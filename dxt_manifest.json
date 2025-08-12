@@ -1,0 +1,152 @@
+{
+  "name": "tapo-camera-mcp",
+  "version": "0.1.0",
+  "display_name": "Tapo Camera MCP",
+  "description": "MCP server for controlling and monitoring TP-Link Tapo security cameras",
+  "author": "Sandra Schi",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sandraschi/tapo-camera-mcp"
+  },
+  "categories": ["iot", "home-automation", "security", "camera", "tapo"],
+  "keywords": ["tapo", "camera", "surveillance", "rtsp", "ptz", "motion-detection"],
+  
+  "server": {
+    "command": ["python", "-m", "tapo_camera_mcp.server"],
+    "timeout": 30,
+    "launch_delay": 5000,
+    "port": 8080,
+    "auto_start": true
+  },
+
+  "dependencies": [
+    {
+      "name": "fastmcp",
+      "version": ">=2.10.0"
+    },
+    {
+      "name": "pytapo",
+      "version": ">=4.0.0"
+    },
+    {
+      "name": "aiohttp",
+      "version": ">=3.8.0"
+    },
+    {
+      "name": "python-dotenv",
+      "version": ">=0.19.0"
+    },
+    {
+      "name": "pydantic",
+      "version": ">=1.10.0"
+    }
+  ],
+
+  "configuration": {
+    "TAPO_USERNAME": {
+      "type": "string",
+      "description": "Tapo camera username (usually admin)",
+      "required": true
+    },
+    "TAPO_PASSWORD": {
+      "type": "string",
+      "description": "Tapo camera password",
+      "secret": true,
+      "required": true
+    },
+    "CAMERA_IP": {
+      "type": "string",
+      "description": "Camera IP address or hostname",
+      "required": true
+    },
+    "CAMERA_PORT": {
+      "type": "integer",
+      "default": 443,
+      "description": "Camera port (usually 443 for HTTPS)"
+    },
+    "USE_HTTPS": {
+      "type": "boolean",
+      "default": true,
+      "description": "Use HTTPS for API calls"
+    },
+    "VERIFY_SSL": {
+      "type": "boolean",
+      "default": true,
+      "description": "Verify SSL certificate"
+    },
+    "TIMEOUT": {
+      "type": "integer",
+      "default": 10,
+      "description": "Request timeout in seconds"
+    },
+    "LOG_LEVEL": {
+      "type": "string",
+      "default": "INFO",
+      "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+      "description": "Logging level"
+    }
+  },
+
+  "prompts": [
+    {
+      "name": "camera_status_prompt",
+      "description": "Get the current status of the Tapo camera",
+      "template": "What is the current status of the {camera_name} camera? Show me {details_level} information."
+    },
+    {
+      "name": "start_stream_prompt",
+      "description": "Start a video stream from the camera",
+      "template": "Start a {stream_type} stream from the {camera_name} camera with {quality} quality and {with_audio}audio."
+    },
+    {
+      "name": "stop_stream_prompt",
+      "description": "Stop an active video stream",
+      "template": "Stop the {stream_type} stream from the {camera_name} camera."
+    },
+    {
+      "name": "ptz_control_prompt",
+      "template": "Move the {camera_name} camera {direction} at {speed} speed for {duration} seconds.",
+      "description": "Control PTZ (Pan-Tilt-Zoom) movements"
+    },
+    {
+      "name": "motion_detection_prompt",
+      "description": "Configure motion detection settings",
+      "template": "{enable_disable} motion detection on the {camera_name} camera with {sensitivity} sensitivity and {zones} zones."
+    },
+    {
+      "name": "privacy_mode_prompt",
+      "description": "Toggle privacy mode",
+      "template": "{enable_disable} privacy mode on the {camera_name} camera."
+    },
+    {
+      "name": "camera_reboot_prompt",
+      "description": "Reboot the camera",
+      "template": "Reboot the {camera_name} camera {force_option}."
+    },
+    {
+      "name": "camera_info_prompt",
+      "description": "Get camera information",
+      "template": "Show me {details_level} information about the {camera_name} camera."
+    },
+    {
+      "name": "recording_control_prompt",
+      "description": "Control camera recording",
+      "template": "{start_stop} {recording_type} recording on the {camera_name} camera with {quality} quality."
+    },
+    {
+      "name": "camera_snapshot_prompt",
+      "description": "Take a snapshot from the camera",
+      "template": "Take a snapshot from the {camera_name} camera and save it as {filename} with {resolution} resolution."
+    }
+  ],
+
+  "screenshots": [
+    "https://raw.githubusercontent.com/sandraschi/tapo-camera-mcp/main/screenshots/dashboard.png",
+    "https://raw.githubusercontent.com/sandraschi/tapo-camera-mcp/main/screenshots/stream.png",
+    "https://raw.githubusercontent.com/sandraschi/tapo-camera-mcp/main/screenshots/settings.png"
+  ],
+  
+  "icon": "https://raw.githubusercontent.com/sandraschi/tapo-camera-mcp/main/icon.png",
+  "documentation": "https://github.com/sandraschi/tapo-camera-mcp/blob/main/README.md"
+}

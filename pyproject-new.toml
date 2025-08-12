@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=42.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tapo-camera-mcp"
+version = "0.2.0"
+description = "FastMCP 2.10 server for controlling TP-Link Tapo cameras"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Tapo Camera MCP Team", email = "tapo-camera-mcp@example.com"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Topic :: Home Automation",
+    "Topic :: Multimedia :: Video :: Capture",
+    "Framework :: FastMCP",
+]
+dependencies = [
+    "fastmcp>=2.10.0",
+    "pytapo>=3.3.48",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "aiohttp>=3.9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.20.0",
+    "pytest-mock>=3.10.0",
+    "black>=22.0.0",
+    "isort>=5.10.1",
+    "mypy>=0.910",
+    "pylint>=2.12.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/tapo-camera-mcp"
+Bug_Tracker = "https://github.com/yourusername/tapo-camera-mcp/issues"
+
+[project.scripts]
+tapo-camera-mcp = "tapo_camera_mcp.cli:main"
+tapo-camera-mcp-v2 = "tapo_camera_mcp.cli_v2:main"
+
+[tool.black]
+line-length = 100
+target-version = ['py38']
+include = '\\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.pylint.master]
+load-plugins = "pylint.ext.mccabe"
+
+[tool.pylint.messages_control]
+disable = [
+    "C0114",  # missing-module-docstring
+    "C0115",  # missing-class-docstring
+    "C0116",  # missing-function-docstring
+    "R0903",  # too-few-public-methods
+    "R0913",  # too-many-arguments
+    "W0613",  # unused-argument
+]
+
+[project.entry-points."fastmcp.plugins"]
+tapo_camera = "tapo_camera_mcp.plugin:register_plugin"
