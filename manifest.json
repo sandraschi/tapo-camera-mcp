@@ -1,0 +1,17 @@
+{
+  "name": "tapo-camera-mcp",
+  "version": "0.2.0",
+  "description": "Advanced control and monitoring for TP-Link Tapo cameras",
+  "dxt_version": "1.0.0",
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com"
+  },
+  "server": {
+    "type": "python",
+    "entry_point": "tapo_camera_mcp.server_v2:main",
+    "mcp_config": {
+      "command": "python -m tapo_camera_mcp.server_v2 --direct"
+    }
+  }
+}

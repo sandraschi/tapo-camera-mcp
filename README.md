@@ -1,22 +1,40 @@
-# Tapo Camera MCP
+# Tapo Camera MCP Server
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/pypi/pyversions/tapo-camera-mcp)](https://www.python.org/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-A FastMCP 2.10-compliant MCP server for controlling TP-Link Tapo cameras. This project provides a unified interface to manage and control Tapo cameras through the MCP protocol, enabling seamless integration with other MCP-compliant systems.
+A FastMCP 2.10.1-compliant MCP server for TP-Link Tapo cameras, communicating via stdio as per the MCP 2.10.1 standard.
+
+> **Note:** This project includes FastAPI-based test endpoints for development and testing purposes only. The primary communication channel is via stdio as required by the MCP 2.10.1 specification.
 
 ## Features
 
-- **Camera Control**: Power on/off, reboot, and manage camera settings
-- **PTZ Control**: Pan, tilt, and zoom control for compatible cameras
-- **Motion Detection**: Configure and monitor motion detection
-- **Video Streaming**: Stream video in multiple formats (RTSP, RTMP, HLS)
-- **Recording**: Local recording with configurable storage settings
-- **Snapshot**: Capture still images from the camera feed
-- **RESTful API**: Full-featured API for programmatic control
-- **CLI**: Command-line interface for easy management
-- **Plugin System**: Easy integration with FastMCP applications
+### Supported Camera Types
+- **Tapo Cameras**: Full support for TP-Link Tapo series
+- *Note: Other camera types shown in examples are for demonstration purposes only. Current implementation focuses on Tapo cameras.*
+
+### Core Features
+- **Unified Interface**: Single API for all camera types
+- **Camera Groups**: Organize cameras into logical groups
+- **Multi-Stream Support**: Handle multiple camera streams simultaneously
+- **Cross-Platform**: Works on Windows, macOS, and Linux
+
+### Camera Control
+- **Power Management**: Power on/off, reboot
+- **PTZ Control**: Pan, tilt, and zoom (where supported)
+- **Motion Detection**: Configure and monitor motion events
+- **Video Streaming**: RTSP, RTMP, and HLS streaming
+- **Snapshot**: Capture still images
+- **Status Monitoring**: Real-time status and health checks
+
+### Integration
+- **MCP 2.10.1 Compliant**: Seamless integration with MCP ecosystem via stdio
+- **CLI**: Command-line interface for administration
+
+### Development & Testing
+- **Test Server**: Includes a FastAPI-based test server (for development only)
+- **Mock Implementations**: For testing without physical hardware
 
 ## Installation
 
@@ -44,9 +62,76 @@ pip install tapo-camera-mcp
    pip install -e .
    ```
 
-## Configuration
+## Quick Start
 
-Create a `.env` file in the project root with your camera details:
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/tapo-camera-mcp.git
+   cd tapo-camera-mcp
+   ```
+
+2. Install with development dependencies:
+   ```bash
+   # Install package in development mode with test dependencies
+   pip install -e ".[dev]"
+   
+   # For testing the MCP server (optional)
+   pip install fastapi uvicorn
+   ```
+
+> **Note:** FastAPI and Uvicorn are only required for testing the MCP server. The main application communicates via stdio as per the MCP 2.10.1 specification.
+
+### Configuration
+
+Create a `config.yaml` file in the project root with your camera configurations:
+
+```yaml
+# Server configuration
+server:
+  host: 0.0.0.0
+  port: 8000
+  web_port: 7777
+  log_level: INFO
+
+# Camera configurations
+cameras:
+  - name: living_room
+    type: tapo
+    enabled: true
+    params:
+      host: 192.168.1.100
+      username: your_username
+      password: your_password
+      
+  - name: front_door
+    type: ring
+    enabled: true
+    params:
+      email: your@email.com
+      password: your_password
+      
+  - name: pet_cam
+    type: furbo
+    enabled: true
+    params:
+      email: your@email.com
+      password: your_password
+      
+  - name: webcam1
+    type: webcam
+    enabled: true
+    params:
+      device_id: 0  # Usually 0 for default webcam
+
+# Camera groups
+groups:
+  indoor:
+    - living_room
+    - pet_cam
+  outdoor:
+    - front_door
 
 ```ini
 # Camera connection settings
@@ -76,13 +161,22 @@ TAPO_CAMERA_MOTION_SENSITIVITY=medium
 
 ## Usage
 
-### Command Line Interface
+### MCP 2.10.1 Integration
+
+This MCP server communicates via stdio as per the MCP 2.10.1 specification. It's designed to be used with MCP-compatible clients.
+
+### Command Line Interface (Development Only)
+
+For development and testing purposes, you can use the CLI:
 
 ```bash
-# Start the MCP server
-tapo-camera-mcp serve --bind 0.0.0.0 --port 8000
+# Start the MCP server (stdio mode, MCP 2.10.1 compliant)
+tapo-camera-mcp serve
 
-# Get camera info
+# For testing with FastAPI (development only)
+tapo-camera-mcp serve --test-api --port 8000
+
+# Get camera info (development only)
 tapo-camera-mcp camera info
 
 # Get camera status
@@ -101,19 +195,24 @@ tapo-camera-mcp camera snapshot
 tapo-camera-mcp camera record start --duration 60
 ```
 
-### Python API
+### MCP 2.10.1 Protocol
+
+This server implements the MCP 2.10.1 specification, communicating via stdio. For integration with MCP clients:
+
+1. The server reads JSON-RPC 2.0 requests from stdin
+2. Processes the requests
+3. Writes JSON-RPC 2.0 responses to stdout
+
+### Python API (Testing Only)
+
+For testing purposes, you can use the Python API:
 
 ```python
-from tapo_camera_mcp import TapoCameraMCP
+from tapo_camera_mcp.server import TapoCameraMCPServer
 
-# Create a camera instance
-camera = TapoCameraMCP(config={
-    "host": "192.168.1.100",
-    "username": "admin",
-    "password": "yourpassword"
-})
-
-# Connect to the camera
+# Create and run the MCP server
+server = TapoCameraMCPServer()
+server.run()  # Runs in stdio mode for MCP 2.10.1 compatibility
 await camera.connect()
 
 # Get camera info
@@ -175,25 +274,20 @@ await camera.disconnect()
 ### Running Tests
 
 ```bash
-# Run all tests
-pytest
+# Run unit tests
+pytest tests/
 
-# Run tests with coverage
-pytest --cov=tapo_camera_mcp --cov-report=term-missing
+# Run MCP protocol tests
+pytest tests/test_mcp_protocol.py
 ```
 
 ### Code Style
 
-This project uses `black` for code formatting and `isort` for import sorting.
+This project uses `black` for code formatting and `isort` for import sorting. Before committing, run:
 
 ```bash
-# Format code
 black .
-
-# Sort imports
 isort .
-
-# Check code style
 pylint tapo_camera_mcp/
 ```
 

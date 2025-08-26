@@ -1,0 +1,85 @@
+# Tapo Camera MCP Server Configuration
+
+# Server settings
+host: 0.0.0.0
+port: 8000
+web_enabled: true
+web_host: "0.0.0.0"  # Accessible from other devices on your network
+web_port: 7777
+web_username: "admin"  # Change this to a secure username
+web_password: "change_me"  # Change this to a strong password
+
+# Camera configurations
+cameras:
+  - name: "living_room"
+    type: "tapo"
+    params:
+      host: "192.168.1.100"  # Replace with your camera's IP
+      username: "your_email@example.com"  # Your Tapo account email
+      password: "your_secure_password"
+    stream_quality: "hd"  # or "sd"
+    verify_ssl: true
+    enabled: true
+    motion_detection: true
+    recording: false  # Set to true to enable continuous recording
+    snapshot_interval: 300  # Seconds between snapshots (0 to disable)
+
+  - name: "front_door"
+    type: "tapo"
+    params:
+      host: "192.168.1.101"  # Replace with your camera's IP
+      username: "your_email@example.com"
+      password: "your_secure_password"
+    stream_quality: "hd"
+    verify_ssl: true
+    enabled: true
+    motion_detection: true
+    recording: false
+    snapshot_interval: 300
+
+  - name: "backyard"
+    type: "tapo"
+    params:
+      host: "192.168.1.102"  # Replace with your camera's IP
+      username: "your_email@example.com"
+      password: "your_secure_password"
+    stream_quality: "hd"
+    verify_ssl: true
+    enabled: true
+    motion_detection: true
+    recording: false
+    snapshot_interval: 300
+
+# Camera groups (for controlling multiple cameras at once)
+camera_groups:
+  outdoor: ["front_door", "backyard"]
+  all: ["living_room", "front_door", "backyard"]
+
+# Storage settings
+storage:
+  snapshots_dir: "C:/tapo_camera/snapshots"  # Where to store snapshots
+  recordings_dir: "C:/tapo_camera/recordings"  # Where to store recordings
+  max_storage_mb: 10240  # 10GB max storage
+  retention_days: 30  # Days to keep recordings
+
+# Performance settings
+cache_size_mb: 200  # Increased for multiple cameras
+max_cache_items: 200
+request_timeout: 45  # Increased timeout for multiple streams
+max_retries: 5
+stream_buffer_size: 5  # Seconds of stream buffering
+
+# Security settings
+enable_auth: true  # Enable web interface authentication
+ssl_enabled: false  # Set to true and provide cert paths for HTTPS
+# ssl_cert: "/path/to/cert.pem"
+# ssl_key: "/path/to/key.pem"
+
+# Logging settings
+log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+log_file: "C:/tapo_camera/logs/tapo_camera_mcp.log"
+log_retention_days: 7  # Days to keep log files
+
+# System settings
+temp_dir: "C:/temp"
+max_upload_size_mb: 100  # Maximum file upload size for snapshots/recordings

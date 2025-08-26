@@ -1,0 +1,77 @@
+# Server configuration
+server:
+  host: 0.0.0.0
+  port: 8000
+  web_port: 7777
+  log_level: INFO
+
+# Camera configurations
+cameras:
+  # Tapo Camera
+  - name: living_room
+    type: tapo
+    enabled: true
+    params:
+      host: 192.168.1.100
+      username: your_tapo_username
+      password: your_tapo_password
+      stream_quality: "hd"  # hd or sd
+      
+  # Ring Doorbell
+  - name: front_door
+    type: ring
+    enabled: true
+    params:
+      email: your@email.com
+      password: your_ring_password
+      # Optional: device_id if you have multiple Ring devices
+      # device_id: "abc123"
+      
+  # Furbo Dog Camera
+  - name: pet_cam
+    type: furbo
+    enabled: true
+    params:
+      email: your@email.com
+      password: your_furbo_password
+      # Optional: device_id if you have multiple Furbo devices
+      # device_id: "def456"
+      
+  # Webcam
+  - name: webcam1
+    type: webcam
+    enabled: true
+    params:
+      device_id: 0  # Usually 0 for default webcam
+      resolution: "1280x720"  # Optional: set resolution
+      fps: 30  # Optional: set frames per second
+
+# Camera groups
+groups:
+  indoor:
+    - living_room
+    - pet_cam
+  outdoor:
+    - front_door
+  all:
+    - living_room
+    - front_door
+    - pet_cam
+    - webcam1
+
+# DINOv3 Settings (optional)
+vision:
+  model: "facebook/dinov2-base"  # or "facebook/dinov2-small", "facebook/dinov2-large"
+  device: "cuda"  # or "cpu" if no GPU available
+  
+# Storage settings
+storage:
+  snapshots_dir: "./snapshots"
+  recordings_dir: "./recordings"
+  max_storage_mb: 10240  # 10GB max storage
+  
+# Security settings (optional)
+security:
+  enable_auth: false
+  username: "admin"
+  password_hash: ""  # Generate with: python -c 'from passlib.hash import bcrypt; print(bcrypt.hash("yourpassword"))'

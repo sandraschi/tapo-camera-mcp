@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tapo Camera Viewer</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .camera { margin: 10px; display: inline-block; }
+        video { max-width: 800px; max-height: 600px; }
+        .controls { margin: 10px 0; }
+        button { padding: 8px 15px; margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🎥 Tapo Camera Viewer</h1>
+    <div class="controls">
+        <select id="cameraSelect">
+            <option value="">Select a camera</option>
+        </select>
+        <button onclick="addCamera()">Add Camera</button>
+    </div>
+    <div id="cameraContainer"></div>
+
+    <script>
+        async function getCameras() {
+            const response = await fetch('/api/cameras');
+            return await response.json();
+        }
+
+        async function getStreamUrl(cameraName) {
+            const response = await fetch(`/api/stream/${cameraName}`);
+            return await response.json();
+        }
+
+        function addCamera() {
+            const select = document.getElementById('cameraSelect');
+            const cameraName = select.value;
+            if (!cameraName) return;
+
+            getStreamUrl(cameraName).then(data => {
+                if (data.rtsp_url) {
+                    const container = document.createElement('div');
+                    container.className = 'camera';
+                    container.innerHTML = `
+                        <h3>${cameraName}</h3>
+                        <video id="${cameraName}" controls autoplay muted></video>
+                        <div>
+                            <button onclick="document.getElementById('${cameraName}').src='${data.rtsp_url}'">
+                                Play
+                            </button>
+                            <button onclick="document.getElementById('${cameraName}').src=''">
+                                Stop
+                            </button>
+                        </div>
+                    `;
+                    document.getElementById('cameraContainer').appendChild(container);
+                }
+            });
+        }
+
+        // Load cameras on page load
+        window.onload = () => {
+            getCameras().then(data => {
+                const select = document.getElementById('cameraSelect');
+                Object.keys(data.cameras || {}).forEach(cameraName => {
+                    const option = document.createElement('option');
+                    option.value = cameraName;
+                    option.textContent = cameraName;
+                    select.appendChild(option);
+                });
+            });
+        };
+    </script>
+</body>
+</html>
