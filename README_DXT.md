@@ -14,10 +14,70 @@ This document provides instructions for building, installing, and using the Tapo
 ## Building the DXT Package
 
 1. **Clone the repository** (if you haven't already):
+
    ```bash
    git clone https://github.com/sandraschi/tapo-camera-mcp.git
    cd tapo-camera-mcp
    ```
+
+## Grafana Plugin Setup
+
+---
+
+### Prerequisites
+
+- Node.js 14.x or later
+- Grafana 9.5.x or later
+- Yarn or npm
+
+### Installation
+
+1. **Navigate to the plugin directory**:
+
+   ```bash
+   cd grafana/plugins/tapo-camera-stream
+   ```
+
+2. **Install dependencies**:
+
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. **Build the plugin**:
+
+   ```bash
+   npm run build
+   # or
+   yarn build
+   ```
+
+4. **Start the development server**:
+
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
+
+5. **Add the plugin to Grafana**:
+   - Copy the `tapo-camera-stream` directory to your Grafana plugins directory
+   - Or create a symlink from the Grafana plugins directory to this directory
+   - Restart Grafana
+
+6. **Enable the plugin**:
+   - Log in to Grafana as an administrator
+   - Go to Configuration -> Plugins
+   - Find "Tapo Camera Stream" and click "Enable"
+
+### Development
+
+- `npm run build` — Build the plugin in production mode
+- `npm run dev` — Start development server with hot reload
+- `npm run test` — Run tests
+- `npm run sign` — Sign the plugin for distribution
 
 2. **Build the DXT package** using the provided build script:
    ```powershell

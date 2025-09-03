@@ -1,0 +1,630 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": ["tapo", "camera"],
+      "targetBlank": true,
+      "title": "Related Dashboards",
+      "type": "dashboards"
+    }
+  ],
+  "liveNow": true,
+  "panels": [
+    {
+      "datasource": {
+        "type": "tapo-camera-mcp-datasource",
+        "uid": "${DS_TAPO-CAMERA-MCP}"
+      },
+      "description": "Live stream with PTZ controls",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 16,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "autoPlay": true,
+        "muted": true,
+        "showControls": true,
+        "showPtzControls": true,
+        "streamType": "hls",
+        "streamUrl": "${TAPO_CAMERA_STREAM_URL}",
+        "useAuth": true,
+        "username": "${TAPO_CAMERA_USERNAME}",
+        "password": "${TAPO_CAMERA_PASSWORD}",
+        "debug": false
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "tapo-camera-mcp-datasource",
+            "uid": "${DS_TAPO-CAMERA-MCP}"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Camera Stream with PTZ Controls",
+      "type": "tapo-camera-stream"
+    },
+    {
+      "datasource": {
+        "type": "tapo-camera-mcp-datasource",
+        "uid": "${DS_TAPO-CAMERA-MCP}"
+      },
+      "description": "Manage PTZ presets for the selected camera",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Actions"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 120
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ID"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 60
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "ID"
+          }
+        ]
+      },
+      "pluginVersion": "1.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "tapo-camera-mcp-datasource",
+            "uid": "${DS_TAPO-CAMERA-MCP}"
+          },
+          "queryType": "ptzPresets",
+          "refId": "A"
+        }
+      ],
+      "title": "PTZ Presets",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "tapo-camera-mcp-datasource",
+        "uid": "${DS_TAPO-CAMERA-MCP}"
+      },
+      "description": "Current PTZ position and status",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "value"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 14
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.4.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "tapo-camera-mcp-datasource",
+            "uid": "${DS_TAPO-CAMERA-MCP}"
+          },
+          "expr": "camera_ptz_pan_position{camera=\"$camera\"}",
+          "format": "time_series",
+          "interval": "",
+          "legendFormat": "Pan",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "tapo-camera-mcp-datasource",
+            "uid": "${DS_TAPO-CAMERA-MCP}"
+          },
+          "expr": "camera_ptz_tilt_position{camera=\"$camera\"}",
+          "hide": false,
+          "legendFormat": "Tilt",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "tapo-camera-mcp-datasource",
+            "uid": "${DS_TAPO-CAMERA-MCP}"
+          },
+          "expr": "camera_ptz_zoom_position{camera=\"$camera\"}",
+          "hide": false,
+          "legendFormat": "Zoom",
+          "refId": "C"
+        }
+      ],
+      "title": "PTZ Position",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "tapo-camera-mcp-datasource",
+        "uid": "${DS_TAPO-CAMERA-MCP}"
+      },
+      "description": "PTZ control history",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 16,
+        "x": 8,
+        "y": 14
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "tapo-camera-mcp-datasource",
+            "uid": "${DS_TAPO-CAMERA-MCP}"
+          },
+          "expr": "rate(camera_ptz_commands_total{direction=~\"$direction\",camera=\"$camera\"}[5m])",
+          "legendFormat": "{{direction}}",
+          "refId": "A"
+        }
+      ],
+      "title": "PTZ Activity",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 37,
+  "style": "dark",
+  "tags": ["tapo", "camera", "ptz", "controls"],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "Living Room",
+          "value": "living-room"
+        },
+        "description": "Camera to control",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Camera",
+        "multi": false,
+        "name": "camera",
+        "options": [
+          {
+            "selected": true,
+            "text": "Living Room",
+            "value": "living-room"
+          },
+          {
+            "selected": false,
+            "text": "Front Door",
+            "value": "front-door"
+          },
+          {
+            "selected": false,
+            "text": "Backyard",
+            "value": "backyard"
+          }
+        ],
+        "query": "living-room,front-door,backyard",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "description": "Filter PTZ directions",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Direction",
+        "multi": true,
+        "name": "direction",
+        "options": [
+          {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": false,
+            "text": "up",
+            "value": "up"
+          },
+          {
+            "selected": false,
+            "text": "down",
+            "value": "down"
+          },
+          {
+            "selected": false,
+            "text": "left",
+            "value": "left"
+          },
+          {
+            "selected": false,
+            "text": "right",
+            "value": "right"
+          },
+          {
+            "selected": false,
+            "text": "zoom_in",
+            "value": "zoom_in"
+          },
+          {
+            "selected": false,
+            "text": "zoom_out",
+            "value": "zoom_out"
+          },
+          {
+            "selected": false,
+            "text": "stop",
+            "value": "stop"
+          },
+          {
+            "selected": false,
+            "text": "preset",
+            "value": "preset"
+          }
+        ],
+        "query": "up,down,left,right,zoom_in,zoom_out,stop,preset",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "description": "Data source for Tapo Camera MCP",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Tapo Camera MCP",
+        "multi": false,
+        "name": "DS_TAPO-CAMERA-MCP",
+        "options": [],
+        "query": "tapo-camera-mcp",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": [
+            "rtsp://camera-ip:554/stream1"
+          ],
+          "value": [
+            "rtsp://camera-ip:554/stream1"
+          ]
+        },
+        "description": "RTSP stream URL for the camera",
+        "hide": 2,
+        "includeAll": false,
+        "label": "Camera Stream URL",
+        "multi": false,
+        "name": "TAPO_CAMERA_STREAM_URL",
+        "options": [
+          {
+            "selected": true,
+            "text": "rtsp://camera-ip:554/stream1",
+            "value": "rtsp://camera-ip:554/stream1"
+          }
+        ],
+        "query": "rtsp://camera-ip:554/stream1",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "admin",
+          "value": "admin"
+        },
+        "description": "Camera username",
+        "hide": 2,
+        "includeAll": false,
+        "label": "Camera Username",
+        "multi": false,
+        "name": "TAPO_CAMERA_USERNAME",
+        "options": [
+          {
+            "selected": true,
+            "text": "admin",
+            "value": "admin"
+          }
+        ],
+        "query": "admin",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "description": "Camera password",
+        "hide": 2,
+        "includeAll": false,
+        "label": "Camera Password",
+        "multi": false,
+        "name": "TAPO_CAMERA_PASSWORD",
+        "options": [],
+        "query": "password",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "PTZ Controls",
+  "uid": "tapo-ptz-controls",
+  "version": 1,
+  "weekStart": ""
+}

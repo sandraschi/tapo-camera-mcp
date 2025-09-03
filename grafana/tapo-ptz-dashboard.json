@@ -1,0 +1,525 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 2,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Pan"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Tilt"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Zoom"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "unit",
+                "value": "percentunit"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ptz_pan",
+          "format": "time_series",
+          "legendFormat": "{{camera_id}} - Pan",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ptz_tilt",
+          "format": "time_series",
+          "legendFormat": "{{camera_id}} - Tilt",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ptz_zoom",
+          "format": "time_series",
+          "legendFormat": "{{camera_id}} - Zoom",
+          "refId": "C"
+        }
+      ],
+      "title": "PTZ Position",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Current PTZ position visualization with interactive controls",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ptz_pan",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "Pan",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ptz_tilt",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "Tilt",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ptz_zoom",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "Zoom",
+          "refId": "C"
+        }
+      ],
+      "title": "PTZ Control Panel",
+      "type": "stat",
+      "gridPos": {
+        "h": 16,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ptz_pan",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "Pan",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ptz_tilt",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "Tilt",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ptz_zoom",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "Zoom",
+          "refId": "C"
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "PTZ presets for quick navigation",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ptz_preset",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{camera_id}} - {{preset_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "PTZ Presets",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "Camera stream with PTZ controls",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "id": 6,
+      "options": {
+        "content": "<div id='ptz-controls' style='width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\n  <div style='display:flex; flex-direction:column; align-items:center; margin-bottom:20px;'>\n    <button id='ptz-up' style='width:60px; height:60px; font-size:24px;' onclick='movePTZ(\"up\")'>⬆️</button>\n    <div style='display:flex;'>\n      <button id='ptz-left' style='width:60px; height:60px; font-size:24px; margin:0 10px;' onclick='movePTZ(\"left\")'>⬅️</button>\n      <button id='ptz-stop' style='width:60px; height:60px; font-size:24px; margin:0 10px;' onclick='stopPTZ()'>⏹️</button>\n      <button id='ptz-right' style='width:60px; height:60px; font-size:24px;' onclick='movePTZ(\"right\")'>➡️</button>\n    </div>\n    <button id='ptz-down' style='width:60px; height:60px; font-size:24px;' onclick='movePTZ(\"down\")'>⬇️</button>\n  </div>\n  <div style='display:flex; gap:20px; margin-top:20px;'>\n    <div>\n      <div>Zoom</div>\n      <div style='display:flex; flex-direction:column;'>\n        <button onclick='zoomPTZ(\"in\")'>+</button>\n        <button onclick='zoomPTZ(\"out\")'>-</button>\n      </div>\n    </div>\n    <div>\n      <div>Presets</div>\n      <div id='preset-buttons' style='display:flex; gap:5px; flex-wrap:wrap; max-width:300px;'>\n        <!-- Preset buttons will be added here dynamically -->\n      </div>\n    </div>\n  </div>\n</div>\n\n<script>\nasync function movePTZ(direction) {\n  const cameraId = getSelectedCamera();\n  if (!cameraId) return;\n  \n  try {\n    const response = await fetch(`/api/cameras/${cameraId}/ptz/move`, {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ direction })\n    });\n    \n    if (!response.ok) {\n      console.error('Failed to move PTZ:', await response.text());\n    }\n  } catch (error) {\n    console.error('Error moving PTZ:', error);\n  }\n}\n\nasync function stopPTZ() {\n  const cameraId = getSelectedCamera();\n  if (!cameraId) return;\n  \n  try {\n    const response = await fetch(`/api/cameras/${cameraId}/ptz/stop`, {\n      method: 'POST'\n    });\n    \n    if (!response.ok) {\n      console.error('Failed to stop PTZ:', await response.text());\n    }\n  } catch (error) {\n    console.error('Error stopping PTZ:', error);\n  }\n}\n\nasync function zoomPTZ(direction) {\n  const cameraId = getSelectedCamera();\n  if (!cameraId) return;\n  \n  try {\n    const response = await fetch(`/api/cameras/${cameraId}/ptz/zoom`, {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ direction })\n    });\n    \n    if (!response.ok) {\n      console.error('Failed to zoom PTZ:', await response.text());\n    }\n  } catch (error) {\n    console.error('Error zooming PTZ:', error);\n  }\n}\n\nfunction getSelectedCamera() {\n  // Get the currently selected camera from Grafana variables\n  const vars = window.grafanaBootData?.settings?.featureToggles?.variables;\n  if (vars?.camera) {\n    return vars.camera;\n  }\n  console.warn('No camera selected');\n  return null;\n}\n\n// Update presets when data is received\nfunction onDataReceived(data) {\n  if (!data || !data.series) return;\n  \n  // Find presets data\n  const presets = data.series.find(s => s.name === 'ptz_preset');\n  if (!presets) return;\n  \n  const container = document.getElementById('preset-buttons');\n  if (!container) return;\n  \n  // Clear existing buttons\n  container.innerHTML = '';\n  \n  // Add new preset buttons\n  presets.fields.find(f => f.name === 'preset_name')?.values.buffer.forEach((name, i) => {\n    const presetId = presets.fields.find(f => f.name === 'preset_id')?.values.buffer[i];\n    if (name && presetId) {\n      const button = document.createElement('button');\n      button.textContent = name;\n      button.onclick = () => recallPreset(presetId);\n      container.appendChild(button);\n    }\n  });\n}\n\nasync function recallPreset(presetId) {\n  const cameraId = getSelectedCamera();\n  if (!cameraId) return;\n  \n  try {\n    const response = await fetch(`/api/cameras/${cameraId}/ptz/presets/${presetId}/recall`, {\n      method: 'POST'\n    });\n    \n    if (!response.ok) {\n      console.error('Failed to recall preset:', await response.text());\n    }\n  } catch (error) {\n    console.error('Error recalling preset:', error);\n  }\n}\n\n// Listen for data updates\nwindow.addEventListener('message', (event) => {\n  if (event.data?.name === 'data-received') {\n    onDataReceived(event.data.data);\n  }\n});\n</script>",
+        "mode": "html"
+      },
+      "pluginVersion": "9.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "ptz_preset",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{camera_id}} - {{preset_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "PTZ Controls",
+      "type": "text"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["tapo", "ptz", "controls"],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "Prometheus",
+          "value": "Prometheus"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Data Source",
+        "multi": false,
+        "name": "DS_PROMETHEUS",
+        "options": [],
+        "query": "prometheus",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(camera_status, camera_id)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Camera",
+        "multi": false,
+        "name": "camera",
+        "options": [],
+        "query": {
+          "query": "label_values(camera_status, camera_id)",
+          "refId": "TapoPTZ-camera-Variable-Query"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "timezone": "",
+  "title": "Tapo PTZ Controls",
+  "version": 1,
+  "weekStart": ""
+}

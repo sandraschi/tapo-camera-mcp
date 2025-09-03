@@ -3,7 +3,7 @@ Data models for Tapo-Camera-MCP.
 """
 from enum import Enum
 from typing import Dict, List, Optional, Union
-from pydantic import BaseModel, Field, HttpUrl, IPvAnyAddress, validator
+from pydantic import BaseModel, Field, HttpUrl, IPvAnyAddress, field_validator
 
 class CameraModel(str, Enum):
     """Supported Tapo camera models."""
@@ -56,11 +56,11 @@ class CameraStatus(BaseModel):
 
 class CameraConfig(BaseModel):
     """Configuration for a Tapo camera."""
-    # Connection settings
-    host: str = Field(..., description="Camera IP address or hostname")
+    # Connection settings - now optional with defaults
+    host: Optional[str] = Field(None, description="Camera IP address or hostname")
     port: int = Field(443, description="Camera port (usually 443 for HTTPS)")
-    username: str = Field(..., description="Camera username (usually admin)")
-    password: str = Field(..., description="Camera password")
+    username: Optional[str] = Field(None, description="Camera username (usually admin)")
+    password: Optional[str] = Field(None, description="Camera password")
     use_https: bool = Field(True, description="Use HTTPS for API calls")
     verify_ssl: bool = Field(True, description="Verify SSL certificate")
     timeout: int = Field(10, description="Request timeout in seconds")
@@ -93,26 +93,29 @@ class CameraConfig(BaseModel):
     rtsp_port: int = Field(554, description="RTSP port (usually 554)")
     onvif_port: int = Field(2020, description="ONVIF port (usually 2020)")
     
-    @validator('host')
+    @field_validator('host')
+    @classmethod
     def validate_host(cls, v):
-        """Validate the host is not empty."""
-        if not v or not v.strip():
+        """Validate the host is not empty if provided."""
+        if v is not None and (not v or not v.strip()):
             raise ValueError("Host cannot be empty")
-        return v.strip()
+        return v.strip() if v else v
     
-    @validator('username')
+    @field_validator('username')
+    @classmethod
     def validate_username(cls, v):
-        """Validate the username is not empty."""
-        if not v or not v.strip():
+        """Validate the username is not empty if provided."""
+        if v is not None and (not v or not v.strip()):
             raise ValueError("Username cannot be empty")
-        return v.strip()
+        return v.strip() if v else v
     
-    @validator('password')
+    @field_validator('password')
+    @classmethod
     def validate_password(cls, v):
-        """Validate the password is not empty."""
-        if not v or not v.strip():
+        """Validate the password is not empty if provided."""
+        if v is not None and (not v or not v.strip()):
             raise ValueError("Password cannot be empty")
-        return v.strip()
+        return v.strip() if v else v
 
 class PTZPosition(BaseModel):
     """PTZ position coordinates."""

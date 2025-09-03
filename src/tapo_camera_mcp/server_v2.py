@@ -8,6 +8,7 @@ import io
 import json
 import logging
 import os
+import sys
 import time
 from collections import OrderedDict
 from datetime import datetime, timedelta
@@ -26,12 +27,14 @@ from .web_server import TapoWebServer
 from .analysis import image_analyzer
 from .camera.manager import camera_manager
 from .camera.base import CameraType, CameraConfig
+# Import camera implementations to ensure registration
+from . import camera
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 # Pydantic models for request/response validation
-class CameraConfig(BaseModel):
+class TapoCameraConfig(BaseModel):
     """Camera configuration model."""
     host: str = Field(..., description="Camera IP address or hostname")
     username: str = Field(..., description="Camera username")
@@ -128,12 +131,22 @@ class TapoCameraServer:
                 - request_timeout: HTTP request timeout in seconds (default: 30)
                 - max_retries: Maximum retry attempts for operations (default: 3)
         """
-        self.config = CameraConfig(**(config or {}))
+        # Load camera configuration from config parameter
+        camera_config = config.copy() if config else {}
+        
+        # Only create TapoCameraConfig if we have the required fields or they're provided via config
+        if camera_config.get('host') and camera_config.get('username') and camera_config.get('password'):
+            self.camera_config = TapoCameraConfig(**camera_config)
+        else:
+            # Create empty camera config - camera connection will be established later
+            self.camera_config = None
+        
+        # General server config (not camera-specific)
+        self.config = config or {}
         self.camera: Optional[Tapo] = None
         self.mcp = FastMCP(
             name="Tapo-Camera-MCP",
-            version="0.3.0",  # Bump version for new features
-            description="FastMCP 2.10 server for TP-Link Tapo cameras with multimodal support"
+            version="0.3.0"  # Bump version for new features
         )
         
         # Initialize image cache
@@ -159,9 +172,14 @@ class TapoCameraServer:
         # Initialize camera manager
         self.camera_manager = camera_manager
         
-        # Initialize with default camera if config provided
+        # Initialize camera tracking
+        self._active_camera = None
+        self.cameras = {}  # Legacy camera storage for compatibility
+        
+        # Store default camera config for later initialization
+        self.default_camera_config = None
         if self.config.get('host') and self.config.get('username') and self.config.get('password'):
-            asyncio.create_task(self.camera_manager.add_camera({
+            self.default_camera_config = {
                 'name': 'default',
                 'type': CameraType.TAPO,
                 'params': {
@@ -170,7 +188,7 @@ class TapoCameraServer:
                     'password': self.config['password']
                 },
                 'enabled': True
-            }))
+            }
         
         self._register_tools()
         
@@ -178,6 +196,19 @@ class TapoCameraServer:
         if self.web_enabled:
             self._start_web_server()
         
+
+    async def initialize(self):
+        """Initialize the camera manager and default camera if configured."""
+        # Initialize camera manager
+        await self.camera_manager.initialize()
+        
+        # Add default camera if config was provided
+        if self.default_camera_config:
+            try:
+                await self.camera_manager.add_camera(self.default_camera_config)
+                logger.info("Default camera initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize default camera: {e}")
     async def get_rtsp_url(self, camera_name: str = None) -> Dict[str, Any]:
         """Get RTSP stream URL for a camera."""
         camera_name = camera_name or self._active_camera
@@ -1922,6 +1953,10 @@ Respond with:
             else:
                 logger.info("Running in direct mode with HTTP transport")
                 self.mcp.create_http_server(host=host, port=port)
+            
+            # Initialize camera manager in direct mode
+            # We need to ensure initialization happens when the event loop is available
+            asyncio.create_task(self.initialize())
             return
             
         # Original server mode with event loop management
@@ -1935,6 +1970,8 @@ Respond with:
         
         # Run the event loop
         loop = asyncio.get_event_loop()
+        # Initialize camera manager
+        loop.run_until_complete(self.initialize())
         
         try:
             logger.info(f"Starting MCP server on http://{host}:{port}")
@@ -1983,8 +2020,18 @@ def main():
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     
+    # Load configuration from environment variables
+    config = {
+        'host': os.getenv('TAPO_CAMERA_HOST'),
+        'username': os.getenv('TAPO_CAMERA_USERNAME'),
+        'password': os.getenv('TAPO_CAMERA_PASSWORD'),
+    }
+    
+    # Remove None values to let defaults apply
+    config = {k: v for k, v in config.items() if v is not None}
+    
     # Create and run the server
-    server = TapoCameraServer()
+    server = TapoCameraServer(config)
     
     try:
         server.run(

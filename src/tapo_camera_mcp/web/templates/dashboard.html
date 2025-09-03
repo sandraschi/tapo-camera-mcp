@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Tapo Camera MCP{% endblock %}
+
+
+{% block content %}
+<div class="dashboard">
+    <h1>Dashboard</h1>
+    
+    <!-- Status Overview -->
+    <div class="status-overview">
+        <div class="status-card">
+            <div class="status-icon online">
+                <i class="fas fa-video"></i>
+            </div>
+            <div class="status-info">
+                <h3>Cameras Online</h3>
+                <p class="count">{{ online_cameras }}/{{ total_cameras }}</p>
+            </div>
+        </div>
+        
+        <div class="status-card">
+            <div class="status-icon storage">
+                <i class="fas fa-hdd"></i>
+            </div>
+            <div class="status-info">
+                <h3>Storage Used</h3>
+                <p class="count">{{ storage_used }}%</p>
+            </div>
+        </div>
+        
+        <div class="status-card">
+            <div class="status-icon alerts">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div class="status-info">
+                <h3>Active Alerts</h3>
+                <p class="count">{{ active_alerts }}</p>
+            </div>
+        </div>
+        
+        <div class="status-card">
+            <div class="status-icon recording">
+                <i class="fas fa-record-vinyl"></i>
+            </div>
+            <div class="status-info">
+                <h3>Active Recordings</h3>
+                <p class="count">{{ active_recordings }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Camera Grid -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Live View</h2>
+            <div class="view-options">
+                <button class="btn btn-outline active" id="grid-view">
+                    <i class="fas fa-th-large"></i>
+                </button>
+                <button class="btn btn-outline" id="list-view">
+                    <i class="fas fa-list"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="camera-grid" id="camera-container">
+            {% for camera in cameras %}
+            <div class="camera-card">
+                <div class="camera-header">
+                    <h3>{{ camera.name }}</h3>
+                    <span class="status-badge {% if camera.is_online %}
+                    online{% else %}offline{% endif %}">
+                        {{ 'Online' if camera.is_online else 'Offline' }}
+                    </span>
+                </div>
+                <div class="camera-preview">
+                    <img src="{{ url_for('get_camera_snapshot', 
+                    camera_id=camera.id) }}" 
+                    alt="{{ camera.name }}" class="camera-feed">
+                    <div class="camera-overlay">
+                        <button class="btn btn-icon" title="Fullscreen">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                        <button class="btn btn-icon" title="PTZ Controls">
+                            <i class="fas fa-arrows-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="camera-footer">
+                    <div class="camera-info">
+                        <span class="camera-model">{{ camera.model }}</span>
+                        <span class="camera-ip">{{ camera.ip_address }}</span>
+                    </div>
+                    <div class="camera-actions">
+                        <button class="btn btn-icon" title="View Details">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                        <button class="btn btn-icon" title="Settings">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Recent Events -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Recent Events</h2>
+            <a href="{{ url_for('events') }}" class="btn btn-link">View All</a>
+        </div>
+        
+        <div class="events-list">
+            {% for event in recent_events %}
+            <div class="event-item">
+                <div class="event-icon">
+                    {% if event.type == 'motion' %}
+                    <i class="fas fa-running"></i>
+                    {% elif event.type == 'recording' %}
+                    <i class="fas fa-record-vinyl"></i>
+                    {% else %}
+                    <i class="fas fa-info-circle"></i>
+                    {% endif %}
+                </div>
+                <div class="event-details">
+                    <h4>{{ event.title }}</h4>
+                    <p>{{ event.description }}</p>
+                    <span class="event-time">{{ event.timestamp }}</span>
+                </div>
+                {% if event.has_thumbnail %}
+                <div class="event-thumbnail">
+                    <img src="{{ event.thumbnail_url }}" alt="Event Thumbnail">
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>No recent events</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- System Status -->
+    <div class="section">
+        <div class="section-header">
+            <h2>System Status</h2>
+        </div>
+        
+        <div class="system-status">
+            <div class="status-item">
+                <div class="status-label">CPU Usage</div>
+                <div class="status-bar">
+                    <div class="progress" data-value="{{ system_status.cpu_usage }}">
+                        <span class="sr-only">{{ system_status.cpu_usage }}%</span>
+                    </div>
+                    <span aria-hidden="true">{{ system_status.cpu_usage }}%</span>
+                </div>
+            </div>
+            
+            <div class="status-item">
+                <div class="status-label">Memory Usage</div>
+                <div class="status-bar">
+                    <div class="progress" data-value="{{ system_status.memory_usage }}">
+                        <span class="sr-only">{{ system_status.memory_usage }}%</span>
+                    </div>
+                    <span aria-hidden="true">{{ system_status.memory_usage }}%</span>
+                </div>
+            </div>
+            
+            <div class="status-item">
+                <div class="status-label">Disk Usage</div>
+                <div class="status-bar">
+                    <div class="progress" data-value="{{ system_status.disk_usage }}">
+                        <span class="sr-only">{{ system_status.disk_usage }}%</span>
+                    </div>
+                    <span aria-hidden="true">{{ system_status.disk_usage }}%</span>
+                </div>
+            </div>
+            
+            <div class="status-item">
+                <div class="status-label">Network</div>
+                <div class="status-details">
+                    <span>↑ {{ system_status.network.upload }} MB/s</span>
+                    <span>↓ {{ system_status.network.download }} MB/s</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Dashboard functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set progress bar widths from data attributes
+        document.querySelectorAll('.progress[data-value]').forEach(progress => {
+            const value = progress.getAttribute('data-value');
+            if (value) {
+                progress.style.width = `${value}%`;
+            }
+        });
+
+        // Toggle between grid and list view
+        document.getElementById('grid-view').addEventListener('click', function() {
+            document.getElementById('camera-container').classList.add('grid-view');
+            document.getElementById('camera-container').classList.remove('list-view');
+            this.classList.add('active');
+            document.getElementById('list-view').classList.remove('active');
+        });
+
+        document.getElementById('list-view').addEventListener('click', function() {
+            document.getElementById('camera-container').classList.add('list-view');
+            document.getElementById('camera-container').classList.remove('grid-view');
+            this.classList.add('active');
+            document.getElementById('grid-view').classList.remove('active');
+        });
+    });
+</script>
+{% endblock %}

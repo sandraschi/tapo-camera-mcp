@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional, Type
 from fastmcp import FastMCP, McpMessage
 from pydantic import BaseModel
 
-from .server import TapoCameraMCP
+from .server_v3 import TapoCameraServer as TapoCameraMCP
 from .models import CameraConfig
 
 class TapoCameraPluginConfig(BaseModel):

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Tapo Camera MCP{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>Tapo Camera MCP</h2>
+            </div>
+            <ul class="nav-links">
+                <li class="nav-item {% if request.url.path == '/' %}active{% endif %}">
+                    <a href="{{ url_for('dashboard') }}">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item {% if request.url.path.startswith('/cameras') %}
+                active{% endif %}">
+                    <a href="{{ url_for('list_cameras') }}">
+                        <i class="fas fa-video"></i>
+                        <span>Cameras</span>
+                    </a>
+                </li>
+                <li class="nav-item {% if request.url.path.startswith('/recordings') %}
+                active{% endif %}">
+                    <a href="{{ url_for('recordings') }}">
+                        <i class="fas fa-film"></i>
+                        <span>Recordings</span>
+                    </a>
+                </li>
+                <li class="nav-item {% if request.url.path.startswith('/system') %}
+                active{% endif %}">
+                    <a href="{{ url_for('system_settings') }}">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+            <div class="app-version">v1.0.0</div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search cameras, recordings...">
+                </div>
+                <div class="user-menu">
+                    <div class="notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                    <div class="user-profile">
+                        <img src="{{ url_for('static', path='/img/avatar.png') }}" 
+                        alt="User" class="avatar">
+                        <span>Admin</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

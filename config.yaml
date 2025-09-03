@@ -1,28 +1,28 @@
 # Tapo Camera MCP Server Configuration
 
 # Server settings
-host: 0.0.0.0
+host: "0.0.0.0"
 port: 8000
 web_enabled: true
-web_host: "0.0.0.0"  # Accessible from other devices on your network
+web_host: "0.0.0.0"
 web_port: 7777
-web_username: "admin"  # Change this to a secure username
-web_password: "change_me"  # Change this to a strong password
+web_username: "admin"
+web_password: "change_me"  # Change this to a secure password
 
 # Camera configurations
 cameras:
   - name: "living_room"
     type: "tapo"
     params:
-      host: "192.168.1.100"  # Replace with your camera's IP
-      username: "your_email@example.com"  # Your Tapo account email
-      password: "your_secure_password"
+      host: "192.168.0.136"  # Replace with your camera's IP address
+      username: "sandraschipal@hotmail.com"  # Your Tapo account email
+      password: "Sec1060ta"    # Your Tapo account password
     stream_quality: "hd"  # or "sd"
     verify_ssl: true
     enabled: true
     motion_detection: true
-    recording: false  # Set to true to enable continuous recording
-    snapshot_interval: 300  # Seconds between snapshots (0 to disable)
+    recording: false
+    snapshot_interval: 300  # seconds
 
   - name: "front_door"
     type: "tapo"

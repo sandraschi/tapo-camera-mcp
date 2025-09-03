@@ -1,0 +1,43 @@
+{
+  "type": "panel",
+  "name": "Tapo Camera Stream",
+  "id": "tapo-camera-stream",
+  "info": {
+    "description": "Grafana panel for viewing and controlling Tapo camera streams with PTZ support",
+    "author": {
+      "name": "Tapo Camera MCP Team",
+      "url": "https://github.com/your-org/tapo-camera-mcp"
+    },
+    "keywords": ["tapo", "camera", "stream", "ptz", "video", "surveillance"],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [
+      {"name": "Website", "url": "https://github.com/your-org/tapo-camera-mcp"},
+      {"name": "License", "url": "https://github.com/your-org/tapo-camera-mcp/blob/main/LICENSE"}
+    ],
+    "screenshots": [],
+    "version": "1.0.0",
+    "updated": "2025-09-03"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=9.0.0",
+    "plugins": []
+  },
+  "includes": [
+    {
+      "type": "dashboard",
+      "name": "Tapo Camera Overview",
+      "path": "dashboards/tapo-camera-overview.json",
+      "addToNav": true,
+      "defaultNav": true
+    },
+    {
+      "type": "dashboard",
+      "name": "PTZ Controls",
+      "path": "dashboards/tapo-ptz-controls.json",
+      "addToNav": true
+    }
+  ]
+}

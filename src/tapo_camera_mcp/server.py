@@ -1,389 +1,280 @@
 """
-Tapo-Camera-MCP - FastMCP 2.10 server for controlling TP-Link Tapo cameras.
+Tapo Camera MCP Server
+
+A FastMCP 2.12+ server for managing TP-Link Tapo cameras with a modular architecture.
 """
+
 import asyncio
 import logging
-from typing import Any, Dict, Optional, Set
+import sys
+from pathlib import Path
+from typing import Dict, Any, Optional, List
 
-import aiohttp
-from fastmcp import FastMCP, McpMessage
+from fastmcp import FastMCP
+from pydantic import BaseModel, Field
 
-from .exceptions import TapoCameraError, AuthenticationError, ConnectionError
-from .models import CameraConfig, CameraStatus, CameraInfo, PTZPosition, MotionEvent
+# Import tool modules
+from .tools.camera import (
+    ListCamerasTool, AddCameraTool, RemoveCameraTool,
+    SetActiveCameraTool, ConnectCameraTool, DisconnectCameraTool,
+    GetCameraInfoTool, ManageCameraGroupsTool
+)
 
+from .tools.ptz import (
+    MovePTZTool, SavePTZPresetTool, RecallPTZPresetTool,
+    GetPTZPresetsTool, GoToHomePTZTool, StopPTZTool, GetPTZPositionTool
+)
+
+from .tools.media import (
+    CaptureImageTool, FindSimilarImagesTool, GetStreamURLTool,
+    StartRecordingTool, StopRecordingTool, AnalyzeImageTool,
+    SecurityScanTool, CaptureStillTool
+)
+
+from .tools.system import (
+    GetSystemInfoTool, RebootCameraTool, GetLogsTool, GetHelpTool,
+    SetMotionDetectionTool, SetLEDEnabledTool, SetPrivacyModeTool, HelpTool
+)
+
+from .metrics_service import MetricsCollector, MetricsServer
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-class TapoCameraMCP(FastMCP):
-    """Tapo Camera MCP server implementation."""
+class TapoCameraConfig(BaseModel):
+    """Configuration model for the Tapo Camera MCP server."""
+    host: Optional[str] = Field(None, description="Camera IP address or hostname")
+    username: Optional[str] = Field(None, description="Camera username")
+    password: Optional[str] = Field(None, description="Camera password")
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
-        """Initialize the Tapo Camera MCP server."""
-        kwargs.setdefault("name", "Tapo-Camera-MCP")
-        kwargs.setdefault("version", "0.1.0")
-        
-        super().__init__(**kwargs)
-        
-        # Initialize configuration
-        self.config = CameraConfig(**(config or {}))
-        
-        # Camera connection state
-        self._session: Optional[aiohttp.ClientSession] = None
-        self._is_connected = False
-        self._motion_detected = False
-        self._motion_listeners: Set[callable] = set()
-        
-        # Register message handlers
-        self._register_handlers()
-    
-    def _register_handlers(self):
-        """Register all message handlers."""
-        handlers = {
-            "camera_connect": self.handle_connect,
-            "camera_disconnect": self.handle_disconnect,
-            "camera_info": self.handle_get_info,
-            "camera_status": self.handle_get_status,
-            "camera_config": self.handle_get_config,
-            "camera_update_config": self.handle_update_config,
-            "camera_reboot": self.handle_reboot,
-            "stream_start": self.handle_start_stream,
-            "stream_stop": self.handle_stop_stream,
-            "ptz_move": self.handle_ptz_move,
-            "ptz_preset": self.handle_ptz_preset,
-            "ptz_home": self.handle_ptz_home,
-            "motion_detection": self.handle_motion_detection,
-            "recording_start": self.handle_start_recording,
-            "recording_stop": self.handle_stop_recording,
-            "snapshot": self.handle_snapshot,
-        }
-        
-        for msg_type, handler in handlers.items():
-            self.register_message_handler(msg_type, handler)
-    
-    # ===== Connection Management =====
-    
-    async def connect(self) -> None:
-        """Connect to the Tapo camera."""
-        if self._is_connected:
-            return
-        
-        try:
-            self._session = aiohttp.ClientSession(
-                base_url=f"http{'s' if self.config.use_https else ''}://{self.config.host}:{self.config.port}",
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout),
-                connector=aiohttp.TCPConnector(ssl=self.config.verify_ssl)
-            )
-            
-            # Test connection
-            await self._send_request("POST", "/")
-            
-            self._is_connected = True
-            logger.info(f"Connected to camera at {self.config.host}")
-            
-        except aiohttp.ClientError as e:
-            await self._cleanup()
-            raise ConnectionError(f"Failed to connect to camera: {str(e)}")
-        except Exception as e:
-            await self._cleanup()
-            if "401" in str(e):
-                raise AuthenticationError("Invalid username or password")
-            raise ConnectionError(f"Failed to connect to camera: {str(e)}")
-    
-    async def disconnect(self) -> None:
-        """Disconnect from the Tapo camera."""
-        await self._cleanup()
-        logger.info(f"Disconnected from camera at {self.config.host}")
-    
-    async def _cleanup(self):
-        """Clean up resources."""
-        if self._session and not self._session.closed:
-            await self._session.close()
-        self._session = None
-        self._is_connected = False
-    
-    async def _send_request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
-        """Send an authenticated request to the camera."""
-        if not self._session or self._session.closed:
-            raise ConnectionError("Not connected to camera")
-        
-        try:
-            # Add authentication
-            auth = aiohttp.BasicAuth(self.config.username, self.config.password)
-            kwargs.setdefault("auth", auth)
-            
-            # Send request
-            async with self._session.request(method, endpoint, **kwargs) as response:
-                response.raise_for_status()
-                return await response.json()
-                
-        except aiohttp.ClientResponseError as e:
-            if e.status == 401:
-                raise AuthenticationError("Invalid username or password")
-            raise ConnectionError(f"Camera API error: {str(e)}")
-        except aiohttp.ClientError as e:
-            raise ConnectionError(f"Network error: {str(e)}")
-    
-    # ===== Message Handlers =====
-    
-    async def handle_connect(self, message: McpMessage) -> Dict[str, Any]:
-        """Handle camera connect request."""
-        try:
-            await self.connect()
-            return {"status": "connected", "message": f"Connected to camera at {self.config.host}"}
-        except Exception as e:
-            raise ConnectionError(f"Failed to connect to camera: {str(e)}")
-    
-    async def handle_disconnect(self, message: McpMessage) -> Dict[str, Any]:
-        """Handle camera disconnect request."""
-        try:
-            await self.disconnect()
-            return {"status": "disconnected", "message": "Disconnected from camera"}
-        except Exception as e:
-            raise ConnectionError(f"Failed to disconnect from camera: {str(e)}")
-    
-    async def handle_get_info(self, message: McpMessage) -> Dict[str, Any]:
-        """Handle get camera info request."""
-        if not self._is_connected:
-            await self.connect()
-        
-        try:
-            # In a real implementation, this would fetch actual camera info
-            info = CameraInfo(
-                model="Tapo C200",
-                serial_number="T1234567890",
-                mac_address="00:11:22:33:44:55",
-                firmware_version="1.0.0",
-                hardware_version="1.0",
-                uptime=3600,
-                ip_address=self.config.host,
-                wifi_signal=80,
-                wifi_ssid="MyWiFi"
-            )
-            return info.dict()
-            
-        except Exception as e:
-            raise ConnectionError(f"Failed to get camera info: {str(e)}")
-    
-    async def handle_get_status(self, message: McpMessage) -> Dict[str, Any]:
-        """Handle get camera status request."""
-        if not self._is_connected:
-            await self.connect()
-        
-        try:
-            status = CameraStatus(
-                online=True,
-                recording=False,
-                motion_detected=self._motion_detected,
-                audio_detected=False,
-                privacy_mode=False,
-                led_enabled=True,
-                firmware_version="1.0.0",
-                uptime=3600,
-                storage={"total": 64000000000, "used": 3200000000, "free": 60800000000}
-            )
-            return status.dict()
-            
-        except Exception as e:
-            raise ConnectionError(f"Failed to get camera status: {str(e)}")
-    
-    async def handle_get_config(self, message: McpMessage) -> Dict[str, Any]:
-        """Handle get camera config request."""
-        return self.config.dict()
-    
-    async def handle_update_config(self, message: McpMessage) -> Dict[str, Any]:
-        """Handle update camera config request."""
-        try:
-            update_data = message.data.get("config", {})
-            self.config = CameraConfig(**{**self.config.dict(), **update_data})
-            
-            if self._is_connected:
-                await self.disconnect()
-                await self.connect()
-            
-            return {"status": "success", "message": "Configuration updated"}
-            
-        except Exception as e:
-            raise ConnectionError(f"Failed to update config: {str(e)}")
-    
-    async def handle_reboot(self, message: McpMessage) -> Dict[str, Any]:
-        """Handle camera reboot request."""
-        if not self._is_connected:
-            await self.connect()
-        
-        try:
-            # In a real implementation, this would send a reboot command
-            await asyncio.sleep(1)  # Simulate reboot delay
-            await self.disconnect()
-            
-            return {"status": "success", "message": "Camera is rebooting"}
-            
-        except Exception as e:
-            raise ConnectionError(f"Failed to reboot camera: {str(e)}")
-    
-    async def handle_start_stream(self, message: McpMessage) -> Dict[str, Any]:
-        """Handle start stream request."""
-        if not self._is_connected:
-            await self.connect()
-        
-        stream_id = message.data.get("stream_id", "default")
-        stream_type = message.data.get("stream_type", self.config.stream_type)
-        
-        try:
-            # In a real implementation, this would start a video stream
-            stream_url = f"rtsp://{self.config.host}:{self.config.rtsp_port}/stream1"
-            
-            return {
-                "status": "success",
-                "stream_id": stream_id,
-                "stream_type": stream_type,
-                "stream_url": stream_url
-            }
-            
-        except Exception as e:
-            raise ConnectionError(f"Failed to start stream: {str(e)}")
-    
-    async def handle_stop_stream(self, message: McpMessage) -> Dict[str, Any]:
-        """Handle stop stream request."""
-        stream_id = message.data.get("stream_id", "all")
-        return {"status": "success", "message": f"Stream {stream_id} stopped"}
-    
-    async def handle_ptz_move(self, message: McpMessage) -> Dict[str, Any]:
-        """Handle PTZ move request."""
-        if not self._is_connected:
-            await self.connect()
-        
-        try:
-            direction = message.data.get("direction")
-            speed = message.data.get("speed", 0.5)
-            
-            # In a real implementation, this would move the camera
-            return {"status": "success", "message": f"PTZ moved {direction} at speed {speed}"}
-            
-        except Exception as e:
-            raise ConnectionError(f"Failed to move PTZ: {str(e)}")
-    
-    async def handle_ptz_preset(self, message: McpMessage) -> Dict[str, Any]:
-        """Handle PTZ preset request."""
-        action = message.data.get("action", "list")
-        preset_name = message.data.get("preset_name")
-        
-        try:
-            if action == "list":
-                return {"status": "success", "presets": [
-                    {"name": "Home", "position": {"pan": 0, "tilt": 0, "zoom": 0}},
-                    {"name": "Left", "position": {"pan": -0.5, "tilt": 0, "zoom": 0}},
-                    {"name": "Right", "position": {"pan": 0.5, "tilt": 0, "zoom": 0}}
-                ]}
-            else:
-                return {"status": "success", "message": f"Preset {action} {preset_name}"}
-                
-        except Exception as e:
-            raise ConnectionError(f"Failed to handle PTZ preset: {str(e)}")
-    
-    async def handle_ptz_home(self, message: McpMessage) -> Dict[str, Any]:
-        """Handle PTZ home position request."""
-        if not self._is_connected:
-            await self.connect()
-        
-        try:
-            # In a real implementation, this would move the camera to home position
-            return {"status": "success", "message": "PTZ moved to home position"}
-            
-        except Exception as e:
-            raise ConnectionError(f"Failed to move PTZ to home: {str(e)}")
-    
-    async def handle_motion_detection(self, message: McpMessage) -> Dict[str, Any]:
-        """Handle motion detection request."""
-        action = message.data.get("action", "status")
-        
-        try:
-            if action == "start":
-                self._motion_detected = True
-                return {"status": "success", "message": "Motion detection started"}
-                
-            elif action == "stop":
-                self._motion_detected = False
-                return {"status": "success", "message": "Motion detection stopped"}
-                
-            else:  # status
-                return {
-                    "status": "success",
-                    "enabled": self._motion_detected,
-                    "motion_detected": self._motion_detected,
-                    "sensitivity": self.config.motion_sensitivity
-                }
-                
-        except Exception as e:
-            raise ConnectionError(f"Failed to handle motion detection: {str(e)}")
-    
-    async def handle_start_recording(self, message: McpMessage) -> Dict[str, Any]:
-        """Handle start recording request."""
-        recording_id = message.data.get("recording_id", f"rec_{int(time.time())}")
-        
-        try:
-            # In a real implementation, this would start recording
-            return {
-                "status": "success",
-                "recording_id": recording_id,
-                "start_time": datetime.now().isoformat()
-            }
-            
-        except Exception as e:
-            raise ConnectionError(f"Failed to start recording: {str(e)}")
-    
-    async def handle_stop_recording(self, message: McpMessage) -> Dict[str, Any]:
-        """Handle stop recording request."""
-        recording_id = message.data.get("recording_id", "all")
-        return {"status": "success", "message": f"Stopped recording {recording_id}"}
-    
-    async def handle_snapshot(self, message: McpMessage) -> Dict[str, Any]:
-        """Handle snapshot request."""
-        if not self._is_connected:
-            await self.connect()
-        
-        try:
-            # In a real implementation, this would capture a snapshot
-            snapshot_data = b""  # Placeholder for actual image data
-            
-            return {
-                "status": "success",
-                "snapshot": f"data:image/jpeg;base64,{base64.b64encode(snapshot_data).decode()}",
-                "timestamp": datetime.now().isoformat()
-            }
-            
-        except Exception as e:
-            raise ConnectionError(f"Failed to capture snapshot: {str(e)}")
+    # Metrics service configuration
+    enable_metrics: bool = Field(True, description="Enable metrics collection service")
+    metrics_host: str = Field("0.0.0.0", description="Host to bind metrics server to")
+    metrics_port: int = Field(8080, description="Port to bind metrics server to")
+    stream_quality: str = Field("hd", description="Stream quality (hd/sd)")
+    verify_ssl: bool = Field(True, description="Verify SSL certificate")
+    web_enabled: bool = Field(True, description="Enable web interface")
+    web_host: str = Field("0.0.0.0", description="Web interface host")
+    web_port: int = Field(7777, description="Web interface port")
+    cache_size_mb: int = Field(100, description="Image cache size in MB")
+    max_cache_items: int = Field(100, description="Maximum number of cached items")
+    temp_dir: str = Field("C:/temp", description="Directory for temporary files")
+    request_timeout: int = Field(30, description="HTTP request timeout in seconds")
+    max_retries: int = Field(3, description="Maximum retry attempts for operations")
 
-def create_app(config: Optional[Dict[str, Any]] = None) -> TapoCameraMCP:
-    """Create and configure a Tapo Camera MCP application."""
-    return TapoCameraMCP(config=config)
+class TapoCameraServer:
+    """Main Tapo Camera MCP server class."""
+    
+    _instance = None
+    
+    @classmethod
+    def get_instance(cls):
+        """Get the singleton instance of the server."""
+        if cls._instance is None:
+            raise RuntimeError("Server not initialized. Call create() first.")
+        return cls._instance
+    
+    @classmethod
+    async def create(cls, config: Optional[Dict[str, Any]] = None):
+        """Create a new instance of the server.
+        
+        Args:
+            config: Optional configuration dictionary
+            
+        Returns:
+            TapoCameraServer: The server instance
+        """
+        if cls._instance is not None:
+            return cls._instance
+            
+        cls._instance = cls(config)
+        await cls._instance.initialize()
+        return cls._instance
+    
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        """Initialize the server with the given configuration."""
+        if self._instance is not None:
+            raise RuntimeError("Use create() method to create a server instance")
+            
+        # Load configuration
+        self.config = TapoCameraConfig(**(config or {})).dict()
+        
+        # Initialize FastMCP
+        self.mcp = FastMCP(
+            name="Tapo-Camera-MCP",
+            version="0.4.0",
+            description="MCP server for TP-Link Tapo cameras"
+        )
+        
+        # Initialize components
+        self.camera = None
+        self.web_server = None
+        self.metrics_collector = None
+        self.metrics_server = None
+        
+    async def initialize(self):
+        """Initialize server components."""
+        # Create necessary directories
+        temp_dir = Path(self.config["temp_dir"])
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Register tools
+        self._register_tools()
+        
+        # Initialize metrics service if enabled
+        if self.config["enable_metrics"]:
+            try:
+                self.metrics_collector = MetricsCollector(tapo_client=None)  # Pass actual client when available
+                await self.metrics_collector.start()
+                
+                self.metrics_server = MetricsServer(
+                    self.metrics_collector,
+                    host=self.config["metrics_host"],
+                    port=self.config["metrics_port"]
+                )
+                # Start metrics server in the background
+                asyncio.create_task(self.metrics_server.start())
+                logger.info(f"Metrics service started on {self.config['metrics_host']}:{self.config['metrics_port']}")
+            except Exception as e:
+                logger.error(f"Failed to start metrics service: {e}")
+        
+        # Start web server if enabled
+        if self.config["web_enabled"]:
+            await self._start_web_server()
+    
+    def _register_tools(self):
+        """Register all available tools with the MCP server."""
+        # Camera management tools
+        self.mcp.register_tool(ListCamerasTool())
+        self.mcp.register_tool(AddCameraTool())
+        self.mcp.register_tool(RemoveCameraTool())
+        self.mcp.register_tool(SetActiveCameraTool())
+        self.mcp.register_tool(ConnectCameraTool())
+        self.mcp.register_tool(DisconnectCameraTool())
+        self.mcp.register_tool(GetCameraInfoTool())
+        self.mcp.register_tool(ManageCameraGroupsTool())
+        
+        # PTZ control tools
+        self.mcp.register_tool(MovePTZTool())
+        self.mcp.register_tool(SavePTZPresetTool())
+        self.mcp.register_tool(RecallPTZPresetTool())
+        self.mcp.register_tool(GetPTZPresetsTool())
+        self.mcp.register_tool(GoToHomePTZTool())
+        self.mcp.register_tool(StopPTZTool())
+        self.mcp.register_tool(GetPTZPositionTool())
+        
+        # Media tools
+        self.mcp.register_tool(CaptureImageTool())
+        self.mcp.register_tool(FindSimilarImagesTool())
+        self.mcp.register_tool(GetStreamURLTool())
+        self.mcp.register_tool(StartRecordingTool())
+        self.mcp.register_tool(StopRecordingTool())
+        self.mcp.register_tool(AnalyzeImageTool())
+        self.mcp.register_tool(SecurityScanTool())
+        self.mcp.register_tool(CaptureStillTool())
+        
+        # System tools
+        self.mcp.register_tool(GetSystemInfoTool())
+        self.mcp.register_tool(RebootCameraTool())
+        self.mcp.register_tool(GetLogsTool())
+        self.mcp.register_tool(GetHelpTool())
+        self.mcp.register_tool(SetMotionDetectionTool())
+        self.mcp.register_tool(SetLEDEnabledTool())
+        self.mcp.register_tool(SetPrivacyModeTool())
+        self.mcp.register_tool(HelpTool())
+    
+    async def _start_web_server(self):
+        """Start the web interface server."""
+        from .web_server import TapoWebServer
+        
+        try:
+            self.web_server = TapoWebServer(
+                host=self.config["web_host"],
+                port=self.config["web_port"],
+                mcp=self.mcp
+            )
+            await self.web_server.start()
+            logger.info(f"Web server started on http://{self.config['web_host']}:{self.config['web_port']}")
+        except Exception as e:
+            logger.error(f"Failed to start web server: {e}")
+    
+    async def run(self, host: str = "0.0.0.0", port: int = 8000, stdio: bool = True):
+        """Run the MCP server.
+        
+        Args:
+            host: Host to bind the HTTP server to
+            port: Port to bind the HTTP server to
+            stdio: Enable stdio transport
+        """
+        try:
+            # Start the MCP server
+            await self.mcp.start(host=host, port=port, stdio=stdio)
+            logger.info(f"MCP server started on http://{host}:{port}")
+            
+            # Keep the server running
+            while True:
+                await asyncio.sleep(3600)  # Sleep for 1 hour
+                
+        except asyncio.CancelledError:
+            logger.info("Shutting down server...")
+        except Exception as e:
+            logger.error(f"Server error: {e}", exc_info=True)
+        finally:
+            await self.shutdown()
+    
+    async def shutdown(self):
+        """Shut down the server and clean up resources."""
+        # Shutdown web server if running
+        if self.web_server:
+            await self.web_server.stop()
+        
+        # Shutdown metrics service if running
+        if self.metrics_collector:
+            await self.metrics_collector.stop()
+        
+        if self.metrics_server:
+            await self.metrics_server.stop()
+        
+        logger.info("Server shutdown complete")
+
 
 async def main():
-    """Run the Tapo Camera MCP server."""
+    """Main entry point for the Tapo Camera MCP server."""
     import argparse
     
+    # Parse command line arguments
     parser = argparse.ArgumentParser(description="Tapo Camera MCP Server")
-    parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
-    parser.add_argument("-p", "--port", type=int, default=8000, help="Port to listen on")
-    parser.add_argument("--debug", action="store_true", help="Enable debug mode")
+    parser.add_argument("--host", default="0.0.0.0", help="Host to bind the server to")
+    parser.add_argument("--port", type=int, default=8000, help="Port to bind the server to")
+    parser.add_argument("--no-stdio", action="store_false", dest="stdio", 
+                       help="Disable stdio transport")
+    parser.add_argument("--config", help="Path to configuration file (JSON)")
     
     args = parser.parse_args()
     
-    app = create_app()
+    # Load configuration
+    config = {}
+    if args.config:
+        import json
+        with open(args.config) as f:
+            config = json.load(f)
     
     try:
-        await app.start(host=args.host, port=args.port, debug=args.debug)
-        logger.info(f"Tapo Camera MCP server started on {args.host}:{args.port}")
-        
-        while True:
-            await asyncio.sleep(3600)  # Run forever
-            
+        # Create and run the server
+        server = await TapoCameraServer.create(config)
+        await server.run(host=args.host, port=args.port, stdio=args.stdio)
     except KeyboardInterrupt:
         logger.info("Shutting down...")
     except Exception as e:
-        logger.exception("Server error:")
-    finally:
-        await app.stop()
+        logger.error(f"Fatal error: {e}", exc_info=True)
+        return 1
+    
+    return 0
+
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    sys.exit(asyncio.run(main()))
