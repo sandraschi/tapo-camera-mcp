@@ -14,7 +14,8 @@ from fastmcp import Client
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from tapo_camera_mcp.server_v2 import TapoCameraServer, CameraInfo, CameraStatus, StreamInfo
+from tapo_camera_mcp.core.server import TapoCameraServer
+from tapo_camera_mcp.core.models import CameraInfo, CameraStatus
 
 class TestTapoCameraServer(unittest.IsolatedAsyncioTestCase):
     """Test cases for the TapoCameraServer class."""

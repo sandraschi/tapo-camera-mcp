@@ -4,132 +4,187 @@ PTZ (Pan-Tilt-Zoom) tools for Tapo Camera MCP.
 This module contains tools for controlling camera movements and presets.
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Union
 import logging
+from pydantic import Field, BaseModel
 
-from fastmcp.tools.types import ToolParameter
-from ..base_tool import BaseTool, ToolCategory, tool, parameter
+from tapo_camera_mcp.tools.base_tool import tool, ToolCategory, BaseTool, ToolResult
 
 logger = logging.getLogger(__name__)
 
 @tool(
     name="move_ptz",
-    description="Move the camera PTZ (Pan-Tilt-Zoom)",
-    category=ToolCategory.CAMERA
+    category=ToolCategory.PTZ
 )
 class MovePTZTool(BaseTool):
     """Tool to control camera PTZ movements."""
     
-    parameters = [
-        parameter("pan", float, "Pan position (-1.0 to 1.0)", required=False, default=0.0),
-        parameter("tilt", float, "Tilt position (-1.0 to 1.0)", required=False, default=0.0),
-        parameter("zoom", float, "Zoom level (0.0 to 1.0)", required=False, default=0.0),
-        parameter("speed", int, "Movement speed (1-8)", required=False, default=5),
-        parameter("relative", bool, "Whether the movement is relative", required=False, default=True)
-    ]
+    class Config:
+        schema_extra = {
+            "category": ToolCategory.PTZ,
+            "description": "Control camera PTZ movements"
+        }
     
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    pan: float = Field(
+        default=0.0,
+        ge=-1.0,
+        le=1.0,
+        description="Pan position (-1.0 to 1.0)"
+    )
+    
+    tilt: float = Field(
+        default=0.0,
+        ge=-1.0,
+        le=1.0,
+        description="Tilt position (-1.0 to 1.0)"
+    )
+    
+    zoom: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Zoom level (0.0 to 1.0)"
+    )
+    
+    speed: int = Field(
+        default=5,
+        ge=1,
+        le=8,
+        description="Movement speed (1-8)"
+    )
+    
+    relative: bool = Field(
+        default=True,
+        description="Whether the movement is relative"
+    )
+    
+    async def execute(self) -> Dict[str, Any]:
         """Execute PTZ movement."""
-        from ...server_v3 import TapoCameraServer  # Lazy import to avoid circular imports
+        from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
         server = TapoCameraServer.get_instance()
-        return await server.move_ptz(kwargs)
+        return await server.move_ptz({
+            'pan': self.pan,
+            'tilt': self.tilt,
+            'zoom': self.zoom,
+            'speed': self.speed,
+            'relative': self.relative
+        })
 
 @tool(
     name="save_ptz_preset",
-    description="Save the current PTZ position as a preset",
-    category=ToolCategory.CAMERA
+    category=ToolCategory.PTZ
 )
 class SavePTZPresetTool(BaseTool):
     """Tool to save the current PTZ position as a preset."""
     
-    parameters = [
-        parameter("name", str, "Name for the preset", required=True),
-        parameter("preset_id", int, "Preset ID (1-16)", required=False)
-    ]
+    class Config:
+        schema_extra = {
+            "category": ToolCategory.PTZ,
+            "description": "Save the current PTZ position as a preset"
+        }
     
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    preset_id: int = Field(
+        ...,
+        ge=1,
+        le=16
+    )
+    
+    name: Optional[str] = Field(
+        None
+    )
+    
+    async def execute(self) -> Dict[str, Any]:
         """Save the current PTZ position as a preset."""
-        from ...server_v3 import TapoCameraServer  # Lazy import to avoid circular imports
+        from ...core.server import TapoCameraServer
         server = TapoCameraServer.get_instance()
-        return await server.save_ptz_preset(kwargs)
+        return await server.save_ptz_preset({
+            'name': self.name,
+            'preset_id': self.preset_id
+        })
 
 @tool(
     name="recall_ptz_preset",
-    description="Recall a saved PTZ preset",
-    category=ToolCategory.CAMERA
+    category=ToolCategory.PTZ
 )
 class RecallPTZPresetTool(BaseTool):
     """Tool to recall a saved PTZ preset."""
     
-    parameters = [
-        parameter("preset_id", int, "Preset ID to recall", required=True)
-    ]
+    class Config:
+        schema_extra = {
+            "category": ToolCategory.PTZ,
+            "description": "Recall a saved PTZ preset"
+        }
     
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    preset_id: int = Field(
+        ...,
+        ge=1,
+        le=16
+    )
+    
+    async def execute(self) -> Dict[str, Any]:
         """Recall a saved PTZ preset."""
-        from ...server_v3 import TapoCameraServer  # Lazy import to avoid circular imports
+        from ...core.server import TapoCameraServer
         server = TapoCameraServer.get_instance()
-        return await server.recall_ptz_preset(kwargs["preset_id"])
+        return await server.recall_ptz_preset(self.preset_id)
 
 @tool(
     name="get_ptz_presets",
-    description="Get all saved PTZ presets",
-    category=ToolCategory.CAMERA
+    category=ToolCategory.PTZ
 )
 class GetPTZPresetsTool(BaseTool):
     """Tool to get all saved PTZ presets."""
     
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    class Config:
+        schema_extra = {
+            "category": ToolCategory.PTZ,
+            "description": "Get all saved PTZ presets"
+        }
+    
+    async def execute(self) -> Dict[str, Any]:
         """Get all saved PTZ presets."""
-        from ...server_v2 import TapoCameraServer  # Lazy import to avoid circular imports
+        from ...core.server import TapoCameraServer
         server = TapoCameraServer.get_instance()
-        try:
-            presets = await server.get_ptz_presets()
-            return {
-                "status": "success",
-                "presets": presets
-            }
-        except Exception as e:
-            logger.error(f"Failed to get PTZ presets: {str(e)}")
-            return {
-                "status": "error",
-                "message": f"Failed to get PTZ presets: {str(e)}"
-            }
+        return await server.get_ptz_presets()
 
 @tool(
-    name="ptz_go_to_home",
-    description="Move the PTZ to the home position",
-    category=ToolCategory.CAMERA
+    name="go_to_home_ptz",
+    category=ToolCategory.PTZ
 )
 class GoToHomePTZTool(BaseTool):
     """Tool to move the PTZ to the home position."""
     
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    class Config:
+        schema_extra = {
+            "category": ToolCategory.PTZ,
+            "description": "Move the PTZ to the home position"
+        }
+    
+    async def execute(self) -> Dict[str, Any]:
         """Move the PTZ to the home position."""
-        from ...server_v2 import TapoCameraServer  # Lazy import to avoid circular imports
+        from ...core.server import TapoCameraServer
         server = TapoCameraServer.get_instance()
         try:
-            # Use the move_ptz method to go to home position (0, 0, 0)
-            result = await server.move_ptz({"pan": 0, "tilt": 0, "zoom": 0, "relative": False})
-            if result.get("status") == "success":
-                return {"status": "success", "message": "PTZ moved to home position"}
-            else:
-                return result
+            return await server.go_to_home_ptz()
         except Exception as e:
             logger.error(f"Failed to move PTZ to home position: {str(e)}")
             return {"status": "error", "message": f"Failed to move PTZ to home position: {str(e)}"}
 
 @tool(
-    name="ptz_stop",
-    description="Stop all PTZ movement",
-    category=ToolCategory.CAMERA
+    name="stop_ptz",
+    category=ToolCategory.PTZ
 )
 class StopPTZTool(BaseTool):
     """Tool to stop all PTZ movement."""
     
+    class Config:
+        schema_extra = {
+            "category": ToolCategory.PTZ,
+            "description": "Stop all PTZ movement"
+        }
+    
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Stop all PTZ movement."""
-        from ...server_v2 import TapoCameraServer  # Lazy import to avoid circular imports
+        from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
         server = TapoCameraServer.get_instance()
         try:
             # Use move_ptz with all zeros to stop movement
@@ -143,16 +198,21 @@ class StopPTZTool(BaseTool):
             return {"status": "error", "message": f"Failed to stop PTZ movement: {str(e)}"}
 
 @tool(
-    name="ptz_get_position",
-    description="Get the current PTZ position",
-    category=ToolCategory.CAMERA
+    name="get_ptz_position",
+    category=ToolCategory.PTZ
 )
 class GetPTZPositionTool(BaseTool):
     """Tool to get the current PTZ position."""
     
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    class Config:
+        schema_extra = {
+            "category": ToolCategory.PTZ,
+            "description": "Get the current PTZ position"
+        }
+    
+    async def execute(self, **kwargs) -> ToolResult:
         """Get the current PTZ position."""
-        from ...server_v2 import TapoCameraServer  # Lazy import to avoid circular imports
+        from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
         server = TapoCameraServer.get_instance()
         try:
             # Note: This assumes the camera maintains its own position state

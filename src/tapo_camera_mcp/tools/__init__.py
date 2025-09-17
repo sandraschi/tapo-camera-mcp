@@ -5,8 +5,25 @@ This package contains all the tools for the Tapo Camera MCP server,
 organized into logical modules for better maintainability.
 """
 
-from fastmcp.tools import Tool
-from typing import Dict, Type, List, Optional
+# Import types first to avoid circular imports
+from typing import Dict, Type, List, Optional, TYPE_CHECKING, Any
+
+# Import base tool components
+from tapo_camera_mcp.tools.base_tool import (
+    BaseTool,
+    register_tool,
+    get_tool as _get_tool,
+    get_all_tools as _get_all_tools,
+    ToolCategory,
+    ToolDefinition,
+    ToolResult,
+    _tool_registry as tools_registry
+)
+
+# Import discovery functions
+from tapo_camera_mcp.tools.discovery import discover_tools
+
+# Import standard library modules
 from importlib import import_module
 import pkgutil
 import os
@@ -15,43 +32,11 @@ import logging
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Dictionary to store all registered tools
-tools_registry: Dict[str, Type[Tool]] = {}
+# Re-export functions from base_tool
+get_tool = _get_tool
+get_all_tools = _get_all_tools
 
-def register_tool(tool_cls: Type[Tool]) -> Type[Tool]:
-    """Decorator to register a tool class.
-    
-    Args:
-        tool_cls: The tool class to register
-        
-    Returns:
-        The registered tool class
-        
-    Raises:
-        ValueError: If the tool class is missing required attributes
-    """
-    if not hasattr(tool_cls, 'name'):
-        raise ValueError(f"Tool class {tool_cls.__name__} must have a 'name' class attribute")
-    
-    if not hasattr(tool_cls, 'description'):
-        raise ValueError(f"Tool class {tool_cls.__name__} must have a 'description' class attribute")
-    
-    tools_registry[tool_cls.name] = tool_cls
-    logger.debug(f"Registered tool: {tool_cls.name}")
-    return tool_cls
-
-def get_tool(name: str) -> Optional[Type[Tool]]:
-    """Get a registered tool by name.
-    
-    Args:
-        name: The name of the tool to retrieve
-        
-    Returns:
-        The tool class if found, None otherwise
-    """
-    return tools_registry.get(name)
-
-def discover_tools(package: str = None) -> List[Type[Tool]]:
+def discover_tools(package: Optional[str] = None) -> List[Type[BaseTool]]:
     """Discover and import all tools in the specified package.
     
     Args:
@@ -66,39 +51,76 @@ def discover_tools(package: str = None) -> List[Type[Tool]]:
     # Get the directory containing the tools
     package_path = os.path.dirname(os.path.abspath(__file__))
     
+    # Determine subpackage directory names to avoid importing same-named .py modules
+    subpackage_dirs = {name for name in os.listdir(package_path) 
+                      if os.path.isdir(os.path.join(package_path, name))}
+
     # Import all modules in the tools directory
-    for _, module_name, is_pkg in pkgutil.iter_modules([package_path]):
+    for finder, module_name, is_pkg in pkgutil.iter_modules([package_path]):
         # Skip the base module and private modules
         if module_name == 'base_tool' or module_name.startswith('_'):
             continue
             
+        # If there exists a subpackage with the same name, skip importing the .py module to avoid conflicts
+        if not is_pkg and module_name in subpackage_dirs:
+            continue
+            
         full_module_name = f"{package}.{module_name}"
         try:
-            import_module(full_module_name)
-            if is_pkg:
-                # Recursively discover tools in subpackages
-                discover_tools(full_module_name)
+            # Use finder.find_spec to properly handle package imports
+            spec = finder.find_spec(module_name)
+            if spec is not None:
+                module = import_module(full_module_name)
+                if is_pkg:
+                    # Recursively discover tools in subpackages
+                    subpackage_path = os.path.join(package_path, module_name)
+                    discover_tools_in_path(subpackage_path, full_module_name)
         except ImportError as e:
             logger.error(f"Failed to import tool module {full_module_name}: {e}")
     
-    return list(tools_registry.values())
+    return _get_all_tools()
 
-def get_all_tools() -> List[Type[Tool]]:
-    """Get all registered tools.
+def discover_tools_in_path(package_path: str, package_name: str) -> None:
+    """Discover tools in a specific package path.
     
-    Returns:
-        List of all registered tool classes
+    Args:
+        package_path: The directory path to search
+        package_name: The full package name for imports
     """
-    return list(tools_registry.values())
+    # Import all modules in the subpackage directory
+    for finder, module_name, is_pkg in pkgutil.iter_modules([package_path]):
+        # Skip private modules
+        if module_name.startswith('_'):
+            continue
+            
+        full_module_name = f"{package_name}.{module_name}"
+        try:
+            # Use finder.find_spec to properly handle package imports
+            spec = finder.find_spec(module_name)
+            if spec is not None:
+                import_module(full_module_name)
+                if is_pkg:
+                    # Recursively discover tools in deeper subpackages
+                    subpackage_path = os.path.join(package_path, module_name)
+                    discover_tools_in_path(subpackage_path, full_module_name)
+        except ImportError as e:
+            logger.error(f"Failed to import tool module {full_module_name}: {e}")
+
+# Re-export functions from base_tool
+get_tool = _get_tool
+get_all_tools = _get_all_tools
 
 # Discover tools when the package is imported
 discover_tools()
 
 __all__ = [
-    'Tool',
+    'BaseTool',
+    'ToolCategory',
+    'ToolResult',
     'register_tool',
     'get_tool',
-    'discover_tools',
     'get_all_tools',
-    'tools_registry'
+    'discover_tools',
+    'tools_registry',
+    'ToolDefinition'
 ]

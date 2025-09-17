@@ -1,4 +1,4 @@
-""
+"""
 Test utilities for Tapo Camera MCP tests.
 """
 from unittest.mock import MagicMock

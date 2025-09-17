@@ -15,8 +15,9 @@ from fastmcp import FastMCP
 # Add the project root to the Python path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from tapo_camera_mcp.server import TapoCameraMCP
-from tapo_camera_mcp.models import CameraConfig
+from tapo_camera_mcp import TapoCameraMCP
+from tapo_camera_mcp.core.server import TapoCameraServer
+from tapo_camera_mcp.core.models import TapoCameraConfig
 from tapo_camera_mcp.exceptions import ConnectionError, AuthenticationError
 
 # Test configuration
@@ -39,9 +40,9 @@ def event_loop():
     loop.close()
 
 @pytest.fixture
-def config() -> CameraConfig:
+def config() -> TapoCameraConfig:
     """Return a test configuration."""
-    return CameraConfig(**TEST_CONFIG)
+    return TapoCameraConfig(**TEST_CONFIG)
 
 @pytest_asyncio.fixture
 async def mock_session():

@@ -4,12 +4,12 @@ Camera tools for Tapo Camera MCP.
 This module contains tools for managing and controlling Tapo cameras.
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Type, Union, Literal
 from enum import Enum
 import logging
+from pydantic import Field, BaseModel, validator
 
-from fastmcp.tools.types import ToolParameter
-from ..base_tool import BaseTool, ToolCategory, tool, parameter
+from tapo_camera_mcp.tools.base_tool import tool, ToolCategory, BaseTool, ToolResult, register_tool
 
 logger = logging.getLogger(__name__)
 
@@ -20,186 +20,295 @@ class CameraStatus(str, Enum):
     CONNECTING = "connecting"
     ERROR = "error"
 
-@tool(
-    name="list_cameras",
-    description="List all registered cameras and their status",
-    category=ToolCategory.CAMERA
-)
+    class Config:
+        use_enum_values = True
+
+@tool("list_cameras")
 class ListCamerasTool(BaseTool):
     """Tool to list all registered cameras and their status."""
     
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    class Meta:
+        name = "list_cameras"
+        description = "List all registered cameras and their status"
+        category = ToolCategory.CAMERA
+        
+        class Parameters:
+            pass
+    
+    # Config is no longer needed as we use Meta class for metadata
+    async def execute(self) -> Dict[str, Any]:
         """List all registered cameras and their status."""
-        from ...server_v3 import TapoCameraServer  # Lazy import to avoid circular imports
+        from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
         server = TapoCameraServer.get_instance()
         return await server.list_cameras()
 
-@tool(
-    name="add_camera",
-    description="Add a new camera to the system",
-    category=ToolCategory.CAMERA
-)
+@tool("add_camera")
 class AddCameraTool(BaseTool):
     """Tool to add a new camera to the system."""
     
-    parameters = [
-        parameter("name", str, "Name to identify the camera", required=True),
-        parameter("host", str, "Camera IP address or hostname", required=True),
-        parameter("username", str, "Camera username", required=True),
-        parameter("password", str, "Camera password", required=True, secret=True),
-        parameter("stream_quality", str, "Stream quality (hd/sd)", default="hd"),
-        parameter("verify_ssl", bool, "Verify SSL certificate", default=True)
-    ]
+    class Meta:
+        name = "add_camera"
+        description = "Add a new camera to the system"
+        category = ToolCategory.CAMERA
+        
+        class Parameters:
+            camera_name: str = Field(
+                ...,
+                description="A friendly name for the camera"
+            )
+            ip_address: str = Field(
+                ...,
+                description="IP address of the camera"
+            )
+            username: str = Field(
+                ...,
+                description="Username for camera authentication"
+            )
+            password: str = Field(
+                ...,
+                description="Password for camera authentication"
+            )
+            stream_url: Optional[str] = Field(
+                None,
+                description="Optional custom RTSP stream URL"
+            )
     
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    camera_name: str
+    ip_address: str
+    username: str
+    password: str
+    stream_url: Optional[str] = None
+    
+    async def execute(self) -> Dict[str, Any]:
         """Add a new camera to the system."""
-        from ...server_v3 import TapoCameraServer  # Lazy import to avoid circular imports
+        from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
         server = TapoCameraServer.get_instance()
-        return await server.add_camera(kwargs)
+        return await server.add_camera(
+            name=self.camera_name,
+            host=self.ip_address,
+            username=self.username,
+            password=self.password,
+            port=self.port
+        )
 
-@tool(
-    name="remove_camera",
-    description="Remove a camera from the system",
-    category=ToolCategory.CAMERA
-)
+@tool("remove_camera")
 class RemoveCameraTool(BaseTool):
     """Tool to remove a camera from the system."""
     
-    parameters = [
-        parameter("name", str, "Name of the camera to remove", required=True)
-    ]
+    class Meta:
+        name = "remove_camera"
+        description = "Remove a camera from the system"
+        category = ToolCategory.CAMERA
+        
+        class Parameters:
+            camera_id: str = Field(
+                ...,
+                description="ID of the camera to remove"
+            )
     
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    camera_id: str
+    
+    async def execute(self) -> Dict[str, Any]:
         """Remove a camera from the system."""
-        from ...server_v3 import TapoCameraServer  # Lazy import to avoid circular imports
+        from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
         server = TapoCameraServer.get_instance()
-        return await server.remove_camera(kwargs["name"])
+        return await server.remove_camera(camera_id=self.camera_id)
 
-@tool(
-    name="set_active_camera",
-    description="Set the active camera for operations",
-    category=ToolCategory.CAMERA
-)
+@tool("set_active_camera")
 class SetActiveCameraTool(BaseTool):
     """Tool to set the active camera for operations."""
     
-    parameters = [
-        parameter("name", str, "Name of the camera to set as active", required=True)
-    ]
+    class Meta:
+        name = "set_active_camera"
+        description = "Set the active camera for operations"
+        category = ToolCategory.CAMERA
+        
+        class Parameters:
+            name: str = Field(
+                ...,
+                description="Name or ID of the camera to set as active"
+            )
     
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    name: str
+    
+    async def execute(self) -> Dict[str, Any]:
         """Set the active camera for operations."""
-        from ...server_v3 import TapoCameraServer  # Lazy import to avoid circular imports
+        from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
         server = TapoCameraServer.get_instance()
-        return await server.set_active_camera(kwargs["name"])
+        return await server.set_active_camera(name=self.name)
 
-@tool(
-    name="get_camera_status",
-    description="Get the status of a specific camera or all cameras",
-    category=ToolCategory.CAMERA
-)
+@tool("get_camera_status")
 class GetCameraStatusTool(BaseTool):
-    """Tool to get the status of a specific camera or all cameras."""
+    """Tool to get the status of a specific camera."""
     
-    parameters = [
-        parameter("name", str, "Name of the camera to get status for (leave empty for all)", required=False)
-    ]
+    class Meta:
+        name = "get_camera_status"
+        description = "Get the status of a specific camera"
+        category = ToolCategory.CAMERA
+        
+        class Parameters:
+            camera_id: str = Field(
+                None,
+                description="ID of the camera to get status for. If not provided, returns status of active camera."
+            )
     
-    async def execute(self, **kwargs) -> Dict[str, Any]:
-        """Get the status of a specific camera or all cameras."""
-        from ...server_v3 import TapoCameraServer  # Lazy import to avoid circular imports
+    camera_id: Optional[str] = None
+    
+    async def execute(self) -> Dict[str, Any]:
+        """Get the status of a specific camera."""
+        from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
         server = TapoCameraServer.get_instance()
-        name = kwargs.get("name")
-        return await server.get_camera_status(name)
+        return await server.get_camera_status(name=self.camera_id) if self.camera_id else await server.get_active_camera_status()
 
-@tool(
-    name="connect_camera",
-    description="Connect to a Tapo camera",
-    category=ToolCategory.CAMERA
-)
+@tool("connect_camera")
 class ConnectCameraTool(BaseTool):
     """Tool to connect to a Tapo camera."""
     
-    parameters = [
-        parameter("host", str, "Camera IP address or hostname", required=True),
-        parameter("username", str, "Camera username", required=True),
-        parameter("password", str, "Camera password", required=True, secret=True),
-        parameter("verify_ssl", bool, "Verify SSL certificate", default=True)
-    ]
+    class Meta:
+        name = "connect_camera"
+        description = "Connect to a Tapo camera"
+        category = ToolCategory.CAMERA
+        
+        class Parameters:
+            host: str = Field(
+                ...,
+                description="IP address or hostname of the camera"
+            )
+            username: str = Field(
+                ...,
+                description="Username for camera authentication"
+            )
+            password: str = Field(
+                ...,
+                description="Password for camera authentication"
+            )
+            verify_ssl: bool = Field(
+                True,
+                description="Whether to verify SSL certificates (default: True)"
+            )
     
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    host: str
+    username: str
+    password: str
+    verify_ssl: bool = True
+    
+    async def execute(self) -> Dict[str, Any]:
         """Connect to a Tapo camera."""
-        from ...server_v2 import TapoCameraServer  # Lazy import to avoid circular imports
+        from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
         server = TapoCameraServer.get_instance()
-        try:
-            # Convert to the format expected by the server
-            params = {
-                'host': kwargs['host'],
-                'username': kwargs['username'],
-                'password': kwargs['password'],
-                'verify_ssl': kwargs.get('verify_ssl', True)
-            }
-            return await server.connect_camera(params)
-        except Exception as e:
-            logger.error(f"Error connecting to camera: {str(e)}")
-            return {"status": "error", "message": f"Failed to connect to camera: {str(e)}"}
+        return await server.connect_camera(
+            host=self.host,
+            username=self.username,
+            password=self.password,
+            verify_ssl=self.verify_ssl
+        )
 
-@tool(
-    name="disconnect_camera",
-    description="Disconnect from the current camera",
-    category=ToolCategory.CAMERA
-)
+@tool("disconnect_camera")
 class DisconnectCameraTool(BaseTool):
     """Tool to disconnect from the current camera."""
     
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    class Meta:
+        name = "disconnect_camera"
+        description = "Disconnect from the current camera"
+        category = ToolCategory.CAMERA
+        
+        class Parameters:
+            pass
+    
+    async def execute(self) -> Dict[str, Any]:
         """Disconnect from the current camera."""
-        from ...server_v2 import TapoCameraServer  # Lazy import to avoid circular imports
+        from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
         server = TapoCameraServer.get_instance()
-        try:
-            return await server.disconnect_camera()
-        except Exception as e:
-            logger.error(f"Error disconnecting from camera: {str(e)}")
-            return {"status": "error", "message": f"Failed to disconnect from camera: {str(e)}"}
+        return await server.disconnect_camera()
 
-@tool(
-    name="get_camera_info",
-    description="Get detailed information about the connected camera",
-    category=ToolCategory.CAMERA
-)
+@tool("get_camera_info")
 class GetCameraInfoTool(BaseTool):
     """Tool to get detailed information about the connected camera."""
     
+    class Meta:
+        name = "get_camera_info"
+        description = "Get detailed information about the connected camera"
+        category = ToolCategory.CAMERA
+        
+        class Parameters:
+            pass
+    
     async def execute(self, **kwargs) -> Dict[str, Any]:
-        """Get detailed information about the connected camera."""
-        from ...server_v2 import TapoCameraServer  # Lazy import to avoid circular imports
+        """Get detailed information about the connected camera.
+        
+        Args:
+            **kwargs: Additional arguments (ignored)
+            
+        Returns:
+            Dict containing camera information
+        """
+        from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
         server = TapoCameraServer.get_instance()
-        try:
-            return await server.get_camera_info()
-        except Exception as e:
-            logger.error(f"Error getting camera info: {str(e)}")
-            return {"status": "error", "message": f"Failed to get camera info: {str(e)}"}
+        return await server.get_camera_info()
 
-@tool(
-    name="manage_camera_groups",
-    description="Manage camera groups (add, remove, list)",
-    category=ToolCategory.CAMERA
-)
+@tool("manage_camera_groups")
 class ManageCameraGroupsTool(BaseTool):
     """Tool to manage camera groups."""
     
-    parameters = [
-        parameter("action", str, "Action to perform (list, add, remove, list_group)", required=True),
-        parameter("group", str, "Group name (required for add/remove/list_group)", required=False),
-        parameter("camera", str, "Camera name (required for add/remove)", required=False)
-    ]
+    class Meta:
+        name = "manage_camera_groups"
+        description = "Manage camera groups"
+        category = ToolCategory.CAMERA
+        
+        class Parameters:
+            action: Literal["list", "add", "remove", "list_group"] = Field(
+                ...,
+                description="Action to perform"
+            )
+            group: Optional[str] = Field(
+                None,
+                description="Group name (required for add/remove/list_group)"
+            )
+            camera: Optional[str] = Field(
+                None,
+                description="Camera name (required for add/remove)"
+            )
     
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    action: str
+    group: Optional[str] = None
+    camera: Optional[str] = None
+    
+    async def execute(self) -> Dict[str, Any]:
         """Manage camera groups."""
-        from ...server_v2 import TapoCameraServer  # Lazy import to avoid circular imports
+        from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
         server = TapoCameraServer.get_instance()
-        try:
-            return await server.camera_groups(kwargs)
-        except Exception as e:
-            logger.error(f"Error managing camera groups: {str(e)}")
-            return {"status": "error", "message": f"Failed to manage camera groups: {str(e)}"}
+        
+        if self.action == "list":
+            return await server.list_camera_groups()
+        elif self.action == "list_group":
+            if not self.group:
+                raise ValueError("Group name is required for list_group action")
+            return await server.list_cameras_in_group(self.group)
+        elif self.action == "add":
+            if not self.group or not self.camera:
+                raise ValueError("Both group name and camera name are required for add action")
+            return await server.add_camera_to_group(self.camera, self.group)
+        elif self.action == "remove":
+            if not self.group or not self.camera:
+                raise ValueError("Both group name and camera name are required for remove action")
+            return await server.remove_camera_from_group(self.camera, self.group)
+        else:
+            raise ValueError(f"Unknown action: {self.action}")
+
+# Register all tools
+ListCamerasTool = register_tool(ListCamerasTool)
+AddCameraTool = register_tool(AddCameraTool)
+RemoveCameraTool = register_tool(RemoveCameraTool)
+SetActiveCameraTool = register_tool(SetActiveCameraTool)
+GetCameraStatusTool = register_tool(GetCameraStatusTool)
+ConnectCameraTool = register_tool(ConnectCameraTool)
+DisconnectCameraTool = register_tool(DisconnectCameraTool)
+GetCameraInfoTool = register_tool(GetCameraInfoTool)
+ManageCameraGroupsTool = register_tool(ManageCameraGroupsTool)
+
+# Debug: Print registered tools
+logger.debug(f"Registered camera tools: {[tool.Meta.name for tool in [
+    ListCamerasTool, AddCameraTool, RemoveCameraTool, SetActiveCameraTool,
+    GetCameraStatusTool, ConnectCameraTool, DisconnectCameraTool,
+    GetCameraInfoTool, ManageCameraGroupsTool
+]]}")

@@ -1,25 +1,24 @@
 """
 PTZ (Pan-Tilt-Zoom) tools for Tapo Camera MCP.
 
-This module contains tools for controlling camera movements and presets.
+This module contains tools for controlling camera movement and zoom.
 """
 
-from .ptz_tools import (
+from tapo_camera_mcp.tools.ptz.ptz_tools import (
     MovePTZTool,
-    SavePTZPresetTool,
-    RecallPTZPresetTool,
-    GetPTZPresetsTool,
-    GoToHomePTZTool,
-    StopPTZTool,
-    GetPTZPositionTool
+    SetPresetTool,
+    GoToPresetTool,
+    GetPTZStatusTool,
+    AutoTrackTool,
+    PatrolTool
 )
 
 __all__ = [
     'MovePTZTool',
-    'SavePTZPresetTool',
-    'RecallPTZPresetTool',
-    'GetPTZPresetsTool',
-    'GoToHomePTZTool',
-    'StopPTZTool',
+    'SetPresetTool',
+    'GoToPresetTool',
+    'GetPTZStatusTool',
+    'AutoTrackTool',
+    'PatrolTool',
     'GetPTZPositionTool'
 ]

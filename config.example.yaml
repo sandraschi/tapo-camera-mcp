@@ -1,0 +1,130 @@
+# Tapo Camera MCP Configuration
+# Copy this file to config.yaml and update with your settings
+
+# Server configuration
+server:
+  host: "0.0.0.0"  # Listen on all interfaces
+  port: 8000       # HTTP server port
+  debug: false     # Enable debug mode
+  log_level: "INFO"  # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+
+# Camera configurations
+cameras:
+  # Tapo Camera Example
+  living_room:
+    type: tapo
+    host: 192.168.1.100
+    username: your_tapo_username
+    password: your_tapo_password
+    stream_type: "rtsp"  # rtsp, rtmp, or hls
+    
+  # Webcam Example
+  webcam1:
+    type: webcam
+    device_id: 0  # Usually 0 for the first webcam
+    resolution: "1920x1080"
+    
+  # Ring Camera Example (experimental)
+  front_door:
+    type: ring
+    email: your_ring_email@example.com
+    password: your_ring_password
+    
+  # Furbo Camera Example
+  pet_cam:
+    type: furbo
+    email: your_furbo_email@example.com
+    password: your_furbo_password
+
+# PTZ Presets
+ptz_presets:
+  home:
+    pan: 0
+    tilt: 0
+    zoom: 0
+  
+  door:
+    pan: -45
+    tilt: 10
+    zoom: 1.5
+
+# Recording settings
+recording:
+  enabled: true
+  output_dir: "./recordings"
+  max_size_mb: 1024  # Maximum size in MB before rotating
+  max_age_days: 7    # Maximum age in days before deleting old recordings
+
+# Motion detection
+motion_detection:
+  enabled: true
+  sensitivity: 0.7  # 0.0 to 1.0
+  zones:  # Define areas to monitor for motion
+    - name: "Front Door"
+      coordinates: [[0, 0], [100, 0], [100, 100], [0, 100]]  # x,y percentages
+    - name: "Backyard"
+      coordinates: [[30, 30], [70, 30], [70, 70], [30, 70]]
+
+# MCP Protocol Settings
+mcp:
+  enable: true
+  host: "127.0.0.1"
+  port: 8888
+  api_key: "your-secure-api-key"
+
+# Grafana Integration
+grafana:
+  enabled: true
+  host: "localhost"
+  port: 3000
+  username: "admin"
+  password: "admin"  # Change this in production!
+  dashboard_uid: "tapo-camera-dashboard"
+
+# Web Interface
+web:
+  enabled: true
+  theme: "dark"  # dark or light
+  show_ptz_controls: true
+  show_motion_zones: true
+
+# Authentication (for web interface and API)
+auth:
+  enabled: true
+  username: "admin"
+  password: "change_this_password"  # Change this in production!
+  jwt_secret: "your-jwt-secret-key"  # Generate a secure random key
+
+alerts:
+  email:
+    enabled: false
+    smtp_host: "smtp.example.com"
+    smtp_port: 587
+    smtp_user: "your-email@example.com"
+    smtp_password: "your-email-password"
+    from_email: "noreply@example.com"
+    to_emails: ["your-email@example.com"]
+  
+  # Webhook for custom integrations
+  webhook:
+    enabled: false
+    url: "https://your-webhook-url.com/endpoint"
+    method: "POST"
+    headers:
+      Content-Type: "application/json"
+      X-API-Key: "your-api-key"
+
+# Logging configuration
+logging:
+  file: "tapo_mcp.log"
+  max_size: 10  # MB
+  backup_count: 5
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Advanced settings
+advanced:
+  ffmpeg_path: "ffmpeg"  # Path to ffmpeg binary if not in PATH
+  worker_threads: 4       # Number of worker threads for camera processing
+  reconnect_interval: 10  # Seconds between reconnection attempts
+  timeout: 30             # Default timeout for camera operations (seconds)
+  max_retries: 3          # Maximum number of retries for failed operations

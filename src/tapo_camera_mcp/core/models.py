@@ -2,7 +2,7 @@
 Core data models for Tapo-Camera-MCP.
 """
 from enum import Enum
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Any
 from pydantic import BaseModel, Field, HttpUrl, IPvAnyAddress, field_validator
 
 class CameraModel(str, Enum):
@@ -47,8 +47,9 @@ class CameraStatus(BaseModel):
     motion_detected: bool = Field(False, description="Whether motion is currently detected")
     audio_detected: bool = Field(False, description="Whether audio is currently detected")
     privacy_mode: bool = Field(False, description="Whether privacy mode is enabled")
-    led_enabled: bool = Field(True, description="Whether the status LED is enabled")
+    mac_address: str = Field(..., description="MAC address of the camera")
     firmware_version: str = Field(..., description="Camera firmware version")
+    hardware_version: str = Field(..., description="Camera hardware version")
     uptime: int = Field(0, description="Uptime in seconds")
     storage: Dict[str, Union[int, str]] = Field(default_factory=dict, 
                                              description="Storage information")
@@ -78,3 +79,30 @@ class CameraInfo(BaseModel):
     ip_address: IPvAnyAddress
     wifi_signal: int = Field(ge=0, le=100, description="WiFi signal strength (0-100)")
     wifi_ssid: Optional[str] = Field(None, description="Connected WiFi SSID")
+
+
+class TapoCameraConfig(BaseModel):
+    """Configuration for Tapo Camera MCP server."""
+    host: str = Field(..., description="Camera IP address or hostname")
+    port: int = Field(443, description="Camera port (default: 443 for HTTPS)")
+    username: str = Field(..., description="Camera username")
+    password: str = Field(..., description="Camera password")
+    use_https: bool = Field(True, description="Use HTTPS for API calls")
+    verify_ssl: bool = Field(False, description="Verify SSL certificate")
+    timeout: int = Field(10, description="Request timeout in seconds")
+    web: Dict[str, Any] = Field(
+        default_factory=lambda: {"enabled": False},
+        description="Web server configuration"
+    )
+
+    @field_validator('port')
+    def validate_port(cls, v):
+        if not (1 <= v <= 65535):
+            raise ValueError("Port must be between 1 and 65535")
+        return v
+
+    @field_validator('timeout')
+    def validate_timeout(cls, v):
+        if v < 1:
+            raise ValueError("Timeout must be at least 1 second")
+        return v

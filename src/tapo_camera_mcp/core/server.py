@@ -1,184 +1,150 @@
 """
-Tapo-Camera-MCP - FastMCP 2.12 server for controlling TP-Link Tapo cameras.
-
-This is a refactored version with a modular tools architecture.
+Tapo Camera MCP Server implementation.
 """
-import asyncio
 import logging
-import sys
-import threading
+import asyncio
+from typing import Dict, Any, List, Optional, Type, TypeVar
 from pathlib import Path
-from typing import Any, Dict, Optional, Union, List, Type
+import inspect
+import asyncio
 
-from fastmcp import FastMCP
-from pydantic import BaseModel, Field, HttpUrl
+from fastmcp.server import FastMCP
+from ..tools.discovery import discover_tools
+from ..tools.base_tool import ToolResult, BaseTool
 
-# Import web server
-from ..web.server import WebServer
-
-# Import tool modules to register them
-from ..tools import discover_tools
-from ..tools.camera import *
-from ..tools.ptz import *
-from ..tools.media import *
-from ..tools.system import *
-from .models import (CameraModel, StreamType, VideoQuality, PTZDirection,
-                    MotionDetectionSensitivity, CameraStatus, PTZPosition,
-                    MotionEvent, CameraInfo)
-
-# Configure logging
 logger = logging.getLogger(__name__)
 
-class TapoCameraConfig(BaseModel):
-    """Camera configuration model."""
-    host: str = Field(..., description="Camera IP address or hostname")
-    username: str = Field(..., description="Camera username")
-    password: str = Field(..., description="Camera password")
-    stream_quality: str = Field("hd", description="Stream quality (hd/sd)")
-    verify_ssl: bool = Field(True, description="Verify SSL certificate")
-
-class PTZPosition(BaseModel):
-    """PTZ position model."""
-    pan: float = Field(0.0, ge=-1.0, le=1.0, description="Pan position (-1.0 to 1.0)")
-    tilt: float = Field(0.0, ge=-1.0, le=1.0, description="Tilt position (-1.0 to 1.0)")
-    zoom: float = Field(0.0, ge=0.0, le=1.0, description="Zoom level (0.0 to 1.0)")
-
-class CameraInfo(BaseModel):
-    """Camera information model."""
-    model: str = Field(..., description="Camera model name")
-    serial_number: str = Field(..., description="Camera serial number")
-    firmware: str = Field(..., description="Firmware version")
-    wifi_signal: int = Field(..., description="WiFi signal strength (0-100)")
-    wifi_ssid: str = Field(..., description="Connected WiFi SSID")
-
-class CameraStatus(BaseModel):
-    """Camera status model."""
-    online: bool = Field(..., description="Camera online status")
-    recording: bool = Field(..., description="Recording status")
-    motion_detected: bool = Field(..., description="Motion detection status")
-    privacy_mode: bool = Field(..., description="Privacy mode status")
-    led_enabled: bool = Field(..., description="LED status")
-    uptime: int = Field(..., description="Uptime in seconds")
-    storage: Dict[str, int] = Field(..., description="Storage information")
-
-class StreamInfo(BaseModel):
-    """Stream information model."""
-    url: HttpUrl = Field(..., description="Stream URL")
-    type: str = Field(..., description="Stream type (rtsp/rtmp)")
-    quality: str = Field(..., description="Stream quality (hd/sd)")
 
 class TapoCameraServer:
-    """Tapo Camera MCP server implementation using FastMCP 2.12 with modular tools."""
+    """Tapo Camera MCP Server."""
     
     _instance = None
-    
-    @classmethod
-    def get_instance(cls):
-        """Get the singleton instance of the server."""
-        if cls._instance is None:
-            cls._instance = cls()
-        return cls._instance
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """Initialize the Tapo Camera MCP server.
         
         Args:
-            config: Optional configuration dictionary with keys:
-                - cache_size_mb: Maximum cache size in MB (default: 100)
-                - temp_dir: Directory for temporary files (default: system temp dir)
-                - request_timeout: HTTP request timeout in seconds (default: 30)
-                - web: Web server configuration (see WebUISettings)
+            config: Optional configuration dictionary
         """
-        # Store configuration
+        # Initialize FastMCP with only the required parameters
+        self.mcp = FastMCP("tapo-camera-mcp")
+        self._initialized = False
         self.config = config or {}
-        
-        # Initialize FastMCP
-        self.mcp = FastMCP(
-            name="Tapo-Camera-MCP",
-            version="0.4.0"  # Bumped version for refactored architecture
-        )
-        
-        # Camera management
-        self.cameras = {}
-        self._active_camera = None
-        self.camera_groups = {}
-        
-        # Web server
-        self.web_server = None
-        self._web_thread = None
-        
-        # Register all tools
-        self._register_tools()
+        self.camera = None
+        self._connected = False
     
-    def _register_tools(self):
-        """Register all tools with the MCP server."""
-        # Discover and register all tools from the tools package
-        tools = discover_tools()
-        
-        for tool_cls in tools:
-            # Create an instance of the tool
-            tool_instance = tool_cls()
-            
-            # Register the tool with MCP
-            self.mcp.register_tool(
-                tool_instance,
-                name=tool_cls.name,
-                description=tool_cls.description,
-                parameters=tool_cls.parameters if hasattr(tool_cls, 'parameters') else []
-            )
-    
-    async def initialize(self):
-        """Initialize the camera manager and any required resources."""
-        logger.info("Initializing Tapo Camera MCP server")
-        
-        # Create temp directory if it doesn't exist
-        temp_dir = Path(self.config.get('temp_dir', '/tmp/tapo-mcp'))
-        temp_dir.mkdir(parents=True, exist_ok=True)
-        
-        logger.info(f"Tapo Camera MCP server initialized with temp directory: {temp_dir}")
-    
-    async def _start_web_server(self):
-        """Start the web server in a separate thread."""
-        try:
-            self.web_server = WebServer()
-            web_config = self.config.get('web', {})
-            host = web_config.get('host', '0.0.0.0')
-            port = web_config.get('port', 7777)
-            
-            # Start the web server in a separate thread
-            def run_web_server():
-                self.web_server.run(host=host, port=port)
-            
-            self._web_thread = threading.Thread(target=run_web_server, daemon=True)
-            self._web_thread.start()
-            logger.info(f"Web server started on http://{host}:{port}")
-            
-        except Exception as e:
-            logger.error(f"Failed to start web server: {e}", exc_info=True)
-    
-    def run(self, host: str = "0.0.0.0", port: int = 8000, stdio: bool = True, direct: bool = False):
-        """Run the MCP server with both HTTP and stdio transports.
+    @classmethod
+    async def get_instance(cls, config: Optional[Dict[str, Any]] = None) -> 'TapoCameraServer':
+        """Get or create the singleton instance of TapoCameraServer.
         
         Args:
-            host: Host to bind the MCP HTTP server to
-            port: Port to bind the MCP HTTP server to
-            stdio: Enable stdio transport
-            direct: If True, runs in direct mode (no event loop management, for Claude Desktop)
+            config: Optional configuration dictionary
+            
+        Returns:
+            TapoCameraServer: The singleton instance
         """
-        # Initialize resources
-        asyncio.run(self.initialize())
+        if cls._instance is None:
+            cls._instance = TapoCameraServer(config)
+            await cls._instance.initialize()
+        return cls._instance
         
-        # Start the web server if enabled
-        web_enabled = self.config.get('web', {}).get('enabled', True)
-        if web_enabled:
-            asyncio.run(self._start_web_server())
+    async def initialize(self, config: Optional[Dict[str, Any]] = None) -> None:
+        """Initialize the server and register all tools.
         
-        # Start the MCP server
+        Args:
+            config: Optional configuration dictionary to override the one passed to __init__
+        """
+        if self._initialized:
+            return
+            
+        try:
+            if config is not None:
+                self.config.update(config)
+                
+            await self._register_tools()
+            self._initialized = True
+            logger.info("Tapo Camera MCP Server initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize server: {e}")
+            raise
+            
+    async def connect(self) -> bool:
+        """Connect to the Tapo camera.
+        
+        Returns:
+            bool: True if connection was successful, False otherwise
+        """
+        try:
+            if self._connected and self.camera is not None:
+                return True
+                
+            if not self.config:
+                raise ValueError("No configuration provided")
+                
+            # Import here to avoid circular imports
+            from tapo_camera_mcp.camera.tapo import TapoCamera
+            from tapo_camera_mcp.core.models import CameraConfig, CameraParams
+            
+            # Create camera config with params
+            params = CameraParams(
+                host=self.config.get('host'),
+                username=self.config.get('username'),
+                password=self.config.get('password'),
+                port=self.config.get('port', 443),
+                use_https=self.config.get('use_https', True),
+                verify_ssl=self.config.get('verify_ssl', False),
+                timeout=self.config.get('timeout', 10)
+            )
+            
+            camera_config = CameraConfig(
+                name="tapo_camera",
+                type="tapo",
+                params=params
+            )
+            
+            self.camera = TapoCamera(camera_config)
+            await self.camera.connect()
+            self._connected = True
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to connect to camera: {e}")
+            self._connected = False
+            self.camera = None
+            raise
+    
+    async def disconnect(self) -> None:
+        """Disconnect from the Tapo camera."""
+        if self.camera:
+            try:
+                await self.camera.close()
+            except Exception as e:
+                logger.error(f"Error disconnecting from camera: {e}")
+            finally:
+                self.camera = None
+                self._connected = False
+    
+    async def run(self, host: str = "0.0.0.0", port: int = 8000, stdio: bool = True, direct: bool = False) -> None:
+        """Run the MCP server.
+        
+        Args:
+            host: Host to bind the server to
+            port: Port to bind the server to
+            stdio: Whether to enable stdio transport
+            direct: Whether to run in direct mode (for Claude Desktop)
+        """
+        if not self._initialized:
+            await self.initialize()
+            
+        logger.info(f"Starting Tapo Camera MCP Server on {host}:{port}")
+        
         if direct:
-            # Direct mode for Claude Desktop
-            self.mcp.run_http(host=host, port=port)
+            # Direct mode for Claude Desktop - use stdio transport
             if stdio:
-                self.mcp.run_stdio()
+                await self.mcp.run_stdio_async()
+            else:
+                # Use streamable-http for direct mode without stdio
+                await self.mcp.run_streamable_http_async(host=host, port=port)
         else:
             # Standard async mode
             loop = asyncio.get_event_loop()
@@ -196,70 +162,251 @@ class TapoCameraServer:
                 tasks = [http_task]
                 if stdio_task:
                     tasks.append(stdio_task)
-                loop.run_until_complete(asyncio.gather(*tasks))
+                await asyncio.gather(*tasks)
             except KeyboardInterrupt:
                 logger.info("Shutting down...")
                 for task in asyncio.all_tasks(loop):
                     task.cancel()
-                loop.run_until_complete(loop.shutdown_asyncgens())
-                loop.close()         # Keep the server running
-            async def run_server():
-                try:
-                    while True:
-                        await asyncio.sleep(3600)  # Sleep for an hour
-                except asyncio.CancelledError:
-                    logger.info("Shutting down MCP server")
+                await loop.shutdown_asyncgens()
+                loop.close()
+        
+    async def get_camera_info(self) -> Dict[str, Any]:
+        """Get information about the connected camera.
+        
+        Returns:
+            Dict containing camera information
             
-            # Run the async function
-            loop.run_until_complete(run_server())
+        Raises:
+            RuntimeError: If not connected to a camera
+        """
+        if not self._connected or self.camera is None:
+            raise RuntimeError("Not connected to a camera")
+            
+        try:
+            # Get basic camera info
+            info = {
+                "host": self.camera.host,
+                "port": self.camera.port,
+                "connected": self._connected,
+            }
+            
+            # Try to get additional info if available
+            try:
+                if hasattr(self.camera, 'get_device_info'):
+                    device_info = await self.camera.get_device_info()
+                    info.update({
+                        "model": device_info.get("model"),
+                        "firmware_version": device_info.get("firmware_version"),
+                        "serial_number": device_info.get("serial_number"),
+                    })
+                
+                if hasattr(self.camera, 'get_basic_info'):
+                    basic_info = await self.camera.get_basic_info()
+                    info.update({
+                        "name": basic_info.get("device_alias"),
+                        "mac_address": basic_info.get("mac"),
+                        "ip_address": basic_info.get("ip"),
+                    })
+                    
+            except Exception as e:
+                logger.warning(f"Could not get detailed camera info: {e}")
+                
+            return info
+            
+        except Exception as e:
+            logger.error(f"Error getting camera info: {e}")
+            raise
     
-
-# Backward compatibility
-def get_server() -> TapoCameraServer:
-    """Get the singleton instance of the TapoCameraServer."""
-    return TapoCameraServer.get_instance()
-
-def main():
-    """Main entry point for the Tapo Camera MCP server."""
-    import argparse
-    
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description="Tapo Camera MCP Server")
-    parser.add_argument("--host", default="0.0.0.0", help="Host to bind the server to")
-    parser.add_argument("--port", type=int, default=8000, help="Port to bind the server to")
-    parser.add_argument("--no-stdio", action="store_false", dest="stdio", 
-                       help="Disable stdio transport")
-    parser.add_argument("--direct", action="store_true", 
-                       help="Run in direct mode (for Claude Desktop integration)")
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
-    
-    args = parser.parse_args()
-    
-    # Configure logging
-    log_level = logging.DEBUG if args.debug else logging.INFO
-    logging.basicConfig(
-        level=log_level,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
-    
-    # Create and run the server
-    server = TapoCameraServer.get_instance()
-    
+    async def _register_tools(self):
+        """Register all tools with the MCP server using FastMCP 2.12 patterns."""
+        # Discover and register all tools from the tools package
+        tools = discover_tools('tapo_camera_mcp.tools')
+        
+        # Deduplicate tools by name to avoid registering the same tool twice
+        seen_tools = set()
+        unique_tools = []
+        for tool_cls in tools:
+            tool_meta = getattr(tool_cls, 'Meta', None)
+            if tool_meta:
+                tool_name = getattr(tool_meta, 'name', tool_cls.__name__.replace('Tool', '').lower())
+                if tool_name not in seen_tools:
+                    seen_tools.add(tool_name)
+                    unique_tools.append(tool_cls)
+        
+        logger.info(f"Discovered {len(tools)} tools, registering {len(unique_tools)} unique tools")
+        
+        for tool_cls in unique_tools:
+            # Get tool metadata from the class
+            tool_meta = getattr(tool_cls, 'Meta', None)
+            if not tool_meta:
+                logger.warning(f"Tool {tool_cls.__name__} is missing Meta class, skipping")
+                continue
+                
+            tool_name = getattr(tool_meta, 'name', tool_cls.__name__.replace('Tool', '').lower())
+            tool_description = getattr(tool_meta, 'description', '')
+            
+            logger.debug(f"Registering tool: {tool_name}")
+            
+            # Get parameter names from the tool class
+            param_names = []
+            if hasattr(tool_meta, 'Parameters'):
+                # Extract parameter names from the Parameters class
+                params_class = tool_meta.Parameters
+                for attr_name in dir(params_class):
+                    if not attr_name.startswith('_') and not callable(getattr(params_class, attr_name)):
+                        param_names.append(attr_name)
+            elif hasattr(tool_cls, '__fields__'):
+                # Extract from Pydantic fields
+                param_names = list(tool_cls.__fields__.keys())
+            
+            # Create a wrapper function for FastMCP 2.12 with explicit parameters
+            def create_tool_wrapper(tool_cls, tool_name, param_names):
+                """Create a tool wrapper function with explicit parameters."""
+                
+                if param_names:
+                    # Create a function with explicit parameters using exec
+                    param_str = ', '.join(param_names)
+                    func_code = f"""
+async def tool_wrapper({param_str}):
+    \"\"\"Wrapper function for tool execution.\"\"\"
     try:
-        asyncio.run(server.run(
-            host=args.host,
-            port=args.port,
-            stdio=args.stdio,
-            direct=args.direct
-        ))
-    except KeyboardInterrupt:
-        logger.info("Shutting down...")
+        # Create tool instance with provided parameters
+        kwargs = {{{', '.join([f"'{name}': {name}" for name in param_names])}}}
+        tool_instance = tool_cls(**kwargs)
+        
+        # If the tool has an async initialize method, call it
+        if hasattr(tool_instance, 'initialize') and callable(tool_instance.initialize):
+            if asyncio.iscoroutinefunction(tool_instance.initialize):
+                await tool_instance.initialize()
+            else:
+                tool_instance.initialize()
+        
+        # Call the tool's execute method
+        if hasattr(tool_instance, 'execute'):
+            execute_method = tool_instance.execute
+            
+            # Handle both sync and async execute methods
+            if asyncio.iscoroutinefunction(execute_method):
+                result = await execute_method()
+            else:
+                result = execute_method()
+                
+            # Handle the result
+            if isinstance(result, ToolResult):
+                return {{
+                    "content": result.content,
+                    "is_error": result.is_error
+                }}
+            elif isinstance(result, dict):
+                return result
+            else:
+                return {{
+                    "content": str(result),
+                    "is_error": False
+                }}
+        else:
+            raise ValueError(f"Tool {{tool_name}} has no execute method")
+            
     except Exception as e:
-        logger.exception("Server error:")
-        return 1
+        error_msg = f"Error executing tool {{tool_name}}: {{e}}"
+        logger.error(error_msg)
+        logger.exception("Full traceback:")
+        return {{
+            "content": error_msg,
+            "is_error": True
+        }}
+"""
+                    # Execute the function definition
+                    local_vars = {'tool_cls': tool_cls, 'tool_name': tool_name, 'asyncio': asyncio, 'ToolResult': ToolResult, 'logger': logger}
+                    exec(func_code, globals(), local_vars)
+                    return local_vars['tool_wrapper']
+                else:
+                    # No parameters
+                    async def tool_wrapper():
+                        """Wrapper function for tool execution."""
+                        try:
+                            # Create tool instance
+                            tool_instance = tool_cls()
+                            
+                            # If the tool has an async initialize method, call it
+                            if hasattr(tool_instance, 'initialize') and callable(tool_instance.initialize):
+                                if asyncio.iscoroutinefunction(tool_instance.initialize):
+                                    await tool_instance.initialize()
+                                else:
+                                    tool_instance.initialize()
+                            
+                            # Call the tool's execute method
+                            if hasattr(tool_instance, 'execute'):
+                                execute_method = tool_instance.execute
+                                
+                                # Handle both sync and async execute methods
+                                if asyncio.iscoroutinefunction(execute_method):
+                                    result = await execute_method()
+                                else:
+                                    result = execute_method()
+                                    
+                                # Handle the result
+                                if isinstance(result, ToolResult):
+                                    return {
+                                        "content": result.content,
+                                        "is_error": result.is_error
+                                    }
+                                elif isinstance(result, dict):
+                                    return result
+                                else:
+                                    return {
+                                        "content": str(result),
+                                        "is_error": False
+                                    }
+                            else:
+                                raise ValueError(f"Tool {tool_name} has no execute method")
+                                
+                        except Exception as e:
+                            error_msg = f"Error executing tool {tool_name}: {e}"
+                            logger.error(error_msg)
+                            logger.exception("Full traceback:")
+                            return {
+                                "content": error_msg,
+                                "is_error": True
+                            }
+                    
+                    return tool_wrapper
+            
+            # Create the wrapper function
+            tool_wrapper = create_tool_wrapper(tool_cls, tool_name, param_names)
+            
+            # Register the tool with FastMCP 2.12 using the tool decorator method
+            try:
+                # Use FastMCP 2.12 tool decorator method
+                decorated_tool = self.mcp.tool(
+                    name=tool_name,
+                    description=tool_description
+                )(tool_wrapper)
+                
+                logger.debug(f"Successfully registered tool: {tool_name}")
+                
+            except Exception as e:
+                logger.warning(f"Failed to register tool {tool_name}: {e}")
+                continue
+        
+        logger.info(f"Registered {len(unique_tools)} tools")
     
-    return 0
+    def get_mcp_server(self) -> FastMCP:
+        """Get the FastMCP server instance."""
+        return self.mcp
+
+
+def get_server() -> TapoCameraServer:
+    """Get a configured Tapo Camera MCP server instance."""
+    return TapoCameraServer()
+
+
+# For direct execution
+async def main():
+    """Main entry point."""
+    server = get_server()
+    await server.run()
+
 
 if __name__ == "__main__":
-    sys.exit(main())
+    asyncio.run(main())

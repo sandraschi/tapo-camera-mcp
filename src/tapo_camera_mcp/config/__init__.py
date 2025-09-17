@@ -4,6 +4,7 @@ Configuration module for Tapo Camera MCP.
 This module provides configuration models and utilities for the Tapo Camera MCP server.
 """
 import os
+import sys
 import json
 import yaml
 from pathlib import Path
@@ -33,29 +34,47 @@ class ConfigManager:
             
         Returns:
             Path to the configuration file.
-            
-        Raises:
-            FileNotFoundError: If no configuration file is found.
         """
         if config_path and Path(config_path).exists():
             return Path(config_path)
             
-        # Default config locations
+        # Get the module directory to find the repo root config
+        module_dir = Path(__file__).parent.parent.parent.parent  # Go up to repo root
+        repo_config = module_dir / "config.yaml"
+        
+        # User-writable config directory
+        user_config_dir = Path("~/.config/tapo-camera-mcp").expanduser()
+        user_config_file = user_config_dir / "config.yaml"
+        
+        # Search paths in order of preference
         search_paths = [
-            Path("config.yaml"),
+            user_config_file,  # User config directory (highest priority)
+            repo_config,       # Repo root config file
+            Path("config.yaml"),  # Current directory
             Path("config.yml"),
-            Path("~/.config/tapo-camera-mcp/config.yaml").expanduser(),
-            Path("/etc/tapo-camera-mcp/config.yaml"),
+            Path("/etc/tapo-camera-mcp/config.yaml"),  # System config (Linux)
         ]
         
         for path in search_paths:
             if path.exists():
                 return path
                 
-        # If no config found, create a default one in the current directory
-        default_config = Path("config.yaml")
-        self.save_default_config(default_config)
-        return default_config
+        # If no config found, try to create one from the repo template
+        if repo_config.exists():
+            # Copy repo config to user directory
+            user_config_dir.mkdir(parents=True, exist_ok=True)
+            try:
+                import shutil
+                shutil.copy2(repo_config, user_config_file)
+                return user_config_file
+            except Exception:
+                # If copying fails, just use the repo config
+                return repo_config
+        
+        # Last resort: create a minimal default config in user directory
+        user_config_dir.mkdir(parents=True, exist_ok=True)
+        self.save_default_config(user_config_file)
+        return user_config_file
     
     def save_default_config(self, path: Union[str, Path]) -> None:
         """Save a default configuration file.
@@ -63,6 +82,10 @@ class ConfigManager:
         Args:
             path: Path where to save the default configuration.
         """
+        # Get user-writable directories
+        user_data_dir = Path("~/.local/share/tapo-camera-mcp").expanduser()
+        user_data_dir.mkdir(parents=True, exist_ok=True)
+        
         default_config = {
             "host": "0.0.0.0",
             "port": 8080,
@@ -93,56 +116,81 @@ class ConfigManager:
             },
             "logging": {
                 "level": "INFO",
-                "file": "tapo-camera-mcp.log",
+                "file": str(user_data_dir / "tapo-camera-mcp.log"),
                 "max_size_mb": 10,
                 "backup_count": 5,
                 "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
                 "date_format": "%Y-%m-%d %H:%M:%S"
             },
             "storage": {
-                "recordings_dir": "recordings",
-                "snapshots_dir": "snapshots",
-                "temp_dir": "temp",
+                "recordings_dir": str(user_data_dir / "recordings"),
+                "snapshots_dir": str(user_data_dir / "snapshots"),
+                "temp_dir": str(user_data_dir / "temp"),
                 "max_storage_gb": 100,
                 "retention_days": 30
             },
             "camera_scan_interval": 300,
             "max_workers": 4,
             "request_timeout": 30,
-            "log_level": "INFO"
+            "log_level": "INFO",
+            "cameras": []  # Empty cameras list for initial setup
         }
         
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         
-        with open(path, 'w') as f:
-            yaml.safe_dump(default_config, f, default_flow_style=False, sort_keys=False)
+        try:
+            with open(path, 'w') as f:
+                yaml.safe_dump(default_config, f, default_flow_style=False, sort_keys=False)
+        except PermissionError:
+            # If we can't write to the specified path, create a warning but don't crash
+            print(f"Warning: Cannot write config to {path}. Using read-only mode.", file=sys.stderr)
     
     def load_config(self) -> Dict[str, Any]:
         """Load configuration from file.
         
         Returns:
             Dictionary containing the configuration.
-            
-        Raises:
-            ValueError: If the configuration file has an unsupported format.
         """
         if self._config_cache:
             return self._config_cache
             
         if not self.config_path.exists():
-            raise FileNotFoundError(f"Configuration file not found: {self.config_path}")
+            # Create a minimal in-memory config
+            return {
+                "host": "0.0.0.0",
+                "port": 8080,
+                "debug": False,
+                "cameras": [],
+                "log_level": "INFO"
+            }
         
-        with open(self.config_path, 'r') as f:
-            if self.config_path.suffix.lower() in ('.yaml', '.yml'):
-                config = yaml.safe_load(f)
-            elif self.config_path.suffix.lower() == '.json':
-                config = json.load(f)
-            else:
-                raise ValueError(f"Unsupported config file format: {self.config_path.suffix}")
-        
-        self._config_cache = config
-        return config
+        try:
+            with open(self.config_path, 'r', encoding='utf-8') as f:
+                if self.config_path.suffix.lower() in ('.yaml', '.yml'):
+                    config = yaml.safe_load(f)
+                elif self.config_path.suffix.lower() == '.json':
+                    config = json.load(f)
+                else:
+                    raise ValueError(f"Unsupported config file format: {self.config_path.suffix}")
+            
+            # Ensure config is a dictionary
+            if not isinstance(config, dict):
+                config = {}
+                
+            self._config_cache = config
+            return config
+            
+        except Exception as e:
+            print(f"Warning: Error loading config from {self.config_path}: {e}", file=sys.stderr)
+            # Return minimal config on error
+            return {
+                "host": "0.0.0.0",
+                "port": 8080,
+                "debug": False,
+                "cameras": [],
+                "log_level": "INFO"
+            }
     
     def get(self, key: str, default: Any = None) -> Any:
         """Get a configuration value by dot notation key.
@@ -179,14 +227,19 @@ class ConfigManager:
         
         if model_name == 'serverconfig':
             # Special handling for ServerConfig since it contains nested models
+            web_config = config.get('web', {})
+            security_config = config.get('security', {})
+            logging_config = config.get('logging', {})
+            storage_config = config.get('storage', {})
+            
             return ServerConfig(
                 host=config.get('host', '0.0.0.0'),
                 port=config.get('port', 8080),
                 debug=config.get('debug', False),
-                web=WebUISettings(**config.get('web', {})),
-                security=SecuritySettings(**config.get('security', {})),
-                logging=LoggingSettings(**config.get('logging', {})),
-                storage=StorageSettings(**config.get('storage', {})),
+                web=WebUISettings(**web_config) if web_config else WebUISettings(),
+                security=SecuritySettings(**security_config) if security_config else SecuritySettings(),
+                logging=LoggingSettings(**logging_config) if logging_config else LoggingSettings(),
+                storage=StorageSettings(**storage_config) if storage_config else StorageSettings(),
                 camera_scan_interval=config.get('camera_scan_interval', 300),
                 max_workers=config.get('max_workers', 4),
                 request_timeout=config.get('request_timeout', 30),
@@ -197,8 +250,12 @@ class ConfigManager:
                 cache_dir=Path(config.get('cache_dir', 'cache')),
                 api_key=config.get('api_key')
             )
+        elif hasattr(model_class, 'model_validate'):
+            # Handle Pydantic v2 models
+            model_config = config.get(model_name, {})
+            return model_class.model_validate(model_config)
         elif hasattr(model_class, 'parse_obj'):
-            # Handle Pydantic models
+            # Handle Pydantic v1 models
             model_config = config.get(model_name, {})
             return model_class.parse_obj(model_config)
         else:

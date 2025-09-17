@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from tapo_camera_mcp.server_v2 import TapoCameraServer
+from tapo_camera_mcp.core.server import TapoCameraServer
 
 class TestImageAnalysis(unittest.IsolatedAsyncioTestCase):
     """Test image capture and analysis functionality."""
@@ -14,6 +14,16 @@ class TestImageAnalysis(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         """Set up test fixtures."""
         self.server = TapoCameraServer()
+        # Initialize with test configuration
+        self.server.config = {
+            'cameras': [{
+                'name': 'test_camera',
+                'host': '192.168.1.100',
+                'username': 'test',
+                'password': 'test',
+                'stream_quality': 'hd'
+            }]
+        }
         self.server.camera = AsyncMock()
         self.temp_dir = tempfile.mkdtemp()
         

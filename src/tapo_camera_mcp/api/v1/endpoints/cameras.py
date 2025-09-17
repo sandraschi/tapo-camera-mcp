@@ -4,7 +4,7 @@ Camera-related API endpoints.
 
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastmcp.tools import Tool
+from ....tools.base_tool import Tool
 
 from ....core.models import CameraInfo, CameraStatus
 from ....tools import get_tool

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tapo-camera-mcp"
-version = "0.2.0"
-description = "FastMCP 2.12.0 compliant server for TP-Link Tapo cameras"
+version = "0.3.0"  # Bumped version for major refactoring
+description = "FastMCP 2.12.0 compliant server for TP-Link Tapo cameras with PTZ control and real-time monitoring"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
@@ -34,13 +34,24 @@ keywords = ["tapo", "tplink", "camera", "mcp", "fastmcp", "home-automation"]
 
 dependencies = [
     # Core dependencies
-    "fastmcp>=2.12.0,<3.0.0",  # MCP 2.12.0 stdio protocol
-    "pytapo>=3.3.48,<4.0.0",   # Tapo camera control
-    "pydantic>=2.0.0,<3.0.0",  # Data validation
-    "python-dotenv>=1.0.0,<2.0.0",  # Environment variable management
-    "aiohttp>=3.9.0,<4.0.0",   # Async HTTP client
-    "pillow>=10.0.0,<11.0.0",  # Image processing
-    "numpy>=1.24.0,<2.0.0"     # Image array manipulation
+    "fastmcp>=2.12.0,<3.0.0",      # MCP 2.12.0 stdio protocol
+    "pytapo>=3.3.48,<4.0.0",       # Tapo camera control
+    "pydantic>=2.0.0,<3.0.0",      # Data validation and settings management
+    "python-dotenv>=1.0.0,<2.0.0", # Environment variable management
+    "aiohttp>=3.9.0,<4.0.0",       # Async HTTP client
+    "pillow>=10.0.0,<11.0.0",      # Image processing
+    "numpy>=1.24.0,<2.0.0",        # Image array manipulation
+    "opencv-python>=4.5.0,<5.0.0", # Computer vision and video processing
+    "ffmpeg-python>=0.2.0,<1.0.0", # FFmpeg integration
+    "python-multipart>=0.0.6,<1.0.0", # File upload handling
+    "pyyaml>=6.0.0,<7.0.0",        # YAML config parsing
+    "aiofiles>=23.1.0,<24.0.0",    # Async file operations
+    "httpx>=0.23.0,<1.0.0",        # Async HTTP client
+    "python-jose[cryptography]>=3.3.0,<4.0.0", # JWT authentication
+    "passlib[bcrypt]>=1.7.4,<2.0.0", # Password hashing
+    "python-multipart>=0.0.6,<1.0.0", # Form data parsing
+    "email-validator>=2.0.0,<3.0.0", # Email validation
+    "tenacity>=8.0.0,<9.0.0"       # Retry logic
 ]
 
 [project.optional-dependencies]
@@ -51,24 +62,58 @@ dev = [
     "pytest-asyncio>=0.20.0,<1.0.0",
     "pytest-mock>=3.10.0,<4.0.0",
     "pytest-cov>=4.0.0,<5.0.0",
+    "pytest-xdist>=3.0.0,<4.0.0",  # Parallel test execution
+    "pytest-benchmark>=4.0.0,<5.0.0",  # Performance testing
+    "pytest-html>=4.0.0,<5.0.0",   # HTML test reports
+    "pytest-sugar>=0.9.0,<1.0.0",  # Better test output
+    "respx>=0.20.0,<1.0.0",        # Mock HTTP requests
+    "asynctest>=0.13.0,<1.0.0",    # Async test utilities
+    "hypothesis>=6.0.0,<7.0.0",    # Property-based testing
+    "freezegun>=1.0.0,<2.0.0",     # Time freezing for tests
+    "pytest-aiohttp>=1.0.0,<2.0.0", # Async HTTP testing
+    "pytest-timeout>=2.0.0,<3.0.0", # Test timeouts
+    "pytest-env>=0.8.0,<1.0.0",    # Environment variables in tests
     
     # Code quality
     "black>=22.0.0,<24.0.0",
     "isort>=5.10.1,<6.0.0",
-    "mypy>=0.910,<2.0.0",
+    "mypy>=1.0.0,<2.0.0",
     "pylint>=2.12.0,<3.0.0",
-    "types-pillow>=10.0.0",  # Type stubs for pillow
-    "types-python-dateutil>=2.8.0",  # Type stubs for dateutil
+    "flake8>=5.0.0,<7.0.0",
+    "bandit>=1.7.0,<2.0.0",        # Security linting
+    "safety>=2.0.0,<3.0.0",        # Dependency vulnerability scanning
+    "pre-commit>=2.20.0,<3.0.0",   # Git hooks
+    "mypy-extensions>=0.4.0,<1.0.0",
+    "types-pillow>=10.0.0",
+    "types-python-dateutil>=2.8.0",
+    "types-PyYAML>=6.0.0",
+    "types-requests>=2.28.0",
+    "types-pytz>=2022.1.0",
+    "types-six>=1.16.0",
     
     # Documentation
     "sphinx>=5.0.0,<8.0.0",
     "sphinx-rtd-theme>=1.0.0,<2.0.0",
     "sphinx-autodoc-typehints>=1.0.0,<2.0.0",
+    "myst-parser>=0.18.0,<1.0.0",
+    "sphinx-copybutton>=0.5.0,<1.0.0",
+    "sphinxcontrib-mermaid>=0.8.0,<1.0.0",  # For diagrams
+    "sphinxcontrib-httpdomain>=3.0.0,<4.0.0",
+    "sphinxcontrib-httpexample>=0.1.0,<1.0.0",
+    "sphinxcontrib-versioning>=3.0.0,<4.0.0",
     
-    # Test server (not for production use)
-    "fastapi>=0.68.0,<1.0.0",
-    "uvicorn[standard]>=0.15.0,<1.0.0",
-    "httpx>=0.23.0,<1.0.0"
+    # Development tools
+    "ipython>=8.0.0,<9.0.0",
+    "jupyter>=1.0.0,<2.0.0",
+    "jupyterlab>=3.0.0,<4.0.0",
+    "pdbpp>=0.10.0,<1.0.0",
+    "ipdb>=0.13.0,<1.0.0",
+    "debugpy>=1.6.0,<2.0.0",
+    "pudb>=2022.0.0,<2023.0.0",
+    "py-spy>=0.3.0,<1.0.0",  # Profiling
+    "memory-profiler>=0.60.0,<1.0.0",
+    "pyinstrument>=4.0.0,<5.0.0",
+    "snakeviz>=2.2.0,<3.0.0"
 ]
 
 # Documentation dependencies
@@ -76,7 +121,14 @@ docs = [
     "sphinx>=5.0.0,<8.0.0",
     "sphinx-rtd-theme>=1.0.0,<2.0.0",
     "sphinx-autodoc-typehints>=1.0.0,<2.0.0",
-    "myst-parser>=0.18.0,<1.0.0"
+    "myst-parser>=0.18.0,<1.0.0",
+    "sphinx-copybutton>=0.5.0,<1.0.0",
+    "sphinxcontrib-mermaid>=0.8.0,<1.0.0",
+    "sphinxcontrib-httpdomain>=3.0.0,<4.0.0",
+    "sphinxcontrib-httpexample>=0.1.0,<1.0.0",
+    "sphinxcontrib-versioning>=3.0.0,<4.0.0",
+    "sphinx-issues>=3.0.0,<4.0.0",
+    "sphinx-notfound-page>=0.7.0,<1.0.0"
 ]
 
 [project.urls]
@@ -87,7 +139,8 @@ Changelog = "https://github.com/yourusername/tapo-camera-mcp/blob/main/CHANGELOG
 Source = "https://github.com/yourusername/tapo-camera-mcp"
 
 [project.scripts]
-tapo-camera-mcp = "tapo_camera_mcp.cli:main"
+tapo-camera-mcp = "tapo_camera_mcp.cli_v2:main"
+tapo-llms = "tapo_camera_mcp.cli:main"
 
 [tool.black]
 line-length = 100

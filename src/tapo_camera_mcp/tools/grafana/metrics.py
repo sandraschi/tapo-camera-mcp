@@ -3,13 +3,15 @@ import asyncio
 import time
 from datetime import datetime
 from typing import Dict, Any, List
-from ..base_tool import BaseTool
+from ..base_tool import BaseTool, ToolCategory
 
 class GrafanaMetricsTool(BaseTool):
     """Tool for collecting camera metrics in Grafana-compatible format."""
     
-    name = "get_grafana_metrics"
-    description = "Export comprehensive camera metrics for Grafana HTTP data source"
+    class Meta:
+        name: str = "get_grafana_metrics"
+        description: str = "Export comprehensive camera metrics for Grafana HTTP data source"
+        category: ToolCategory = ToolCategory.UTILITY
     
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Collect all camera metrics for Grafana consumption."""

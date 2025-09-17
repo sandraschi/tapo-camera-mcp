@@ -4,11 +4,11 @@
 from .tapo import TapoCamera
 from .furbo import FurboCamera
 from .ring import RingCamera
-from .webcam import WebcamCamera
+from .webcam import WebCamera
 
 __all__ = [
     'TapoCamera',
     'FurboCamera', 
     'RingCamera',
-    'WebcamCamera'
+    'WebCamera'
 ]

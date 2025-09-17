@@ -4,41 +4,15 @@ import io
 import time
 from datetime import datetime
 from typing import Dict, Any, Optional
-from ..base_tool import BaseTool
+from ..base_tool import BaseTool, ToolCategory
 
 class GrafanaSnapshotsTool(BaseTool):
     """Tool for capturing live camera snapshots for Grafana image panels."""
     
-    name = "get_camera_snapshot"
-    description = "Capture live camera snapshot for Grafana image panels - MANDATORY FOR VIDEO/IMAGES"
-    
-    parameters = [
-        {
-            "name": "camera_id",
-            "type": "string", 
-            "description": "Camera ID to capture snapshot from",
-            "required": True
-        },
-        {
-            "name": "quality",
-            "type": "string",
-            "description": "Image quality (low, medium, high)",
-            "required": False,
-            "default": "medium"
-        },
-        {
-            "name": "width",
-            "type": "integer",
-            "description": "Image width in pixels",
-            "required": False
-        },
-        {
-            "name": "height",
-            "type": "integer",
-            "description": "Image height in pixels",
-            "required": False
-        }
-    ]
+    class Meta:
+        name: str = "get_camera_snapshot"
+        description: str = "Capture live camera snapshot for Grafana image panels - MANDATORY FOR VIDEO/IMAGES"
+        category: ToolCategory = ToolCategory.UTILITY
     
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Capture a snapshot from the specified camera."""

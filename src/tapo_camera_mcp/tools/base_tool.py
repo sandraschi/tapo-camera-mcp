@@ -1,158 +1,211 @@
 """
-Base tool classes and decorators for Tapo Camera MCP tools.
+Base tool classes for Tapo Camera MCP tools.
 
 This module provides the base functionality for all tools in the Tapo Camera MCP system,
-including decorators for FastMCP 2.12 compatibility.
+with FastMCP 2.12 compatibility.
 """
 
-from typing import Any, Dict, List, Optional, Type, TypeVar, Callable, Awaitable
-from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Type, TypeVar, Callable, Awaitable, Union, ClassVar
 from enum import Enum
+from pydantic import BaseModel, Field, ConfigDict
 import json
 import logging
-
-# Import from fastmcp directly as the structure might have changed
-from fastmcp.tools import Tool, ToolResult
-from fastmcp.tools.types import ToolParameter
+import asyncio
+import inspect
 
 logger = logging.getLogger(__name__)
 
-# Type variable for tool classes
-T = TypeVar('T', bound='BaseTool')
+class ToolResult(BaseModel):
+    """The result of a tool execution."""
+    content: Union[str, Dict[str, Any]]
+    is_error: bool = False
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert the result to a dictionary."""
+        return {
+            "content": self.content,
+            "is_error": self.is_error
+        }
+    
+    def __call__(self, **kwargs) -> 'Union[ToolResult, Awaitable[ToolResult]]':
+        """Execute the tool with the given parameters.
+        
+        This method is NOT async to avoid 'unawaited coroutine' warnings during instantiation.
+        It handles both sync and async execute methods internally.
+        """
+        # Check if we have an async execute method
+        if hasattr(self, 'execute'):
+            execute_method = self.execute
+            
+            # Check if execute is a coroutine function
+            if inspect.iscoroutinefunction(execute_method):
+                # Return the coroutine directly - let caller handle await
+                return execute_method(**kwargs)
+            else:
+                # Call sync execute method directly
+                return execute_method(**kwargs)
+        
+        # Fallback: raise error if no execute method
+        raise NotImplementedError("Tool must implement execute method")
+
+# Tool registry
+_tool_registry: Dict[str, Type['BaseTool']] = {}
+
+def register_tool(tool_cls: 'Type[BaseTool]') -> 'Type[BaseTool]':
+    """Register a tool class in the global registry.
+    
+    Args:
+        tool_cls: The tool class to register
+        
+    Returns:
+        The registered tool class
+        
+    Raises:
+        ValueError: If the tool class is missing required attributes
+    """
+    if not hasattr(tool_cls, 'Meta') or not hasattr(tool_cls.Meta, 'name'):
+        raise ValueError(f"Tool class {tool_cls.__name__} is missing required Meta.name attribute")
+    
+    tool_name = tool_cls.Meta.name
+    _tool_registry[tool_name] = tool_cls
+    logger.debug(f"Registered tool: {tool_name}")
+    return tool_cls
+
+def get_tool(name: str) -> Optional['Type[BaseTool]']:
+    """Get a registered tool by name.
+    
+    Args:
+        name: The name of the tool to retrieve
+        
+    Returns:
+        The tool class if found, None otherwise
+    """
+    return _tool_registry.get(name)
+
+def get_all_tools() -> List['Type[BaseTool]']:
+    """Get all registered tools.
+    
+    Returns:
+        List of all registered tool classes
+    """
+    return list(_tool_registry.values())
 
 class ToolCategory(str, Enum):
     """Categories for organizing tools in the MCP interface."""
     CAMERA = "Camera"
     SYSTEM = "System"
     MEDIA = "Media"
+    PTZ = "PTZ"
     CONFIGURATION = "Configuration"
     UTILITY = "Utility"
+    ANALYSIS = "Analysis"
+    SECURITY = "Security"
 
-@dataclass
-class ToolDefinition:
+class ToolDefinition(BaseModel):
     """Metadata for a tool."""
     name: str
     description: str
     category: ToolCategory
-    parameters: List[ToolParameter] = field(default_factory=list)
+    parameters: List[Dict[str, Any]] = []
     is_async: bool = False
+    
+    model_config = ConfigDict(use_enum_values=True)
 
-class BaseTool(Tool):
+class BaseTool(BaseModel):
     """Base class for all Tapo Camera MCP tools.
     
     This class provides common functionality and metadata for all tools.
     """
+    # Pydantic v2 config
+    model_config = ConfigDict(
+        extra="forbid",
+        json_encoders={
+            # Add custom JSON encoders here if needed
+        },
+        use_enum_values=True
+    )
     
-    # Tool metadata - must be overridden by subclasses
-    name: str = "base_tool"
-    description: str = "Base tool - should be overridden"
-    category: ToolCategory = ToolCategory.UTILITY
+    # Class-level metadata
+    class Meta:
+        name: str = ""
+        description: str = ""
+        category: ToolCategory = ToolCategory.UTILITY
+        parameters: List[Dict[str, Any]] = []
     
     def __init_subclass__(cls, **kwargs):
         """Register the tool class when it's defined."""
         super().__init_subclass__(**kwargs)
         
-        # Skip abstract base classes
-        if cls.__name__.startswith('Base'):
-            return
-            
-        # Register the tool
-        from . import register_tool
-        register_tool(cls)
+        # Skip registration for abstract base classes
+        if not inspect.isabstract(cls):
+            register_tool(cls)
     
     @classmethod
     def get_definition(cls) -> ToolDefinition:
         """Get the tool definition with metadata and parameters."""
         return ToolDefinition(
-            name=cls.name,
-            description=cls.description,
-            category=cls.category,
-            parameters=getattr(cls, 'parameters', []),
-            is_async=hasattr(cls, 'execute_async') or False
+            name=cls.Meta.name,
+            description=cls.Meta.description,
+            category=cls.Meta.category,
+            parameters=cls.Meta.parameters,
+            is_async=inspect.iscoroutinefunction(getattr(cls, 'execute', None))
         )
     
     async def execute(self, **kwargs) -> ToolResult:
         """Execute the tool with the given parameters.
         
         This method should be overridden by subclasses to implement the tool's functionality.
+        Must be an async method that returns a ToolResult.
         """
         raise NotImplementedError("Subclasses must implement execute method")
 
 def tool(
-    name: str,
-    description: str,
-    category: ToolCategory = ToolCategory.UTILITY,
-    parameters: Optional[List[ToolParameter]] = None
-) -> Callable[[Type[T]], Type[T]]:
+    name: str = None,
+    description: str = "",
+    category: 'ToolCategory' = ToolCategory.UTILITY,
+    **extra_metadata
+):
     """Decorator for defining a tool with metadata.
     
+    This is a simplified decorator that works with FastMCP 2.12+.
+    
     Args:
-        name: Unique identifier for the tool
-        description: Human-readable description of what the tool does
-        category: Category for organizing the tool
-        parameters: List of parameters the tool accepts
+        name: Optional name for the tool (defaults to class name in snake_case)
+        description: Description of what the tool does
+        category: Category for the tool (from ToolCategory enum)
+        **extra_metadata: Additional metadata for the tool
         
     Returns:
         A decorator that adds the metadata to the tool class
     """
-    if parameters is None:
-        parameters = []
-    
-    def decorator(tool_class: Type[T]) -> Type[T]:
-        tool_class.name = name
-        tool_class.description = description
-        tool_class.category = category
-        tool_class.parameters = parameters
-        return tool_class
+    def decorator(cls):
+        # Create or update the Meta class
+        if not hasattr(cls, 'Meta'):
+            class Meta:
+                pass
+            cls.Meta = Meta()
+        
+        # Set the tool name (default to class name if not provided)
+        tool_name = name or cls.__name__.replace('Tool', '').lower()
+        setattr(cls.Meta, 'name', tool_name)
+        
+        # Set description and category
+        if description:
+            setattr(cls.Meta, 'description', description)
+        if category:
+            setattr(cls.Meta, 'category', category)
+        
+        # Set additional metadata
+        for key, value in extra_metadata.items():
+            setattr(cls.Meta, key, value)
+        
+        # Ensure the class has an execute method
+        if not hasattr(cls, 'execute'):
+            raise TypeError(f"Tool class {cls.__name__} must implement an 'execute' method")
+        
+        # Register the tool
+        register_tool(cls)
+        
+        return cls
     
     return decorator
-
-def parameter(
-    name: str,
-    type: Type,
-    description: str,
-    required: bool = True,
-    default: Any = None,
-    enum: Optional[List[Any]] = None,
-    **kwargs
-) -> ToolParameter:
-    """Create a parameter definition for a tool.
-    
-    Args:
-        name: Name of the parameter
-        type: Python type of the parameter
-        description: Description of the parameter
-        required: Whether the parameter is required
-        default: Default value for the parameter
-        enum: List of allowed values for the parameter
-        **kwargs: Additional parameter attributes
-        
-    Returns:
-        A ToolParameter instance
-    """
-    # Map Python types to JSON schema types
-    type_mapping = {
-        str: "string",
-        int: "integer",
-        float: "number",
-        bool: "boolean",
-        dict: "object",
-        list: "array"
-    }
-    
-    param_type = type_mapping.get(type, str(type).lower())
-    
-    # Create enum values if provided
-    enum_values = None
-    if enum is not None:
-        enum_values = [str(v) if not isinstance(v, (str, int, float, bool)) else v for v in enum]
-    
-    return ToolParameter(
-        name=name,
-        type=param_type,
-        description=description,
-        required=required,
-        default=default,
-        enum=enum_values,
-        **kwargs
-    )

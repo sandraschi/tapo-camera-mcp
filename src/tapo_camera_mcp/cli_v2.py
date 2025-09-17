@@ -130,7 +130,7 @@ class TapoCameraCLI:
             
             # Handle serve command (start the server)
             if args.command == "serve":
-                from .server_v3 import TapoCameraServer
+                from .core.server import TapoCameraServer
                 server = TapoCameraServer()
                 print_info(f"Starting Tapo Camera MCP server on {args.host}:{args.port}")
                 if args.stdio:

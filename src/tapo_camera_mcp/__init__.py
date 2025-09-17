@@ -30,9 +30,11 @@ from . import presets
 
 # For backward compatibility
 from .core.server import TapoCameraServer as Server  # noqa: F401
+from .core.server import TapoCameraServer as TapoCameraMCP  # noqa: F401
 __all__ = [
     # Core components
     "TapoCameraServer",
+    "TapoCameraMCP",  # For backward compatibility
     "get_server",
     "TapoWebServer",
     "TapoCameraError",

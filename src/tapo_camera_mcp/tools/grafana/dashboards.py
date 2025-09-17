@@ -1,13 +1,15 @@
 """Vienna-specific security dashboard data for Grafana."""
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
-from ..base_tool import BaseTool
+from ..base_tool import BaseTool, ToolCategory
 
 class ViennaDashboardTool(BaseTool):
     """Tool for Vienna-specific security dashboard data."""
     
-    name = "get_vienna_security_dashboard"
-    description = "Get formatted data for Vienna-specific security dashboard with German labels"
+    class Meta:
+        name: str = "get_vienna_security_dashboard"
+        description: str = "Get formatted data for Vienna-specific security dashboard with German labels"
+        category: ToolCategory = ToolCategory.UTILITY
     
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Generate dashboard data with Vienna context."""

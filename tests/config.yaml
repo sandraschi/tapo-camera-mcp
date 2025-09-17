@@ -1,0 +1,43 @@
+host: 0.0.0.0
+port: 8080
+debug: false
+web:
+  enabled: true
+  host: 0.0.0.0
+  port: 7777
+  title: Tapo Camera MCP
+  theme: dark
+  enable_swagger: true
+  enable_redoc: false
+  enable_cors: true
+  cors_origins:
+  - '*'
+  session_secret: change-this-in-production
+  session_lifetime: 86400
+security:
+  secret_key: change-this-in-production
+  algorithm: HS256
+  access_token_expire_minutes: 1440
+  password_min_length: 8
+  password_require_digit: true
+  password_require_uppercase: true
+  password_require_special_char: true
+  rate_limit: 100/minute
+  enable_rate_limiting: true
+logging:
+  level: INFO
+  file: tapo-camera-mcp.log
+  max_size_mb: 10
+  backup_count: 5
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  date_format: '%Y-%m-%d %H:%M:%S'
+storage:
+  recordings_dir: recordings
+  snapshots_dir: snapshots
+  temp_dir: temp
+  max_storage_gb: 100
+  retention_days: 30
+camera_scan_interval: 300
+max_workers: 4
+request_timeout: 30
+log_level: INFO

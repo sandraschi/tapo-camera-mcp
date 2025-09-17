@@ -6,14 +6,15 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch, Mock
 
 import pytest
-from fastmcp import McpMessage
+from fastmcp.server import FastMCP
 
-from tapo_camera_mcp.server import TapoCameraMCP
-from tapo_camera_mcp.models import CameraConfig, CameraStatus, CameraInfo
+from tapo_camera_mcp.core.server import TapoCameraServer
+from tapo_camera_mcp.core.models import CameraStatus, CameraInfo, PTZPosition, TapoCameraConfig
 from tapo_camera_mcp.exceptions import ConnectionError, AuthenticationError
+from tapo_camera_mcp.tools.camera import GetCameraInfoTool
 
 # Test data
 TEST_CONFIG = {
@@ -24,13 +25,24 @@ TEST_CONFIG = {
     "use_https": True,
     "verify_ssl": False,
     "timeout": 5,
+    "web": {
+        "enabled": False
+    }
 }
 
 # Fixtures
 @pytest.fixture
 def config():
     """Return a test configuration."""
-    return CameraConfig(**TEST_CONFIG)
+    return {
+        "host": TEST_CONFIG["host"],
+        "port": TEST_CONFIG["port"],
+        "username": TEST_CONFIG["username"],
+        "password": TEST_CONFIG["password"],
+        "use_https": TEST_CONFIG["use_https"],
+        "verify_ssl": TEST_CONFIG["verify_ssl"],
+        "timeout": TEST_CONFIG["timeout"],
+    }
 
 @pytest.fixture
 def mock_session():
@@ -41,29 +53,120 @@ def mock_session():
         mock_session.__aexit__.return_value = None
         mock_session_class.return_value = mock_session
         
-        # Mock response for connection test
+        # Mock response for device info
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.json.return_value = {"result": {"device_id": "test-device-123"}}
-        
+        mock_response.json.return_value = {
+            "result": {
+                "device_id": "test-device-123",
+                "model": "Tapo C200",
+                "fw_ver": "1.0.0",
+                "hw_ver": "1.0",
+                "type": "SMART.IPCAMERA",
+                "mac": "00:11:22:33:44:55",
+                "dev_name": "Tapo Camera",
+                "device_on": True
+            }
+        }
         mock_session.request.return_value.__aenter__.return_value = mock_response
         
         yield mock_session
 
 @pytest.fixture
 def tapo_camera(config, mock_session):
-    """Return a TapoCameraMCP instance with a mock session."""
-    return TapoCameraMCP(config=config.dict())
+    """Return a TapoCameraServer instance with a mock session."""
+    server = TapoCameraServer()
+    # Initialize with test config
+    server.config = {
+        "cameras": [{
+            "host": config["host"],
+            "username": config["username"],
+            "password": config["password"]
+        }],
+        "web": {"enabled": False}
+    }
+    # Mock the session creation and FastMCP initialization
+    server._session = mock_session
+    server.mcp = Mock(spec=FastMCP)
+    return server
 
 @pytest.mark.asyncio
-async def test_connect_success(tapo_camera, mock_session):
-    """Test successful connection to the camera."""
-    await tapo_camera.connect()
-    assert tapo_camera._is_connected is True
-    assert tapo_camera._session is not None
+async def test_initialization(tapo_camera):
+    """Test that the server initializes correctly."""
+    assert tapo_camera is not None
+    assert tapo_camera.mcp is not None
+    assert len(tapo_camera.config.get("cameras", [])) > 0
 
 @pytest.mark.asyncio
-async def test_connect_auth_error(tapo_camera, mock_session):
+async def test_register_tools(tapo_camera):
+    """Test that tools are registered with the MCP server."""
+    # Mock the tool registration
+    tapo_camera.mcp.tool = Mock()
+    
+    # Call the method that registers tools
+    tapo_camera._register_tools()
+    
+    # Verify that mcp.tool was called for each tool
+    assert tapo_camera.mcp.tool.call_count > 0
+
+@pytest.mark.asyncio
+async def test_run_server(tapo_camera):
+    """Test that the server can be started."""
+    # Mock the MCP run method
+    tapo_camera.mcp.run = AsyncMock()
+    
+    # Call the run method
+    await tapo_camera.run(host="127.0.0.1", port=8000, stdio=False, direct=True)
+    
+    # Verify that mcp.run was called
+    tapo_camera.mcp.run.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_web_server_initialization(tapo_camera):
+    """Test that the web server is initialized when enabled."""
+    # Enable web server in config
+    tapo_camera.config["web"] = {"enabled": True, "port": 8080}
+    
+    # Mock the web server
+    with patch('tapo_camera_mcp.web.server.WebServer') as mock_web_server:
+        mock_web_instance = Mock()
+        mock_web_server.return_value = mock_web_instance
+        
+        # Initialize the server
+        await tapo_camera.initialize(tapo_camera.config)
+        
+        # Verify the web server was created and started
+        mock_web_server.assert_called_once()
+        mock_web_instance.start.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_handle_get_camera_info(tapo_camera, mock_session):
+    """Test handling of get_camera_info tool."""
+    # Mock the response for get_device_info
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    mock_response.json.return_value = {
+        "result": {
+            "model": "Tapo C200",
+            "fw_ver": "1.0.0",
+            "hw_ver": "1.0",
+            "mac": "00:11:22:33:44:55",
+            "device_id": "test-device-123",
+            "device_on": True
+        }
+    }
+    mock_session.request.return_value.__aenter__.return_value = mock_response
+    
+    # Call the method that handles get_camera_info
+    tool = GetCameraInfoTool()
+    result = await tool.execute({})
+    
+    # Verify the response
+    assert result is not None
+    assert "model" in result
+    assert result["model"] == "Tapo C200"
+    assert "fw_ver" in result
+    assert result["fw_ver"] == "1.0.0"
     """Test authentication error during connection."""
     # Mock a 401 Unauthorized response
     mock_response = AsyncMock()

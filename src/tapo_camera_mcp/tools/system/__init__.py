@@ -1,27 +1,41 @@
 """
 System tools for Tapo Camera MCP.
 
-This module contains tools for system-level operations and configuration.
+This module contains system-level tools for managing the camera.
 """
 
-from .system_tools import (
+from tapo_camera_mcp.tools.system.system_tools import (
+    RebootTool,
+    GetSystemInfoTool,
+    SetSystemSettingsTool,
+    UpdateFirmwareTool,
+    FactoryResetTool,
+    CheckForUpdatesTool,
+    GetStorageInfoTool,
+    FormatStorageTool
+)
+
+__all__ = [
+    'RebootTool',
+    'GetSystemInfoTool',
+    'SetSystemSettingsTool',
+    'UpdateFirmwareTool',
+    'FactoryResetTool',
+    'CheckForUpdatesTool',
+    'GetStorageInfoTool',
+    'FormatStorageTool',
+    'SetPrivacyModeTool',
+    'StatusTool'
+]
+for tool in [
     GetSystemInfoTool,
     RebootCameraTool,
     GetLogsTool,
+    HelpTool,
     GetHelpTool,
     SetMotionDetectionTool,
     SetLEDEnabledTool,
     SetPrivacyModeTool,
-    HelpTool
-)
-
-__all__ = [
-    'GetSystemInfoTool',
-    'RebootCameraTool',
-    'GetLogsTool',
-    'GetHelpTool',
-    'SetMotionDetectionTool',
-    'SetLEDEnabledTool',
-    'SetPrivacyModeTool',
-    'HelpTool'
-]
+    StatusTool
+]:
+    register_tool(tool)
