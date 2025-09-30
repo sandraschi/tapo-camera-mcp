@@ -6,7 +6,7 @@ This module contains tools for controlling camera movements and presets.
 
 from typing import Dict, Any, List, Optional, Union
 import logging
-from pydantic import Field, BaseModel
+from pydantic import Field, BaseModel, ConfigDict
 
 from tapo_camera_mcp.tools.base_tool import tool, ToolCategory, BaseTool, ToolResult
 
@@ -19,11 +19,12 @@ logger = logging.getLogger(__name__)
 class MovePTZTool(BaseTool):
     """Tool to control camera PTZ movements."""
     
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "category": ToolCategory.PTZ,
             "description": "Control camera PTZ movements"
         }
+    )
     
     pan: float = Field(
         default=0.0,
@@ -61,7 +62,7 @@ class MovePTZTool(BaseTool):
     async def execute(self) -> Dict[str, Any]:
         """Execute PTZ movement."""
         from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
-        server = TapoCameraServer.get_instance()
+        server = await TapoCameraServer.get_instance()
         return await server.move_ptz({
             'pan': self.pan,
             'tilt': self.tilt,
@@ -96,7 +97,7 @@ class SavePTZPresetTool(BaseTool):
     async def execute(self) -> Dict[str, Any]:
         """Save the current PTZ position as a preset."""
         from ...core.server import TapoCameraServer
-        server = TapoCameraServer.get_instance()
+        server = await TapoCameraServer.get_instance()
         return await server.save_ptz_preset({
             'name': self.name,
             'preset_id': self.preset_id
@@ -124,7 +125,7 @@ class RecallPTZPresetTool(BaseTool):
     async def execute(self) -> Dict[str, Any]:
         """Recall a saved PTZ preset."""
         from ...core.server import TapoCameraServer
-        server = TapoCameraServer.get_instance()
+        server = await TapoCameraServer.get_instance()
         return await server.recall_ptz_preset(self.preset_id)
 
 @tool(
@@ -143,7 +144,7 @@ class GetPTZPresetsTool(BaseTool):
     async def execute(self) -> Dict[str, Any]:
         """Get all saved PTZ presets."""
         from ...core.server import TapoCameraServer
-        server = TapoCameraServer.get_instance()
+        server = await TapoCameraServer.get_instance()
         return await server.get_ptz_presets()
 
 @tool(
@@ -162,7 +163,7 @@ class GoToHomePTZTool(BaseTool):
     async def execute(self) -> Dict[str, Any]:
         """Move the PTZ to the home position."""
         from ...core.server import TapoCameraServer
-        server = TapoCameraServer.get_instance()
+        server = await TapoCameraServer.get_instance()
         try:
             return await server.go_to_home_ptz()
         except Exception as e:
@@ -185,7 +186,7 @@ class StopPTZTool(BaseTool):
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Stop all PTZ movement."""
         from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
-        server = TapoCameraServer.get_instance()
+        server = await TapoCameraServer.get_instance()
         try:
             # Use move_ptz with all zeros to stop movement
             result = await server.move_ptz({"pan": 0, "tilt": 0, "zoom": 0, "relative": True})
@@ -213,19 +214,41 @@ class GetPTZPositionTool(BaseTool):
     async def execute(self, **kwargs) -> ToolResult:
         """Get the current PTZ position."""
         from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
-        server = TapoCameraServer.get_instance()
+        server = await TapoCameraServer.get_instance()
         try:
-            # Note: This assumes the camera maintains its own position state
-            # If not, you may need to track position in the server
-            return {
-                "status": "success",
-                "position": {
-                    "pan": 0.0,  # Replace with actual position if available
-                    "tilt": 0.0,  # Replace with actual position if available
-                    "zoom": 0.0   # Replace with actual position if available
-                },
-                "message": "PTZ position tracking not fully implemented. This may not reflect the actual position."
-            }
+            if not server.camera or not server._connected:
+                return {
+                    "status": "error", 
+                    "message": "No camera connected. Please connect to a camera first."
+                }
+            
+            # Get real PTZ position from camera
+            if hasattr(server.camera, '_camera') and server.camera._camera:
+                # Use pytapo to get actual PTZ position
+                position_data = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: server.camera._camera.getMotorCapability()
+                )
+                
+                # Extract position from camera response
+                pan = position_data.get('pan', {}).get('current_position', 0.0)
+                tilt = position_data.get('tilt', {}).get('current_position', 0.0)
+                zoom = position_data.get('zoom', {}).get('current_position', 0.0)
+                
+                return {
+                    "status": "success",
+                    "position": {
+                        "pan": float(pan),
+                        "tilt": float(tilt),
+                        "zoom": float(zoom)
+                    },
+                    "message": "Current PTZ position retrieved successfully"
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": "Camera not properly initialized for PTZ operations"
+                }
         except Exception as e:
             logger.error(f"Failed to get PTZ position: {str(e)}")
             return {"status": "error", "message": f"Failed to get PTZ position: {str(e)}"}

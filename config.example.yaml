@@ -1,5 +1,19 @@
 # Tapo Camera MCP Configuration
 # Copy this file to config.yaml and update with your settings
+#
+# Quick Start:
+# 1. Install dependencies: pip install -r requirements.txt
+# 2. For Ring cameras: pip install ring-doorbell
+# 3. Copy this file: cp config.example.yaml config.yaml
+# 4. Edit config.yaml with your camera details
+# 5. Start dashboard: python start.py dashboard
+# 6. Access dashboard: http://localhost:7777
+#
+# Supported Camera Types:
+# - tapo: TP-Link Tapo cameras (requires pytapo)
+# - webcam: USB webcams (requires opencv-python)
+# - ring: Ring doorbell cameras (requires ring-doorbell)
+# - furbo: Furbo pet cameras (uses built-in API client)
 
 # Server configuration
 server:
@@ -16,25 +30,38 @@ cameras:
     host: 192.168.1.100
     username: your_tapo_username
     password: your_tapo_password
+    port: 443  # Optional, defaults to 443
+    verify_ssl: true  # Optional, defaults to true
     stream_type: "rtsp"  # rtsp, rtmp, or hls
     
-  # Webcam Example
+  # USB Webcam Example
   webcam1:
     type: webcam
     device_id: 0  # Usually 0 for the first webcam
-    resolution: "1920x1080"
+    resolution: "1920x1080"  # Optional
+    fps: 30  # Optional, frames per second
     
-  # Ring Camera Example (experimental)
+  # Ring Doorbell Camera Example
   front_door:
     type: ring
-    email: your_ring_email@example.com
-    password: your_ring_password
+    params:
+      username: your_ring_email@example.com
+      password: your_ring_password
+      # Alternative: use token instead of username/password
+      # token: "your_ring_token_here"
+      device_id: "optional_specific_device_id"  # Optional, uses first device if not specified
     
-  # Furbo Camera Example
+  # Furbo Pet Camera Example
   pet_cam:
     type: furbo
-    email: your_furbo_email@example.com
-    password: your_furbo_password
+    params:
+      email: your_furbo_email@example.com
+      password: your_furbo_password
+      device_id: "optional_specific_device_id"  # Optional, uses first device if not specified
+      # For RTSP streaming (optional):
+      host: "192.168.1.xxx"  # Furbo camera IP address
+      username: "furbo_username"  # Furbo RTSP username
+      password: "furbo_password"   # Furbo RTSP password
 
 # PTZ Presets
 ptz_presets:
@@ -84,9 +111,17 @@ grafana:
 # Web Interface
 web:
   enabled: true
-  theme: "dark"  # dark or light
+  host: "0.0.0.0"  # Web dashboard host
+  port: 7777       # Web dashboard port
+  theme: "dark"    # dark or light
   show_ptz_controls: true
   show_motion_zones: true
+  # Video streaming settings
+  video_streaming:
+    enabled: true
+    default_fps: 30
+    quality: 80  # JPEG quality (1-100)
+    max_streams: 10  # Maximum concurrent streams
 
 # Authentication (for web interface and API)
 auth:

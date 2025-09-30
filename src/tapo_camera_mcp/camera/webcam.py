@@ -97,3 +97,45 @@ class WebCamera(BaseCamera):
             'device_id': self._device_id,
             'streaming': await self.is_streaming()
         }
+    
+    async def get_info(self) -> Dict:
+        """Get comprehensive webcam information."""
+        try:
+            info = {
+                'name': self.config.name,
+                'type': self.config.type.value,
+                'device_id': self._device_id,
+                'connected': await self.is_connected(),
+                'streaming': await self.is_streaming(),
+                'capabilities': {
+                    'video_capture': True,
+                    'image_capture': True,
+                    'streaming': True,
+                    'ptz': False
+                }
+            }
+            
+            # Add OpenCV-specific information if connected
+            if await self.is_connected() and self._cap:
+                try:
+                    width = int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                    height = int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                    fps = self._cap.get(cv2.CAP_PROP_FPS)
+                    
+                    info.update({
+                        'resolution': f"{width}x{height}",
+                        'fps': fps,
+                        'backend': self._cap.getBackendName()
+                    })
+                except Exception as e:
+                    info['resolution_info_error'] = str(e)
+            
+            return info
+            
+        except Exception as e:
+            return {
+                'name': self.config.name,
+                'type': self.config.type.value,
+                'device_id': self._device_id,
+                'error': f"Failed to get camera info: {e}"
+            }

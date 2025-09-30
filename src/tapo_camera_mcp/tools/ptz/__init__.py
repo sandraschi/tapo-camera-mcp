@@ -6,19 +6,20 @@ This module contains tools for controlling camera movement and zoom.
 
 from tapo_camera_mcp.tools.ptz.ptz_tools import (
     MovePTZTool,
-    SetPresetTool,
-    GoToPresetTool,
-    GetPTZStatusTool,
-    AutoTrackTool,
-    PatrolTool
+    SavePTZPresetTool,
+    RecallPTZPresetTool,
+    GetPTZPresetsTool,
+    GoToHomePTZTool,
+    StopPTZTool,
+    GetPTZPositionTool
 )
 
 __all__ = [
     'MovePTZTool',
-    'SetPresetTool',
-    'GoToPresetTool',
-    'GetPTZStatusTool',
-    'AutoTrackTool',
-    'PatrolTool',
+    'SavePTZPresetTool',
+    'RecallPTZPresetTool',
+    'GetPTZPresetsTool',
+    'GoToHomePTZTool',
+    'StopPTZTool',
     'GetPTZPositionTool'
 ]

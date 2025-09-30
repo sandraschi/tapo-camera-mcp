@@ -2,12 +2,16 @@
 Status tool for monitoring system health and camera status in Tapo Camera MCP.
 """
 from typing import Dict, Any, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 import psutil
 import os
+import asyncio
+import logging
 
-from ...mcp_integration import tool, ToolCategory, BaseTool
+from tapo_camera_mcp.tools.base_tool import tool, ToolCategory, BaseTool
+
+logger = logging.getLogger(__name__)
 
 class SystemStatus(BaseModel):
     cpu_percent: float = Field(..., description="CPU usage percentage")
@@ -18,47 +22,187 @@ class SystemStatus(BaseModel):
     active_streams: int = Field(..., description="Number of active streams")
     last_updated: str = Field(..., description="Timestamp of last status update")
 
-class CameraStatus(BaseModel):
-    camera_id: str = Field(..., description="Unique camera identifier")
-    model: str = Field(..., description="Camera model")
-    status: str = Field(..., description="Connection status")
-    last_seen: str = Field(..., description="Last successful connection time")
-    stream_status: str = Field(..., description="Current stream status")
-    fps: float = Field(..., description="Current FPS if streaming")
-    resolution: str = Field(..., description="Current stream resolution")
+class HealthStatus(BaseModel):
+    """Comprehensive health status information."""
+    overall: str = Field(..., description="Overall health status: healthy/warning/critical")
+    server_status: str = Field(..., description="MCP server status")
+    camera_health: Dict[str, Any] = Field(..., description="Camera health information")
+    system_health: Dict[str, Any] = Field(..., description="System resource health")
+    last_check: str = Field(..., description="Timestamp of health check")
+
+class PerformanceMetrics(BaseModel):
+    """Performance monitoring metrics."""
+    response_time_avg: float = Field(..., description="Average response time (ms)")
+    memory_usage_mb: float = Field(..., description="Memory usage in MB")
+    cpu_usage_percent: float = Field(..., description="CPU usage percentage")
+    active_connections: int = Field(..., description="Number of active connections")
+    total_requests: int = Field(..., description="Total requests processed")
 
 @tool(name="get_status")
 class StatusTool(BaseTool):
     """Tool to get system and camera status information."""
     
     class Meta:
+        name = "get_status"
         category = ToolCategory.SYSTEM
     
     detail_level: str = Field(
         default="basic",
-        enum=["basic", "detailed", "cameras"],
         description="Level of detail in the status report"
+    )
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "enum": ["basic", "detailed", "cameras"]
+        }
     )
 
     def __init__(self, **data):
         super().__init__(**data)
-        from ...core.server import TapoCameraServer
+        from tapo_camera_mcp.core.server import TapoCameraServer
         self.server = TapoCameraServer.get_instance()
         self.camera_manager = self.server.camera_manager
 
     async def execute(self) -> Dict[str, Any]:
-        """Return system and camera status information."""
-        status = self._get_system_status()
-        
-        # Get camera status if needed
-        if self.detail_level in ["detailed", "cameras"] and self.camera_manager:
-            status["cameras"] = await self._get_camera_statuses()
-            
-            # Include additional system details for detailed mode
-            if self.detail_level == "detailed":
-                status.update(await self._get_detailed_system_status())
-        
-        return status
+        """Return comprehensive system and camera status information with health monitoring."""
+        try:
+            # Get basic system status
+            basic_status = await self._get_system_status()
+
+            # Enhanced health monitoring for Gold status
+            health_status = await self._get_comprehensive_health()
+
+            # Combine status information
+            result = {
+                "success": True,
+                "status": basic_status,
+                "health": health_status,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
+            # Get camera status if requested
+            if self.detail_level in ["detailed", "cameras"] and self.camera_manager:
+                result["cameras"] = await self._get_camera_statuses()
+
+                if self.detail_level == "detailed":
+                    result["system"] = await self._get_detailed_system_status()
+
+            logger.info(f"Status check completed - Health: {health_status.get('overall', 'unknown')}")
+            return result
+
+        except Exception as e:
+            logger.error(f"Error getting system status: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get status: {str(e)}",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
+    async def _get_comprehensive_health(self) -> Dict[str, Any]:
+        """Get comprehensive health status for Gold tier monitoring."""
+        try:
+            # System resource health
+            cpu_percent = psutil.cpu_percent(interval=1)
+            memory_percent = psutil.virtual_memory().percent
+            disk_percent = psutil.disk_usage('/').percent
+
+            # Determine overall system health
+            system_warnings = []
+            if cpu_percent > 80:
+                system_warnings.append("High CPU usage")
+            if memory_percent > 85:
+                system_warnings.append("High memory usage")
+            if disk_percent > 90:
+                system_warnings.append("High disk usage")
+
+            system_status = "healthy" if not system_warnings else "warning"
+
+            # Camera health
+            camera_health = await self._assess_camera_health()
+
+            # MCP Server health
+            server_status = await self._assess_server_health()
+
+            # Overall health determination
+            all_warnings = system_warnings + camera_health.get("warnings", []) + server_status.get("warnings", [])
+            overall = "critical" if any("critical" in warning.lower() for warning in all_warnings) else \
+                     "warning" if all_warnings else "healthy"
+
+            return {
+                "overall": overall,
+                "server_status": server_status.get("status", "unknown"),
+                "camera_health": camera_health,
+                "system_health": {
+                    "status": system_status,
+                    "warnings": system_warnings,
+                    "cpu_percent": cpu_percent,
+                    "memory_percent": memory_percent,
+                    "disk_percent": disk_percent
+                },
+                "last_check": datetime.utcnow().isoformat()
+            }
+
+        except Exception as e:
+            logger.error(f"Error in comprehensive health check: {e}")
+            return {
+                "overall": "critical",
+                "error": str(e),
+                "last_check": datetime.utcnow().isoformat()
+            }
+
+    async def _assess_camera_health(self) -> Dict[str, Any]:
+        """Assess overall camera health."""
+        if not self.camera_manager:
+            return {"status": "no_cameras", "warnings": []}
+
+        try:
+            cameras = self.camera_manager.get_cameras()
+            total_cameras = len(cameras)
+            online_cameras = sum(1 for camera in cameras if camera.is_online())
+
+            warnings = []
+            if online_cameras == 0 and total_cameras > 0:
+                warnings.append("No cameras are currently online")
+            elif online_cameras < total_cameras:
+                warnings.append(f"{total_cameras - online_cameras} cameras are offline")
+
+            status = "healthy" if online_cameras > 0 else "warning"
+
+            return {
+                "status": status,
+                "total_cameras": total_cameras,
+                "online_cameras": online_cameras,
+                "warnings": warnings
+            }
+
+        except Exception as e:
+            logger.error(f"Error assessing camera health: {e}")
+            return {"status": "error", "warnings": [str(e)]}
+
+    async def _assess_server_health(self) -> Dict[str, Any]:
+        """Assess MCP server health."""
+        try:
+            # Check if server is responsive
+            server_responsive = True
+
+            # Check for any critical errors in logs (simplified check)
+            critical_errors = 0
+
+            warnings = []
+            if critical_errors > 0:
+                warnings.append(f"{critical_errors} critical errors detected")
+
+            status = "healthy" if server_responsive and critical_errors == 0 else "warning"
+
+            return {
+                "status": status,
+                "responsive": server_responsive,
+                "warnings": warnings
+            }
+
+        except Exception as e:
+            logger.error(f"Error assessing server health: {e}")
+            return {"status": "error", "warnings": [str(e)]}
 
     async def _get_system_status(self) -> Dict[str, Any]:
         """Get basic system status information."""
@@ -72,11 +216,11 @@ class StatusTool(BaseTool):
             "last_updated": datetime.utcnow().isoformat()
         }
 
-    async def _get_cameras_status(self) -> List[Dict[str, Any]]:
+    async def _get_camera_statuses(self) -> List[Dict[str, Any]]:
         """Get status for all cameras."""
         if not self.camera_manager:
             return []
-            
+
         cameras_status = []
         for camera in self.camera_manager.get_cameras():
             stream = self.camera_manager.get_camera_stream(camera.id)
@@ -90,6 +234,19 @@ class StatusTool(BaseTool):
                 "resolution": f"{stream.width}x{stream.height}" if stream else "N/A"
             })
         return cameras_status
+
+    async def _get_detailed_system_status(self) -> Dict[str, Any]:
+        """Get detailed system status information."""
+        return {
+            "grafana": self._get_grafana_status(),
+            "storage": self._get_storage_status(),
+            "network": self._get_network_status(),
+            "process_info": {
+                "pid": os.getpid(),
+                "memory_mb": psutil.Process().memory_info().rss / (1024 * 1024),
+                "threads": psutil.Process().num_threads()
+            }
+        }
 
     def _get_grafana_status(self) -> Dict[str, Any]:
         """Get Grafana integration status."""

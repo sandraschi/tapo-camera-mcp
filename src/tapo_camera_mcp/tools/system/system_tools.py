@@ -37,7 +37,7 @@ class GetSystemInfoTool(BaseTool):
     async def execute(self) -> Dict[str, Any]:
         """Get system information and status."""
         from ...core.server import TapoCameraServer
-        server = TapoCameraServer.get_instance()
+        server = await TapoCameraServer.get_instance()
         return await server.get_system_info()
 
 # Register the tool
@@ -57,7 +57,7 @@ class RebootCameraTool(BaseTool):
     async def execute(self) -> Dict[str, Any]:
         """Reboot the camera."""
         from ...core.server import TapoCameraServer
-        server = TapoCameraServer.get_instance()
+        server = await TapoCameraServer.get_instance()
         return await server.reboot_camera()
 
 # Register the tool
@@ -89,7 +89,7 @@ class GetLogsTool(BaseTool):
     async def execute(self) -> Dict[str, Any]:
         """Get system logs."""
         from ...core.server import TapoCameraServer
-        server = TapoCameraServer.get_instance()
+        server = await TapoCameraServer.get_instance()
         return await server.get_logs(
             level=self.level,
             limit=self.limit
@@ -117,7 +117,7 @@ class GetHelpTool(BaseTool):
     async def execute(self) -> Dict[str, Any]:
         """Get help about available tools and their usage."""
         from ...core.server import TapoCameraServer
-        server = TapoCameraServer.get_instance()
+        server = await TapoCameraServer.get_instance()
         return await server.get_help(tool_name=self.tool_name)
 
 # Register the tool
@@ -154,7 +154,7 @@ class SetMotionDetectionTool(BaseTool):
     async def execute(self) -> Dict[str, Any]:
         """Enable or disable motion detection."""
         from ...core.server import TapoCameraServer
-        server = TapoCameraServer.get_instance()
+        server = await TapoCameraServer.get_instance()
         return await server.set_motion_detection(
             enabled=self.enabled,
             sensitivity=self.sensitivity,
@@ -183,7 +183,7 @@ class SetLEDEnabledTool(BaseTool):
     async def execute(self) -> Dict[str, Any]:
         """Enable or disable the camera LED."""
         from ...core.server import TapoCameraServer
-        server = TapoCameraServer.get_instance()
+        server = await TapoCameraServer.get_instance()
         return await server.set_led_enabled(enabled=self.enabled)
 
 # Register the tool
@@ -208,7 +208,7 @@ class SetPrivacyModeTool(BaseTool):
     async def execute(self) -> Dict[str, Any]:
         """Enable or disable privacy mode."""
         from ...core.server import TapoCameraServer
-        server = TapoCameraServer.get_instance()
+        server = await TapoCameraServer.get_instance()
         return await server.set_privacy_mode(enabled=self.enabled)
 
 # Register the tool
@@ -238,7 +238,7 @@ class HelpTool(BaseTool):
     async def execute(self) -> Dict[str, Any]:
         """Get comprehensive help about available tools and their usage."""
         from ...core.server import TapoCameraServer
-        server = TapoCameraServer.get_instance()
+        server = await TapoCameraServer.get_instance()
         return await server.get_help(
             tool_name=self.tool_name,
             category=self.category

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tapo-camera-mcp"
-version = "0.3.0"  # Bumped version for major refactoring
-description = "FastMCP 2.12.0 compliant server for TP-Link Tapo cameras with PTZ control and real-time monitoring"
+version = "1.0.0"  # Production release with Pydantic V2 and enhanced logging
+description = "🔥 Production-ready FastMCP 2.12 server for TP-Link Tapo cameras with PTZ control, real-time monitoring, and Claude Desktop integration"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
@@ -16,7 +16,7 @@ maintainers = [
     {name = "Tapo Camera MCP Maintainers", email = "tapo-camera-mcp@example.com"}
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
@@ -195,13 +195,22 @@ source = ["tapo_camera_mcp"]
 omit = [
     "**/tests/**",
     "**/__main__.py",
-    "**/version.py"
+    "**/version.py",
+    "**/migrations/**"
 ]
 
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
 skip_empty = true
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
 
 [tool.mypy]
 python_version = "3.8"

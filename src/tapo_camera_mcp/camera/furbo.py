@@ -259,3 +259,43 @@ class FurboCamera(BaseCamera):
                 'connected': False,
                 'error': str(e)
             }
+    
+    async def get_info(self) -> Dict:
+        """Get comprehensive Furbo camera information."""
+        try:
+            info = {
+                'name': self.config.name,
+                'type': self.config.type.value,
+                'connected': await self.is_connected(),
+                'streaming': await self.is_streaming(),
+                'capabilities': {
+                    'video_capture': True,
+                    'image_capture': True,
+                    'streaming': True,
+                    'ptz': True
+                }
+            }
+            
+            # Add Furbo-specific information if connected
+            if await self.is_connected():
+                try:
+                    info.update({
+                        'model': self._device_info.get('model', 'Unknown'),
+                        'device_name': self._device_info.get('name', 'Unknown'),
+                        'battery_level': self._device_info.get('battery_level'),
+                        'firmware_version': self._device_info.get('firmware_version'),
+                        'device_id': self._device_info.get('device_id'),
+                        'mac_address': self._device_info.get('mac_address'),
+                        'ip_address': self._device_info.get('ip_address')
+                    })
+                except Exception as e:
+                    info['device_info_error'] = str(e)
+            
+            return info
+            
+        except Exception as e:
+            return {
+                'name': self.config.name,
+                'type': self.config.type.value,
+                'error': f"Failed to get camera info: {e}"
+            }

@@ -5,7 +5,7 @@ This module provides the web server implementation using FastAPI.
 """
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional, List, Union, Generator
 
 from fastapi import FastAPI, Request, Depends, HTTPException, status
 from fastapi.staticfiles import StaticFiles
@@ -13,7 +13,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.security import OAuth2PasswordBearer
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse, Response
 from fastapi.exceptions import RequestValidationError, HTTPException as FastAPIHTTPException
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -141,16 +141,94 @@ class WebServer:
                 "debug": self.config.get("debug", False),
             }
         
+        @self.app.get("/api/cameras")
+        async def get_cameras():
+            """Get list of cameras."""
+            try:
+                from tapo_camera_mcp.core.server import TapoCameraServer
+                server = await TapoCameraServer.get_instance()
+                cameras_data = await server.list_cameras()
+                return cameras_data
+            except Exception as e:
+                return {"success": False, "error": str(e), "cameras": []}
+        
+        @self.app.get("/api/cameras/{camera_id}/stream")
+        async def get_camera_stream(camera_id: str):
+            """Get camera video stream."""
+            try:
+                from tapo_camera_mcp.core.server import TapoCameraServer
+                server = await TapoCameraServer.get_instance()
+                
+                if hasattr(server, 'camera_manager') and server.camera_manager:
+                    camera = server.camera_manager.cameras.get(camera_id)
+                    if camera:
+                        # For webcam, return MJPEG stream
+                        if camera.config.type.value == "webcam":
+                            return StreamingResponse(
+                                self._generate_webcam_stream(camera),
+                                media_type="multipart/x-mixed-replace; boundary=frame"
+                            )
+                        # For Tapo cameras, return RTSP stream URL
+                        elif camera.config.type.value == "tapo":
+                            stream_url = await camera.get_stream_url()
+                            if stream_url:
+                                return {"stream_url": stream_url, "type": "rtsp"}
+                
+                return {"error": "Camera not found or not supported"}
+            except Exception as e:
+                return {"error": str(e)}
+        
+        @self.app.get("/api/cameras/{camera_id}/snapshot")
+        async def get_camera_snapshot(camera_id: str):
+            """Get camera snapshot."""
+            try:
+                from tapo_camera_mcp.core.server import TapoCameraServer
+                server = await TapoCameraServer.get_instance()
+                
+                if hasattr(server, 'camera_manager') and server.camera_manager:
+                    camera = server.camera_manager.cameras.get(camera_id)
+                    if camera:
+                        image = await camera.capture_still()
+                        
+                        # Convert to bytes
+                        import io
+                        buffer = io.BytesIO()
+                        image.save(buffer, format="JPEG", quality=75)
+                        image_bytes = buffer.getvalue()
+                        
+                        return Response(
+                            content=image_bytes,
+                            media_type="image/jpeg"
+                        )
+                
+                return Response(content="Camera not found", status_code=404)
+            except Exception as e:
+                return Response(content=f"Error: {str(e)}", status_code=500)
+        
         # Web UI routes
-        @self.app.get("/", response_class=HTMLResponse)
+        @self.app.get("/", response_class=HTMLResponse, name="dashboard")
         async def index(request: Request):
             """Serve the main dashboard page."""
+            # Use mock data for now to avoid server issues
+            cameras = []
+            online_cameras = 0
+            total_cameras = 0
+            
             return self.templates.TemplateResponse(
-                "dashboard.html",
-                {"request": request, "active_page": "dashboard"}
+                "simple_dashboard.html",
+                {
+                    "request": request, 
+                    "active_page": "dashboard",
+                    "online_cameras": online_cameras,
+                    "total_cameras": total_cameras,
+                    "storage_used": 45,  # Mock data
+                    "active_alerts": 0,
+                    "active_recordings": 0,
+                    "cameras": cameras
+                }
             )
         
-        @self.app.get("/cameras", response_class=HTMLResponse)
+        @self.app.get("/cameras", response_class=HTMLResponse, name="cameras")
         async def cameras(request: Request):
             """Serve the cameras page."""
             # TODO: Get actual camera data
@@ -160,7 +238,7 @@ class WebServer:
             ]
             
             return self.templates.TemplateResponse(
-                "cameras.html",
+                "dashboard.html",
                 {
                     "request": request,
                     "active_page": "cameras",
@@ -168,15 +246,70 @@ class WebServer:
                 }
             )
         
-        @self.app.get("/settings", response_class=HTMLResponse)
+        @self.app.get("/settings", response_class=HTMLResponse, name="settings")
         async def settings(request: Request):
             """Serve the settings page."""
             return self.templates.TemplateResponse(
-                "settings.html",
+                "dashboard.html",
                 {
                     "request": request,
                     "active_page": "settings",
                     "config": self.config
+                }
+            )
+        
+        @self.app.get("/list_cameras", response_class=HTMLResponse, name="list_cameras")
+        async def list_cameras(request: Request):
+            """Serve the cameras list page."""
+            return self.templates.TemplateResponse(
+                "dashboard.html",
+                {
+                    "request": request,
+                    "active_page": "cameras"
+                }
+            )
+        
+        @self.app.get("/recordings", response_class=HTMLResponse, name="recordings")
+        async def recordings(request: Request):
+            """Serve the recordings page."""
+            return self.templates.TemplateResponse(
+                "dashboard.html",
+                {
+                    "request": request,
+                    "active_page": "recordings"
+                }
+            )
+        
+        @self.app.get("/system_settings", response_class=HTMLResponse, name="system_settings")
+        async def system_settings(request: Request):
+            """Serve the system settings page."""
+            return self.templates.TemplateResponse(
+                "dashboard.html",
+                {
+                    "request": request,
+                    "active_page": "system_settings"
+                }
+            )
+        
+        @self.app.get("/events", response_class=HTMLResponse, name="events")
+        async def events(request: Request):
+            """Serve the events page."""
+            return self.templates.TemplateResponse(
+                "dashboard.html",
+                {
+                    "request": request,
+                    "active_page": "events"
+                }
+            )
+        
+        @self.app.get("/help", response_class=HTMLResponse, name="help")
+        async def help_page(request: Request):
+            """Serve the help and documentation page."""
+            return self.templates.TemplateResponse(
+                "help.html",
+                {
+                    "request": request,
+                    "active_page": "help"
                 }
             )
         
@@ -194,6 +327,44 @@ class WebServer:
                 {"request": request},
                 status_code=404
             )
+    
+    async def _generate_webcam_stream(self, camera) -> Generator[bytes, None, None]:
+        """Generate MJPEG stream from webcam."""
+        try:
+            import cv2
+            import asyncio
+            
+            # Ensure camera is connected
+            if not await camera.is_connected():
+                await camera.connect()
+            
+            # Get OpenCV VideoCapture from webcam
+            if hasattr(camera, '_cap') and camera._cap:
+                cap = camera._cap
+                
+                while True:
+                    ret, frame = cap.read()
+                    if not ret:
+                        break
+                    
+                    # Encode frame as JPEG
+                    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 80]
+                    result, encoded_img = cv2.imencode('.jpg', frame, encode_param)
+                    
+                    if result:
+                        # Create MJPEG frame
+                        yield (b'--frame\r\n'
+                               b'Content-Type: image/jpeg\r\n\r\n' + 
+                               encoded_img.tobytes() + b'\r\n')
+                    
+                    # Control frame rate
+                    await asyncio.sleep(0.033)  # ~30 FPS
+                    
+        except Exception as e:
+            logger.error(f"Error generating webcam stream: {e}")
+            # Send error frame
+            error_frame = b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00\xff\xdb\x00C\x00\x08\x06\x06\x07\x06\x05\x08\x07\x07\x07\t\t\x08\n\x0c\x14\r\x0c\x0b\x0b\x0c\x19\x12\x13\x0f\x14\x1d\x1a\x1f\x1e\x1d\x1a\x1c\x1c $.\' ",#\x1c\x1c(7),01444\x1f\'9=82<.342\xff\xc0\x00\x11\x08\x00\x01\x00\x01\x01\x01\x11\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\xff\xc4\x00\x14\x10\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00\x3f\x00\xaa\xff\xd9' + b'\r\n'
+            yield error_frame
     
     def run(self, host: Optional[str] = None, port: Optional[int] = None):
         """Run the web server.

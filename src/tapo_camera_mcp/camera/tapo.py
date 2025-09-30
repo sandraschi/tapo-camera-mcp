@@ -112,3 +112,50 @@ class TapoCamera(BaseCamera):
                 'connected': False,
                 'error': str(e)
             }
+    
+    async def get_info(self) -> Dict:
+        """Get comprehensive Tapo camera information."""
+        try:
+            info = {
+                'name': self.config.name,
+                'type': self.config.type.value,
+                'host': self.config.params.get('host', ''),
+                'connected': await self.is_connected(),
+                'streaming': await self.is_streaming(),
+                'capabilities': {
+                    'video_capture': True,
+                    'image_capture': True,
+                    'streaming': True,
+                    'ptz': True
+                }
+            }
+            
+            # Add Tapo-specific information if connected
+            if await self.is_connected():
+                try:
+                    basic_info = await asyncio.get_event_loop().run_in_executor(
+                        None,
+                        lambda: self._camera.getBasicInfo()
+                    )
+                    
+                    device_info = basic_info.get('device_info', {})
+                    info.update({
+                        'model': device_info.get('device_model'),
+                        'firmware_version': device_info.get('firmware_version'),
+                        'serial_number': device_info.get('serial_number'),
+                        'device_alias': device_info.get('device_alias'),
+                        'mac_address': device_info.get('mac'),
+                        'ip_address': device_info.get('ip')
+                    })
+                except Exception as e:
+                    info['device_info_error'] = str(e)
+            
+            return info
+            
+        except Exception as e:
+            return {
+                'name': self.config.name,
+                'type': self.config.type.value,
+                'host': self.config.params.get('host', ''),
+                'error': f"Failed to get camera info: {e}"
+            }

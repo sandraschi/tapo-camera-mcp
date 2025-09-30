@@ -1,85 +1,72 @@
-# Tapo Camera MCP Server Configuration
+# Tapo Camera MCP Configuration
+# Quick start configuration with all camera types
 
-# Server settings
-host: "0.0.0.0"
-port: 8000
-web_enabled: true
-web_host: "0.0.0.0"
-web_port: 7777
-web_username: "admin"
-web_password: "change_me"  # Change this to a secure password
+# Server configuration
+server:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+  log_level: "INFO"
 
 # Camera configurations
 cameras:
-  - name: "living_room"
-    type: "tapo"
-    params:
-      host: "192.168.0.136"  # Replace with your camera's IP address
-      username: "sandraschipal@hotmail.com"  # Your Tapo account email
-      password: "Sec1060ta"    # Your Tapo account password
-    stream_quality: "hd"  # or "sd"
+  # USB Webcam (easiest to test)
+  webcam:
+    type: webcam
+    device_id: 0
+    resolution: "1920x1080"
+    fps: 30
+    
+  # Tapo Camera Example
+  tapo_camera:
+    type: tapo
+    host: 192.168.1.100
+    username: "your_tapo_username"
+    password: "your_tapo_password"
+    port: 443
     verify_ssl: true
-    enabled: true
-    motion_detection: true
-    recording: false
-    snapshot_interval: 300  # seconds
-
-  - name: "front_door"
-    type: "tapo"
+    
+  # Ring Doorbell Camera
+  ring_doorbell:
+    type: ring
     params:
-      host: "192.168.1.101"  # Replace with your camera's IP
-      username: "your_email@example.com"
-      password: "your_secure_password"
-    stream_quality: "hd"
-    verify_ssl: true
-    enabled: true
-    motion_detection: true
-    recording: false
-    snapshot_interval: 300
-
-  - name: "backyard"
-    type: "tapo"
+      username: "your_ring_email@example.com"
+      password: "your_ring_password"
+      # Alternative: use token
+      # token: "your_ring_token"
+      
+  # Furbo Pet Camera
+  furbo_camera:
+    type: furbo
     params:
-      host: "192.168.1.102"  # Replace with your camera's IP
-      username: "your_email@example.com"
-      password: "your_secure_password"
-    stream_quality: "hd"
-    verify_ssl: true
+      email: "your_furbo_email@example.com"
+      password: "your_furbo_password"
+      # For RTSP streaming:
+      host: "192.168.1.xxx"
+      username: "furbo_username"
+      password: "furbo_password"
+
+# Web Dashboard
+web:
+  enabled: true
+  host: "0.0.0.0"
+  port: 7777
+  theme: "dark"
+  show_ptz_controls: true
+  video_streaming:
     enabled: true
-    motion_detection: true
-    recording: false
-    snapshot_interval: 300
+    default_fps: 30
+    quality: 80
+    max_streams: 10
 
-# Camera groups (for controlling multiple cameras at once)
-camera_groups:
-  outdoor: ["front_door", "backyard"]
-  all: ["living_room", "front_door", "backyard"]
+# Authentication
+auth:
+  enabled: false  # Disable for quick testing
+  username: "admin"
+  password: "admin"
 
-# Storage settings
-storage:
-  snapshots_dir: "C:/tapo_camera/snapshots"  # Where to store snapshots
-  recordings_dir: "C:/tapo_camera/recordings"  # Where to store recordings
-  max_storage_mb: 10240  # 10GB max storage
-  retention_days: 30  # Days to keep recordings
-
-# Performance settings
-cache_size_mb: 200  # Increased for multiple cameras
-max_cache_items: 200
-request_timeout: 45  # Increased timeout for multiple streams
-max_retries: 5
-stream_buffer_size: 5  # Seconds of stream buffering
-
-# Security settings
-enable_auth: true  # Enable web interface authentication
-ssl_enabled: false  # Set to true and provide cert paths for HTTPS
-# ssl_cert: "/path/to/cert.pem"
-# ssl_key: "/path/to/key.pem"
-
-# Logging settings
-log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
-log_file: "C:/tapo_camera/logs/tapo_camera_mcp.log"
-log_retention_days: 7  # Days to keep log files
-
-# System settings
-temp_dir: "C:/temp"
-max_upload_size_mb: 100  # Maximum file upload size for snapshots/recordings
+# Logging
+logging:
+  file: "tapo_mcp.log"
+  max_size: 10
+  backup_count: 5

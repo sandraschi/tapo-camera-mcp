@@ -75,9 +75,25 @@
                     </span>
                 </div>
                 <div class="camera-preview">
-                    <img src="{{ url_for('get_camera_snapshot', 
-                    camera_id=camera.id) }}" 
-                    alt="{{ camera.name }}" class="camera-feed">
+                    <div class="video-container">
+                        <img id="stream-{{ camera.id }}" 
+                             src="/api/cameras/{{ camera.id }}/snapshot" 
+                             alt="{{ camera.name }}" 
+                             class="camera-feed"
+                             style="display: none;">
+                        <div id="video-{{ camera.id }}" class="video-stream" style="display: none;">
+                            <video autoplay muted playsinline>
+                                <source src="/api/cameras/{{ camera.id }}/stream" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                        <div class="stream-controls">
+                            <button class="btn btn-sm btn-outline" onclick="toggleStream('{{ camera.id }}')">
+                                <i class="fas fa-play" id="play-icon-{{ camera.id }}"></i>
+                                <span id="play-text-{{ camera.id }}">Start Stream</span>
+                            </button>
+                        </div>
+                    </div>
                     <div class="camera-overlay">
                         <button class="btn btn-icon" title="Fullscreen">
                             <i class="fas fa-expand"></i>
@@ -220,6 +236,112 @@
             this.classList.add('active');
             document.getElementById('grid-view').classList.remove('active');
         });
+        
+        // Load cameras data
+        loadCameras();
     });
+    
+    // Load cameras from API
+    async function loadCameras() {
+        try {
+            const response = await fetch('/api/cameras');
+            const data = await response.json();
+            
+            if (data.success && data.cameras) {
+                updateCameraDisplay(data.cameras);
+            }
+        } catch (error) {
+            console.error('Failed to load cameras:', error);
+        }
+    }
+    
+    // Update camera display with real data
+    function updateCameraDisplay(cameras) {
+        const container = document.getElementById('camera-container');
+        container.innerHTML = '';
+        
+        cameras.forEach(camera => {
+            const cameraCard = createCameraCard(camera);
+            container.appendChild(cameraCard);
+        });
+    }
+    
+    // Create camera card element
+    function createCameraCard(camera) {
+        const card = document.createElement('div');
+        card.className = 'camera-card';
+        card.innerHTML = `
+            <div class="camera-header">
+                <h3>${camera.name}</h3>
+                <span class="status-badge ${camera.status === 'online' ? 'online' : 'offline'}">
+                    ${camera.status === 'online' ? 'Online' : 'Offline'}
+                </span>
+            </div>
+            <div class="camera-preview">
+                <div class="video-container">
+                    <img id="stream-${camera.name}" 
+                         src="/api/cameras/${camera.name}/snapshot" 
+                         alt="${camera.name}" 
+                         class="camera-feed">
+                    <div id="video-${camera.name}" class="video-stream" style="display: none;">
+                        <img src="/api/cameras/${camera.name}/stream" 
+                             alt="${camera.name}" 
+                             class="camera-feed">
+                    </div>
+                    <div class="stream-controls">
+                        <button class="btn btn-sm btn-outline" onclick="toggleStream('${camera.name}')">
+                            <i class="fas fa-play" id="play-icon-${camera.name}"></i>
+                            <span id="play-text-${camera.name}">Start Stream</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="camera-overlay">
+                    <button class="btn btn-icon" title="Fullscreen">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    <button class="btn btn-icon" title="PTZ Controls">
+                        <i class="fas fa-arrows-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="camera-footer">
+                <div class="camera-info">
+                    <span class="camera-model">${camera.model || 'Unknown'}</span>
+                    <span class="camera-type">${camera.type}</span>
+                </div>
+                <div class="camera-actions">
+                    <button class="btn btn-icon" title="View Details">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
+                    <button class="btn btn-icon" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        return card;
+    }
+    
+    // Toggle video stream
+    function toggleStream(cameraId) {
+        const img = document.getElementById(`stream-${cameraId}`);
+        const video = document.getElementById(`video-${cameraId}`);
+        const playIcon = document.getElementById(`play-icon-${cameraId}`);
+        const playText = document.getElementById(`play-text-${cameraId}`);
+        
+        if (img.style.display !== 'none') {
+            // Switch to video stream
+            img.style.display = 'none';
+            video.style.display = 'block';
+            playIcon.className = 'fas fa-pause';
+            playText.textContent = 'Stop Stream';
+        } else {
+            // Switch back to snapshot
+            video.style.display = 'none';
+            img.style.display = 'block';
+            playIcon.className = 'fas fa-play';
+            playText.textContent = 'Start Stream';
+        }
+    }
 </script>
 {% endblock %}

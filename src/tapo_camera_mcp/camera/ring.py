@@ -158,3 +158,47 @@ class RingCamera(BaseCamera):
                 'connected': False,
                 'error': str(e)
             }
+    
+    async def get_info(self) -> Dict:
+        """Get comprehensive Ring camera information."""
+        try:
+            info = {
+                'name': self.config.name,
+                'type': self.config.type.value,
+                'connected': await self.is_connected(),
+                'streaming': await self.is_streaming(),
+                'capabilities': {
+                    'video_capture': True,
+                    'image_capture': True,
+                    'streaming': True,
+                    'ptz': False
+                }
+            }
+            
+            # Add Ring-specific information if connected
+            if await self.is_connected():
+                try:
+                    health = await asyncio.get_event_loop().run_in_executor(
+                        None,
+                        lambda: self._device.health
+                    )
+                    
+                    info.update({
+                        'model': self._device.family,
+                        'name': self._device.name,
+                        'battery_life': health.get('battery_life'),
+                        'firmware_version': health.get('firmware_version'),
+                        'wifi_signal': health.get('wifi_signal_category'),
+                        'device_id': self._device.id
+                    })
+                except Exception as e:
+                    info['device_info_error'] = str(e)
+            
+            return info
+            
+        except Exception as e:
+            return {
+                'name': self.config.name,
+                'type': self.config.type.value,
+                'error': f"Failed to get camera info: {e}"
+            }

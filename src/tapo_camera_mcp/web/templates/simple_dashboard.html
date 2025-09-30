@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Dashboard - Tapo Camera MCP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">Tapo Camera MCP Dashboard</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Cameras Online</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ online_cameras }}/{{ total_cameras }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="fas fa-hdd"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Storage Used</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ storage_used }}%</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Alerts</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ active_alerts }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-100 text-red-600">
+                        <i class="fas fa-record-vinyl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Recordings</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ active_recordings }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold mb-4">Camera Status</h2>
+            {% if cameras %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for camera in cameras %}
+                    <div class="border rounded-lg p-4">
+                        <h3 class="font-bold">{{ camera.name or camera.id }}</h3>
+                        <p class="text-sm text-gray-600">Status: {{ camera.status }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-600">No cameras configured yet.</p>
+                <p class="text-sm text-gray-500 mt-2">
+                    Use the MCP tools to add cameras: <code>add_camera</code>
+                </p>
+            {% endif %}
+        </div>
+        
+        <div class="mt-8 text-center">
+            <a href="/help" class="text-blue-600 hover:text-blue-800 underline">
+                <i class="fas fa-question-circle mr-2"></i>Help & Documentation
+            </a>
+        </div>
+    </div>
+</body>
+</html>

@@ -107,13 +107,39 @@ class GrafanaMetricsTool(BaseTool):
     
     async def _get_motion_events(self, camera_id: str, hours: int) -> int:
         """Get motion event count for specified time period."""
-        # TODO: Implement motion event counting from camera logs
-        # For now, return mock data - replace with actual implementation
-        import random
-        if hours == 1:
-            return random.randint(0, 10)
-        else:
-            return random.randint(5, 50)
+        try:
+            from tapo_camera_mcp.core.server import TapoCameraServer
+            server = await TapoCameraServer.get_instance()
+            
+            if hasattr(server, 'camera_manager') and server.camera_manager:
+                camera = server.camera_manager.cameras.get(camera_id)
+                if camera and hasattr(camera, '_camera') and camera._camera:
+                    # Get real motion events from camera
+                    motion_data = await asyncio.get_event_loop().run_in_executor(
+                        None,
+                        lambda: camera._camera.getMotionDetection()
+                    )
+                    
+                    # Extract motion event count from camera response
+                    # This is a simplified implementation - real cameras may have different APIs
+                    events = motion_data.get('motion_detection', {}).get('events', [])
+                    
+                    # Filter events by time period
+                    from datetime import datetime, timedelta
+                    cutoff_time = datetime.now() - timedelta(hours=hours)
+                    recent_events = [
+                        event for event in events 
+                        if datetime.fromisoformat(event.get('timestamp', '1970-01-01')) > cutoff_time
+                    ]
+                    
+                    return len(recent_events)
+            
+            # Fallback: return 0 if no real data available
+            return 0
+            
+        except Exception as e:
+            logger.error(f"Failed to get motion events for {camera_id}: {e}")
+            return 0
     
     async def _get_last_motion_time(self, camera_id: str) -> str:
         """Get timestamp of last motion detection."""

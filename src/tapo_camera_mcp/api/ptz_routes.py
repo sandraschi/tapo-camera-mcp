@@ -54,7 +54,7 @@ class PTZPresetResponse(PTZPresetCreate):
     updated_at: datetime
     thumbnail_url: Optional[str] = None
 
-    class Config:
+    model_config = ConfigDict(
         orm_mode = True
 
 @router.post("/move", status_code=status.HTTP_202_ACCEPTED)

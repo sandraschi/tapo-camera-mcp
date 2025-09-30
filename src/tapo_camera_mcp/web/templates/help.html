@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Help & Documentation{% endblock %}
+
+{% block content %}
+<div class="help-container">
+    <h1>🎥 Tapo Camera MCP Help & Documentation</h1>
+    
+    <div class="help-section">
+        <h2>🚀 Getting Started</h2>
+        <p>Welcome to the Tapo Camera MCP system! This comprehensive help guide will get you up and running quickly.</p>
+        
+        <h3>Quick Start with USB Webcam</h3>
+        <ol>
+            <li>Connect your USB webcam to your computer</li>
+            <li>In Claude Desktop, use the <code>add_camera</code> tool:
+                <pre><code>camera_type: webcam
+name: my_webcam
+device_id: 0</code></pre>
+            </li>
+            <li>Test the connection with <code>capture_image</code> tool</li>
+            <li>View live stream in the dashboard at <a href="http://localhost:7777">http://localhost:7777</a></li>
+        </ol>
+    </div>
+    
+    <div class="help-section">
+        <h2>📷 Supported Cameras</h2>
+        <div class="camera-grid">
+            <div class="camera-card">
+                <h4>📹 USB Webcam</h4>
+                <p>✅ Working - Connect any USB webcam</p>
+                <p>Perfect for testing and development</p>
+            </div>
+            <div class="camera-card">
+                <h4>🏠 Tapo IP Camera</h4>
+                <p>✅ Working - TP-Link Tapo cameras</p>
+                <p>Includes PTZ controls and motion detection</p>
+            </div>
+            <div class="camera-card">
+                <h4>🔔 Ring Doorbell</h4>
+                <p>✅ Working - Ring doorbell cameras</p>
+                <p>Connect via Ring API</p>
+            </div>
+            <div class="camera-card">
+                <h4>🐕 Furbo Pet Camera</h4>
+                <p>✅ Working - Furbo pet cameras</p>
+                <p>Pet monitoring and treat dispensing</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="help-section">
+        <h2>🛠️ Available Tools</h2>
+        <p>The system provides <strong>25+ MCP tools</strong> for complete camera control:</p>
+        
+        <h3>Camera Management</h3>
+        <ul>
+            <li><code>add_camera</code> - Add new camera to system</li>
+            <li><code>list_cameras</code> - List all connected cameras</li>
+            <li><code>connect_camera</code> - Connect to IP camera</li>
+            <li><code>get_camera_info</code> - Get detailed camera information</li>
+        </ul>
+        
+        <h3>PTZ Controls</h3>
+        <ul>
+            <li><code>move_ptz</code> - Move camera (up, down, left, right, zoom)</li>
+            <li><code>save_ptz_preset</code> - Save current position</li>
+            <li><code>recall_ptz_preset</code> - Move to saved position</li>
+            <li><code>stop_ptz</code> - Stop all movement</li>
+        </ul>
+        
+        <h3>Media Capture</h3>
+        <ul>
+            <li><code>capture_image</code> - Take snapshot</li>
+            <li><code>get_camera_stream</code> - Get live stream URL</li>
+            <li><code>start_recording</code> - Start video recording</li>
+            <li><code>stop_recording</code> - Stop recording</li>
+        </ul>
+    </div>
+    
+    <div class="help-section">
+        <h2>🌐 Dashboard Features</h2>
+        <p>The web dashboard provides a user-friendly interface for camera management:</p>
+        
+        <h3>Current Features</h3>
+        <ul>
+            <li>✅ Live video streaming from all cameras</li>
+            <li>✅ Camera management and configuration</li>
+            <li>✅ Real-time status monitoring</li>
+            <li>✅ Image capture and storage</li>
+            <li>✅ Multi-camera simultaneous viewing</li>
+        </ul>
+        
+        <h3>Planned Features</h3>
+        <ul>
+            <li>🔄 PTZ control interface</li>
+            <li>🔄 Preset management</li>
+            <li>🔄 Motion detection configuration</li>
+            <li>🔄 Recording management</li>
+            <li>🔄 Event timeline</li>
+        </ul>
+    </div>
+    
+    <div class="help-section">
+        <h2>🔧 Troubleshooting</h2>
+        
+        <h3>USB Webcam Issues</h3>
+        <div class="troubleshooting-item">
+            <h4>❌ Camera not detected</h4>
+            <p><strong>Solution:</strong> Try different device_id values (0, 1, 2, 3). Check Windows Camera app.</p>
+        </div>
+        
+        <div class="troubleshooting-item">
+            <h4>❌ Permission denied</h4>
+            <p><strong>Solution:</strong> Grant camera permissions in Windows Settings > Privacy > Camera.</p>
+        </div>
+        
+        <h3>IP Camera Issues</h3>
+        <div class="troubleshooting-item">
+            <h4>❌ Connection timeout</h4>
+            <p><strong>Solution:</strong> Verify IP address, username, and password. Check network connectivity.</p>
+        </div>
+        
+        <div class="troubleshooting-item">
+            <h4>❌ PTZ not working</h4>
+            <p><strong>Solution:</strong> Ensure camera supports PTZ. Update firmware. Test in camera's web interface.</p>
+        </div>
+    </div>
+    
+    <div class="help-section">
+        <h2>📡 Getting Help</h2>
+        <p>For more detailed information, use these MCP tools in Claude Desktop:</p>
+        
+        <ul>
+            <li><code>help</code> - Get comprehensive help about all tools</li>
+            <li><code>get_help</code> - Get help for specific tool</li>
+            <li><code>help category=camera</code> - Filter tools by category</li>
+        </ul>
+        
+        <p><strong>Dashboard URL:</strong> <a href="http://localhost:7777">http://localhost:7777</a></p>
+        <p><strong>Start Dashboard:</strong> <code>python start.py dashboard</code></p>
+    </div>
+</div>
+
+<style>
+.help-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.help-section {
+    margin-bottom: 3rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    border-left: 4px solid #0d6efd;
+}
+
+.help-section h2 {
+    color: #0d6efd;
+    margin-bottom: 1rem;
+}
+
+.help-section h3 {
+    color: #495057;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.camera-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.camera-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.camera-card h4 {
+    color: #0d6efd;
+    margin-bottom: 0.5rem;
+}
+
+.troubleshooting-item {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 0.25rem;
+}
+
+.troubleshooting-item h4 {
+    color: #664d03;
+    margin-bottom: 0.5rem;
+}
+
+code {
+    background: #e9ecef;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-family: 'Courier New', monospace;
+}
+
+pre {
+    background: #2d3748;
+    color: #e2e8f0;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+}
+
+pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+}
+
+ul, ol {
+    padding-left: 1.5rem;
+}
+
+li {
+    margin-bottom: 0.5rem;
+}
+
+a {
+    color: #0d6efd;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+</style>
+{% endblock %}
