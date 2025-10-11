@@ -1,0 +1,50 @@
+# MCPB Ignore File
+# Exclude files from MCPB package
+# Note: This file is in mcpb/ directory, so paths are relative to project root (..)
+
+# Python cache
+../__pycache__/
+../**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments  
+../venv/
+../env/
+
+# Testing
+../.pytest_cache/
+../htmlcov/
+../.coverage
+
+# IDE
+../.vscode/
+../.idea/
+../.cursor/
+
+# Git
+../.git/
+
+# Build outputs (but include in package)
+# (Don't exclude dist - MCPB needs to include it)
+
+# Development docs (too large)
+../docs/development/
+../docs/glama-platform/
+../docs/repository-protection/
+../docs/serena/
+../docs/notepadpp/
+../docs/mcpb-packaging/MCPB_BUILDING_GUIDE.md
+../docs/mcpb-packaging/PYPI_PUBLISHING_GUIDE.md
+
+# Tests (not needed in distribution)
+../tests/
+
+# Examples
+../examples/
+
+# Grafana plugin dev files (too large)
+../grafana/plugins/
+
+# Old config files
+../pyproject-*.toml

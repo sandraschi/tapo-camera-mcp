@@ -209,19 +209,52 @@ class WebServer:
         @self.app.get("/", response_class=HTMLResponse, name="dashboard")
         async def index(request: Request):
             """Serve the main dashboard page."""
-            # Use mock data for now to avoid server issues
-            cameras = []
-            online_cameras = 0
-            total_cameras = 0
-            
+            try:
+                # Get real camera data from the MCP server
+                from tapo_camera_mcp.core.server import TapoCameraServer
+                server = await TapoCameraServer.get_instance()
+
+                # Get camera list
+                cameras_result = await server.list_cameras()
+                cameras = cameras_result.get('cameras', [])
+                total_cameras = len(cameras)
+                online_cameras = sum(1 for cam in cameras if cam.get('status') == 'online')
+
+                # If no cameras configured, try to auto-add USB webcam
+                if total_cameras == 0:
+                    try:
+                        logger.info("No cameras configured, attempting to auto-add USB webcam...")
+                        add_result = await server.add_camera(
+                            camera_name='usb_webcam_0',
+                            camera_type='webcam',
+                            device_id=0
+                        )
+                        if add_result.get('success'):
+                            logger.info("Successfully auto-added USB webcam")
+                            # Refresh camera list
+                            cameras_result = await server.list_cameras()
+                            cameras = cameras_result.get('cameras', [])
+                            total_cameras = len(cameras)
+                            online_cameras = sum(1 for cam in cameras if cam.get('status') == 'online')
+                        else:
+                            logger.warning(f"Failed to auto-add webcam: {add_result}")
+                    except Exception as e:
+                        logger.warning(f"Error auto-adding webcam: {e}")
+
+            except Exception as e:
+                logger.warning(f"Failed to get camera data for dashboard: {e}")
+                cameras = []
+                online_cameras = 0
+                total_cameras = 0
+
             return self.templates.TemplateResponse(
                 "simple_dashboard.html",
                 {
-                    "request": request, 
+                    "request": request,
                     "active_page": "dashboard",
                     "online_cameras": online_cameras,
                     "total_cameras": total_cameras,
-                    "storage_used": 45,  # Mock data
+                    "storage_used": 45,  # Mock data for now
                     "active_alerts": 0,
                     "active_recordings": 0,
                     "cameras": cameras

@@ -99,7 +99,7 @@ class HealthCheckTool(BaseTool):
                 timestamp=datetime.utcnow().isoformat()
             )
 
-            logger.info(f"Health check completed: {overall_status} ({response_time_ms".1f"}ms)")
+            logger.info(f"Health check completed: {overall_status} ({response_time_ms:.1f}ms)")
             return result.dict()
 
         except Exception as e:

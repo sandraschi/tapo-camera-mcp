@@ -70,12 +70,36 @@ This project has achieved **Gold Status** on [Glama.ai](https://glama.ai), the p
 
 ## 🚀 Getting Started
 
+### Installation Options
+
+#### Option 1: MCPB Package (Recommended for Claude Desktop)
+
+**One-click installation** for Claude Desktop users:
+
+1. Download the latest `.mcpb` package from [GitHub Releases](https://github.com/sandraschi/tapo-camera-mcp/releases)
+2. Drag the `.mcpb` file to Claude Desktop
+3. Configure camera settings when prompted:
+   - Tapo Camera IP Address (optional)
+   - Tapo Camera Username (optional)
+   - Tapo Camera Password (optional)
+   - Web Dashboard Port (default: 7777)
+4. Restart Claude Desktop
+5. All 26+ tools are now available!
+
+**Quick Start with MCPB:**
+```
+"Connect to my USB webcam using add_camera tool"
+"Start the dashboard and show me the camera feed"
+```
+
+#### Option 2: Manual Installation
+
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - pip (Python package manager)
 - OpenCV (for webcam support)
-- TP-Link Tapo camera(s) or USB webcam
+- TP-Link Tapo camera(s), Ring doorbell, Furbo pet camera, or USB webcam
 
 ### Installation
 
@@ -269,6 +293,26 @@ src/tapo_camera_mcp/
    pre-commit install
    ```
 
+### Building MCPB Package
+
+To build an MCPB package for distribution:
+
+```powershell
+# Windows (PowerShell)
+.\scripts\build-mcpb-package.ps1 -NoSign
+
+# Or build manually
+mcpb pack . dist/tapo-camera-mcp.mcpb
+```
+
+The package will be created in `dist/tapo-camera-mcp.mcpb` (approximately 280KB).
+
+**For automated builds**: Push a version tag to trigger GitHub Actions:
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
 ### Running Tests
 
 ```bash
@@ -295,6 +339,22 @@ isort .
 pylint tapo_camera_mcp/
 ```
 
+## 📦 MCPB Packaging
+
+This project supports **MCPB (MCP Bundle)** packaging for one-click installation in Claude Desktop.
+
+**For Users:**
+- Download `.mcpb` file from [Releases](https://github.com/sandraschi/tapo-camera-mcp/releases)
+- Drag to Claude Desktop
+- Configure and enjoy!
+
+**For Developers:**
+- See [MCPB Quick Start](docs/MCPB_QUICKSTART.md)
+- Build with `.\scripts\build-mcpb-package.ps1 -NoSign`
+- Full guide in [docs/mcpb-packaging/](docs/mcpb-packaging/)
+
+---
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -302,7 +362,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - [TP-Link](https://www.tp-link.com/) for their Tapo camera products
-- [FastMCP](https://github.com/yourusername/fastmcp) for the MCP protocol implementation
+- [FastMCP](https://github.com/jlowin/fastmcp) for the MCP framework
+- [Anthropic](https://www.anthropic.com/) for Claude Desktop and MCPB toolkit
+- [Ring](https://ring.com/) for Ring doorbell integration
+- [Furbo](https://furbo.com/) for Furbo pet camera support
 - [aiohttp](https://docs.aiohttp.org/) for the async HTTP client/server
 - [ONVIF](https://www.onvif.org/) for the camera control protocol
 

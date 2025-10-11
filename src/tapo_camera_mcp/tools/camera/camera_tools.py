@@ -28,7 +28,26 @@ class CameraStatus(str, Enum):
 
 @tool("list_cameras")
 class ListCamerasTool(BaseTool):
-    """Tool to list all registered cameras and their status."""
+    '''
+    List all registered cameras and their current status.
+    
+    Returns information about all cameras managed by the system including
+    their connection status, type, model, and firmware version.
+    
+    Parameters:
+        None
+    
+    Returns:
+        Dict with:
+        - success (bool): Whether the operation succeeded
+        - cameras (List[Dict]): List of camera information dictionaries
+        - total (int): Total number of cameras
+    
+    Example:
+        result = await list_cameras_tool.execute()
+        for camera in result['cameras']:
+            print(f"{camera['name']}: {camera['status']}")
+    '''
     
     class Meta:
         name = "list_cameras"
@@ -90,7 +109,40 @@ class ListCamerasTool(BaseTool):
 
 @tool("add_camera")
 class AddCameraTool(BaseTool):
-    """Tool to add a new camera to the system."""
+    '''
+    Add a new camera to the system.
+    
+    Supports multiple camera types: Tapo IP cameras, Ring doorbells,
+    Furbo pet cameras, and USB webcams. Each camera type requires
+    different connection parameters.
+    
+    Parameters:
+        camera_id (str): Unique identifier for the camera
+        camera_type (str): Type - 'Tapo', 'Ring', 'Furbo', or 'Webcam'
+        host (str, optional): IP address for Tapo cameras
+        username (str, optional): Username for authentication
+        password (str, optional): Password for authentication
+        device_id (int, optional): Device ID for webcams (default: 0)
+        token (str, optional): API token for Furbo cameras
+    
+    Returns:
+        Dict with success status and camera details
+    
+    Example:
+        # Add USB webcam
+        result = await add_camera_tool.execute(
+            camera_id='webcam1', camera_type='Webcam', device_id=0
+        )
+        
+        # Add Tapo camera
+        result = await add_camera_tool.execute(
+            camera_id='tapo_front',
+            camera_type='Tapo',
+            host='192.168.1.100',
+            username='user@example.com',
+            password='secret'
+        )
+    '''
     
     class Meta:
         name = "add_camera"
@@ -139,7 +191,8 @@ class AddCameraTool(BaseTool):
             server = await TapoCameraServer.get_instance()
 
             result = await server.add_camera(
-                name=camera_name,
+                camera_name=camera_name,
+                camera_type='tapo',  # Assuming Tapo camera for now
                 host=ip_address,
                 username=username,
                 password=password,
@@ -165,7 +218,20 @@ class AddCameraTool(BaseTool):
 
 @tool("remove_camera")
 class RemoveCameraTool(BaseTool):
-    """Tool to remove a camera from the system."""
+    '''
+    Remove a camera from the system.
+    
+    Disconnects and removes a camera from the managed camera list.
+    
+    Parameters:
+        camera_name (str): Name of the camera to remove
+    
+    Returns:
+        Dict with success status and confirmation message
+    
+    Example:
+        result = await remove_camera_tool.execute(camera_name='webcam1')
+    '''
     
     class Meta:
         name = "remove_camera"
@@ -188,7 +254,21 @@ class RemoveCameraTool(BaseTool):
 
 @tool("set_active_camera")
 class SetActiveCameraTool(BaseTool):
-    """Tool to set the active camera for operations."""
+    '''
+    Set the active camera for subsequent operations.
+    
+    Designates which camera will be used for commands that don't
+    specify a camera explicitly.
+    
+    Parameters:
+        camera_name (str): Name of the camera to set as active
+    
+    Returns:
+        Dict with success status and active camera name
+    
+    Example:
+        result = await set_active_camera_tool.execute(camera_name='tapo_front')
+    '''
     
     class Meta:
         name = "set_active_camera"
@@ -211,7 +291,27 @@ class SetActiveCameraTool(BaseTool):
 
 @tool("get_camera_status")
 class GetCameraStatusTool(BaseTool):
-    """Tool to get the status of a specific camera."""
+    '''
+    Get the current status of a camera.
+    
+    Returns detailed status information including connection state,
+    streaming status, and hardware information.
+    
+    Parameters:
+        camera_id (str, optional): Name of the camera to query (uses active camera if not specified)
+    
+    Returns:
+        Dict with camera status details:
+        - connected (bool): Connection status
+        - streaming (bool): Whether camera is streaming
+        - model (str): Camera model
+        - firmware (str): Firmware version
+    
+    Example:
+        result = await get_camera_status_tool.execute(camera_id='webcam1')
+        if result['status']['connected']:
+            print(f"Camera online: {result['status']['model']}")
+    '''
     
     class Meta:
         name = "get_camera_status"
@@ -234,8 +334,30 @@ class GetCameraStatusTool(BaseTool):
 
 @tool("connect_camera")
 class ConnectCameraTool(BaseTool):
-    """Tool to connect to a Tapo camera."""
+    '''
+    Connect to a Tapo camera.
     
+    Establishes a connection to a TP-Link Tapo IP camera using
+    the provided credentials and IP address.
+    
+    Parameters:
+        host (str): IP address of the Tapo camera
+        username (str): TP-Link account email
+        password (str): TP-Link account password
+    
+    Returns:
+        Dict with connection status and camera information
+    
+    Example:
+        result = await connect_camera_tool.execute(
+            host='192.168.1.100',
+            username='user@example.com',
+            password='secret123'
+        )
+        if result['success']:
+            print(f"Connected to {result['camera']['model']}")
+    '''
+
     class Meta:
         name = "connect_camera"
         description = "Connect to a Tapo camera"
@@ -314,7 +436,22 @@ class ConnectCameraTool(BaseTool):
 
 @tool("disconnect_camera")
 class DisconnectCameraTool(BaseTool):
-    """Tool to disconnect from the current camera."""
+    '''
+    Disconnect from the current camera.
+    
+    Closes the connection to the currently active camera and
+    releases resources.
+    
+    Parameters:
+        None
+    
+    Returns:
+        Dict with disconnection status
+    
+    Example:
+        result = await disconnect_camera_tool.execute()
+        print(result['message'])
+    '''
     
     class Meta:
         name = "disconnect_camera"
@@ -332,7 +469,28 @@ class DisconnectCameraTool(BaseTool):
 
 @tool("get_camera_info")
 class GetCameraInfoTool(BaseTool):
-    """Tool to get detailed information about the connected camera."""
+    '''
+    Get detailed information about a camera.
+    
+    Returns comprehensive camera information including model, firmware,
+    hardware capabilities, network settings, and features.
+    
+    Parameters:
+        camera_id (str, optional): Camera name (uses active camera if not specified)
+    
+    Returns:
+        Dict with detailed camera information:
+        - model (str): Camera model
+        - firmware (str): Firmware version
+        - mac_address (str): MAC address
+        - ip_address (str): IP address
+        - capabilities (Dict): Hardware capabilities
+    
+    Example:
+        result = await get_camera_info_tool.execute(camera_id='tapo_front')
+        print(f"Model: {result['info']['model']}")
+        print(f"Firmware: {result['info']['firmware']}")
+    '''
     
     class Meta:
         name = "get_camera_info"
@@ -357,7 +515,31 @@ class GetCameraInfoTool(BaseTool):
 
 @tool("manage_camera_groups")
 class ManageCameraGroupsTool(BaseTool):
-    """Tool to manage camera groups."""
+    '''
+    Manage camera groups for organizing multiple cameras.
+    
+    Create, update, or delete camera groups to logically organize
+    cameras by location, function, or any other criteria.
+    
+    Parameters:
+        action (str): Action to perform - 'create', 'update', 'delete', 'list'
+        group_name (str, optional): Name of the group
+        camera_ids (List[str], optional): List of camera IDs for the group
+    
+    Returns:
+        Dict with operation result and group information
+    
+    Example:
+        # Create a group
+        result = await manage_camera_groups_tool.execute(
+            action='create',
+            group_name='front_yard',
+            camera_ids=['tapo_front', 'webcam1']
+        )
+        
+        # List all groups
+        result = await manage_camera_groups_tool.execute(action='list')
+    '''
     
     class Meta:
         name = "manage_camera_groups"
@@ -416,8 +598,9 @@ GetCameraInfoTool = register_tool(GetCameraInfoTool)
 ManageCameraGroupsTool = register_tool(ManageCameraGroupsTool)
 
 # Debug: Print registered tools
-logger.debug(f"Registered camera tools: {[tool.Meta.name for tool in [
+camera_tool_classes = [
     ListCamerasTool, AddCameraTool, RemoveCameraTool, SetActiveCameraTool,
     GetCameraStatusTool, ConnectCameraTool, DisconnectCameraTool,
     GetCameraInfoTool, ManageCameraGroupsTool
-]]}")
+]
+logger.debug(f"Registered camera tools: {[tool.Meta.name for tool in camera_tool_classes]}")

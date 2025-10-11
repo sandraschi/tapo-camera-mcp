@@ -1,0 +1,196 @@
+# Glama.ai Configuration
+# Platform: https://glama.ai
+# Documentation: https://docs.glama.ai
+
+name: tapo-camera-mcp
+display_name: "Tapo Camera MCP Server"
+description: "Comprehensive camera management MCP server supporting Tapo, Ring, Furbo, and USB webcams with 26+ tools"
+
+# Quality and Status
+quality:
+  status: "gold"
+  score: 85
+  target_score: 90
+  tests_passing: true
+  coverage_percent: 23
+  linting_passing: true
+  
+# Repository Information
+repository:
+  url: "https://github.com/sandraschi/tapo-camera-mcp"
+  primary_branch: "main"
+  homepage: "https://github.com/sandraschi/tapo-camera-mcp"
+  
+# MCP Server Details  
+mcp:
+  version: "2.12.0"
+  framework: "fastmcp"
+  framework_version: ">=2.12.0"
+  protocol: "stdio"
+  tools_count: 26
+  
+# Platform Support
+platforms:
+  - windows
+  - macos
+  - linux
+  
+# Programming Languages
+languages:
+  primary: "python"
+  versions:
+    - "3.10"
+    - "3.11"
+    - "3.12"
+    - "3.13"
+    
+# Categories and Tags
+categories:
+  - camera-control
+  - home-automation
+  - video-streaming
+  - iot-devices
+  
+tags:
+  - tapo
+  - ring
+  - furbo
+  - webcam
+  - ptz-control
+  - motion-detection
+  - video-streaming
+  - grafana
+  - ai-vision
+  - dinov3
+  - fastmcp
+  - production-ready
+  - gold-status
+  
+# Features
+features:
+  - name: "Multi-Camera Support"
+    description: "Supports Tapo, Ring, Furbo, and USB webcams"
+    
+  - name: "PTZ Control"
+    description: "Pan-Tilt-Zoom control with preset positions"
+    
+  - name: "Video Streaming"
+    description: "Live MJPEG and RTSP video streaming"
+    
+  - name: "Web Dashboard"
+    description: "Browser-based dashboard with live camera feeds"
+    
+  - name: "Motion Detection"
+    description: "Real-time motion event monitoring"
+    
+  - name: "AI Vision Analysis"
+    description: "DINOv3-powered scene and object detection"
+    
+  - name: "Grafana Integration"
+    description: "Metrics and monitoring dashboards"
+    
+# Documentation
+documentation:
+  readme: true
+  changelog: true
+  contributing: true
+  security_policy: true
+  code_of_conduct: true
+  api_docs: true
+  user_guide: true
+  
+# CI/CD and Quality
+ci_cd:
+  platform: "github-actions"
+  workflows:
+    - name: "CI"
+      file: ".github/workflows/ci.yml"
+      tests: true
+      linting: true
+      coverage: true
+      
+    - name: "MCPB Build"
+      file: ".github/workflows/build-mcpb.yml"
+      packaging: true
+      releases: true
+      
+    - name: "Release"
+      file: ".github/workflows/release.yml"
+      pypi: true
+      github_releases: true
+      
+# Packaging
+packaging:
+  formats:
+    - mcpb
+    - pypi
+    - source
+    
+  mcpb:
+    enabled: true
+    manifest: "manifest.json"
+    config: "mcpb.json"
+    package_size_kb: 274
+    
+  pypi:
+    enabled: true
+    package_name: "tapo-camera-mcp"
+    
+# Security
+security:
+  policy_file: "SECURITY.md"
+  dependabot: true
+  automated_scanning: true
+  vulnerability_alerts: true
+  
+# Community
+community:
+  contributing_guide: true
+  code_of_conduct: true
+  issue_templates: true
+  pr_template: true
+  
+# Performance Metrics
+performance:
+  startup_time_ms: 500
+  response_time_ms: 100
+  concurrent_connections: 10
+  
+# Dependencies
+dependencies:
+  production:
+    - fastmcp
+    - pytapo
+    - opencv-python
+    - ring-doorbell
+    - aiohttp
+    - pydantic
+    - pyyaml
+    
+  development:
+    - pytest
+    - black
+    - mypy
+    - isort
+    
+# Monitoring and Analytics
+monitoring:
+  grafana_dashboards: true
+  prometheus_metrics: false
+  logging_structured: true
+  error_tracking: true
+  
+# Updates and Maintenance
+maintenance:
+  last_updated: "2025-10-10"
+  update_frequency: "weekly"
+  security_patches: "immediate"
+  feature_releases: "monthly"
+  
+# Contact and Support
+support:
+  email: "sandraschipal@hotmail.com"
+  issues: "https://github.com/sandraschi/tapo-camera-mcp/issues"
+  documentation: "https://github.com/sandraschi/tapo-camera-mcp/blob/main/README.md"
+
+

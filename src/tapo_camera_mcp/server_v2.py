@@ -4,12 +4,35 @@ Tapo Camera MCP Server v2 - Fixed asyncio handling for Claude Desktop integratio
 Provides camera control capabilities through MCP protocol
 """
 
+# Suppress warnings before any imports to prevent JSON parsing issues in Claude Desktop
+import warnings
+import os
+import sys
+
+# Set environment variable to suppress warnings globally
+os.environ['PYTHONWARNINGS'] = 'ignore'
+
+# Redirect stderr to avoid warnings interfering with JSON parsing
+original_stderr = sys.stderr
+sys.stderr = open(os.devnull, 'w')
+
+# Apply warning filters
+warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 # Apply patch for ring_doorbell imports first
 try:
     import patch_ring_doorbell
     patch_ring_doorbell.patch_ring_doorbell()
 except Exception as e:
-    print(f"Warning: Failed to apply ring_doorbell patch: {e}")
+    # Use stderr for warnings to avoid JSON parsing issues
+    print(f"Warning: Failed to apply ring_doorbell patch: {e}", file=original_stderr)
+
+# Restore stderr after imports are complete
+sys.stderr = original_stderr
 
 import logging
 import argparse

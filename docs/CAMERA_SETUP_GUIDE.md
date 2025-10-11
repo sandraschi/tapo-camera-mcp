@@ -195,3 +195,6 @@ Once configured, you'll have:
 - **No more mocks** - everything is real!
 
 **Dashboard URL**: `http://localhost:7777` 🎥✨
+
+
+
