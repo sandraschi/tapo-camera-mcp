@@ -75,6 +75,11 @@
                                         id="btn-{{ camera.name or camera.id }}">
                                     Start Stream
                                 </button>
+                                <button onclick="toggleAudio('{{ camera.name or camera.id }}')"
+                                        class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-sm"
+                                        id="btn-audio-{{ camera.name or camera.id }}">
+                                    🔊 Audio
+                                </button>
                                 <button onclick="captureSnapshot('{{ camera.name or camera.id }}')"
                                         class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm">
                                     📸 Snapshot
@@ -156,6 +161,40 @@
                     toggleStream(cameraId); // Stop the failed stream
                     alert('Failed to start video stream. Camera may not be available.');
                 };
+            }
+        }
+
+        function toggleAudio(cameraId) {
+            const button = document.getElementById(`btn-audio-${cameraId}`);
+
+            if (button.textContent.includes('🔊')) {
+                // Request microphone access
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(function(stream) {
+                        console.log('Microphone access granted');
+                        button.textContent = '🔇 Stop Audio';
+                        button.classList.remove('bg-purple-500', 'hover:bg-purple-600');
+                        button.classList.add('bg-red-500', 'hover:bg-red-600');
+
+                        // Store stream for later cleanup
+                        if (!window.activeAudioStreams) window.activeAudioStreams = new Map();
+                        window.activeAudioStreams.set(cameraId, stream);
+                    })
+                    .catch(function(err) {
+                        console.error('Microphone access denied:', err);
+                        alert('Microphone access required for audio. Please allow microphone permissions and try again.');
+                    });
+            } else {
+                // Stop audio
+                if (window.activeAudioStreams && window.activeAudioStreams.has(cameraId)) {
+                    const stream = window.activeAudioStreams.get(cameraId);
+                    stream.getTracks().forEach(track => track.stop());
+                    window.activeAudioStreams.delete(cameraId);
+                }
+
+                button.textContent = '🔊 Audio';
+                button.classList.remove('bg-red-500', 'hover:bg-red-600');
+                button.classList.add('bg-purple-500', 'hover:bg-purple-600');
             }
         }
 
