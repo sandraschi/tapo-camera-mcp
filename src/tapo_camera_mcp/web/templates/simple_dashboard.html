@@ -62,13 +62,47 @@
         </div>
         
         <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-bold mb-4">Camera Status</h2>
+            <h2 class="text-xl font-bold mb-4">Live Camera Feeds</h2>
             {% if cameras %}
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {% for camera in cameras %}
                     <div class="border rounded-lg p-4">
-                        <h3 class="font-bold">{{ camera.name or camera.id }}</h3>
-                        <p class="text-sm text-gray-600">Status: {{ camera.status }}</p>
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold text-lg">{{ camera.name or camera.id }}</h3>
+                            <div class="flex space-x-2">
+                                <button onclick="toggleStream('{{ camera.name or camera.id }}')"
+                                        class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                                        id="btn-{{ camera.name or camera.id }}">
+                                    Start Stream
+                                </button>
+                                <button onclick="captureSnapshot('{{ camera.name or camera.id }}')"
+                                        class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm">
+                                    📸 Snapshot
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <p class="text-sm text-gray-600">
+                                Status: <span class="font-medium {{ 'text-green-600' if camera.status == 'online' else 'text-red-600' }}">{{ camera.status }}</span>
+                                {% if camera.type %}
+                                <span class="ml-2 text-xs bg-gray-100 px-2 py-1 rounded">{{ camera.type }}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div class="video-container">
+                            <img id="stream-{{ camera.name or camera.id }}"
+                                 class="w-full h-48 object-cover border rounded hidden"
+                                 alt="Video stream">
+                            <div id="placeholder-{{ camera.name or camera.id }}"
+                                 class="w-full h-48 bg-gray-100 border-2 border-dashed border-gray-300 rounded flex items-center justify-center text-gray-500">
+                                <div class="text-center">
+                                    <i class="fas fa-video text-3xl mb-2"></i>
+                                    <p>Click "Start Stream" to view live video</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -86,6 +120,93 @@
             </a>
         </div>
     </div>
+
+    <script>
+        // Camera streaming functionality
+        const activeStreams = new Map();
+
+        function toggleStream(cameraId) {
+            const streamImg = document.getElementById(`stream-${cameraId}`);
+            const placeholder = document.getElementById(`placeholder-${cameraId}`);
+            const button = document.getElementById(`btn-${cameraId}`);
+
+            if (activeStreams.has(cameraId)) {
+                // Stop stream
+                activeStreams.delete(cameraId);
+                streamImg.src = '';
+                streamImg.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                button.textContent = 'Start Stream';
+                button.classList.remove('bg-red-500', 'hover:bg-red-600');
+                button.classList.add('bg-blue-500', 'hover:bg-blue-600');
+            } else {
+                // Start stream
+                const streamUrl = `/api/cameras/${cameraId}/stream`;
+                streamImg.src = streamUrl;
+                streamImg.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                button.textContent = 'Stop Stream';
+                button.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                button.classList.add('bg-red-500', 'hover:bg-red-600');
+                activeStreams.set(cameraId, true);
+
+                // Handle stream errors
+                streamImg.onerror = function() {
+                    console.error('Stream failed to load');
+                    toggleStream(cameraId); // Stop the failed stream
+                    alert('Failed to start video stream. Camera may not be available.');
+                };
+            }
+        }
+
+        function captureSnapshot(cameraId) {
+            // Create a temporary image element to capture from stream
+            const streamImg = document.getElementById(`stream-${cameraId}`);
+
+            if (!activeStreams.has(cameraId)) {
+                alert('Please start the video stream first to capture a snapshot.');
+                return;
+            }
+
+            try {
+                // Create canvas to capture current frame
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = streamImg.naturalWidth || 640;
+                canvas.height = streamImg.naturalHeight || 480;
+
+                ctx.drawImage(streamImg, 0, 0);
+
+                // Convert to blob and download
+                canvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `snapshot_${cameraId}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 'image/png');
+
+                // Visual feedback
+                const originalText = event.target.textContent;
+                event.target.textContent = '✅ Captured!';
+                setTimeout(() => {
+                    event.target.textContent = originalText;
+                }, 1500);
+
+            } catch (error) {
+                console.error('Snapshot capture failed:', error);
+                alert('Failed to capture snapshot. Make sure the video stream is active.');
+            }
+        }
+
+        // Auto-refresh status every 30 seconds
+        setInterval(function() {
+            location.reload();
+        }, 30000);
+    </script>
 </body>
 </html>
 
