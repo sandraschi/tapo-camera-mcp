@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.2",
   "name": "tapo-camera-mcp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Comprehensive camera management MCP server supporting Tapo, Ring, Furbo, and USB webcams with 26+ tools",
   "long_description": "Professional camera management and control platform with support for multiple camera types including TP-Link Tapo IP cameras, Ring doorbells, Furbo pet cameras, and USB webcams. Includes PTZ control, motion detection, image capture, video streaming, Grafana metrics integration, and AI-powered vision analysis using DINOv3. Features a web dashboard with live video streaming and comprehensive MCP tool suite.",
   "author": {

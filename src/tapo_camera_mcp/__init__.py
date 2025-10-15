@@ -6,7 +6,7 @@ TP-Link Tapo cameras, including features like live streaming, PTZ control,
 motion detection, image capture, and multimodal analysis.
 """
 
-__version__ = "0.5.0"
+__version__ = "1.1.0"
 __author__ = "Tapo Camera MCP Team <tapo-camera-mcp@example.com>"
 __license__ = "MIT"
 

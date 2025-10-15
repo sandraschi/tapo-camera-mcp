@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tapo-camera-mcp"
-version = "1.0.0"  # Production release with Pydantic V2 and enhanced logging
+version = "1.1.0"  # Live dashboard working - major breakthrough
 description = "🔥 Production-ready FastMCP 2.12 server for TP-Link Tapo cameras with PTZ control, real-time monitoring, and Claude Desktop integration"
 readme = "README.md"
 requires-python = ">=3.8"
