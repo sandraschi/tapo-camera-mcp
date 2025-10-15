@@ -9,17 +9,17 @@ import asyncio
 
 class CameraType(str, Enum):
     """Supported camera types.
-    
+
     Attributes:
         TAPO: Tapo camera (TP-Link)
         RING: Ring doorbell camera
         WEBCAM: Standard USB/web camera
-        FURBO: Furbo dog camera
+        PETCUBE: Petcube pet camera
     """
     TAPO = "tapo"
     RING = "ring"
     WEBCAM = "webcam"
-    FURBO = "furbo"
+    PETCUBE = "petcube"
     
     @classmethod
     def values(cls):
@@ -98,7 +98,7 @@ class BaseCamera(ABC):
     @abstractmethod
     async def get_status(self) -> Dict:
         """Get the status of the camera.
-        
+
         Returns:
             Dict: Status information including connection state, streaming state, etc.
         """
@@ -108,6 +108,13 @@ class BaseCamera(ABC):
             'type': self.config.type.value,
             'enabled': self.config.enabled,
             'last_error': self._last_error,
+            'model': 'Unknown',
+            'firmware': 'Unknown',
+            'resolution': 'Unknown',
+            'ptz_capable': False,
+            'audio_capable': False,
+            'streaming_capable': False,
+            'capture_capable': True,  # Most cameras can capture
             'config': {
                 k: v for k, v in self.config.params.items()
                 if k not in ['password', 'token', 'api_key']  # Don't expose sensitive data

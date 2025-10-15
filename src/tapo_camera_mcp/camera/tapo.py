@@ -90,27 +90,73 @@ class TapoCamera(BaseCamera):
         return self._stream_url
     
     async def get_status(self) -> Dict:
-        """Get camera status."""
+        """Get camera status with detailed capabilities."""
         if not await self.is_connected():
             await self.connect()
-            
+
         try:
             basic_info = await asyncio.get_event_loop().run_in_executor(
                 None,
                 lambda: self._camera.getBasicInfo()
             )
-            
+
+            device_info = basic_info.get('device_info', {})
+
+            # Get resolution from video capabilities if available
+            resolution = 'Unknown'
+            try:
+                # Try to get video config for resolution info
+                video_config = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: self._camera.getVideoConfig()
+                )
+                if video_config and 'video_config' in video_config:
+                    res_info = video_config['video_config'].get('resolution', {})
+                    if res_info:
+                        width = res_info.get('width', 'Unknown')
+                        height = res_info.get('height', 'Unknown')
+                        if width != 'Unknown' and height != 'Unknown':
+                            resolution = f"{width}x{height}"
+            except Exception:
+                # Fallback to basic resolution detection
+                pass
+
+            # Check PTZ capability (most Tapo cameras have PTZ)
+            ptz_capable = True  # Assume true for Tapo cameras, could be enhanced
+
+            # Check audio capability
+            audio_capable = False
+            try:
+                audio_config = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: self._camera.getAudioConfig()
+                )
+                if audio_config and audio_config.get('enabled', False):
+                    audio_capable = True
+            except Exception:
+                pass
+
             return {
                 'connected': True,
-                'model': basic_info.get('device_info', {}).get('device_model'),
-                'firmware': basic_info.get('device_info', {}).get('firmware_version'),
-                'streaming': await self.is_streaming()
+                'model': device_info.get('device_model', 'Unknown'),
+                'firmware': device_info.get('firmware_version', 'Unknown'),
+                'streaming': await self.is_streaming(),
+                'resolution': resolution,
+                'ptz_capable': ptz_capable,
+                'audio_capable': audio_capable,
+                'streaming_capable': True,  # All Tapo cameras can stream
+                'capture_capable': True     # All Tapo cameras can capture
             }
         except Exception as e:
             self._is_connected = False
             return {
                 'connected': False,
-                'error': str(e)
+                'error': str(e),
+                'resolution': 'N/A',
+                'ptz_capable': False,
+                'audio_capable': False,
+                'streaming_capable': False,
+                'capture_capable': False
             }
     
     async def get_info(self) -> Dict:

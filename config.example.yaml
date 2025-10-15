@@ -149,6 +149,21 @@ alerts:
       Content-Type: "application/json"
       X-API-Key: "your-api-key"
 
+# Security System Integrations
+# Integrate with other MCP servers for unified security monitoring
+security_integrations:
+  # Nest Protect smoke/CO detector integration
+  nest_protect:
+    enabled: false  # Set to true to enable
+    server_url: "http://localhost:8123"  # URL of Nest Protect MCP server
+    # api_key: "your-nest-api-key"  # Optional API key for authentication
+
+  # Ring doorbell/camera integration
+  ring_mcp:
+    enabled: false  # Set to true to enable (when Ring MCP is working)
+    server_path: "D:\\Dev\\repos\\ring-mcp"  # Path to Ring MCP server
+    proxy_port: 8124  # Port for MCP proxy (if needed)
+
 # Logging configuration
 logging:
   file: "tapo_mcp.log"

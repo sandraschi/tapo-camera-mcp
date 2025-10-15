@@ -23,7 +23,9 @@
 
 ## 1. Introduction
 
-Tapo Camera MCP is a powerful server for managing multiple IP cameras with support for various brands including TP-Link Tapo, Ring, and Furbo. This guide covers all aspects of setting up and using the server.
+Tapo Camera MCP is a powerful server for managing multiple IP cameras with support for various brands including TP-Link Tapo, Ring, and Petcube. This guide covers all aspects of setting up and using the server.
+
+**Note:** Furbo cameras are not supported due to their intentional API restrictions. Use Petcube cameras instead for API-accessible pet monitoring.
 
 ## 2. Getting Started
 
@@ -86,7 +88,7 @@ Access the web interface at `http://localhost:7777` (or your server's IP address
 ### 4.1 Adding Cameras
 Add cameras through the web interface or config file. Supported parameters:
 - `name`: Unique identifier
-- `type`: Camera type (tapo, ring, furbo)
+- `type`: Camera type (tapo, ring)
 - `params`: Connection parameters
 - `stream_quality`: hd or sd
 - `enabled`: true/false
@@ -106,8 +108,45 @@ Supported camera types and their requirements:
 |-------|------------------------------|--------------------------------|
 | Tapo  | host, username, password     | Uses Tapo API                  |
 | Ring  | email, password, 2FA token   | Requires Ring account          |
-| Furbo | email, password              | Uses Furbo API                 |
+| Petcube | email, password, device_id   | Petcube pet camera with treats |
 | RTSP  | rtsp_url                     | Generic RTSP camera support    |
+
+**Note:** Furbo cameras are not supported due to API restrictions. Use Petcube instead.
+
+### 4.4 Petcube Camera Setup
+
+**Petcube Bites 2 Lite** is the recommended pet camera for MCP integration.
+
+#### **🎯 Getting Started:**
+1. **Purchase:** Buy Petcube Bites 2 Lite ($199-249)
+2. **Setup:** Use Petcube app to configure camera
+3. **Account:** Create Petcube account (email/password)
+4. **MCP Config:** Add camera to your `config.yaml`
+
+#### **🔧 Configuration:**
+```yaml
+cameras:
+  my_petcube:
+    type: petcube
+    params:
+      email: "your_petcube_account@example.com"
+      password: "your_petcube_password"
+      # device_id: optional - auto-detected if not specified
+```
+
+#### **🎮 MCP Features:**
+- **Live streaming** through web interface
+- **Remote treat dispensing** (up to 2 compartments)
+- **Motion/sound alerts** with notifications
+- **Battery monitoring** and status tracking
+- **Automated pet care** schedules
+
+#### **📱 Petcube Advantages over Furbo:**
+- ✅ **Official API** (Furbo blocks third-party access)
+- ✅ **Dual treat compartments** (vs Furbo's single)
+- ✅ **Interactive toys** (laser pointer, auto-play)
+- ✅ **Better price** ($199-249 vs Furbo's $249-349)
+- ✅ **Full MCP integration** possible
 
 ## 5. Streaming
 

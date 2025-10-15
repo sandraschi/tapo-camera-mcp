@@ -38,10 +38,12 @@ def is_tool_class(obj: Any) -> bool:
         # Check for required attributes in FastMCP 2.12
         if not hasattr(obj, 'Meta') or not hasattr(obj.Meta, 'name') or not hasattr(obj, 'execute'):
             return False
-            
-        # Check if the Meta class has the required Parameters class
-        if not hasattr(obj.Meta, 'Parameters'):
-            return False
+
+        # Check if the Meta class has the required Parameters class (optional for Pydantic-based tools)
+        # Some tools use Pydantic fields directly instead of Parameters classes
+        has_parameters = hasattr(obj.Meta, 'Parameters')
+        # For now, we'll accept tools with or without Parameters classes
+        # TODO: Standardize on one approach across all tools
             
         return True
         

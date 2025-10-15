@@ -91,11 +91,31 @@ class WebCamera(BaseCamera):
         return None
     
     async def get_status(self) -> Dict:
-        """Get webcam status."""
+        """Get webcam status with detailed capabilities."""
+        connected = await self.is_connected()
+
+        # Get resolution information if connected
+        resolution = 'Unknown'
+        if connected and self._cap:
+            try:
+                width = int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                height = int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                if width > 0 and height > 0:
+                    resolution = f"{width}x{height}"
+            except Exception:
+                pass
+
         return {
-            'connected': await self.is_connected(),
+            'connected': connected,
+            'model': f"Webcam Device {self._device_id}",
+            'firmware': 'N/A',
             'device_id': self._device_id,
-            'streaming': await self.is_streaming()
+            'streaming': await self.is_streaming(),
+            'resolution': resolution,
+            'ptz_capable': False,  # Most webcams don't have PTZ
+            'audio_capable': False,  # Audio not implemented for webcams
+            'streaming_capable': True,  # Webcams can stream
+            'capture_capable': True     # Webcams can capture
         }
     
     async def get_info(self) -> Dict:

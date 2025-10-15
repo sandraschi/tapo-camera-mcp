@@ -106,3 +106,24 @@ class TapoCameraConfig(BaseModel):
         if v < 1:
             raise ValueError("Timeout must be at least 1 second")
         return v
+
+
+class SystemInfo(BaseModel):
+    """System information response model."""
+    version: str = Field(..., description="MCP server version")
+    python_version: str = Field(..., description="Python version")
+    platform: str = Field(..., description="Operating system platform")
+    uptime: Optional[float] = Field(None, description="Server uptime in seconds")
+    memory_usage: Optional[Dict[str, Any]] = Field(None, description="Memory usage statistics")
+    cpu_usage: Optional[float] = Field(None, description="CPU usage percentage")
+
+
+class SystemStatus(BaseModel):
+    """System status response model."""
+    status: str = Field(..., description="Overall system status")
+    cameras_connected: int = Field(..., description="Number of connected cameras")
+    cameras_total: int = Field(..., description="Total number of configured cameras")
+    server_uptime: Optional[float] = Field(None, description="Server uptime in seconds")
+    last_camera_check: Optional[float] = Field(None, description="Last camera health check timestamp")
+    active_streams: int = Field(0, description="Number of active video streams")
+    disk_usage: Optional[Dict[str, Any]] = Field(None, description="Disk usage statistics")

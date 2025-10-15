@@ -1,18 +1,36 @@
-# 🎥 Tapo Camera MCP - Product Requirements Document (PRD)
+# 🏠 Home Security Dashboard MCP - Product Requirements Document (PRD)
 
 ## 📋 **PRODUCT OVERVIEW** (Updated October 2025)
 
 ### **Product Name**
-Tapo Camera MCP Server with Live Video Streaming Dashboard
+Home Security Dashboard MCP - Dual Architecture Platform
 
 ### **Product Vision**
-A production-ready camera management system providing unified control over multiple camera types through MCP integration and a modern web dashboard with real-time video streaming capabilities.
+A production-ready security monitoring platform with dual MCP architecture: serving as both individual camera/sensor MCP servers AND a unified security dashboard that orchestrates multiple MCP servers for comprehensive home security monitoring.
 
 ### **Target Users**
-- **✅ Home Security Enthusiasts**: Users with multiple Tapo cameras (WORKING)
-- **✅ AI Developers**: Developers integrating camera feeds with Claude Desktop (WORKING)
-- **✅ System Administrators**: IT professionals managing camera networks
-- **✅ Home Automation Users**: Smart home enthusiasts
+- **🏠 Home Security Professionals**: Users with comprehensive security ecosystems (cameras + sensors)
+- **🤖 AI Integration Developers**: Developers building MCP-based security systems
+- **🏢 System Administrators**: IT professionals managing multi-vendor security networks
+- **🔧 Home Automation Enthusiasts**: Users integrating multiple smart home systems
+- **📱 Remote Monitoring Users**: Users needing mobile access via VPN (Tailscale)
+
+### **🎯 DUAL ARCHITECTURE EXPLANATION**
+
+**This platform serves two complementary roles:**
+
+#### **🎥 Role 1: Individual MCP Servers**
+- **Tapo Camera MCP**: Standalone TP-Link camera control
+- **USB Webcam MCP**: Direct webcam management
+- **Ring MCP**: Doorbell/camera security integration
+- **Nest Protect MCP**: Smoke/CO detector monitoring
+- **Each MCP server**: Can run independently for specific device control
+
+#### **🏠 Role 2: Unified Security Dashboard**
+- **Multi-MCP Orchestrator**: Coordinates multiple MCP servers
+- **Unified Interface**: Single dashboard for all security devices
+- **Cross-System Correlation**: Intelligent alert analysis across systems
+- **Real-time Monitoring**: Live status from cameras + sensors + alarms
 
 ### **🏆 MAJOR ACHIEVEMENT - PRODUCTION READY!**
 - **✅ Live Web Dashboard**: Working at `localhost:7777`

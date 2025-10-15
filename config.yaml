@@ -11,11 +11,12 @@ server:
 # Camera configurations
 cameras:
   # USB Webcam (easiest to test)
-  webcam:
+  test_webcam:
     type: webcam
-    device_id: 0
-    resolution: "1920x1080"
-    fps: 30
+    params:
+      device_id: 0
+      resolution: "1920x1080"
+      fps: 30
     
   # Tapo Camera Example
   tapo_camera:

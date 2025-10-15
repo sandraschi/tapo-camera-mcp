@@ -43,14 +43,30 @@ def start_mcp_server(debug=False):
     except KeyboardInterrupt:
         logger.info("🛑 MCP Server stopped")
 
-def start_web_dashboard():
+def start_dual_server():
+    """Start the dual interface server (MCP + REST API)."""
+    logger.info("🔄 Starting Dual Interface Server...")
+    logger.info("📡 MCP Server: Available for Claude Desktop integration")
+    logger.info("🌐 REST API: Available at http://localhost:8123")
+    logger.info("📺 Dashboard: Available at http://localhost:7777")
+    logger.info("🛑 Press Ctrl+C to stop the server")
+
+    cmd = "python -c \"import asyncio; from src.tapo_camera_mcp.dual_server import start_dual_server; asyncio.run(start_dual_server())\""
+
+    try:
+        subprocess.run(cmd, shell=True)
+    except KeyboardInterrupt:
+        logger.info("🛑 Dual Server stopped")
+
+def start_web_dashboard(port: int = 7777):
     """Start the web dashboard."""
     logger.info("🌐 Starting Web Dashboard...")
-    logger.info("📺 Dashboard will be available at: http://localhost:7777")
+    logger.info(f"📺 Dashboard will be available at: http://localhost:{port}")
     logger.info("🛑 Press Ctrl+C to stop the dashboard")
-    
+
     try:
-        subprocess.run("python -m tapo_camera_mcp.web.server", shell=True)
+        cmd = f"python -m tapo_camera_mcp.web.server --port {port}"
+        subprocess.run(cmd, shell=True)
     except KeyboardInterrupt:
         logger.info("🛑 Web Dashboard stopped")
 
@@ -97,13 +113,13 @@ def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Tapo Camera MCP Quick Start")
     parser.add_argument("command", choices=[
-        "mcp", "dashboard", "webcam", "test", "check", "both"
+        "mcp", "dashboard", "dual", "webcam", "test", "check", "both"
     ], help="Command to run")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     
     args = parser.parse_args()
     
-    print("🎥 Tapo Camera MCP - Quick Start")
+    print("Tapo Camera MCP - Quick Start")
     print("=" * 40)
     
     if args.command == "check":
@@ -112,6 +128,8 @@ def main():
         test_webcam()
     elif args.command == "mcp":
         start_mcp_server(args.debug)
+    elif args.command == "dual":
+        start_dual_server()
     elif args.command == "dashboard":
         start_web_dashboard()
     elif args.command == "webcam":

@@ -1,106 +1,168 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Dashboard - Tapo Camera MCP</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-    </style>
-</head>
-<body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-8">Tapo Camera MCP Dashboard</h1>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-lg shadow">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-green-100 text-green-600">
-                        <i class="fas fa-video"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Cameras Online</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ online_cameras }}/{{ total_cameras }}</p>
-                    </div>
-                </div>
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Home Security MCP{% endblock %}
+
+{% block extra_css %}
+<style>
+    .camera-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .camera-card {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+
+    .security-card {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid #dc2626;
+    }
+
+    .status-online { border-left-color: #16a34a; }
+    .status-offline { border-left-color: #6b7280; }
+    .status-alert { border-left-color: #dc2626; }
+
+    .alert-critical { border-left-color: #dc2626; background-color: #fef2f2; }
+    .alert-warning { border-left-color: #d97706; background-color: #fffbeb; }
+    .alert-info { border-left-color: #2563eb; background-color: #eff6ff; }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .theme-toggle {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 0.375rem;
+        transition: background-color 0.2s;
+    }
+
+    .theme-toggle:hover {
+        background-color: #f3f4f6;
+    }
+
+    [data-theme="dark"] {
+        --bg-color: #1f2937;
+        --text-color: #f9fafb;
+        --card-bg: #374151;
+        --border-color: #4b5563;
+    }
+
+    [data-theme="dark"] body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+    }
+
+    [data-theme="dark"] .camera-card,
+    [data-theme="dark"] .security-card,
+    [data-theme="dark"] .stat-card {
+        background-color: var(--card-bg);
+        color: var(--text-color);
+        border-color: var(--border-color);
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="dashboard-content">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">🏠 Home Security Dashboard</h1>
+            <a href="/settings" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                ⚙️ Settings
+            </a>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-grid mb-6">
+            <div class="stat-card">
+                <div class="text-3xl font-bold text-green-600 mb-1">{{ online_cameras }}/{{ total_cameras }}</div>
+                <div class="text-sm text-gray-600">Cameras Online</div>
+                <i class="fas fa-video text-green-500 mt-2"></i>
             </div>
-            
-            <div class="bg-white p-6 rounded-lg shadow">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
-                        <i class="fas fa-hdd"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Storage Used</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ storage_used }}%</p>
-                    </div>
-                </div>
+
+            <div class="stat-card">
+                <div class="text-3xl font-bold text-blue-600 mb-1">{{ storage_used }}%</div>
+                <div class="text-sm text-gray-600">Storage Used</div>
+                <i class="fas fa-hdd text-blue-500 mt-2"></i>
             </div>
-            
-            <div class="bg-white p-6 rounded-lg shadow">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                        <i class="fas fa-bell"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Active Alerts</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ active_alerts }}</p>
-                    </div>
-                </div>
+
+            <div class="stat-card">
+                <div class="text-3xl font-bold text-red-600 mb-1">{{ active_alerts }}</div>
+                <div class="text-sm text-gray-600">Active Alerts</div>
+                <i class="fas fa-exclamation-triangle text-red-500 mt-2"></i>
             </div>
-            
-            <div class="bg-white p-6 rounded-lg shadow">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-red-100 text-red-600">
-                        <i class="fas fa-record-vinyl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Active Recordings</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ active_recordings }}</p>
-                    </div>
-                </div>
+
+            <div class="stat-card">
+                <div class="text-3xl font-bold text-purple-600 mb-1">{{ active_recordings }}</div>
+                <div class="text-sm text-gray-600">Active Recordings</div>
+                <i class="fas fa-circle text-purple-500 mt-2"></i>
             </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-bold mb-4">Live Camera Feeds</h2>
+        <!-- Camera Feeds -->
+        <div class="camera-card">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">📹 Live Camera Feeds</h3>
+                <a href="/cameras" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    View All Cameras →
+                </a>
+            </div>
             {% if cameras %}
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="camera-grid">
                     {% for camera in cameras %}
                     <div class="border rounded-lg p-4">
                         <div class="flex justify-between items-center mb-3">
                             <h3 class="font-bold text-lg">{{ camera.name or camera.id }}</h3>
-                            <div class="flex space-x-2">
-                                <button onclick="toggleStream('{{ camera.name or camera.id }}')"
-                                        class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                                        id="btn-{{ camera.name or camera.id }}">
-                                    Start Stream
-                                </button>
-                                <button onclick="toggleAudio('{{ camera.name or camera.id }}')"
-                                        class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-sm"
-                                        id="btn-audio-{{ camera.name or camera.id }}">
-                                    🔊 Audio
-                                </button>
-                                <button onclick="captureSnapshot('{{ camera.name or camera.id }}')"
-                                        class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm">
-                                    📸 Snapshot
-                                </button>
+                            <!-- Status Indicator -->
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-medium">Stream:</span>
+                                <span class="w-3 h-3 rounded-full {{ 'bg-green-500' if camera.streaming_capable else 'bg-red-500' }}"></span>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <p class="text-sm text-gray-600">
-                                Status: <span class="font-medium {{ 'text-green-600' if camera.status == 'online' else 'text-red-600' }}">{{ camera.status }}</span>
-                                {% if camera.type %}
-                                <span class="ml-2 text-xs bg-gray-100 px-2 py-1 rounded">{{ camera.type }}</span>
-                                {% endif %}
-                            </p>
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium {{ 'text-green-600' if camera.status == 'online' else 'text-red-600' }}">{{ camera.status }}</span>
+                                    {% if camera.type %}
+                                    <span class="text-xs bg-gray-100 px-2 py-1 rounded">{{ camera.type }}</span>
+                                    {% endif %}
+                                </div>
+                                <!-- Status Indicator -->
+                                <div class="flex items-center gap-1">
+                                    <span class="text-sm font-medium">Stream:</span>
+                                    <span class="w-3 h-3 rounded-full {{ 'bg-green-500' if camera.streaming_capable else 'bg-red-500' }}"></span>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="video-container">
@@ -115,6 +177,25 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Large Action Buttons -->
+                        <div class="grid grid-cols-3 gap-3 mt-4">
+                            <button onclick="window.open('/api/cameras/{{ camera.name or camera.id }}/stream', 'stream-{{ camera.name or camera.id }}', 'width=800,height=600')"
+                                    class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-4 rounded-xl text-sm font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex flex-col items-center gap-2 group">
+                                <i class="fas fa-play text-lg group-hover:scale-110 transition-transform"></i>
+                                <span class="font-bold">START STREAM</span>
+                            </button>
+                            <button onclick="alert('Audio recording not implemented yet - coming soon!')"
+                                    class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-4 py-4 rounded-xl text-sm font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex flex-col items-center gap-2 group">
+                                <i class="fas fa-microphone text-lg group-hover:scale-110 transition-transform"></i>
+                                <span class="font-bold">RECORD AUDIO</span>
+                            </button>
+                            <button onclick="window.open('/api/cameras/{{ camera.name or camera.id }}/snapshot', 'snapshot-{{ camera.name or camera.id }}', 'width=800,height=600')"
+                                    class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-4 rounded-xl text-sm font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex flex-col items-center gap-2 group">
+                                <i class="fas fa-camera text-lg group-hover:scale-110 transition-transform"></i>
+                                <span class="font-bold">SNAPSHOT</span>
+                            </button>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -125,7 +206,145 @@
                 </p>
             {% endif %}
         </div>
-        
+
+        <!-- Security Systems -->
+        <div class="security-card mt-6">
+            <h3 class="text-lg font-semibold mb-4 text-red-800">
+                🏠 Security Systems
+            </h3>
+
+            <!-- System Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-white p-4 rounded border">
+                    <h3 class="font-semibold text-gray-800">System Status</h3>
+                    <div class="mt-2">
+                        {% if security_overview and security_overview.systems %}
+                            {% for system_name, system_data in security_overview.systems.items() %}
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm capitalize">{{ system_name.replace('_', ' ') }}</span>
+                                    <span class="text-xs px-2 py-1 rounded
+                                        {% if system_data.get('health') == 'online' or system_data.get('online_devices', 0) > 0 %}bg-green-100 text-green-800
+                                        {% elif system_data.get('error') %}bg-red-100 text-red-800
+                                        {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                        {% if system_data.get('error') %}Error
+                                        {% elif system_data.get('health') == 'online' or system_data.get('online_devices', 0) > 0 %}Online
+                                        {% else %}Offline{% endif %}
+                                    </span>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-sm text-gray-500">No security systems configured</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded border">
+                    <h3 class="font-semibold text-gray-800">Device Summary</h3>
+                    <div class="mt-2 text-2xl font-bold text-blue-600">
+                        {{ (security_overview.total_devices if security_overview else 0)|default(0) }}
+                    </div>
+                    <p class="text-sm text-gray-600">
+                        {{ (security_overview.online_devices if security_overview else 0)|default(0) }} online
+                    </p>
+                </div>
+
+                <div class="bg-white p-4 rounded border">
+                    <h3 class="font-semibold text-gray-800">Active Alerts</h3>
+                    <div class="mt-2 text-2xl font-bold text-red-600">
+                        {{ security_alerts|length }}
+                    </div>
+                    <p class="text-sm text-gray-600">
+                        {% if security_alerts %}
+                            Requires attention
+                        {% else %}
+                            All clear
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Security Devices -->
+            {% if security_devices %}
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold mb-3 text-gray-800">Security Devices</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for device in security_devices %}
+                    <div class="bg-white p-4 rounded border-l-4
+                                {% if device.status == 'online' %}border-green-500
+                                {% elif device.status == 'alert' %}border-red-500
+                                {% else %}border-gray-300{% endif %}">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-semibold">{{ device.name }}</h4>
+                            <span class="px-2 py-1 rounded text-xs
+                                       {% if device.status == 'online' %}bg-green-100 text-green-800
+                                       {% elif device.status == 'alert' %}bg-red-100 text-red-800
+                                       {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ device.status }}
+                            </span>
+                        </div>
+
+                        <div class="text-sm text-gray-600 space-y-1">
+                            <p><strong>Type:</strong> {{ device.type.replace('_', ' ') }}</p>
+                            {% if device.battery_level is not none %}
+                            <p><strong>Battery:</strong> {{ device.battery_level }}%</p>
+                            {% endif %}
+                            {% if device.location %}
+                            <p><strong>Location:</strong> {{ device.location }}</p>
+                            {% endif %}
+                            {% if device.last_seen %}
+                            <p><strong>Last Seen:</strong> {{ device.last_seen.strftime('%H:%M %m/%d') }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Active Security Alerts -->
+            {% if security_alerts %}
+            <div class="bg-red-100 border border-red-300 rounded p-4">
+                <h3 class="font-bold text-red-800 mb-3">🚨 Active Security Alerts</h3>
+                <div class="space-y-2">
+                    {% for alert in security_alerts %}
+                    <div class="bg-white p-3 rounded border-l-4
+                                {% if alert.severity == 'critical' %}border-red-500
+                                {% elif alert.severity == 'warning' %}border-yellow-500
+                                {% else %}border-blue-500{% endif %}">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-800">
+                                    {{ alert.device_name }} - {{ alert.alert_type.title() }}
+                                </p>
+                                <p class="text-sm text-gray-600 mt-1">{{ alert.message }}</p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    {{ alert.timestamp.strftime('%H:%M %m/%d/%Y') }}
+                                </p>
+                            </div>
+                            <span class="px-2 py-1 rounded text-xs font-semibold
+                                       {% if alert.severity == 'critical' %}bg-red-100 text-red-800
+                                       {% elif alert.severity == 'warning' %}bg-yellow-100 text-yellow-800
+                                       {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                {{ alert.severity.upper() }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+                <div class="bg-green-100 border border-green-300 rounded p-4">
+                    <div class="flex items-center">
+                        <span class="text-green-600 text-xl mr-3">✅</span>
+                        <div>
+                            <h3 class="font-semibold text-green-800">All Clear</h3>
+                            <p class="text-sm text-green-700">No active security alerts</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
         <div class="mt-8 text-center">
             <a href="/help" class="text-blue-600 hover:text-blue-800 underline">
                 <i class="fas fa-question-circle mr-2"></i>Help & Documentation
@@ -133,177 +352,17 @@
         </div>
     </div>
 
-    <script>
-        // Camera streaming functionality
-        const activeStreams = new Map();
+    </div>
+{% endblock %}
 
-        function toggleStream(cameraId) {
-            const streamImg = document.getElementById(`stream-${cameraId}`);
-            const placeholder = document.getElementById(`placeholder-${cameraId}`);
-            const button = document.getElementById(`btn-${cameraId}`);
-
-            if (activeStreams.has(cameraId)) {
-                // Stop stream
-                activeStreams.delete(cameraId);
-                streamImg.src = '';
-                streamImg.classList.add('hidden');
-                placeholder.classList.remove('hidden');
-                button.textContent = 'Start Stream';
-                button.classList.remove('bg-red-500', 'hover:bg-red-600');
-                button.classList.add('bg-blue-500', 'hover:bg-blue-600');
-            } else {
-                // Start stream
-                const streamUrl = `/api/cameras/${cameraId}/stream`;
-                streamImg.src = streamUrl;
-                streamImg.classList.remove('hidden');
-                placeholder.classList.add('hidden');
-                button.textContent = 'Stop Stream';
-                button.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-                button.classList.add('bg-red-500', 'hover:bg-red-600');
-                activeStreams.set(cameraId, true);
-
-                // Handle stream errors
-                streamImg.onerror = function() {
-                    console.error('Stream failed to load');
-                    toggleStream(cameraId); // Stop the failed stream
-                    alert('Failed to start video stream. Camera may not be available.');
-                };
-            }
-        }
-
-        function toggleAudio(cameraId) {
-            const button = document.getElementById(`btn-audio-${cameraId}`);
-
-            if (button.textContent.includes('🔊')) {
-                console.log('Requesting microphone access...');
-
-                // Check if getUserMedia is supported
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    alert('Microphone access not supported in this browser. Please use a modern browser.');
-                    return;
-                }
-
-                // Request microphone access with constraints
-                navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        sampleRate: 44100
-                    }
-                })
-                    .then(function(stream) {
-                        console.log('✅ Microphone access granted!', stream);
-
-                        // Create audio element to play back microphone input
-                        const audioElement = new Audio();
-                        audioElement.srcObject = stream;
-                        audioElement.volume = 0.1; // Low volume to avoid feedback
-                        audioElement.play().catch(e => console.log('Playback failed:', e));
-
-                        button.textContent = '🔇 Stop Audio';
-                        button.classList.remove('bg-purple-500', 'hover:bg-purple-600');
-                        button.classList.add('bg-green-500', 'hover:bg-green-600');
-
-                        // Store stream and audio element for cleanup
-                        if (!window.activeAudioStreams) window.activeAudioStreams = new Map();
-                        window.activeAudioStreams.set(cameraId, { stream, audioElement });
-
-                        // Add visual feedback - button pulses
-                        button.style.animation = 'pulse 2s infinite';
-
-                        alert('🎙️ Microphone active! You should hear your audio feedback. Adjust volume carefully to avoid feedback.');
-                    })
-                    .catch(function(err) {
-                        console.error('❌ Microphone access failed:', err);
-
-                        let errorMessage = 'Microphone access failed. ';
-                        if (err.name === 'NotAllowedError') {
-                            errorMessage += 'Please allow microphone permissions in your browser settings.';
-                        } else if (err.name === 'NotFoundError') {
-                            errorMessage += 'No microphone found on this device.';
-                        } else if (err.name === 'NotSupportedError') {
-                            errorMessage += 'Microphone not supported in this browser.';
-                        } else {
-                            errorMessage += 'Error: ' + err.message;
-                        }
-
-                        alert(errorMessage);
-                    });
-            } else {
-                // Stop audio
-                if (window.activeAudioStreams && window.activeAudioStreams.has(cameraId)) {
-                    const { stream, audioElement } = window.activeAudioStreams.get(cameraId);
-
-                    // Stop audio playback
-                    if (audioElement) {
-                        audioElement.pause();
-                        audioElement.srcObject = null;
-                    }
-
-                    // Stop all tracks
-                    stream.getTracks().forEach(track => track.stop());
-                    window.activeAudioStreams.delete(cameraId);
-                }
-
-                button.textContent = '🔊 Audio';
-                button.style.animation = '';
-                button.classList.remove('bg-green-500', 'hover:bg-green-600');
-                button.classList.add('bg-purple-500', 'hover:bg-purple-600');
-
-                console.log('🔇 Audio stopped');
-            }
-        }
-
-        function captureSnapshot(cameraId) {
-            // Create a temporary image element to capture from stream
-            const streamImg = document.getElementById(`stream-${cameraId}`);
-
-            if (!activeStreams.has(cameraId)) {
-                alert('Please start the video stream first to capture a snapshot.');
-                return;
-            }
-
-            try {
-                // Create canvas to capture current frame
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = streamImg.naturalWidth || 640;
-                canvas.height = streamImg.naturalHeight || 480;
-
-                ctx.drawImage(streamImg, 0, 0);
-
-                // Convert to blob and download
-                canvas.toBlob(function(blob) {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `snapshot_${cameraId}_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.png`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                }, 'image/png');
-
-                // Visual feedback
-                const originalText = event.target.textContent;
-                event.target.textContent = '✅ Captured!';
-                setTimeout(() => {
-                    event.target.textContent = originalText;
-                }, 1500);
-
-            } catch (error) {
-                console.error('Snapshot capture failed:', error);
-                alert('Failed to capture snapshot. Make sure the video stream is active.');
-            }
-        }
-
-        // Auto-refresh status every 30 seconds
-        setInterval(function() {
-            location.reload();
-        }, 30000);
-    </script>
-</body>
-</html>
+{% block extra_js %}
+<script>
+    // Auto-refresh status every 30 seconds
+    setInterval(function() {
+        location.reload();
+    }, 30000);
+</script>
+{% endblock %}
 
 
 

@@ -23,6 +23,25 @@ class WebUISettings(BaseModel):
     session_secret: str = "change-this-in-production"
     session_lifetime: int = 86400  # 24 hours in seconds
 
+class SecurityIntegrations(BaseModel):
+    """Settings for external security system integrations."""
+    nest_protect: Dict[str, Any] = Field(
+        default_factory=lambda: {
+            "enabled": False,
+            "server_url": "http://localhost:8123",
+            "api_key": None
+        },
+        description="Nest Protect MCP server integration settings"
+    )
+    ring_mcp: Dict[str, Any] = Field(
+        default_factory=lambda: {
+            "enabled": False,
+            "server_path": "D:\\Dev\\repos\\ring-mcp",
+            "proxy_port": 8124
+        },
+        description="Ring MCP server integration settings"
+    )
+
 class SecuritySettings(BaseModel):
     """Security related settings."""
     secret_key: str = "change-this-in-production"
@@ -34,6 +53,9 @@ class SecuritySettings(BaseModel):
     password_require_special_char: bool = True
     rate_limit: str = "100/minute"
     enable_rate_limiting: bool = True
+
+    # Security system integrations
+    integrations: SecurityIntegrations = Field(default_factory=SecurityIntegrations)
 
 class LoggingSettings(BaseModel):
     """Logging configuration."""

@@ -1,4 +1,4 @@
-# 🎥 Tapo Camera MCP Server
+# 🏠 Home Security Dashboard MCP
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/pypi/pyversions/tapo-camera-mcp)](https://www.python.org/)
@@ -7,38 +7,140 @@
 [![Dashboard](https://img.shields.io/badge/Dashboard-Live-green)](http://localhost:7777)
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-success)](https://github.com/sandraschi/tapo-camera-mcp)
 
-🚀 **PRODUCTION READY**: A FastMCP 2.12.0-compliant MCP server for TP-Link Tapo cameras with live web dashboard and Claude Desktop integration.
+🚀 **PRODUCTION READY**: Unified home security dashboard with dual MCP architecture - serving as both individual camera MCP servers AND a comprehensive security monitoring platform.
+
+## 🏗️ **DUAL ARCHITECTURE OVERVIEW**
+
+**This repository has evolved into a sophisticated dual-role platform:**
+
+### **🎯 Role 1: Individual MCP Servers**
+**Standalone MCP servers** for specific device types that can run independently:
+- **Tapo Camera MCP**: TP-Link camera control and monitoring
+- **USB Webcam MCP**: Direct webcam management
+- **Ring MCP**: Doorbell and security camera integration
+- **Nest Protect MCP**: Smoke/CO detector monitoring
+
+### **🎯 Role 2: Unified Security Dashboard**
+**Multi-MCP orchestration platform** that coordinates multiple MCP servers:
+- **Single Interface**: Monitor all cameras + sensors + alarms in one dashboard
+- **Cross-System Integration**: Correlate events across different security systems
+- **Real-time Monitoring**: Live status updates from all integrated devices
+- **Remote Access**: Mobile monitoring via Tailscale VPN
+
+**The dashboard serves as the "conductor" that brings together multiple specialized "instruments" (MCP servers) into a cohesive security symphony.**
 
 ## 🏆 **MAJOR ACHIEVEMENT - LIVE DASHBOARD WORKING!**
 
 **✅ BREAKTHROUGH ACCOMPLISHED:**
-- **Live Web Dashboard**: Real camera monitoring at `http://localhost:7777`
+- **Unified Security Dashboard**: Single interface monitoring cameras + security sensors
+- **Live Web Interface**: Real-time monitoring at `http://localhost:7777`
 - **USB Webcam Support**: Auto-detection and display in dashboard
 - **Claude Desktop Integration**: MCP server starts successfully in Claude
-- **Production Foundation**: Ready for video streaming implementation
+- **Multi-MCP Architecture**: Foundation for integrating Nest Protect, Ring, and other security MCPs
 
-**🎯 Current Status**: USB webcam recognized, dashboard operational, Tapo cameras pending authentication resolution.
+**🎯 Current Status**: USB webcam recognized, security dashboard operational, Tapo cameras pending auth resolution, Nest Protect & Ring MCP integration ready.
 
-## 🚀 **CURRENT CAPABILITIES** (October 2025)
+## 🚀 **DUAL ARCHITECTURE CAPABILITIES** (October 2025)
 
-### ✅ **WORKING NOW**
-- **🌐 Live Web Dashboard**: Professional monitoring interface at `localhost:7777`
-- **📹 USB Webcam Support**: Auto-detection and status monitoring
-- **🤖 Claude Desktop MCP**: Server successfully loads in Claude Desktop
-- **📊 Real-time Monitoring**: Camera connection status and health metrics
-- **🔧 Camera Management**: Add, list, and manage camera connections
+### **🎯 ASPECT 1: INDIVIDUAL MCP SERVERS**
 
-### 🎯 **CORE FEATURES**
-- **Unified Camera Interface**: Consistent API across different camera types
-- **Modular Architecture**: Easy to extend with new camera types and features
-- **Asynchronous I/O**: Built on asyncio for high performance
-- **Type Annotations**: Full type hints for better development experience
+#### ✅ **WORKING NOW**
+- **🎥 Tapo Camera MCP**: TP-Link Tapo camera control and monitoring
+- **📹 USB Webcam MCP**: Auto-detection and management
+- **🤖 Claude Desktop Integration**: MCP protocol compliance for AI assistants
+- **🔧 Camera Management Tools**: Add, configure, and control cameras
+- **📊 Real-time Status**: Camera connection health and diagnostics
+
+#### 🎯 **CORE MCP FEATURES**
+- **MCP 2.12.0 Protocol**: Full Model Context Protocol compliance
+- **Modular Camera Types**: Extensible architecture for new camera brands
+- **Asynchronous Operations**: High-performance async I/O
+- **Type-Safe APIs**: Full type hints and Pydantic validation
+
+### **🎯 ASPECT 2: UNIFIED SECURITY DASHBOARD**
+
+#### ✅ **WORKING NOW**
+- **🏠 Live Security Dashboard**: Single interface at `localhost:7777`
+- **🔗 Multi-MCP Integration**: Connect multiple security MCP servers
+- **📊 Real-time Monitoring**: Cameras + sensors + alarms in one view
+- **🚨 Alert Aggregation**: Unified security event display
+- **📱 Mobile Access**: Works on iPad/iPhone via Tailscale
+
+#### 🎯 **CORE DASHBOARD FEATURES**
+- **Multi-Server Coordination**: Nest Protect, Ring, and other MCPs
+- **Security Event Correlation**: Cross-system alert analysis
+- **Professional UI/UX**: Responsive design with real-time updates
+- **Remote Monitoring**: Access anywhere via secure VPN
 
 ### 📷 **SUPPORTED CAMERA TYPES**
 - **✅ USB Webcams**: Auto-detected and monitored (WORKING)
 - **🔄 Tapo Cameras**: TP-Link Tapo series (pending auth resolution)
 - **📋 Ring Cameras**: Experimental support for Ring devices
-- **📋 Furbo Cameras**: Support for Furbo pet cameras
+- **🐱 Petcube Cameras**: Petcube pet cameras with full API access (READY)
+
+### ⚠️ **UNSUPPORTED CAMERAS**
+- **🚫 Furbo Cameras**: **NOT SUPPORTED** - Furbo intentionally blocks third-party API access. Use official Furbo app only.
+
+### 🐾 **PETCUBE INTEGRATION** ⭐
+
+**Petcube Bites 2 Lite** is now fully supported as an excellent Furbo replacement!
+
+#### **🎥 Camera Features:**
+- **1080p Full HD** video with night vision
+- **160° wide-angle** lens
+- **Two-way audio** with noise cancellation
+- **Motion detection** with smart alerts
+- **Cloud storage** (30 days free)
+
+#### **🍖 Smart Features:**
+- **Dual treat compartments** (vs Furbo's single)
+- **Laser pointer** for interactive play
+- **Auto-play** mode with built-in toys
+- **Custom feeding schedules**
+- **Medication dispensing** capability
+
+#### **🔋 Battery & Connectivity:**
+- **12-hour battery life** (rechargeable)
+- **WiFi + Bluetooth** connectivity
+- **Mobile app** for iOS/Android
+- **Alexa/Google Home** integration
+
+#### **💰 Pricing & Value:**
+- **Price:** $199-249 (vs Furbo's $249-349)
+- **Better value:** More features, lower price
+- **API access:** Full third-party integration
+- **Where to buy:** Amazon, Petcube website, pet stores
+
+#### **🔧 MCP Configuration:**
+```yaml
+cameras:
+  my_petcube:
+    type: petcube
+    params:
+      email: "your_petcube_account@example.com"
+      password: "your_password"
+      device_id: "optional_device_id"  # Auto-detected if not specified
+```
+
+#### **🎮 MCP Features:**
+- ✅ **Live video streaming**
+- ✅ **Remote treat dispensing**
+- ✅ **Motion/sound alerts**
+- ✅ **Battery monitoring**
+- ✅ **Status tracking**
+- ✅ **Automated pet care**
+
+#### **🚀 Why Petcube Over Furbo:**
+| Feature | Furbo ❌ | Petcube ✅ |
+|---------|----------|------------|
+| **API Access** | Blocked | ✅ Official API |
+| **Treat Compartments** | 1 | 2 |
+| **Interactive Toys** | Limited | Laser + Auto-play |
+| **Third-party Apps** | Forbidden | ✅ Allowed |
+| **Price** | $249-349 | $199-249 |
+| **MCP Integration** | ❌ Impossible | ✅ Full support |
+
+**Petcube is the clear winner for API-accessible pet cameras!** 🐱✨
 
 ### 🎥 **CAMERA CONTROLS** (Next Phase)
 - **Live Streaming**: RTSP, RTMP, and HLS streaming support
@@ -48,10 +150,30 @@
 - **Audio Support**: Two-way audio where available
 
 ### 🔌 **INTEGRATIONS**
+
+#### **🔗 MCP SERVER ECOSYSTEM** (Dual Role)
+**This repository serves dual purposes:**
+1. **🎥 Individual MCP Servers**: Standalone camera control (Tapo, USB, Ring)
+2. **🏠 Unified Security Dashboard**: Multi-MCP orchestration platform
+
+#### **🔗 Multi-MCP Coordination** (Dashboard Role)
+- **Nest Protect MCP**: Real-time smoke/CO detector monitoring
+- **Ring MCP**: Doorbell and security camera integration
+- **Unified Dashboard**: Single interface for all security devices
+- **Cross-System Alerts**: Correlated security events and notifications
+- **Health Monitoring**: Real-time status of all integrated MCP servers
+
+#### **🤖 Claude Desktop Integration** (MCP Server Role)
 - **✅ MCP 2.12.0 Protocol**: Seamless Claude Desktop integration (WORKING)
-- **🌐 Web Dashboard**: Real-time video streaming interface (WORKING)
+- **🔧 Camera Management Tools**: Add, configure, and control cameras
+- **📊 Real-time Status**: Camera connection health and diagnostics
+- **🎯 AI Assistant Ready**: Full MCP compliance for intelligent camera control
+
+#### **🌐 Web & API Interfaces** (Dashboard Role)
+- **🏠 Live Security Dashboard**: Real-time monitoring at `localhost:7777`
+- **🔌 REST API**: HTTP endpoints for remote control and monitoring
 - **📊 Grafana Dashboards**: Real-time monitoring and visualization (planned)
-- **🔌 REST API**: HTTP endpoints for remote control and monitoring (available)
+- **📱 Mobile Access**: Works on iPad/iPhone via Tailscale
 
 ### 📺 **VIDEO STREAMING DASHBOARD** (Next Phase)
 - **Live Video Streams**: Real-time MJPEG streaming from USB webcams
@@ -132,7 +254,7 @@ python start.py dashboard
 - Python 3.10 or higher
 - pip (Python package manager)
 - OpenCV (for webcam support)
-- TP-Link Tapo camera(s), Ring doorbell, Furbo pet camera, or USB webcam
+- TP-Link Tapo camera(s), Ring doorbell, or USB webcam
 
 ### Installation
 
@@ -200,6 +322,9 @@ python start.py test
 
 # Start MCP server only
 python start.py mcp
+
+# Start dual interface server (MCP + REST API)
+python start.py dual
 
 # Start web dashboard only
 python start.py dashboard
@@ -398,7 +523,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [FastMCP](https://github.com/jlowin/fastmcp) for the MCP framework
 - [Anthropic](https://www.anthropic.com/) for Claude Desktop and MCPB toolkit
 - [Ring](https://ring.com/) for Ring doorbell integration
-- [Furbo](https://furbo.com/) for Furbo pet camera support
+
+**Note:** Furbo cameras are not supported due to their intentional API restrictions. Use the official Furbo app for Furbo camera access.
 - [aiohttp](https://docs.aiohttp.org/) for the async HTTP client/server
 - [ONVIF](https://www.onvif.org/) for the camera control protocol
 

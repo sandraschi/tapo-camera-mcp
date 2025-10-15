@@ -229,9 +229,18 @@ class ConfigManager:
             # Special handling for ServerConfig since it contains nested models
             web_config = config.get('web', {})
             security_config = config.get('security', {})
+            security_integrations = config.get('security_integrations', {})
+
+            # Merge security_integrations into security_config
+            if security_config and security_integrations:
+                security_config = dict(security_config)
+                security_config['integrations'] = security_integrations
+            elif security_integrations:
+                security_config = {'integrations': security_integrations}
+
             logging_config = config.get('logging', {})
             storage_config = config.get('storage', {})
-            
+
             return ServerConfig(
                 host=config.get('host', '0.0.0.0'),
                 port=config.get('port', 8080),

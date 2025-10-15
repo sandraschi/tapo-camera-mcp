@@ -85,7 +85,116 @@ class MovePTZTool(BaseTool):
     )
     
     async def execute(self) -> Dict[str, Any]:
-        """Execute PTZ movement."""
+        '''Control camera PTZ (Pan-Tilt-Zoom) movements with precise positioning.
+
+        Moves the camera to a new position with adjustable pan, tilt, zoom, and speed settings.
+        Supports both absolute positioning (relative=False) and relative movement (relative=True)
+        from the current position. All movements are validated and executed safely.
+
+        Parameters:
+            pan: Pan position, range -1.0 to 1.0 (left to right) (required)
+                - -1.0: Full left position
+                - 0.0: Center position
+                - 1.0: Full right position
+                - Values outside range will be clamped
+            tilt: Tilt position, range -1.0 to 1.0 (down to up) (required)
+                - -1.0: Full down position
+                - 0.0: Center position
+                - 1.0: Full up position
+                - Values outside range will be clamped
+            zoom: Zoom level, range 0.0 to 1.0 (wide to telephoto) (required)
+                - 0.0: Wide angle (zoomed out)
+                - 1.0: Maximum telephoto (zoomed in)
+                - Values outside range will be clamped
+            speed: Movement speed, range 1-8 (slow to fast) (required)
+                - 1: Slowest movement
+                - 5: Default speed
+                - 8: Fastest movement
+                - Integer values only
+            relative: Movement mode - True for relative, False for absolute (required)
+                - True: Move relative to current position
+                - False: Move to absolute position
+
+        Returns:
+            Dictionary containing:
+                - success: Boolean indicating if movement was successful
+                - message: Success confirmation or error description
+                - final_position: Dictionary with final pan/tilt/zoom values (on success)
+                    - pan: Final pan position (-1.0 to 1.0)
+                    - tilt: Final tilt position (-1.0 to 1.0)
+                    - zoom: Final zoom level (0.0 to 1.0)
+
+        Usage:
+            Use this tool to precisely control camera positioning for optimal viewing angles.
+            Relative mode is useful for fine adjustments, while absolute mode is better for
+            preset positions. Always test movements in relative mode first to understand
+            the camera's range and responsiveness.
+
+            Common scenarios:
+                - Adjusting camera angle for better subject visibility
+                - Following moving objects with smooth tracking
+                - Returning to specific monitoring positions
+                - Setting up surveillance coverage areas
+
+        Examples:
+            Pan right slowly (relative movement):
+                result = await move_ptz_tool.execute(
+                    pan=0.2, tilt=0.0, zoom=0.0, speed=3, relative=True
+                )
+                if result['success']:
+                    print(f"Camera moved to pan: {result['final_position']['pan']}")
+                # Returns: {
+                #     'success': True,
+                #     'message': 'PTZ movement completed successfully',
+                #     'final_position': {'pan': 0.2, 'tilt': 0.0, 'zoom': 0.0}
+                # }
+
+            Tilt up and zoom in (absolute positioning):
+                result = await move_ptz_tool.execute(
+                    pan=0.0, tilt=0.3, zoom=0.7, speed=5, relative=False
+                )
+                # Moves to exact absolute position regardless of current location
+
+            Fine adjustment for subject tracking:
+                result = await move_ptz_tool.execute(
+                    pan=-0.1, tilt=0.05, zoom=0.0, speed=2, relative=True
+                )
+                # Small relative adjustments for smooth tracking
+
+            Error handling - invalid parameters:
+                result = await move_ptz_tool.execute(
+                    pan=2.0, tilt=0.0, zoom=0.0, speed=5, relative=True
+                )
+                # Pan value 2.0 will be clamped to 1.0 (maximum)
+                # Returns: {'success': True, 'message': 'PTZ movement completed successfully', ...}
+
+            Error handling - camera offline:
+                result = await move_ptz_tool.execute(
+                    pan=0.0, tilt=0.0, zoom=0.0, speed=5, relative=True
+                )
+                # Returns: {
+                #     'success': False,
+                #     'message': 'Camera not connected or PTZ not supported'
+                # }
+
+        Raises:
+            Exception: Propagated from camera operations (connection failures, hardware issues)
+
+        Notes:
+            - Camera must support PTZ functionality
+            - All position values are normalized (-1.0 to 1.0 range)
+            - Values outside valid ranges are automatically clamped
+            - Movement speed affects both precision and response time
+            - Relative mode preserves zoom level if not specified
+            - Absolute mode moves to exact coordinates regardless of current position
+            - Some cameras may have limited range or speed capabilities
+
+        See Also:
+            - get_ptz_position_tool: To check current camera position
+            - save_ptz_preset_tool: To save current position as preset
+            - recall_ptz_preset_tool: To move to saved preset position
+            - go_to_home_ptz_tool: To return to default position
+        '''
         from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
         server = await TapoCameraServer.get_instance()
         return await server.move_ptz({
@@ -339,7 +448,102 @@ class GetPTZPositionTool(BaseTool):
         }
     
     async def execute(self, **kwargs) -> ToolResult:
-        """Get the current PTZ position."""
+        '''Get the current PTZ position and movement capabilities of the camera.
+
+        Retrieves the camera's current pan, tilt, and zoom values along with information
+        about the camera's movement capabilities and supported ranges. This provides
+        a complete snapshot of the camera's current state and operational limits.
+
+        Parameters:
+            None: This tool requires no input parameters
+
+        Returns:
+            Dictionary containing:
+                - status: "success" or "error"
+                - position: Dictionary with current PTZ values (only present on success)
+                    - pan: Current pan position (-1.0 to 1.0, where 0.0 is center)
+                    - tilt: Current tilt position (-1.0 to 1.0, where 0.0 is center)
+                    - zoom: Current zoom level (0.0 to 1.0, where 0.0 is wide angle)
+                - capabilities: Dictionary with camera movement limits (only present on success)
+                    - pan_range: Min/max pan values supported
+                    - tilt_range: Min/max tilt values supported
+                    - zoom_range: Min/max zoom values supported
+                    - has_ptz: Boolean indicating PTZ support
+                - message: Success confirmation or error description
+
+        Usage:
+            Use this tool to check the current camera position before making movements,
+            to verify that PTZ operations completed successfully, or to understand the
+            camera's movement capabilities. This is essential for applications that
+            need to track or control camera positioning programmatically.
+
+            Common scenarios:
+                - Checking current position before preset operations
+                - Verifying movement completion
+                - Understanding camera capabilities
+                - Debugging PTZ control issues
+                - Position logging and monitoring
+
+        Examples:
+            Get current position successfully:
+                result = await get_ptz_position_tool.execute()
+                if result['status'] == 'success':
+                    pos = result['position']
+                    print(f"Current position - Pan: {pos['pan']}, Tilt: {pos['tilt']}, Zoom: {pos['zoom']}")
+                # Returns: {
+                #     'status': 'success',
+                #     'position': {'pan': 0.2, 'tilt': -0.1, 'zoom': 0.5},
+                #     'capabilities': {
+                #         'pan_range': {'min': -1.0, 'max': 1.0},
+                #         'tilt_range': {'min': -1.0, 'max': 1.0},
+                #         'zoom_range': {'min': 0.0, 'max': 1.0},
+                #         'has_ptz': True
+                #     },
+                #     'message': 'PTZ position retrieved successfully'
+                # }
+
+            Error handling - no camera connected:
+                result = await get_ptz_position_tool.execute()
+                if result['status'] == 'error':
+                    print(f"Cannot get position: {result['message']}")
+                # Returns: {
+                #     'status': 'error',
+                #     'message': 'No camera connected. Please connect to a camera first.'
+                # }
+
+            Error handling - camera doesn't support PTZ:
+                result = await get_ptz_position_tool.execute()
+                # Returns: {
+                #     'status': 'error',
+                #     'message': 'Camera does not support PTZ functionality'
+                # }
+
+            Check capabilities before movement:
+                result = await get_ptz_position_tool.execute()
+                if result['status'] == 'success':
+                    caps = result['capabilities']
+                    if caps['has_ptz']:
+                        print(f"PTZ supported - Pan range: {caps['pan_range']}")
+                    else:
+                        print("Camera does not support PTZ movement")
+
+        Raises:
+            Exception: Propagated from camera operations (connection failures, hardware issues)
+
+        Notes:
+            - Requires an active camera connection
+            - Camera must support PTZ functionality
+            - Position values are normalized (-1.0 to 1.0 range)
+            - Capabilities may vary between camera models
+            - Some cameras may not provide detailed capability information
+            - Position accuracy depends on camera firmware and calibration
+
+        See Also:
+            - move_ptz_tool: To change the camera position
+            - save_ptz_preset_tool: To save current position as preset
+            - recall_ptz_preset_tool: To move to saved preset position
+            - go_to_home_ptz_tool: To return to default position
+        '''
         from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
         server = await TapoCameraServer.get_instance()
         try:

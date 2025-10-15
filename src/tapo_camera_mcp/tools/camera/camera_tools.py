@@ -59,7 +59,70 @@ class ListCamerasTool(BaseTool):
     
     # Config is no longer needed as we use Meta class for metadata
     async def execute(self) -> Dict[str, Any]:
-        """List all registered cameras and their status."""
+        '''List all configured cameras with their current status and information.
+
+        Retrieves a comprehensive list of all cameras registered in the system,
+        including their connection status, configuration details, and availability.
+
+        Returns:
+            Dictionary containing:
+                - success: Boolean indicating if the operation succeeded
+                - cameras: List of camera dictionaries with details (only present on success)
+                    - name: Camera name/identifier
+                    - type: Camera type (tapo, webcam, ring, etc.)
+                    - status: Connection status ("online", "offline", "error")
+                    - model: Camera model information
+                    - firmware: Camera firmware version
+                    - streaming: Boolean indicating if camera is currently streaming
+                    - error: Error message (only present when status is "error")
+                - total: Total number of cameras found
+
+        Usage:
+            Use this tool to get an overview of all configured cameras before
+            performing operations. This is typically the first tool called to
+            understand what cameras are available in the system.
+
+            Common scenarios:
+                - Initial setup verification
+                - Camera management dashboard
+                - Troubleshooting connection issues
+                - Inventory and status monitoring
+
+        Examples:
+            Basic usage:
+                result = await list_cameras_tool.execute()
+                if result['success']:
+                    for camera in result['cameras']:
+                        print(f"Camera: {camera['name']} - {camera['status']}")
+                # Returns: {
+                #     'success': True,
+                #     'cameras': [
+                #         {'name': 'front_door', 'type': 'tapo', 'status': 'online', 'model': 'C100', ...},
+                #         {'name': 'backyard', 'type': 'webcam', 'status': 'offline', 'model': 'Unknown', ...}
+                #     ],
+                #     'total': 2
+                # }
+
+            Error handling:
+                result = await list_cameras_tool.execute()
+                if not result['success']:
+                    print("Failed to list cameras")
+                # Returns: {'success': False, 'cameras': [], 'total': 0}
+
+        Raises:
+            Exception: Propagated from camera operations (connection failures, authentication errors)
+
+        Notes:
+            - Cameras are listed regardless of connection status
+            - Status is determined by last known connection state
+            - Network connectivity is tested during status checks
+            - Results include cameras that failed to connect with error details
+
+        See Also:
+            - add_camera_tool: For adding new cameras to the system
+            - remove_camera_tool: For removing cameras from the system
+            - get_camera_status_tool: For detailed status of specific cameras
+        '''
         from tapo_camera_mcp.core.server import TapoCameraServer  # Lazy import to avoid circular imports
         server = await TapoCameraServer.get_instance()
         
@@ -111,19 +174,17 @@ class ListCamerasTool(BaseTool):
 class AddCameraTool(BaseTool):
     '''
     Add a new camera to the system.
-    
+
     Supports multiple camera types: Tapo IP cameras, Ring doorbells,
-    Furbo pet cameras, and USB webcams. Each camera type requires
-    different connection parameters.
-    
+    and USB webcams. Each camera type requires different connection parameters.
+
     Parameters:
         camera_id (str): Unique identifier for the camera
-        camera_type (str): Type - 'Tapo', 'Ring', 'Furbo', or 'Webcam'
+        camera_type (str): Type - 'Tapo', 'Ring', or 'Webcam'
         host (str, optional): IP address for Tapo cameras
         username (str, optional): Username for authentication
         password (str, optional): Password for authentication
         device_id (int, optional): Device ID for webcams (default: 0)
-        token (str, optional): API token for Furbo cameras
     
     Returns:
         Dict with success status and camera details
@@ -178,7 +239,121 @@ class AddCameraTool(BaseTool):
     stream_url: Optional[str] = None
     
     async def execute(self) -> Dict[str, Any]:
-        """Add a new camera to the system with comprehensive validation and error handling."""
+        '''Add a new camera to the system with full configuration support.
+
+        Registers and connects to a new camera device using the provided configuration
+        parameters. The camera will be added to the system's camera registry and made
+        available for streaming, recording, and control operations. Supports Tapo IP cameras
+        with comprehensive validation and connection testing.
+
+        Parameters:
+            camera_name: Friendly name for the camera (required)
+                - Must be unique and contain only alphanumeric characters and underscores
+                - Used as the primary identifier for camera operations
+                - Maximum 50 characters
+            ip_address: IP address of the camera (required)
+                - Must be a valid IPv4 address
+                - Camera must be accessible on the network
+                - Format: xxx.xxx.xxx.xxx
+            username: Camera authentication username (required)
+                - Login credential for camera access
+                - Typically "admin" for Tapo cameras
+            password: Camera authentication password (required)
+                - Password credential for camera access
+                - Stored securely in the configuration
+            stream_url: Optional custom RTSP stream URL
+                - If provided, overrides automatic stream URL detection
+                - Must be a valid RTSP URL if specified
+
+        Returns:
+            Dictionary containing:
+                - success: Boolean indicating if camera was added successfully
+                - camera_name: Name of the added camera
+                - camera_type: Type of camera added ("tapo")
+                - ip_address: IP address of the camera
+                - message: Success confirmation or error description
+                - stream_url: Detected or provided stream URL (on success)
+
+        Usage:
+            Use this tool to register new Tapo IP cameras in the system. Ensure the camera
+            is powered on, connected to the network, and accessible before adding. The tool
+            performs comprehensive validation and connection testing.
+
+            Common scenarios:
+                - Initial system setup with multiple cameras
+                - Adding replacement cameras
+                - Expanding camera coverage
+                - Testing new camera installations
+
+        Examples:
+            Add a camera successfully:
+                result = await add_camera_tool.execute(
+                    camera_name='front_door',
+                    ip_address='192.168.1.100',
+                    username='admin',
+                    password='secure_password_123'
+                )
+                if result['success']:
+                    print(f"Camera {result['camera_name']} added successfully")
+                # Returns: {
+                #     'success': True,
+                #     'camera_name': 'front_door',
+                #     'camera_type': 'tapo',
+                #     'ip_address': '192.168.1.100',
+                #     'message': 'Camera front_door added successfully',
+                #     'stream_url': 'rtsp://192.168.1.100:554/stream1'
+                # }
+
+            Error handling - invalid IP:
+                result = await add_camera_tool.execute(
+                    camera_name='test_cam',
+                    ip_address='999.999.999.999',
+                    username='admin',
+                    password='password'
+                )
+                # Returns: {
+                #     'success': False,
+                #     'message': 'Invalid IP address format: 999.999.999.999'
+                # }
+
+            Error handling - camera unreachable:
+                result = await add_camera_tool.execute(
+                    camera_name='offline_cam',
+                    ip_address='192.168.1.200',
+                    username='admin',
+                    password='password'
+                )
+                # Returns: {
+                #     'success': False,
+                #     'message': 'Failed to connect to camera at 192.168.1.200: Connection timeout'
+                # }
+
+            With custom stream URL:
+                result = await add_camera_tool.execute(
+                    camera_name='custom_cam',
+                    ip_address='192.168.1.150',
+                    username='admin',
+                    password='password',
+                    stream_url='rtsp://192.168.1.150:554/custom_stream'
+                )
+                # Uses the provided stream_url instead of auto-detecting
+
+        Raises:
+            Exception: Propagated from camera operations (network connectivity, authentication failures)
+
+        Notes:
+            - Camera names must be unique within the system
+            - Authentication credentials are validated during addition
+            - Camera connectivity is tested before final registration
+            - Failed additions don't leave partial configurations
+            - Stream URL is automatically detected if not provided
+            - Supports only Tapo cameras in current implementation
+
+        See Also:
+            - list_cameras_tool: To verify camera was added successfully
+            - remove_camera_tool: To remove cameras from the system
+            - get_camera_status_tool: To check camera connection status
+        '''
         try:
             # Validate inputs
             camera_name = validate_camera_name(self.camera_name, "camera_name")

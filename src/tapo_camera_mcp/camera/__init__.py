@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 # Import all camera implementations to ensure they register with the factory
 from .tapo import TapoCamera
-from .furbo import FurboCamera
+from .petcube import PetcubeCamera
 
 # Import RingCamera with error handling
 try:
@@ -26,7 +26,7 @@ from .webcam import WebCamera
 
 __all__ = [
     'TapoCamera',
-    'FurboCamera',
+    'PetcubeCamera',
     'WebCamera'
 ]
 

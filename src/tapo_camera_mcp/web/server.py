@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Union, Generator
 
-from fastapi import FastAPI, Request, Depends, HTTPException, status
+from fastapi import FastAPI, Request, Depends, HTTPException, status, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
@@ -124,7 +124,115 @@ class WebServer:
                 url="/?error=invalid_request",
                 status_code=status.HTTP_303_SEE_OTHER
             )
-    
+
+    async def cameras_page(self, request: Request):
+        """Serve the cameras page with detailed camera information."""
+        cameras_data = []
+
+        try:
+            from tapo_camera_mcp.core.server import TapoCameraServer
+            server = await TapoCameraServer.get_instance()
+
+            # Get cameras list with detailed information
+            cameras_list = await server.camera_manager.list_cameras()
+
+            # Enhance each camera with additional details
+            for camera in cameras_list:
+                camera_info = dict(camera)  # Copy base info
+
+                # Try to get detailed camera information
+                try:
+                    if camera.get('status') == 'online':
+                        # Get detailed camera info if available
+                        camera_obj = await server.camera_manager.get_camera(camera['name'])
+                        if camera_obj:
+                            # Get detailed status including capabilities
+                            detailed_status = await camera_obj.get_status()
+
+                            # Add resolution info (mock for now, would come from camera)
+                            camera_info['resolution'] = detailed_status.get('resolution', 'Unknown')
+
+                            # Add PTZ capability
+                            camera_info['ptz_capable'] = detailed_status.get('ptz_capable', False)
+
+                            # Add audio capability
+                            camera_info['audio_capable'] = detailed_status.get('audio_capable', False)
+
+                            # Add model and firmware
+                            camera_info['model'] = detailed_status.get('model', 'Unknown')
+                            camera_info['firmware'] = detailed_status.get('firmware', 'Unknown')
+
+                            # Add streaming capability
+                            camera_info['streaming_capable'] = detailed_status.get('streaming', False)
+                        else:
+                            camera_info.update({
+                                'resolution': 'Unknown',
+                                'ptz_capable': False,
+                                'audio_capable': False,
+                                'model': 'Unknown',
+                                'firmware': 'Unknown',
+                                'streaming_capable': False
+                            })
+                    else:
+                        # Offline camera - set defaults
+                        camera_info.update({
+                            'resolution': 'N/A',
+                            'ptz_capable': False,
+                            'audio_capable': False,
+                            'model': 'N/A',
+                            'firmware': 'N/A',
+                            'streaming_capable': False
+                        })
+                except Exception as e:
+                    logger.warning(f"Could not get detailed info for camera {camera.get('name', 'unknown')}: {e}")
+                    camera_info.update({
+                        'resolution': 'Error',
+                        'ptz_capable': False,
+                        'audio_capable': False,
+                        'model': 'Error',
+                        'firmware': 'Error',
+                        'streaming_capable': False
+                    })
+
+                cameras_data.append(camera_info)
+
+        except Exception as e:
+            logger.error(f"Error getting cameras data: {e}")
+            cameras_data = []
+
+        return self.templates.TemplateResponse(
+            "cameras.html",
+            {
+                "request": request,
+                "active_page": "cameras",
+                "cameras": cameras_data,
+                "total_cameras": len(cameras_data),
+                "online_cameras": sum(1 for cam in cameras_data if cam.get('status') == 'online')
+            }
+        )
+
+    async def settings_page(self, request: Request):
+        """Serve the settings page."""
+        # Get camera count
+        try:
+            from tapo_camera_mcp.core.server import TapoCameraServer
+            server = await TapoCameraServer.get_instance()
+            cameras = await server.camera_manager.list_cameras()
+            total_cameras = len(cameras)
+        except Exception as e:
+            logger.warning(f"Error getting camera count for settings: {e}")
+            total_cameras = 0
+
+        return self.templates.TemplateResponse(
+            "settings.html",
+            {
+                "request": request,
+                "active_page": "settings",
+                "config": self.config,
+                "total_cameras": total_cameras
+            }
+        )
+
     def _setup_routes(self) -> None:
         """Setup routes for the FastAPI app."""
         # Mount static files
@@ -162,14 +270,19 @@ class WebServer:
                 if hasattr(server, 'camera_manager') and server.camera_manager:
                     camera = server.camera_manager.cameras.get(camera_id)
                     if camera:
+                        # Get camera type as string
+                        camera_type = camera.config.type
+                        if hasattr(camera_type, 'value'):
+                            camera_type = camera_type.value
+
                         # For webcam, return MJPEG stream
-                        if camera.config.type.value == "webcam":
+                        if camera_type == "webcam":
                             return StreamingResponse(
                                 self._generate_webcam_stream(camera),
                                 media_type="multipart/x-mixed-replace; boundary=frame"
                             )
                         # For Tapo cameras, return RTSP stream URL
-                        elif camera.config.type.value == "tapo":
+                        elif camera_type == "tapo":
                             stream_url = await camera.get_stream_url()
                             if stream_url:
                                 return {"stream_url": stream_url, "type": "rtsp"}
@@ -204,19 +317,72 @@ class WebServer:
                 return Response(content="Camera not found", status_code=404)
             except Exception as e:
                 return Response(content=f"Error: {str(e)}", status_code=500)
-        
+
+        # Camera control endpoints
+        @self.app.post("/api/cameras/{camera_id}/control")
+        async def control_camera(camera_id: str, action: str = Form(...)):
+            """Control camera actions (start_stream, stop_stream, start_audio, stop_audio)."""
+            try:
+                from tapo_camera_mcp.core.server import TapoCameraServer
+                server = await TapoCameraServer.get_instance()
+
+                if hasattr(server, 'camera_manager') and server.camera_manager:
+                    camera = server.camera_manager.cameras.get(camera_id)
+                    if camera:
+                        if action == "start_stream":
+                            # Start streaming
+                            stream_url = await camera.get_stream_url()
+                            return {"success": True, "stream_url": stream_url}
+
+                        elif action == "stop_stream":
+                            # Stop streaming
+                            await camera.disconnect()
+                            return {"success": True}
+
+                        elif action == "start_audio":
+                            # Start audio recording (this is client-side)
+                            return {"success": True, "message": "Audio recording started on client"}
+
+                        elif action == "stop_audio":
+                            # Stop audio recording (this is client-side)
+                            return {"success": True, "message": "Audio recording stopped on client"}
+
+                        elif action == "snapshot":
+                            # Take snapshot
+                            image = await camera.capture_still()
+                            import io
+                            buffer = io.BytesIO()
+                            image.save(buffer, format="JPEG", quality=75)
+                            image_bytes = buffer.getvalue()
+
+                            return Response(
+                                content=image_bytes,
+                                media_type="image/jpeg"
+                            )
+
+                return {"error": "Camera not found"}
+            except Exception as e:
+                return {"error": str(e)}
+
         # Web UI routes
         @self.app.get("/", response_class=HTMLResponse, name="dashboard")
         async def index(request: Request):
             """Serve the main dashboard page."""
+            # Initialize variables to avoid undefined errors in template
+            cameras = []
+            online_cameras = 0
+            total_cameras = 0
+            security_devices = []
+            security_alerts = []
+            security_overview = {}
+
             try:
                 # Get real camera data from the MCP server
                 from tapo_camera_mcp.core.server import TapoCameraServer
                 server = await TapoCameraServer.get_instance()
 
-                # Get camera list
-                cameras_result = await server.list_cameras()
-                cameras = cameras_result.get('cameras', [])
+                # Get camera list from camera manager
+                cameras = await server.camera_manager.list_cameras()
                 total_cameras = len(cameras)
                 online_cameras = sum(1 for cam in cameras if cam.get('status') == 'online')
 
@@ -224,28 +390,49 @@ class WebServer:
                 if total_cameras == 0:
                     try:
                         logger.info("No cameras configured, attempting to auto-add USB webcam...")
-                        add_result = await server.add_camera(
-                            camera_name='usb_webcam_0',
-                            camera_type='webcam',
-                            device_id=0
-                        )
-                        if add_result.get('success'):
+                        config = {
+                            'name': 'usb_webcam_0',
+                            'type': 'webcam',
+                            'params': {'device_id': 0}
+                        }
+                        success = await server.camera_manager.add_camera(config)
+                        if success:
                             logger.info("Successfully auto-added USB webcam")
                             # Refresh camera list
-                            cameras_result = await server.list_cameras()
-                            cameras = cameras_result.get('cameras', [])
+                            cameras = await server.camera_manager.list_cameras()
                             total_cameras = len(cameras)
                             online_cameras = sum(1 for cam in cameras if cam.get('status') == 'online')
                         else:
-                            logger.warning(f"Failed to auto-add webcam: {add_result}")
+                            logger.warning("Failed to auto-add webcam: camera manager returned False")
                     except Exception as e:
                         logger.warning(f"Error auto-adding webcam: {e}")
 
+                # Get security system data
+                security_devices = []
+                security_alerts = []
+                security_overview = {}
+
+                try:
+                    from tapo_camera_mcp.security import security_manager
+
+                    # Initialize security integrations if not already done
+                    if not hasattr(security_manager, '_initialized'):
+                        security_config = self.security_config.integrations.dict() if self.security_config else {}
+                        await security_manager.initialize(security_config)
+                        security_manager._initialized = True
+
+                    # Get security data
+                    security_devices = await security_manager.get_all_devices()
+                    security_alerts = await security_manager.get_all_alerts()
+                    security_overview = await security_manager.get_system_overview()
+
+                except Exception as e:
+                    logger.warning(f"Failed to get security data for dashboard: {e}")
+                    # Variables already initialized above, just log the error
+
             except Exception as e:
                 logger.warning(f"Failed to get camera data for dashboard: {e}")
-                cameras = []
-                online_cameras = 0
-                total_cameras = 0
+                # Variables already initialized above
 
             return self.templates.TemplateResponse(
                 "simple_dashboard.html",
@@ -255,42 +442,15 @@ class WebServer:
                     "online_cameras": online_cameras,
                     "total_cameras": total_cameras,
                     "storage_used": 45,  # Mock data for now
-                    "active_alerts": 0,
+                    "active_alerts": len(security_alerts),
                     "active_recordings": 0,
-                    "cameras": cameras
+                    "cameras": cameras,
+                    "security_devices": [device.__dict__ for device in security_devices],
+                    "security_alerts": [alert.__dict__ for alert in security_alerts],
+                    "security_overview": security_overview
                 }
             )
-        
-        @self.app.get("/cameras", response_class=HTMLResponse, name="cameras")
-        async def cameras(request: Request):
-            """Serve the cameras page."""
-            # TODO: Get actual camera data
-            cameras = [
-                {"id": "cam1", "name": "Front Door", "status": "online"},
-                {"id": "cam2", "name": "Backyard", "status": "offline"},
-            ]
-            
-            return self.templates.TemplateResponse(
-                "dashboard.html",
-                {
-                    "request": request,
-                    "active_page": "cameras",
-                    "cameras": cameras
-                }
-            )
-        
-        @self.app.get("/settings", response_class=HTMLResponse, name="settings")
-        async def settings(request: Request):
-            """Serve the settings page."""
-            return self.templates.TemplateResponse(
-                "dashboard.html",
-                {
-                    "request": request,
-                    "active_page": "settings",
-                    "config": self.config
-                }
-            )
-        
+
         @self.app.get("/list_cameras", response_class=HTMLResponse, name="list_cameras")
         async def list_cameras(request: Request):
             """Serve the cameras list page."""
@@ -305,22 +465,23 @@ class WebServer:
         @self.app.get("/recordings", response_class=HTMLResponse, name="recordings")
         async def recordings(request: Request):
             """Serve the recordings page."""
+            # Mock data for demonstration - in a real implementation, this would come from a database
+            recordings = []  # Empty for now since we don't have actual recordings
+            total_recordings = 0
+            today_recordings = 0
+            storage_used = "0GB"
+            storage_free = "50GB"  # Mock data
+
             return self.templates.TemplateResponse(
-                "dashboard.html",
+                "recordings.html",
                 {
                     "request": request,
-                    "active_page": "recordings"
-                }
-            )
-        
-        @self.app.get("/system_settings", response_class=HTMLResponse, name="system_settings")
-        async def system_settings(request: Request):
-            """Serve the system settings page."""
-            return self.templates.TemplateResponse(
-                "dashboard.html",
-                {
-                    "request": request,
-                    "active_page": "system_settings"
+                    "active_page": "recordings",
+                    "recordings": recordings,
+                    "total_recordings": total_recordings,
+                    "today_recordings": today_recordings,
+                    "storage_used": storage_used,
+                    "storage_free": storage_free
                 }
             )
         
@@ -360,7 +521,58 @@ class WebServer:
                 {"request": request},
                 status_code=404
             )
-    
+
+        # Register the page routes (defined as class methods)
+        self.app.add_api_route("/cameras", self.cameras_page, methods=["GET"], response_class=HTMLResponse, name="cameras")
+        self.app.add_api_route("/settings", self.settings_page, methods=["GET"], response_class=HTMLResponse, name="settings")
+
+        # Settings API endpoints
+        @self.app.get("/api/settings")
+        async def get_settings():
+            """Get current settings."""
+            try:
+                from tapo_camera_mcp.config import get_config
+                config = get_config()
+
+                # Get camera count
+                camera_count = 0
+                try:
+                    from tapo_camera_mcp.core.server import TapoCameraServer
+                    server = await TapoCameraServer.get_instance()
+                    cameras = await server.camera_manager.list_cameras()
+                    camera_count = len(cameras)
+                except:
+                    pass
+
+                return {
+                    "status": "success",
+                    "settings": {
+                        "server_port": config.get("server", {}).get("port", 8000),
+                        "debug": config.get("debug", False),
+                        "log_level": config.get("log_level", "INFO"),
+                        "web_enabled": config.get("web", {}).get("enabled", True),
+                        "web_port": config.get("web", {}).get("port", 7777),
+                        "theme": config.get("web", {}).get("theme", "dark"),
+                        "cors_enabled": config.get("web", {}).get("enable_cors", True),
+                        "auth_enabled": config.get("auth", {}).get("enabled", False),
+                        "total_cameras": camera_count
+                    }
+                }
+            except Exception as e:
+                return {"status": "error", "message": str(e)}
+
+        @self.app.post("/api/settings")
+        async def save_settings(settings: dict):
+            """Save settings."""
+            try:
+                # For now, just acknowledge the settings
+                # In a real implementation, this would save to config file
+                logger.info(f"Settings update requested: {settings}")
+                return {"status": "success", "message": "Settings saved successfully"}
+            except Exception as e:
+                logger.error(f"Error saving settings: {e}")
+                return {"status": "error", "message": str(e)}
+
     async def _generate_webcam_stream(self, camera) -> Generator[bytes, None, None]:
         """Generate MJPEG stream from webcam."""
         try:
@@ -424,9 +636,23 @@ class WebServer:
 
 # For running the server directly
 if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Tapo Camera MCP Web Server")
+    parser.add_argument("--host", default=None, help="Host to bind the server to (default: from config)")
+    parser.add_argument("--port", type=int, default=None, help="Port to bind the server to (default: from config)")
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode")
+    
+    args = parser.parse_args()
+    
     # Setup logging
     setup_logging()
     
     # Create and run the server
     server = WebServer()
-    server.run()
+    
+    # Override config with command line args if provided
+    host = args.host
+    port = args.port
+    
+    server.run(host=host, port=port)
