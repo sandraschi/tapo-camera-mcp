@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from ...tools.base_tool import BaseTool
+from ...tools.base_tool import BaseTool, ToolCategory, tool
 
 logger = logging.getLogger(__name__)
 
@@ -320,12 +320,21 @@ class TapoPlugManager:
 tapo_plug_manager = TapoPlugManager()
 
 
+@tool("get_smart_plug_status")
 class GetSmartPlugStatusTool(BaseTool):
-    """Get status of all Tapo smart plug devices."""
+    """Get status of all Tapo smart plug devices.
     
-    name: str = "get_smart_plug_status"
-    description: str = "Get status and energy consumption information for all Tapo smart plug devices"
-    category: str = "energy"
+    Provides comprehensive status information for all Tapo P115 smart plugs
+    including power consumption, energy monitoring, and device health.
+    
+    Returns:
+        Dict with device status, energy consumption summary, and recommendations
+    """
+    
+    class Meta:
+        name = "get_smart_plug_status"
+        description = "Get status and energy consumption information for all Tapo smart plug devices"
+        category = ToolCategory.UTILITY
     
     async def execute(self) -> Dict[str, Any]:
         """Execute the tool to get smart plug status."""
@@ -365,12 +374,28 @@ class GetSmartPlugStatusTool(BaseTool):
             return {"error": str(e)}
 
 
+@tool("control_smart_plug")
 class ControlSmartPlugTool(BaseTool):
-    """Control Tapo smart plug devices."""
+    """Control Tapo smart plug devices.
     
-    name: str = "control_smart_plug"
-    description: str = "Turn on/off Tapo smart plug devices"
-    category: str = "energy"
+    Turn on/off Tapo P115 smart plugs with energy monitoring.
+    
+    Parameters:
+        device_id: ID of the smart plug device to control
+        power_state: True to turn on, False to turn off
+    
+    Returns:
+        Dict with control status and device information
+    """
+    
+    class Meta:
+        name = "control_smart_plug"
+        description = "Turn on/off Tapo smart plug devices"
+        category = ToolCategory.UTILITY
+        
+        class Parameters:
+            device_id: str = Field(..., description="ID of the smart plug device to control")
+            power_state: bool = Field(..., description="True to turn on, False to turn off")
     
     async def execute(self, device_id: str, power_state: bool) -> Dict[str, Any]:
         """
@@ -405,12 +430,29 @@ class ControlSmartPlugTool(BaseTool):
             return {"error": str(e)}
 
 
+@tool("get_energy_consumption")
 class GetEnergyConsumptionTool(BaseTool):
-    """Get energy consumption data for smart plug devices."""
+    """Get energy consumption data for smart plug devices.
     
-    name: str = "get_energy_consumption"
-    description: str = "Get detailed energy consumption data and cost analysis for smart plug devices"
-    category: str = "energy"
+    Provides detailed energy consumption data and cost analysis for
+    Tapo P115 smart plugs with historical usage patterns.
+    
+    Parameters:
+        device_id: Specific device ID (optional, gets all devices if not specified)
+        period: Time period (day, week, month)
+    
+    Returns:
+        Dict with consumption statistics and usage data
+    """
+    
+    class Meta:
+        name = "get_energy_consumption"
+        description = "Get detailed energy consumption data and cost analysis for smart plug devices"
+        category = ToolCategory.UTILITY
+        
+        class Parameters:
+            device_id: Optional[str] = Field(None, description="Specific device ID (optional)")
+            period: str = Field(default="day", description="Time period (day, week, month)")
     
     async def execute(self, device_id: Optional[str] = None, period: str = "day") -> Dict[str, Any]:
         """
@@ -462,12 +504,21 @@ class GetEnergyConsumptionTool(BaseTool):
             return {"error": str(e)}
 
 
+@tool("get_energy_cost_analysis")
 class GetEnergyCostAnalysisTool(BaseTool):
-    """Get detailed cost analysis and savings recommendations."""
+    """Get detailed cost analysis and savings recommendations.
     
-    name: str = "get_energy_cost_analysis"
-    description: str = "Get detailed energy cost analysis and savings recommendations"
-    category: str = "energy"
+    Analyzes energy consumption patterns and provides cost analysis
+    with savings recommendations for Tapo P115 smart plugs.
+    
+    Returns:
+        Dict with cost analysis, device breakdown, and recommendations
+    """
+    
+    class Meta:
+        name = "get_energy_cost_analysis"
+        description = "Get detailed energy cost analysis and savings recommendations"
+        category = ToolCategory.UTILITY
     
     async def execute(self) -> Dict[str, Any]:
         """Execute the tool to get energy cost analysis."""
@@ -526,12 +577,35 @@ class GetEnergyCostAnalysisTool(BaseTool):
             return {"error": str(e)}
 
 
+@tool("set_energy_automation")
 class SetEnergyAutomationTool(BaseTool):
-    """Set up energy automation rules for smart plug devices."""
+    """Set up energy automation rules for smart plug devices.
     
-    name: str = "set_energy_automation"
-    description: str = "Configure automation rules for energy management on smart plug devices"
-    category: str = "energy"
+    Configure automation rules for energy management on Tapo P115
+    smart plugs with scheduling and conditional logic.
+    
+    Parameters:
+        device_id: Target device ID
+        rule_name: Name of the automation rule
+        condition: Automation condition (e.g., "time_after_23:00")
+        action: Action to take (e.g., "turn_off")
+        enabled: Whether the rule is enabled
+    
+    Returns:
+        Dict with automation rule status and details
+    """
+    
+    class Meta:
+        name = "set_energy_automation"
+        description = "Configure automation rules for energy management on smart plug devices"
+        category = ToolCategory.UTILITY
+        
+        class Parameters:
+            device_id: str = Field(..., description="Target device ID")
+            rule_name: str = Field(..., description="Name of the automation rule")
+            condition: str = Field(..., description="Automation condition")
+            action: str = Field(..., description="Action to take")
+            enabled: bool = Field(default=True, description="Whether the rule is enabled")
     
     async def execute(
         self, 
@@ -581,12 +655,28 @@ class SetEnergyAutomationTool(BaseTool):
             return {"error": str(e)}
 
 
+@tool("get_tapo_p115_detailed_stats")
 class GetTapoP115DetailedStatsTool(BaseTool):
-    """Get detailed energy statistics for Tapo P115 smart plugs."""
+    """Get detailed energy statistics for Tapo P115 smart plugs.
     
-    name: str = "get_tapo_p115_detailed_stats"
-    description: str = "Get detailed energy monitoring statistics and electrical parameters for Tapo P115 smart plugs"
-    category: str = "energy"
+    Provides comprehensive electrical parameters and energy monitoring
+    statistics for Tapo P115 smart plugs including voltage, current,
+    power factor, and efficiency metrics.
+    
+    Parameters:
+        device_id: Specific P115 device ID (optional, gets all devices if not specified)
+    
+    Returns:
+        Dict with detailed electrical and energy statistics
+    """
+    
+    class Meta:
+        name = "get_tapo_p115_detailed_stats"
+        description = "Get detailed energy monitoring statistics and electrical parameters for Tapo P115 smart plugs"
+        category = ToolCategory.UTILITY
+        
+        class Parameters:
+            device_id: Optional[str] = Field(None, description="Specific P115 device ID (optional)")
     
     async def execute(self, device_id: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -662,12 +752,29 @@ class GetTapoP115DetailedStatsTool(BaseTool):
             return {"error": str(e)}
 
 
+@tool("set_tapo_p115_energy_saving_mode")
 class SetTapoP115EnergySavingModeTool(BaseTool):
-    """Enable/disable energy saving mode on Tapo P115 smart plugs."""
+    """Enable/disable energy saving mode on Tapo P115 smart plugs.
     
-    name: str = "set_tapo_p115_energy_saving_mode"
-    description: str = "Enable or disable energy saving mode on Tapo P115 smart plugs"
-    category: str = "energy"
+    Control energy saving mode on Tapo P115 smart plugs to optimize
+    power consumption and reduce energy costs.
+    
+    Parameters:
+        device_id: Target P115 device ID
+        energy_saving_enabled: Whether to enable energy saving mode
+    
+    Returns:
+        Dict with energy saving mode status and estimated savings
+    """
+    
+    class Meta:
+        name = "set_tapo_p115_energy_saving_mode"
+        description = "Enable or disable energy saving mode on Tapo P115 smart plugs"
+        category = ToolCategory.UTILITY
+        
+        class Parameters:
+            device_id: str = Field(..., description="Target P115 device ID")
+            energy_saving_enabled: bool = Field(..., description="Whether to enable energy saving mode")
     
     async def execute(self, device_id: str, energy_saving_enabled: bool) -> Dict[str, Any]:
         """
@@ -713,12 +820,27 @@ class SetTapoP115EnergySavingModeTool(BaseTool):
             return {"error": str(e)}
 
 
+@tool("get_tapo_p115_power_schedule")
 class GetTapoP115PowerScheduleTool(BaseTool):
-    """Get and manage power schedules for Tapo P115 smart plugs."""
+    """Get and manage power schedules for Tapo P115 smart plugs.
     
-    name: str = "get_tapo_p115_power_schedule"
-    description: str = "Get current power schedule settings for Tapo P115 smart plugs"
-    category: str = "energy"
+    Retrieve current power schedule settings and automation status
+    for Tapo P115 smart plugs.
+    
+    Parameters:
+        device_id: Specific P115 device ID (optional, gets all devices if not specified)
+    
+    Returns:
+        Dict with power schedule information and automation status
+    """
+    
+    class Meta:
+        name = "get_tapo_p115_power_schedule"
+        description = "Get current power schedule settings for Tapo P115 smart plugs"
+        category = ToolCategory.UTILITY
+        
+        class Parameters:
+            device_id: Optional[str] = Field(None, description="Specific P115 device ID (optional)")
     
     async def execute(self, device_id: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -767,12 +889,21 @@ class GetTapoP115PowerScheduleTool(BaseTool):
             return {"error": str(e)}
 
 
+@tool("get_tapo_p115_data_storage_info")
 class GetTapoP115DataStorageInfoTool(BaseTool):
-    """Get information about P115 data storage capabilities and limitations."""
+    """Get information about P115 data storage capabilities and limitations.
     
-    name: str = "get_tapo_p115_data_storage_info"
-    description: str = "Get information about P115 data storage capabilities, limitations, and available historical data"
-    category: str = "energy"
+    Provides comprehensive information about Tapo P115 data storage
+    capabilities, limitations, and recommended data strategies.
+    
+    Returns:
+        Dict with data storage capabilities, limitations, and recommendations
+    """
+    
+    class Meta:
+        name = "get_tapo_p115_data_storage_info"
+        description = "Get information about P115 data storage capabilities, limitations, and available historical data"
+        category = ToolCategory.UTILITY
     
     async def execute(self) -> Dict[str, Any]:
         """Execute the tool to get P115 data storage information."""

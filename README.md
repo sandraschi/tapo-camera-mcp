@@ -180,6 +180,37 @@ cameras:
 - **RTSP Integration**: Direct streaming from Tapo cameras
 - **Dynamic Camera Management**: Add/remove cameras on the fly
 
+### ⚡ **ADVANCED FEATURES** (NEW - January 2025)
+
+#### 🔋 **Energy Management Dashboard**
+- **Tapo P115 Smart Plugs**: Energy monitoring and control
+- **Real-time Power Consumption**: Live wattage, voltage, and current monitoring
+- **Cost Analysis**: Daily, monthly, and annual energy cost tracking
+- **Smart Scheduling**: Automated power management based on usage patterns
+- **Energy Saving Mode**: Intelligent power optimization
+- **Historical Data**: Limited to current day (P115 limitation) with Home Assistant integration recommended
+
+#### 🚨 **Alarm System Integration**
+- **Nest Protect**: Smoke and CO detector monitoring
+- **Ring Alarms**: Door/window sensors and motion detectors
+- **Alert Correlation**: Cross-system event analysis with camera feeds
+- **Battery Monitoring**: Device health and maintenance alerts
+- **Test Scheduling**: Automated device testing and validation
+
+#### 📊 **AI-Powered Analytics**
+- **Scene Analysis**: Computer vision-based scene understanding
+- **Object Detection**: People, vehicles, and activity recognition
+- **Performance Analytics**: System health and optimization recommendations
+- **Smart Automation**: Intelligent scheduling and predictive maintenance
+- **Pattern Recognition**: Usage pattern analysis and optimization
+
+#### 📈 **Advanced Dashboard Components**
+- **Energy Charts**: Lightweight Chart.js-based energy consumption visualization
+- **Real-time Updates**: Live data refresh every minute
+- **Interactive Controls**: Device management and automation configuration
+- **Mobile Responsive**: Optimized for tablet and smartphone access
+- **Export Capabilities**: Chart and data export functionality
+
 ## 🚀 **QUICK START** (What Works Now)
 
 ### **1. Start the Web Dashboard**
@@ -199,7 +230,7 @@ python start.py dashboard
 - ✅ **USB Webcam Detection**: Auto-discovered on dashboard load
 - ✅ **Real-time Status**: Camera connection monitoring
 - ✅ **Professional UI**: Clean, responsive dashboard interface
-- ✅ **MCP Tools**: 52 tools available in Claude Desktop
+- ✅ **MCP Tools**: 30+ tools available in Claude Desktop (FastMCP 2.12 compliant)
 
 ### **4. Next Steps** (Tapo Camera Integration)
 ```bash

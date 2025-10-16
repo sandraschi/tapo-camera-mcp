@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from ...tools.base_tool import BaseTool
+from ...tools.base_tool import BaseTool, ToolCategory, tool
 
 logger = logging.getLogger(__name__)
 
@@ -42,12 +42,29 @@ class AutomationSchedule(BaseModel):
     enabled: bool = Field(default=True, description="Whether schedule is enabled")
 
 
+@tool("smart_automation")
 class SmartAutomationTool(BaseTool):
-    """Smart automation and scheduling tool."""
+    """Smart automation and scheduling tool.
     
-    name: str = "smart_automation"
-    description: str = "Intelligent automation system with smart scheduling, conditional rules, and predictive maintenance"
-    category: str = "automation"
+    Provides intelligent automation capabilities including smart scheduling
+    based on patterns, conditional automation rules, integration with external
+    systems, and predictive maintenance alerts.
+    
+    Parameters:
+        action: Action to perform (create_rule, list_rules, execute_rule, create_schedule, etc.)
+        **kwargs: Additional parameters for the action
+    
+    Returns:
+        Dict with automation operation results
+    """
+    
+    class Meta:
+        name = "smart_automation"
+        description = "Intelligent automation system with smart scheduling, conditional rules, and predictive maintenance"
+        category = ToolCategory.UTILITY
+        
+        class Parameters:
+            action: str = Field(..., description="Action to perform")
     
     def __init__(self):
         super().__init__()

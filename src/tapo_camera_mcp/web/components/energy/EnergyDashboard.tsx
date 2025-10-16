@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Zap, 
   DollarSign, 
@@ -23,8 +24,11 @@ import {
   Coffee,
   Tv,
   Wifi,
-  Battery
+  Battery,
+  Activity,
+  Grid3X3
 } from 'lucide-react';
+import EnergyChartContainer from './EnergyChartContainer';
 
 interface SmartPlugDevice {
   id: string;
@@ -214,6 +218,243 @@ export const EnergyDashboard: React.FC<EnergyDashboardProps> = ({ className }) =
           </div>
         </CardContent>
       </Card>
+
+      {/* Energy Charts Tabs */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <Grid3X3 className="h-4 w-4" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="charts" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Charts
+          </TabsTrigger>
+          <TabsTrigger value="devices" className="flex items-center gap-2">
+            <Power className="h-4 w-4" />
+            Devices
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Analytics
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          {/* Overview content - existing Power Usage Chart and Smart Plugs Status */}
+          {renderOverviewContent()}
+        </TabsContent>
+
+        <TabsContent value="charts" className="space-y-6">
+          <EnergyChartContainer />
+        </TabsContent>
+
+        <TabsContent value="devices" className="space-y-6">
+          {renderDevicesContent()}
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          {renderAnalyticsContent()}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+
+  function renderOverviewContent() {
+    return (
+      <>
+        {/* Power Usage Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Power Usage Trend
+              </div>
+              <div className="flex gap-2">
+                {(['day', 'week', 'month'] as const).map((period) => (
+                  <Button
+                    key={period}
+                    variant={selectedPeriod === period ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedPeriod(period)}
+                  >
+                    {period.charAt(0).toUpperCase() + period.slice(1)}
+                  </Button>
+                ))}
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {usageHistory.length > 0 ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-blue-600">
+                      {energyData?.averagePower.toFixed(1)}W
+                    </div>
+                    <div className="text-sm text-gray-600">Average Power</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-red-600">
+                      {energyData?.peakPower.toFixed(1)}W
+                    </div>
+                    <div className="text-sm text-gray-600">Peak Power</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-green-600">
+                      ${energyData?.totalCost.toFixed(2)}
+                    </div>
+                    <div className="text-sm text-gray-600">Total Cost</div>
+                  </div>
+                </div>
+                {/* Simple chart representation */}
+                <div className="h-32 bg-gray-50 rounded-lg p-4 flex items-end gap-1">
+                  {usageHistory.slice(-24).map((data, index) => (
+                    <div
+                      key={index}
+                      className="bg-blue-500 rounded-t"
+                      style={{
+                        height: `${(data.totalPower / Math.max(...usageHistory.map(d => d.totalPower))) * 100}%`,
+                        width: '4px'
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <BarChart3 className="h-12 w-12 mx-auto mb-2" />
+                <p>No usage data available</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Smart Plugs Status */}
+        {renderSmartPlugsStatus()}
+      </>
+    );
+  }
+
+  function renderDevicesContent() {
+    return renderSmartPlugsStatus();
+  }
+
+  function renderAnalyticsContent() {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Energy Analytics
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-16">
+            <Activity className="h-16 w-16 mx-auto mb-4 text-purple-500" />
+            <h2 className="text-2xl font-bold mb-2">Advanced Analytics</h2>
+            <p className="text-gray-600">Detailed energy analytics and reporting features coming soon!</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  function renderSmartPlugsStatus() {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Power className="h-5 w-5" />
+            Smart Plugs Status
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {smartPlugs.map((device) => (
+              <Card key={device.id} className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    {getDeviceIcon(device.name)}
+                    <h4 className="font-semibold">{device.name}</h4>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={device.powerState ? 'default' : 'outline'}>
+                      {device.powerState ? 'On' : 'Off'}
+                    </Badge>
+                    {device.automationEnabled && (
+                      <Badge variant="secondary" className="text-xs">
+                        Auto
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Model:</span>
+                    <span className="font-medium">{device.deviceModel}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Location:</span>
+                    <span>{device.location}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Current Power:</span>
+                    <span className={getPowerStatusColor(device.currentPower)}>
+                      {device.powerState ? `${device.currentPower}W` : '0W'}
+                    </span>
+                  </div>
+                  {device.powerState && (
+                    <>
+                      <div className="flex justify-between">
+                        <span>Voltage:</span>
+                        <span>{device.voltage.toFixed(1)}V</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Current:</span>
+                        <span>{device.current.toFixed(2)}A</span>
+                      </div>
+                    </>
+                  )}
+                  <div className="flex justify-between">
+                    <span>Daily Usage:</span>
+                    <span>{device.dailyEnergy.toFixed(2)} kWh</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Daily Cost:</span>
+                    <span className="font-semibold">${device.dailyCost.toFixed(2)}</span>
+                  </div>
+                  {device.powerSchedule && (
+                    <div className="flex justify-between">
+                      <span>Schedule:</span>
+                      <span className="text-xs">{device.powerSchedule}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span>Last Seen:</span>
+                    <span className="text-xs">{new Date(device.lastSeen).toLocaleTimeString()}</span>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-3 border-t">
+                  <Button
+                    variant={device.powerState ? 'destructive' : 'default'}
+                    size="sm"
+                    onClick={() => toggleDevice(device.id, device.powerState)}
+                    className="w-full"
+                  >
+                    {device.powerState ? 'Turn Off' : 'Turn On'}
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
       {/* Power Usage Chart */}
       <Card>

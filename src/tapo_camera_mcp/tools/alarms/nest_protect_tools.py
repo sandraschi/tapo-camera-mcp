@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from ...tools.base_tool import BaseTool
+from ...tools.base_tool import BaseTool, ToolCategory, tool
 
 logger = logging.getLogger(__name__)
 
@@ -184,12 +184,22 @@ class NestProtectManager:
 nest_manager = NestProtectManager()
 
 
+@tool("get_nest_protect_status")
 class GetNestProtectStatusTool(BaseTool):
-    """Get status of all Nest Protect devices."""
+    """Get status of all Nest Protect devices.
     
-    name: str = "get_nest_protect_status"
-    description: str = "Get status and health information for all Nest Protect smoke and CO detectors"
-    category: str = "alarms"
+    Provides comprehensive status and health information for all
+    Nest Protect smoke and CO detectors including battery levels,
+    connectivity status, and safety alerts.
+    
+    Returns:
+        Dict with device status, health summary, and safety information
+    """
+    
+    class Meta:
+        name = "get_nest_protect_status"
+        description = "Get status and health information for all Nest Protect smoke and CO detectors"
+        category = ToolCategory.SECURITY
     
     async def execute(self) -> Dict[str, Any]:
         """Execute the tool to get Nest Protect device status."""
@@ -215,12 +225,27 @@ class GetNestProtectStatusTool(BaseTool):
             return {"error": str(e)}
 
 
+@tool("get_nest_protect_alerts")
 class GetNestProtectAlertsTool(BaseTool):
-    """Get recent alerts from Nest Protect devices."""
+    """Get recent alerts from Nest Protect devices.
     
-    name: str = "get_nest_protect_alerts"
-    description: str = "Get recent alerts and notifications from Nest Protect devices"
-    category: str = "alarms"
+    Retrieve recent alerts and notifications from Nest Protect devices
+    including smoke alarms, CO detection, battery warnings, and test results.
+    
+    Parameters:
+        hours: Number of hours to look back for alerts (default: 24)
+    
+    Returns:
+        Dict with categorized alerts and summary statistics
+    """
+    
+    class Meta:
+        name = "get_nest_protect_alerts"
+        description = "Get recent alerts and notifications from Nest Protect devices"
+        category = ToolCategory.SECURITY
+        
+        class Parameters:
+            hours: int = Field(default=24, description="Number of hours to look back for alerts")
     
     async def execute(self, hours: int = 24) -> Dict[str, Any]:
         """
@@ -259,12 +284,27 @@ class GetNestProtectAlertsTool(BaseTool):
             return {"error": str(e)}
 
 
+@tool("test_nest_protect_device")
 class TestNestProtectDeviceTool(BaseTool):
-    """Test a specific Nest Protect device."""
+    """Test a specific Nest Protect device.
     
-    name: str = "test_nest_protect_device"
-    description: str = "Trigger a test on a specific Nest Protect device"
-    category: str = "alarms"
+    Trigger a manual test on a specific Nest Protect device to verify
+    proper functioning of smoke and CO detection systems.
+    
+    Parameters:
+        device_id: ID of the Nest Protect device to test
+    
+    Returns:
+        Dict with test status and device information
+    """
+    
+    class Meta:
+        name = "test_nest_protect_device"
+        description = "Trigger a test on a specific Nest Protect device"
+        category = ToolCategory.SECURITY
+        
+        class Parameters:
+            device_id: str = Field(..., description="ID of the Nest Protect device to test")
     
     async def execute(self, device_id: str) -> Dict[str, Any]:
         """
@@ -296,12 +336,21 @@ class TestNestProtectDeviceTool(BaseTool):
             return {"error": str(e)}
 
 
+@tool("get_nest_protect_battery_status")
 class GetNestProtectBatteryStatusTool(BaseTool):
-    """Get battery status of all Nest Protect devices."""
+    """Get battery status of all Nest Protect devices.
     
-    name: str = "get_nest_protect_battery_status"
-    description: str = "Get battery levels and status for all Nest Protect devices"
-    category: str = "alarms"
+    Monitor battery levels and status for all Nest Protect devices
+    to ensure proper functioning and identify devices needing battery replacement.
+    
+    Returns:
+        Dict with battery status summary and device details
+    """
+    
+    class Meta:
+        name = "get_nest_protect_battery_status"
+        description = "Get battery levels and status for all Nest Protect devices"
+        category = ToolCategory.SECURITY
     
     async def execute(self) -> Dict[str, Any]:
         """Execute the tool to get battery status."""
@@ -346,12 +395,29 @@ class GetNestProtectBatteryStatusTool(BaseTool):
             return {"error": str(e)}
 
 
+@tool("correlate_nest_camera_events")
 class CorrelateNestCameraEventsTool(BaseTool):
-    """Correlate Nest Protect alerts with camera events."""
+    """Correlate Nest Protect alerts with camera events.
     
-    name: str = "correlate_nest_camera_events"
-    description: str = "Find camera events that occurred around the same time as Nest Protect alerts"
-    category: str = "alarms"
+    Find camera events that occurred around the same time as Nest Protect
+    alerts to provide context and visual confirmation of alarm triggers.
+    
+    Parameters:
+        alert_id: Specific alert ID to correlate (optional)
+        time_window_minutes: Time window to search for related events (default: 10)
+    
+    Returns:
+        Dict with correlated events and relevance scores
+    """
+    
+    class Meta:
+        name = "correlate_nest_camera_events"
+        description = "Find camera events that occurred around the same time as Nest Protect alerts"
+        category = ToolCategory.SECURITY
+        
+        class Parameters:
+            alert_id: Optional[str] = Field(None, description="Specific alert ID to correlate (optional)")
+            time_window_minutes: int = Field(default=10, description="Time window to search for related events")
     
     async def execute(self, alert_id: Optional[str] = None, time_window_minutes: int = 10) -> Dict[str, Any]:
         """

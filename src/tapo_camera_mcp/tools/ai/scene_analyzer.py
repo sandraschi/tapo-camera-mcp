@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
-from ...tools.base_tool import BaseTool
+from ...tools.base_tool import BaseTool, ToolCategory, tool
 
 logger = logging.getLogger(__name__)
 
@@ -30,12 +30,36 @@ class SceneAnalysisResult(BaseModel):
     recommendations: List[str] = Field(default_factory=list, description="Action recommendations")
 
 
+@tool("scene_analyzer")
 class SceneAnalyzerTool(BaseTool):
-    """Advanced AI-powered scene analysis tool."""
+    """Advanced AI-powered scene analysis tool.
     
-    name: str = "scene_analyzer"
-    description: str = "Analyze camera scenes using AI to detect objects, activities, and provide contextual insights"
-    category: str = "ai_analysis"
+    Provides intelligent scene analysis using computer vision and AI to
+    understand camera scenes, detect objects, analyze activities, and
+    provide contextual insights and recommendations.
+    
+    Parameters:
+        camera_id: ID of the camera to analyze
+        analysis_type: Type of analysis (comprehensive, objects_only, activities_only, scene_type)
+        include_objects: Whether to detect objects
+        include_activities: Whether to detect activities
+        confidence_threshold: Minimum confidence threshold for detections
+    
+    Returns:
+        Dict with scene analysis results and insights
+    """
+    
+    class Meta:
+        name = "scene_analyzer"
+        description = "Analyze camera scenes using AI to detect objects, activities, and provide contextual insights"
+        category = ToolCategory.ANALYSIS
+        
+        class Parameters:
+            camera_id: str = Field(..., description="ID of the camera to analyze")
+            analysis_type: str = Field(default="comprehensive", description="Type of analysis")
+            include_objects: bool = Field(default=True, description="Whether to detect objects")
+            include_activities: bool = Field(default=True, description="Whether to detect activities")
+            confidence_threshold: float = Field(default=0.7, description="Minimum confidence threshold")
     
     # Scene type database
     SCENE_TYPES = {

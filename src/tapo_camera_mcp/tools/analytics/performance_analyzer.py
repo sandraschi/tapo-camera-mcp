@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from ...tools.base_tool import BaseTool
+from ...tools.base_tool import BaseTool, ToolCategory, tool
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +28,28 @@ class PerformanceMetrics(BaseModel):
     success: bool = Field(..., description="Whether operation succeeded")
 
 
+@tool("performance_analyzer")
 class PerformanceAnalyzerTool(BaseTool):
-    """Advanced performance analytics and monitoring tool."""
+    """Advanced performance analytics and monitoring tool.
     
-    name: str = "performance_analyzer"
-    description: str = "Analyze camera system performance and provide optimization recommendations"
-    category: str = "analytics"
+    Provides comprehensive performance analysis for camera systems including
+    operation metrics, system resources, network performance, and optimization
+    recommendations.
+    
+    Parameters:
+        operation: Type of analysis to perform (full_analysis, camera_operations, system_health)
+    
+    Returns:
+        Dict with performance analysis results and recommendations
+    """
+    
+    class Meta:
+        name = "performance_analyzer"
+        description = "Analyze camera system performance and provide optimization recommendations"
+        category = ToolCategory.ANALYSIS
+        
+        class Parameters:
+            operation: str = Field(default="full_analysis", description="Type of analysis to perform")
     
     # Performance tracking
     _metrics: List[PerformanceMetrics] = []
