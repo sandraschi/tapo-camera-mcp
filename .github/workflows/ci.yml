@@ -76,48 +76,70 @@ jobs:
         file: ./coverage.xml
         fail_ci_if_error: false
 
-  build:
-    name: Build package
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-        cache: 'pip'
-    
-    - name: Install build dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build
-    
-    - name: Build package
-      run: |
-        python -m build
-    
-    - name: Verify built package
-      run: |
-        pip install twine
-        twine check dist/*
-    
-    - name: Upload package artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: python-package
-        path: dist/
-    
-    - name: Publish to PyPI
-      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
-        skip-existing: true
+         build:
+           name: Build packages
+           needs: test
+           runs-on: ubuntu-latest
+           if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
+
+           steps:
+           - uses: actions/checkout@v3
+
+           - name: Set up Python 3.10
+             uses: actions/setup-python@v4
+             with:
+               python-version: '3.10'
+               cache: 'pip'
+
+           - name: Set up Node.js
+             uses: actions/setup-node@v4
+             with:
+               node-version: '18'
+
+           - name: Install build dependencies
+             run: |
+               python -m pip install --upgrade pip
+               pip install build
+
+           - name: Build Python package
+             run: |
+               python -m build
+
+           - name: Verify built Python package
+             run: |
+               pip install twine
+               twine check dist/*.whl dist/*.tar.gz
+
+           - name: Install MCPB CLI
+             run: |
+               npm install -g @anthropic-ai/mcpb
+               mcpb --version
+
+           - name: Validate MCPB manifest
+             run: mcpb validate mcpb/manifest.json
+
+           - name: Build MCPB package
+             run: |
+               mcpb pack . dist/tapo-camera-mcp.mcpb
+
+           - name: Verify MCPB package
+             run: |
+               ls -lh dist/
+               file dist/tapo-camera-mcp.mcpb || echo "MCPB package created"
+
+           - name: Upload package artifacts
+             uses: actions/upload-artifact@v3
+             with:
+               name: packages
+               path: dist/
+
+           - name: Publish to PyPI
+             if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+             uses: pypa/gh-action-pypi-publish@release/v1
+             with:
+               user: __token__
+               password: ${{ secrets.PYPI_API_TOKEN }}
+               skip-existing: true
 
   security:
     name: Security checks

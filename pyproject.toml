@@ -8,7 +8,7 @@ version = "1.1.0"  # Live dashboard working - major breakthrough
 description = "🔥 Production-ready FastMCP 2.12 server for TP-Link Tapo cameras with PTZ control, real-time monitoring, and Claude Desktop integration"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "Tapo Camera MCP Team", email = "tapo-camera-mcp@example.com"},
 ]
@@ -18,7 +18,6 @@ maintainers = [
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
