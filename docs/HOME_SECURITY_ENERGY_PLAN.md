@@ -248,11 +248,16 @@ class SecurityEventCorrelator:
   - Keypad for system control
 
 #### **⚡ Energy Monitoring Hardware**
-- **Tapo Smart Plugs**: Energy monitoring capable
-  - Model: TP-Link Tapo P110 or P115
-  - WiFi connectivity
-  - Energy monitoring features
-  - Remote control capabilities
+- **Tapo P115 Smart Plugs**: Advanced energy monitoring with dual functionality
+  - Model: TP-Link Tapo P115 (specifically P115 model)
+  - WiFi connectivity with real-time monitoring
+  - Dual functionality: Switch control + Energy monitoring
+  - Electrical parameters: Voltage (120V/240V), Current (up to 15A), Power (up to 1800W)
+  - Energy monitoring features: kWh tracking, cost calculation, usage analytics
+  - Power factor calculation and efficiency metrics
+  - Smart scheduling and automation rules
+  - Energy saving mode for optimized consumption
+  - Remote control capabilities via MCP tools
 
 ### **Software Architecture**
 
@@ -485,34 +490,65 @@ alarms:
         type: "motion_detector"
         location: "living_room"
 
-# New energy monitoring configuration
+# New energy monitoring configuration for Tapo P115 smart plugs
 energy:
-  tapo_smart_plugs:
+  tapo_p115_smart_plugs:
     enabled: true
     tapo_account:
       username: "your-username"
       password: "your-password"
     devices:
-      - name: "Living Room TV"
+      - name: "Living Room TV (P115)"
         device_id: "auto-detected"
         location: "living_room"
+        model: "Tapo P115"
         monitoring: true
-      - name: "Kitchen Coffee Maker"
+        energy_saving_mode: false
+        power_schedule: "08:00-23:00"
+      - name: "Kitchen Coffee Maker (P115)"
         device_id: "auto-detected"
         location: "kitchen"
+        model: "Tapo P115"
         monitoring: true
+        energy_saving_mode: true
+        power_schedule: "06:00-08:00, 12:00-13:00"
+      - name: "Garage EV Charger (P115)"
+        device_id: "auto-detected"
+        location: "garage"
+        model: "Tapo P115"
+        monitoring: true
+        energy_saving_mode: true
+        power_schedule: "22:00-06:00"
+      - name: "Office Computer (P115)"
+        device_id: "auto-detected"
+        location: "office"
+        model: "Tapo P115"
+        monitoring: true
+        energy_saving_mode: true
+        power_schedule: "09:00-17:00"
     automation:
       enabled: true
       rules:
         - name: "Turn off TV after 11 PM"
-          device: "Living Room TV"
+          device: "Living Room TV (P115)"
           schedule: "23:00"
           action: "turn_off"
+          energy_saving: true
         - name: "Coffee maker morning routine"
-          device: "Kitchen Coffee Maker"
+          device: "Kitchen Coffee Maker (P115)"
           schedule: "07:00"
           action: "turn_on"
           duration: "30m"
+        - name: "EV charger off-peak charging"
+          device: "Garage EV Charger (P115)"
+          schedule: "22:00-06:00"
+          action: "turn_on"
+          energy_saving: true
+    energy_monitoring:
+      electricity_rate: 0.12  # USD per kWh
+      cost_calculation: true
+      efficiency_tracking: true
+      power_factor_monitoring: true
 
 # Enhanced dashboard configuration
 dashboard:

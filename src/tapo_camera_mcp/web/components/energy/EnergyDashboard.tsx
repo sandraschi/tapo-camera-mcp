@@ -30,14 +30,19 @@ interface SmartPlugDevice {
   id: string;
   name: string;
   location: string;
+  deviceModel: string;
   powerState: boolean;
   currentPower: number; // watts
+  voltage: number; // volts
+  current: number; // amps
   dailyEnergy: number; // kWh
   monthlyEnergy: number; // kWh
   dailyCost: number; // USD
   monthlyCost: number; // USD
   lastSeen: string;
   automationEnabled: boolean;
+  powerSchedule: string;
+  energySavingMode: boolean;
 }
 
 interface EnergyUsageData {
@@ -309,6 +314,10 @@ export const EnergyDashboard: React.FC<EnergyDashboardProps> = ({ className }) =
                 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
+                    <span>Model:</span>
+                    <span className="font-medium">{device.deviceModel}</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span>Location:</span>
                     <span>{device.location}</span>
                   </div>
@@ -318,6 +327,18 @@ export const EnergyDashboard: React.FC<EnergyDashboardProps> = ({ className }) =
                       {device.powerState ? `${device.currentPower}W` : '0W'}
                     </span>
                   </div>
+                  {device.powerState && (
+                    <>
+                      <div className="flex justify-between">
+                        <span>Voltage:</span>
+                        <span>{device.voltage.toFixed(1)}V</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Current:</span>
+                        <span>{device.current.toFixed(2)}A</span>
+                      </div>
+                    </>
+                  )}
                   <div className="flex justify-between">
                     <span>Daily Usage:</span>
                     <span>{device.dailyEnergy.toFixed(2)} kWh</span>
@@ -326,6 +347,12 @@ export const EnergyDashboard: React.FC<EnergyDashboardProps> = ({ className }) =
                     <span>Daily Cost:</span>
                     <span className="font-semibold">${device.dailyCost.toFixed(2)}</span>
                   </div>
+                  {device.powerSchedule && (
+                    <div className="flex justify-between">
+                      <span>Schedule:</span>
+                      <span className="text-xs">{device.powerSchedule}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>Last Seen:</span>
                     <span className="text-xs">{new Date(device.lastSeen).toLocaleTimeString()}</span>

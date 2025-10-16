@@ -18,13 +18,16 @@ logger = logging.getLogger(__name__)
 
 
 class TapoSmartPlug(BaseModel):
-    """Tapo Smart Plug device data model."""
+    """Tapo P115 Smart Plug device data model with energy monitoring."""
     
     device_id: str = Field(..., description="Unique device identifier")
     name: str = Field(..., description="Device name")
     location: str = Field(..., description="Device location")
+    device_model: str = Field(default="Tapo P115", description="Device model")
     power_state: bool = Field(..., description="Current power state (on/off)")
     current_power: float = Field(..., description="Current power consumption in watts")
+    voltage: float = Field(default=0.0, description="Current voltage in volts")
+    current: float = Field(default=0.0, description="Current amperage in amps")
     daily_energy: float = Field(..., description="Daily energy consumption in kWh")
     monthly_energy: float = Field(..., description="Monthly energy consumption in kWh")
     daily_cost: float = Field(..., description="Daily cost in USD")
@@ -32,6 +35,8 @@ class TapoSmartPlug(BaseModel):
     last_seen: str = Field(..., description="Last communication timestamp")
     automation_enabled: bool = Field(default=False, description="Whether automation is enabled")
     energy_monitoring: bool = Field(default=True, description="Whether energy monitoring is enabled")
+    power_schedule: str = Field(default="", description="Power on/off schedule")
+    energy_saving_mode: bool = Field(default=False, description="Whether energy saving mode is enabled")
 
 
 class EnergyUsageData(BaseModel):
@@ -85,64 +90,103 @@ class TapoPlugManager:
             return False
     
     async def _discover_devices(self):
-        """Discover Tapo smart plugs on the network."""
-        # Simulate discovered devices
+        """Discover Tapo P115 smart plugs on the network."""
+        # Simulate discovered Tapo P115 devices with energy monitoring
         sample_devices = [
             {
-                "device_id": "tapo_plug_living_room_tv",
-                "name": "Living Room TV",
+                "device_id": "tapo_p115_living_room_tv",
+                "name": "Living Room TV (P115)",
                 "location": "Living Room",
+                "device_model": "Tapo P115",
                 "power_state": True,
                 "current_power": 45.5,
+                "voltage": 120.2,
+                "current": 0.38,
                 "daily_energy": 0.85,
                 "monthly_energy": 25.5,
                 "daily_cost": 0.10,
                 "monthly_cost": 3.06,
                 "last_seen": "2025-01-16T10:30:00Z",
                 "automation_enabled": True,
-                "energy_monitoring": True
+                "energy_monitoring": True,
+                "power_schedule": "08:00-23:00",
+                "energy_saving_mode": False
             },
             {
-                "device_id": "tapo_plug_kitchen_coffee",
-                "name": "Kitchen Coffee Maker",
+                "device_id": "tapo_p115_kitchen_coffee",
+                "name": "Kitchen Coffee Maker (P115)",
                 "location": "Kitchen",
+                "device_model": "Tapo P115",
                 "power_state": True,
                 "current_power": 850.0,
+                "voltage": 119.8,
+                "current": 7.09,
                 "daily_energy": 2.1,
                 "monthly_energy": 63.0,
                 "daily_cost": 0.25,
                 "monthly_cost": 7.56,
                 "last_seen": "2025-01-16T10:30:00Z",
                 "automation_enabled": True,
-                "energy_monitoring": True
+                "energy_monitoring": True,
+                "power_schedule": "06:00-08:00, 12:00-13:00",
+                "energy_saving_mode": True
             },
             {
-                "device_id": "tapo_plug_bedroom_lamp",
-                "name": "Bedroom Lamp",
+                "device_id": "tapo_p115_bedroom_lamp",
+                "name": "Bedroom Lamp (P115)",
                 "location": "Bedroom",
+                "device_model": "Tapo P115",
                 "power_state": False,
                 "current_power": 0.0,
+                "voltage": 0.0,
+                "current": 0.0,
                 "daily_energy": 0.3,
                 "monthly_energy": 9.0,
                 "daily_cost": 0.04,
                 "monthly_cost": 1.08,
                 "last_seen": "2025-01-16T10:30:00Z",
                 "automation_enabled": False,
-                "energy_monitoring": True
+                "energy_monitoring": True,
+                "power_schedule": "18:00-23:00",
+                "energy_saving_mode": False
             },
             {
-                "device_id": "tapo_plug_garage_door",
-                "name": "Garage Door Opener",
+                "device_id": "tapo_p115_garage_charger",
+                "name": "Garage EV Charger (P115)",
                 "location": "Garage",
+                "device_model": "Tapo P115",
                 "power_state": True,
-                "current_power": 12.0,
-                "daily_energy": 0.1,
-                "monthly_energy": 3.0,
-                "daily_cost": 0.01,
-                "monthly_cost": 0.36,
+                "current_power": 1200.0,
+                "voltage": 240.0,
+                "current": 5.0,
+                "daily_energy": 8.5,
+                "monthly_energy": 255.0,
+                "daily_cost": 1.02,
+                "monthly_cost": 30.60,
                 "last_seen": "2025-01-16T10:30:00Z",
                 "automation_enabled": True,
-                "energy_monitoring": True
+                "energy_monitoring": True,
+                "power_schedule": "22:00-06:00",
+                "energy_saving_mode": True
+            },
+            {
+                "device_id": "tapo_p115_office_computer",
+                "name": "Office Computer (P115)",
+                "location": "Office",
+                "device_model": "Tapo P115",
+                "power_state": True,
+                "current_power": 180.0,
+                "voltage": 120.1,
+                "current": 1.5,
+                "daily_energy": 4.2,
+                "monthly_energy": 126.0,
+                "daily_cost": 0.50,
+                "monthly_cost": 15.12,
+                "last_seen": "2025-01-16T10:30:00Z",
+                "automation_enabled": True,
+                "energy_monitoring": True,
+                "power_schedule": "09:00-17:00",
+                "energy_saving_mode": True
             }
         ]
         
@@ -499,4 +543,190 @@ class SetEnergyAutomationTool(BaseTool):
             
         except Exception as e:
             logger.exception("Failed to set energy automation: %s", e)
+            return {"error": str(e)}
+
+
+class GetTapoP115DetailedStatsTool(BaseTool):
+    """Get detailed energy statistics for Tapo P115 smart plugs."""
+    
+    name: str = "get_tapo_p115_detailed_stats"
+    description: str = "Get detailed energy monitoring statistics and electrical parameters for Tapo P115 smart plugs"
+    category: str = "energy"
+    
+    async def execute(self, device_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Execute the tool to get detailed P115 statistics.
+        
+        Args:
+            device_id: Specific P115 device ID (optional, gets all devices if not specified)
+        """
+        try:
+            devices = await tapo_plug_manager.get_all_devices()
+            
+            if device_id:
+                devices = [d for d in devices if d.device_id == device_id]
+                if not devices:
+                    return {"error": f"P115 device {device_id} not found"}
+            
+            # Filter for P115 devices only
+            p115_devices = [d for d in devices if "P115" in d.device_model]
+            
+            detailed_stats = []
+            for device in p115_devices:
+                stats = {
+                    "device_info": {
+                        "device_id": device.device_id,
+                        "name": device.name,
+                        "location": device.location,
+                        "model": device.device_model
+                    },
+                    "electrical_parameters": {
+                        "voltage_volts": device.voltage,
+                        "current_amps": device.current,
+                        "power_watts": device.current_power,
+                        "power_factor": device.current_power / (device.voltage * device.current) if device.voltage * device.current > 0 else 0
+                    },
+                    "energy_consumption": {
+                        "daily_kwh": device.daily_energy,
+                        "monthly_kwh": device.monthly_energy,
+                        "daily_cost_usd": device.daily_cost,
+                        "monthly_cost_usd": device.monthly_cost
+                    },
+                    "device_status": {
+                        "power_state": device.power_state,
+                        "automation_enabled": device.automation_enabled,
+                        "energy_saving_mode": device.energy_saving_mode,
+                        "power_schedule": device.power_schedule,
+                        "last_seen": device.last_seen
+                    },
+                    "efficiency_metrics": {
+                        "energy_efficiency_rating": "A" if device.daily_cost < 0.20 else "B" if device.daily_cost < 0.50 else "C",
+                        "standby_power_watts": 0.5 if device.power_state else 0.0,
+                        "power_consumption_trend": "stable"  # Could be calculated from historical data
+                    }
+                }
+                detailed_stats.append(stats)
+            
+            return {
+                "status": "success",
+                "device_count": len(p115_devices),
+                "detailed_stats": detailed_stats,
+                "summary": {
+                    "total_p115_devices": len(p115_devices),
+                    "active_p115_devices": len([d for d in p115_devices if d.power_state]),
+                    "total_current_power": sum(d.current_power for d in p115_devices if d.power_state),
+                    "total_daily_energy": sum(d.daily_energy for d in p115_devices),
+                    "total_daily_cost": sum(d.daily_cost for d in p115_devices),
+                    "average_voltage": sum(d.voltage for d in p115_devices) / len(p115_devices) if p115_devices else 0,
+                    "devices_with_energy_saving": len([d for d in p115_devices if d.energy_saving_mode])
+                }
+            }
+            
+        except Exception as e:
+            logger.exception("Failed to get P115 detailed stats: %s", e)
+            return {"error": str(e)}
+
+
+class SetTapoP115EnergySavingModeTool(BaseTool):
+    """Enable/disable energy saving mode on Tapo P115 smart plugs."""
+    
+    name: str = "set_tapo_p115_energy_saving_mode"
+    description: str = "Enable or disable energy saving mode on Tapo P115 smart plugs"
+    category: str = "energy"
+    
+    async def execute(self, device_id: str, energy_saving_enabled: bool) -> Dict[str, Any]:
+        """
+        Execute the tool to set energy saving mode.
+        
+        Args:
+            device_id: Target P115 device ID
+            energy_saving_enabled: Whether to enable energy saving mode
+        """
+        try:
+            device = await tapo_plug_manager.get_device_status(device_id)
+            if not device:
+                return {"error": f"P115 device {device_id} not found"}
+            
+            if "P115" not in device.device_model:
+                return {"error": f"Device {device_id} is not a Tapo P115 model"}
+            
+            # Update energy saving mode
+            device.energy_saving_mode = energy_saving_enabled
+            
+            # Apply energy saving optimizations if enabled
+            if energy_saving_enabled:
+                # In real implementation, this would send commands to the P115
+                logger.info("Energy saving mode enabled for P115 device %s", device_id)
+                
+                # Simulate power reduction for energy saving mode
+                if device.power_state and device.current_power > 0:
+                    # Reduce power consumption by 10% in energy saving mode
+                    device.current_power *= 0.9
+            
+            return {
+                "status": "success",
+                "message": f"Energy saving mode {'enabled' if energy_saving_enabled else 'disabled'} for {device.name}",
+                "device_id": device_id,
+                "device_name": device.name,
+                "energy_saving_mode": energy_saving_enabled,
+                "estimated_power_savings": "10%" if energy_saving_enabled else "0%",
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.exception("Failed to set energy saving mode for P115 %s: %s", device_id, e)
+            return {"error": str(e)}
+
+
+class GetTapoP115PowerScheduleTool(BaseTool):
+    """Get and manage power schedules for Tapo P115 smart plugs."""
+    
+    name: str = "get_tapo_p115_power_schedule"
+    description: str = "Get current power schedule settings for Tapo P115 smart plugs"
+    category: str = "energy"
+    
+    async def execute(self, device_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Execute the tool to get power schedules.
+        
+        Args:
+            device_id: Specific P115 device ID (optional, gets all devices if not specified)
+        """
+        try:
+            devices = await tapo_plug_manager.get_all_devices()
+            
+            if device_id:
+                devices = [d for d in devices if d.device_id == device_id]
+                if not devices:
+                    return {"error": f"P115 device {device_id} not found"}
+            
+            # Filter for P115 devices only
+            p115_devices = [d for d in devices if "P115" in d.device_model]
+            
+            schedules = []
+            for device in p115_devices:
+                schedule_info = {
+                    "device_id": device.device_id,
+                    "device_name": device.name,
+                    "location": device.location,
+                    "current_schedule": device.power_schedule,
+                    "automation_enabled": device.automation_enabled,
+                    "energy_saving_mode": device.energy_saving_mode,
+                    "schedule_status": "active" if device.automation_enabled and device.power_schedule else "inactive"
+                }
+                schedules.append(schedule_info)
+            
+            return {
+                "status": "success",
+                "schedules": schedules,
+                "summary": {
+                    "total_p115_devices": len(p115_devices),
+                    "devices_with_schedules": len([d for d in p115_devices if d.power_schedule]),
+                    "automation_enabled_devices": len([d for d in p115_devices if d.automation_enabled]),
+                    "energy_saving_devices": len([d for d in p115_devices if d.energy_saving_mode])
+                }
+            }
+            
+        except Exception as e:
+            logger.exception("Failed to get P115 power schedules: %s", e)
             return {"error": str(e)}
