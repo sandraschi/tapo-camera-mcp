@@ -31,7 +31,6 @@ class ToolValidationError(ValidationError):
     """Raised when tool input validation fails."""
 
 
-
 def validate_required(value: Any, field_name: str) -> Any:
     """Validate that a required field is not None or empty."""
     if value is None:

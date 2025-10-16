@@ -425,15 +425,15 @@ def test_all_tools_metadata():
             # Category should be valid
             from tapo_camera_mcp.tools.base_tool import ToolCategory
 
-            assert isinstance(
-                meta.category, ToolCategory
-            ), f"Tool {tool_cls.__name__} category should be ToolCategory"
+            assert isinstance(meta.category, ToolCategory), (
+                f"Tool {tool_cls.__name__} category should be ToolCategory"
+            )
 
             # Tool should have execute method
             assert hasattr(tool_cls, "execute"), f"Tool {tool_cls.__name__} missing execute method"
-            assert callable(
-                tool_cls.execute
-            ), f"Tool {tool_cls.__name__} execute should be callable"
+            assert callable(tool_cls.execute), (
+                f"Tool {tool_cls.__name__} execute should be callable"
+            )
 
         print(f"✅ All tools metadata test passed - validated {len(all_tools)} tools")
         return True

@@ -5,14 +5,12 @@ Quick start script for Tapo Camera MCP Dashboard
 This script provides easy commands to start different components of the system.
 """
 
-import subprocess
 import argparse
 import logging
+import subprocess
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -20,9 +18,7 @@ def run_command(cmd, description):
     """Run a command and handle errors."""
     logger.info(f"🚀 {description}")
     try:
-        result = subprocess.run(
-            cmd, shell=True, check=True, capture_output=True, text=True
-        )
+        result = subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True)
         logger.info(f"✅ {description} completed successfully")
         return True
     except subprocess.CalledProcessError as e:
@@ -42,7 +38,7 @@ def start_mcp_server(debug=False):
     logger.info("🛑 Press Ctrl+C to stop the server")
 
     try:
-        subprocess.run(cmd, shell=True)
+        subprocess.run(cmd, check=False, shell=True)
     except KeyboardInterrupt:
         logger.info("🛑 MCP Server stopped")
 
@@ -58,7 +54,7 @@ def start_dual_server():
     cmd = 'python -c "import asyncio; from src.tapo_camera_mcp.dual_server import start_dual_server; asyncio.run(start_dual_server())"'
 
     try:
-        subprocess.run(cmd, shell=True)
+        subprocess.run(cmd, check=False, shell=True)
     except KeyboardInterrupt:
         logger.info("🛑 Dual Server stopped")
 
@@ -71,7 +67,7 @@ def start_web_dashboard(port: int = 7777):
 
     try:
         cmd = f"python -m tapo_camera_mcp.web.server --port {port}"
-        subprocess.run(cmd, shell=True)
+        subprocess.run(cmd, check=False, shell=True)
     except KeyboardInterrupt:
         logger.info("🛑 Web Dashboard stopped")
 

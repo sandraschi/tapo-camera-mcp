@@ -144,9 +144,9 @@ def test_camera_factory():
         from tapo_camera_mcp.camera.base import CameraFactory
 
         # Test that CameraFactory exists
-        assert hasattr(
-            CameraFactory, "create_camera"
-        ), "CameraFactory should have create_camera method"
+        assert hasattr(CameraFactory, "create_camera"), (
+            "CameraFactory should have create_camera method"
+        )
 
         print("✅ Camera factory structure test passed")
         return True
@@ -178,9 +178,9 @@ def test_camera_exceptions():
 
         # Test exception hierarchy
         assert isinstance(error, Exception), "TapoCameraError should be Exception"
-        assert isinstance(
-            connection_error, TapoCameraError
-        ), "ConnectionError should inherit from TapoCameraError"
+        assert isinstance(connection_error, TapoCameraError), (
+            "ConnectionError should inherit from TapoCameraError"
+        )
 
         print("✅ Camera exceptions test passed")
         return True

@@ -217,9 +217,9 @@ def test_tool_validation_function():
             pass
 
         assert not is_tool_class(NotATool), "NotATool should not be recognized as a tool class"
-        assert not is_tool_class(
-            BaseTool
-        ), "BaseTool itself should not be recognized as a tool class"
+        assert not is_tool_class(BaseTool), (
+            "BaseTool itself should not be recognized as a tool class"
+        )
         assert not is_tool_class("not a class"), "String should not be recognized as a tool class"
 
         print("✅ Tool validation function test passed")

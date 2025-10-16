@@ -173,9 +173,7 @@ class WebServer:
         """Run the web server."""
         import uvicorn
 
-        logger.info(
-            f"Starting web server on http://{self.config.web_host}:" f"{self.config.web_port}"
-        )
+        logger.info(f"Starting web server on http://{self.config.web_host}:{self.config.web_port}")
 
         uvicorn.run(
             self.app,

@@ -94,9 +94,9 @@ def assert_dict_contains(d: Dict[Any, Any], sub_d: Dict[Any, Any]) -> None:
     """Assert that dictionary d contains all key-value pairs from sub_d."""
     for key, value in sub_d.items():
         assert key in d, f"Key '{key}' not found in dictionary"
-        assert (
-            d[key] == value
-        ), f"Value for key '{key}' does not match. Expected {value}, got {d[key]}"
+        assert d[key] == value, (
+            f"Value for key '{key}' does not match. Expected {value}, got {d[key]}"
+        )
 
 
 # Mock classes for testing

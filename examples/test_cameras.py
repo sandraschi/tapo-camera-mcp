@@ -6,15 +6,16 @@ This script helps verify that your camera configurations are correct
 and that the server can connect to all configured cameras.
 """
 
-import asyncio
 import argparse
-import yaml
+import asyncio
 import os
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
-from tapo_camera_mcp.camera.manager import camera_manager
+import yaml
+
 from tapo_camera_mcp.camera.base import CameraConfig, CameraType
+from tapo_camera_mcp.camera.manager import camera_manager
 
 # Create output directories
 TEST_OUTPUT_DIR = Path("test_output")
@@ -94,7 +95,7 @@ async def test_camera_connection(camera_name: str, config: Dict[str, Any]) -> bo
 async def main(config_path: str):
     """Main function to test all cameras in the config."""
     # Load config
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         config = yaml.safe_load(f)
 
     cameras = config.get("cameras", [])
@@ -138,9 +139,7 @@ if __name__ == "__main__":
 
     if not os.path.exists(args.config):
         print(f"Error: Config file not found: {args.config}")
-        print(
-            "Please create a config.yaml file or specify a different config file with --config"
-        )
+        print("Please create a config.yaml file or specify a different config file with --config")
         exit(1)
 
     asyncio.run(main(args.config))

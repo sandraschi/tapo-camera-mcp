@@ -41,7 +41,6 @@ class PTZStopRequest(BaseModel):
     """Request model to stop all PTZ movement"""
 
 
-
 class PTZPresetCreate(BaseModel):
     """Request model for creating a PTZ preset"""
 

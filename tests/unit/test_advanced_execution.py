@@ -340,9 +340,9 @@ def test_async_tool_execution():
             # Check that execute is a coroutine function
             import inspect
 
-            assert inspect.iscoroutinefunction(
-                tool.execute
-            ), f"Tool {tool.__class__.__name__} execute should be async"
+            assert inspect.iscoroutinefunction(tool.execute), (
+                f"Tool {tool.__class__.__name__} execute should be async"
+            )
 
         # Test concurrent execution
         async def test_concurrent_execution():

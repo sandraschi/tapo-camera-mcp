@@ -4,8 +4,8 @@ Quick script to add a test camera to the Tapo Camera MCP system.
 """
 
 import asyncio
-import sys
 import os
+import sys
 
 # Add the src directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
@@ -33,9 +33,8 @@ async def add_test_webcam():
         if success:
             print("✅ Test webcam added successfully!")
             return True
-        else:
-            print("❌ Failed to add webcam: Camera manager returned False")
-            return False
+        print("❌ Failed to add webcam: Camera manager returned False")
+        return False
 
     except Exception as e:
         print(f"❌ Failed to add webcam: {e}")
@@ -67,9 +66,8 @@ async def add_tapo_camera(ip_address, username, password, camera_name="tapo_came
         if success:
             print("✅ Tapo camera added successfully!")
             return True
-        else:
-            print("❌ Failed to add Tapo camera: Camera manager returned False")
-            return False
+        print("❌ Failed to add Tapo camera: Camera manager returned False")
+        return False
 
     except Exception as e:
         print(f"❌ Failed to add Tapo camera: {e}")
@@ -102,9 +100,7 @@ def main():
             print("❌ Error: --ip is required for Tapo cameras")
             return 1
 
-        success = asyncio.run(
-            add_tapo_camera(args.ip, args.username, args.password, args.name)
-        )
+        success = asyncio.run(add_tapo_camera(args.ip, args.username, args.password, args.name))
     else:
         success = asyncio.run(add_test_webcam())
 

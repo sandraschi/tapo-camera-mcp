@@ -69,9 +69,9 @@ def test_camera_manager_integration():
         server = asyncio.run(TapoCameraServer.get_instance())
 
         # Test camera manager is properly initialized
-        assert isinstance(
-            server.camera_manager, CameraManager
-        ), "Server should have CameraManager instance"
+        assert isinstance(server.camera_manager, CameraManager), (
+            "Server should have CameraManager instance"
+        )
 
         # Test camera manager has required methods
         required_methods = [

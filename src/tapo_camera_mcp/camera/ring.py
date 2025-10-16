@@ -122,7 +122,6 @@ class RingCamera(BaseCamera):
                 None, lambda: self._device.recording_url()
             )
 
-
         except Exception as e:
             logger.exception(f"Failed to get stream URL from Ring: {e}")
             return None

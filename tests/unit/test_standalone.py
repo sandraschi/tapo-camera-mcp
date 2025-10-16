@@ -221,9 +221,9 @@ async def test_server():
 
             # Verify the response and mock call
             assert result.content["status"] == "success", "Failed to enable motion detection"
-            assert (
-                result.content.get("motion_detection", {}).get("enabled") is True
-            ), "Motion detection not enabled"
+            assert result.content.get("motion_detection", {}).get("enabled") is True, (
+                "Motion detection not enabled"
+            )
             mock_camera.setMotionDetection.assert_awaited_once_with({"enabled": True})
             print_success("Successfully controlled motion detection")
 

@@ -1,8 +1,8 @@
 """Test script for DINOv3 integration."""
 
 import asyncio
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add the project root to the path
 project_root = str(Path(__file__).parent.parent)

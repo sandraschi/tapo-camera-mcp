@@ -130,9 +130,9 @@ def test_tool_documentation():
                 "GitHub Repository",
                 "Tapo API",
             ]:  # Skip external links
-                assert (
-                    f"#### {link_text}" in full_docs
-                ), f"Documentation for {link_text} not found in full docs"
+                assert f"#### {link_text}" in full_docs, (
+                    f"Documentation for {link_text} not found in full docs"
+                )
 
     # Check that some tool documentation is included
     assert "get_camera_info" in full_docs or "move_ptz" in full_docs or "reboot" in full_docs

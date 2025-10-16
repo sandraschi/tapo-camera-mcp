@@ -135,7 +135,9 @@ class StatusTool(BaseTool):
             overall = (
                 "critical"
                 if any("critical" in warning.lower() for warning in all_warnings)
-                else "warning" if all_warnings else "healthy"
+                else "warning"
+                if all_warnings
+                else "healthy"
             )
 
             return {
