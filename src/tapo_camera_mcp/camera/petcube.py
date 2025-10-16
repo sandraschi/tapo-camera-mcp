@@ -1,12 +1,10 @@
 """Petcube camera implementation."""
-import asyncio
+
 import aiohttp
-import json
 import logging
 from typing import Dict, Optional
 from pathlib import Path
 from PIL import Image
-import io
 
 from .base import BaseCamera, CameraFactory, CameraType
 
@@ -30,8 +28,8 @@ class PetcubeAPI:
         if self._session is None or self._session.closed:
             self._session = aiohttp.ClientSession(
                 headers={
-                    'Content-Type': 'application/json',
-                    'User-Agent': 'PetcubeCameraMCP/1.0'
+                    "Content-Type": "application/json",
+                    "User-Agent": "PetcubeCameraMCP/1.0",
                 }
             )
         return self._session
@@ -43,21 +41,20 @@ class PetcubeAPI:
         try:
             async with session.post(
                 f"{self.BASE_URL}/auth/login",
-                json={
-                    "email": self.email,
-                    "password": self.password
-                }
+                json={"email": self.email, "password": self.password},
             ) as response:
                 data = await response.json()
                 if response.status != 200:
-                    raise ValueError(f"Login failed: {data.get('message', 'Unknown error')}")
+                    raise ValueError(
+                        f"Login failed: {data.get('message', 'Unknown error')}"
+                    )
 
-                self._token = data.get('token') or data.get('access_token')
+                self._token = data.get("token") or data.get("access_token")
                 if not self._token:
                     raise ValueError("No token received from login")
 
                 # Update session headers with token
-                session.headers.update({'Authorization': f'Bearer {self._token}'})
+                session.headers.update({"Authorization": f"Bearer {self._token}"})
 
                 return self._token
 
@@ -75,7 +72,11 @@ class PetcubeAPI:
                     raise ValueError(f"Failed to get devices: HTTP {response.status}")
 
                 devices = await response.json()
-                return devices.get('devices', devices) if isinstance(devices, dict) else devices
+                return (
+                    devices.get("devices", devices)
+                    if isinstance(devices, dict)
+                    else devices
+                )
 
         except Exception as e:
             logger.error(f"Error getting devices: {e}")
@@ -88,7 +89,9 @@ class PetcubeAPI:
         try:
             async with session.get(f"{self.BASE_URL}/devices/{device_id}") as response:
                 if response.status != 200:
-                    raise ValueError(f"Failed to get device status: HTTP {response.status}")
+                    raise ValueError(
+                        f"Failed to get device status: HTTP {response.status}"
+                    )
 
                 return await response.json()
 
@@ -101,12 +104,16 @@ class PetcubeAPI:
         session = await self._get_session()
 
         try:
-            async with session.get(f"{self.BASE_URL}/devices/{device_id}/stream") as response:
+            async with session.get(
+                f"{self.BASE_URL}/devices/{device_id}/stream"
+            ) as response:
                 if response.status != 200:
-                    raise ValueError(f"Failed to get stream URL: HTTP {response.status}")
+                    raise ValueError(
+                        f"Failed to get stream URL: HTTP {response.status}"
+                    )
 
                 data = await response.json()
-                return data.get('stream_url') or data.get('url')
+                return data.get("stream_url") or data.get("url")
 
         except Exception as e:
             logger.error(f"Error getting stream URL: {e}")
@@ -118,11 +125,12 @@ class PetcubeAPI:
 
         try:
             async with session.post(
-                f"{self.BASE_URL}/devices/{device_id}/treat",
-                json={"amount": amount}
+                f"{self.BASE_URL}/devices/{device_id}/treat", json={"amount": amount}
             ) as response:
                 if response.status not in [200, 201]:
-                    raise ValueError(f"Failed to dispense treat: HTTP {response.status}")
+                    raise ValueError(
+                        f"Failed to dispense treat: HTTP {response.status}"
+                    )
 
                 return await response.json()
 
@@ -143,10 +151,9 @@ class PetcubeCamera(BaseCamera):
     def __init__(self, config):
         super().__init__(config)
         self.api = PetcubeAPI(
-            config.params.get('email', ''),
-            config.params.get('password', '')
+            config.params.get("email", ""), config.params.get("password", "")
         )
-        self.device_id = config.params.get('device_id')
+        self.device_id = config.params.get("device_id")
         self._stream_url = None
 
     async def connect(self) -> bool:
@@ -160,7 +167,7 @@ class PetcubeCamera(BaseCamera):
                 devices = await self.api.get_devices()
                 if devices:
                     # Use first device or try to match by name
-                    self.device_id = devices[0].get('id') or devices[0].get('device_id')
+                    self.device_id = devices[0].get("id") or devices[0].get("device_id")
                     logger.info(f"Auto-selected Petcube device: {self.device_id}")
                 else:
                     raise ValueError("No Petcube devices found for this account")
@@ -201,12 +208,17 @@ class PetcubeCamera(BaseCamera):
 
             # Placeholder implementation - create a simple image
             # TODO: Implement actual stream capture
-            img = Image.new('RGB', (640, 480), color='gray')
+            img = Image.new("RGB", (640, 480), color="gray")
             # Add timestamp or camera info
-            from PIL import ImageDraw, ImageFont
+            from PIL import ImageDraw
+
             draw = ImageDraw.Draw(img)
-            draw.text((10, 10), f"Petcube {self.device_id}", fill='white')
-            draw.text((10, 30), f"Status: {'Online' if self._is_connected else 'Offline'}", fill='white')
+            draw.text((10, 10), f"Petcube {self.device_id}", fill="white")
+            draw.text(
+                (10, 30),
+                f"Status: {'Online' if self._is_connected else 'Offline'}",
+                fill="white",
+            )
 
             # Save if path provided
             if save_path:
@@ -241,30 +253,30 @@ class PetcubeCamera(BaseCamera):
             device_info = await self.api.get_device_status(self.device_id)
 
             return {
-                'connected': True,
-                'model': device_info.get('model', 'Petcube Camera'),
-                'firmware': device_info.get('firmware_version', 'Unknown'),
-                'streaming': bool(self._stream_url),
-                'resolution': device_info.get('video_resolution', '1080p'),
-                'ptz_capable': False,  # Petcube cameras typically don't have PTZ
-                'audio_capable': device_info.get('audio_enabled', True),
-                'streaming_capable': True,
-                'capture_capable': True,
-                'treat_dispenser': device_info.get('treat_compartments', 0),
-                'battery_level': device_info.get('battery_level'),
-                'online': device_info.get('online', True)
+                "connected": True,
+                "model": device_info.get("model", "Petcube Camera"),
+                "firmware": device_info.get("firmware_version", "Unknown"),
+                "streaming": bool(self._stream_url),
+                "resolution": device_info.get("video_resolution", "1080p"),
+                "ptz_capable": False,  # Petcube cameras typically don't have PTZ
+                "audio_capable": device_info.get("audio_enabled", True),
+                "streaming_capable": True,
+                "capture_capable": True,
+                "treat_dispenser": device_info.get("treat_compartments", 0),
+                "battery_level": device_info.get("battery_level"),
+                "online": device_info.get("online", True),
             }
 
         except Exception as e:
             self._is_connected = False
             return {
-                'connected': False,
-                'error': str(e),
-                'resolution': 'Unknown',
-                'ptz_capable': False,
-                'audio_capable': False,
-                'streaming_capable': False,
-                'capture_capable': False
+                "connected": False,
+                "error": str(e),
+                "resolution": "Unknown",
+                "ptz_capable": False,
+                "audio_capable": False,
+                "streaming_capable": False,
+                "capture_capable": False,
             }
 
     async def dispense_treat(self, amount: int = 1) -> dict:
@@ -275,54 +287,51 @@ class PetcubeCamera(BaseCamera):
         try:
             result = await self.api.dispense_treat(self.device_id, amount)
             return {
-                'success': True,
-                'message': f'Dispensed {amount} treat(s)',
-                'details': result
+                "success": True,
+                "message": f"Dispensed {amount} treat(s)",
+                "details": result,
             }
         except Exception as e:
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     async def get_info(self) -> Dict:
         """Get comprehensive Petcube camera information."""
         try:
             info = {
-                'name': self.config.name,
-                'type': self.config.type.value,
-                'device_id': self.device_id,
-                'connected': await self.is_connected(),
-                'streaming': await self.is_streaming(),
-                'capabilities': {
-                    'video_capture': True,
-                    'image_capture': True,
-                    'streaming': True,
-                    'audio': True,
-                    'treat_dispenser': True,
-                    'motion_detection': True
-                }
+                "name": self.config.name,
+                "type": self.config.type.value,
+                "device_id": self.device_id,
+                "connected": await self.is_connected(),
+                "streaming": await self.is_streaming(),
+                "capabilities": {
+                    "video_capture": True,
+                    "image_capture": True,
+                    "streaming": True,
+                    "audio": True,
+                    "treat_dispenser": True,
+                    "motion_detection": True,
+                },
             }
 
             if await self.is_connected():
                 device_info = await self.api.get_device_status(self.device_id)
-                info.update({
-                    'model': device_info.get('model'),
-                    'firmware': device_info.get('firmware_version'),
-                    'battery_level': device_info.get('battery_level'),
-                    'treat_compartments': device_info.get('treat_compartments'),
-                    'last_seen': device_info.get('last_seen')
-                })
+                info.update(
+                    {
+                        "model": device_info.get("model"),
+                        "firmware": device_info.get("firmware_version"),
+                        "battery_level": device_info.get("battery_level"),
+                        "treat_compartments": device_info.get("treat_compartments"),
+                        "last_seen": device_info.get("last_seen"),
+                    }
+                )
 
             return info
 
         except Exception as e:
             logger.error(f"Error getting Petcube info: {e}")
             return {
-                'name': self.config.name,
-                'type': self.config.type.value,
-                'error': str(e)
+                "name": self.config.name,
+                "type": self.config.type.value,
+                "error": str(e),
             }
-
-
 

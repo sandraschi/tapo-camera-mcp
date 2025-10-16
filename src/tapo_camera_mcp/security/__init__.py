@@ -11,7 +11,7 @@ from .integrations import (
     NestProtectClient,
     RingMCPClient,
     SecurityIntegrationManager,
-    security_manager
+    security_manager,
 )
 
 __all__ = [
@@ -20,8 +20,6 @@ __all__ = [
     "NestProtectClient",
     "RingMCPClient",
     "SecurityIntegrationManager",
-    "security_manager"
+    "security_manager",
 ]
-
-
 

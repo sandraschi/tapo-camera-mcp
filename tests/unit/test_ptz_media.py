@@ -2,11 +2,13 @@
 """
 Test PTZ (Pan-Tilt-Zoom) functionality and media operations.
 """
+
 import sys
 import os
 
 # Add the src path to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
 
 def test_ptz_models():
     """Test PTZ model definitions."""
@@ -15,16 +17,26 @@ def test_ptz_models():
 
         # Test PTZ directions enum
         directions = [
-            PTZDirection.UP, PTZDirection.DOWN, PTZDirection.LEFT, PTZDirection.RIGHT,
-            PTZDirection.UP_LEFT, PTZDirection.UP_RIGHT, PTZDirection.DOWN_LEFT, PTZDirection.DOWN_RIGHT,
-            PTZDirection.ZOOM_IN, PTZDirection.ZOOM_OUT, PTZDirection.STOP
+            PTZDirection.UP,
+            PTZDirection.DOWN,
+            PTZDirection.LEFT,
+            PTZDirection.RIGHT,
+            PTZDirection.UP_LEFT,
+            PTZDirection.UP_RIGHT,
+            PTZDirection.DOWN_LEFT,
+            PTZDirection.DOWN_RIGHT,
+            PTZDirection.ZOOM_IN,
+            PTZDirection.ZOOM_OUT,
+            PTZDirection.STOP,
         ]
 
         print(f"✅ PTZ directions: {[d.value for d in directions]}")
 
         # Test PTZ position model
         position = PTZPosition(pan=45.0, tilt=30.0, zoom=1.5)
-        print(f"✅ PTZ position created: pan={position.pan}, tilt={position.tilt}, zoom={position.zoom}")
+        print(
+            f"✅ PTZ position created: pan={position.pan}, tilt={position.tilt}, zoom={position.zoom}"
+        )
 
         # Test position boundaries
         assert -180 <= position.pan <= 180, "Pan should be between -180 and 180"
@@ -35,21 +47,24 @@ def test_ptz_models():
     except Exception as e:
         print(f"❌ PTZ models test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_ptz_tools():
     """Test PTZ tools structure."""
     try:
         # Just test that PTZ tools module can be imported
-        import tapo_camera_mcp.tools.ptz
         print("✅ PTZ tools module imported successfully")
         return True
     except Exception as e:
         print(f"❌ PTZ tools test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_media_operations():
     """Test media operation structures."""
@@ -68,8 +83,10 @@ def test_media_operations():
     except Exception as e:
         print(f"❌ Media operations test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_camera_types():
     """Test camera type definitions."""
@@ -82,14 +99,18 @@ def test_camera_types():
 
         # Test that all types are strings
         for ct in camera_types:
-            assert isinstance(ct.value, str), f"Camera type {ct.name} should have string value"
+            assert isinstance(ct.value, str), (
+                f"Camera type {ct.name} should have string value"
+            )
 
         return True
     except Exception as e:
         print(f"❌ Camera types test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     tests = [

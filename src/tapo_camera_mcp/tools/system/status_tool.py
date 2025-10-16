@@ -1,17 +1,18 @@
 """
 Status tool for monitoring system health and camera status in Tapo Camera MCP.
 """
-from typing import Dict, Any, List, Optional
+
+from typing import Dict, Any, List
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 import psutil
 import os
-import asyncio
 import logging
 
 from tapo_camera_mcp.tools.base_tool import tool, ToolCategory, BaseTool
 
 logger = logging.getLogger(__name__)
+
 
 class SystemStatus(BaseModel):
     cpu_percent: float = Field(..., description="CPU usage percentage")
@@ -22,44 +23,49 @@ class SystemStatus(BaseModel):
     active_streams: int = Field(..., description="Number of active streams")
     last_updated: str = Field(..., description="Timestamp of last status update")
 
+
 class HealthStatus(BaseModel):
     """Comprehensive health status information."""
-    overall: str = Field(..., description="Overall health status: healthy/warning/critical")
+
+    overall: str = Field(
+        ..., description="Overall health status: healthy/warning/critical"
+    )
     server_status: str = Field(..., description="MCP server status")
     camera_health: Dict[str, Any] = Field(..., description="Camera health information")
     system_health: Dict[str, Any] = Field(..., description="System resource health")
     last_check: str = Field(..., description="Timestamp of health check")
 
+
 class PerformanceMetrics(BaseModel):
     """Performance monitoring metrics."""
+
     response_time_avg: float = Field(..., description="Average response time (ms)")
     memory_usage_mb: float = Field(..., description="Memory usage in MB")
     cpu_usage_percent: float = Field(..., description="CPU usage percentage")
     active_connections: int = Field(..., description="Number of active connections")
     total_requests: int = Field(..., description="Total requests processed")
 
+
 @tool(name="get_status")
 class StatusTool(BaseTool):
     """Tool to get system and camera status information."""
-    
+
     class Meta:
         name = "get_status"
         category = ToolCategory.SYSTEM
-    
+
     detail_level: str = Field(
-        default="basic",
-        description="Level of detail in the status report"
+        default="basic", description="Level of detail in the status report"
     )
-    
+
     model_config = ConfigDict(
-        json_schema_extra={
-            "enum": ["basic", "detailed", "cameras"]
-        }
+        json_schema_extra={"enum": ["basic", "detailed", "cameras"]}
     )
 
     def __init__(self, **data):
         super().__init__(**data)
         from tapo_camera_mcp.core.server import TapoCameraServer
+
         self.server = TapoCameraServer.get_instance()
         self.camera_manager = self.server.camera_manager
 
@@ -77,7 +83,7 @@ class StatusTool(BaseTool):
                 "success": True,
                 "status": basic_status,
                 "health": health_status,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
             # Get camera status if requested
@@ -87,7 +93,9 @@ class StatusTool(BaseTool):
                 if self.detail_level == "detailed":
                     result["system"] = await self._get_detailed_system_status()
 
-            logger.info(f"Status check completed - Health: {health_status.get('overall', 'unknown')}")
+            logger.info(
+                f"Status check completed - Health: {health_status.get('overall', 'unknown')}"
+            )
             return result
 
         except Exception as e:
@@ -95,7 +103,7 @@ class StatusTool(BaseTool):
             return {
                 "success": False,
                 "error": f"Failed to get status: {str(e)}",
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
     async def _get_comprehensive_health(self) -> Dict[str, Any]:
@@ -104,7 +112,7 @@ class StatusTool(BaseTool):
             # System resource health
             cpu_percent = psutil.cpu_percent(interval=1)
             memory_percent = psutil.virtual_memory().percent
-            disk_percent = psutil.disk_usage('/').percent
+            disk_percent = psutil.disk_usage("/").percent
 
             # Determine overall system health
             system_warnings = []
@@ -124,9 +132,18 @@ class StatusTool(BaseTool):
             server_status = await self._assess_server_health()
 
             # Overall health determination
-            all_warnings = system_warnings + camera_health.get("warnings", []) + server_status.get("warnings", [])
-            overall = "critical" if any("critical" in warning.lower() for warning in all_warnings) else \
-                     "warning" if all_warnings else "healthy"
+            all_warnings = (
+                system_warnings
+                + camera_health.get("warnings", [])
+                + server_status.get("warnings", [])
+            )
+            overall = (
+                "critical"
+                if any("critical" in warning.lower() for warning in all_warnings)
+                else "warning"
+                if all_warnings
+                else "healthy"
+            )
 
             return {
                 "overall": overall,
@@ -137,9 +154,9 @@ class StatusTool(BaseTool):
                     "warnings": system_warnings,
                     "cpu_percent": cpu_percent,
                     "memory_percent": memory_percent,
-                    "disk_percent": disk_percent
+                    "disk_percent": disk_percent,
                 },
-                "last_check": datetime.utcnow().isoformat()
+                "last_check": datetime.utcnow().isoformat(),
             }
 
         except Exception as e:
@@ -147,7 +164,7 @@ class StatusTool(BaseTool):
             return {
                 "overall": "critical",
                 "error": str(e),
-                "last_check": datetime.utcnow().isoformat()
+                "last_check": datetime.utcnow().isoformat(),
             }
 
     async def _assess_camera_health(self) -> Dict[str, Any]:
@@ -172,7 +189,7 @@ class StatusTool(BaseTool):
                 "status": status,
                 "total_cameras": total_cameras,
                 "online_cameras": online_cameras,
-                "warnings": warnings
+                "warnings": warnings,
             }
 
         except Exception as e:
@@ -192,12 +209,14 @@ class StatusTool(BaseTool):
             if critical_errors > 0:
                 warnings.append(f"{critical_errors} critical errors detected")
 
-            status = "healthy" if server_responsive and critical_errors == 0 else "warning"
+            status = (
+                "healthy" if server_responsive and critical_errors == 0 else "warning"
+            )
 
             return {
                 "status": status,
                 "responsive": server_responsive,
-                "warnings": warnings
+                "warnings": warnings,
             }
 
         except Exception as e:
@@ -209,11 +228,15 @@ class StatusTool(BaseTool):
         return {
             "cpu_percent": psutil.cpu_percent(interval=1),
             "memory_percent": psutil.virtual_memory().percent,
-            "disk_usage": psutil.disk_usage('/').percent,
+            "disk_usage": psutil.disk_usage("/").percent,
             "uptime": self._format_uptime(psutil.boot_time()),
-            "active_cameras": len(self.camera_manager.get_active_cameras()) if self.camera_manager else 0,
-            "active_streams": len(self.camera_manager.get_active_streams()) if self.camera_manager else 0,
-            "last_updated": datetime.utcnow().isoformat()
+            "active_cameras": len(self.camera_manager.get_active_cameras())
+            if self.camera_manager
+            else 0,
+            "active_streams": len(self.camera_manager.get_active_streams())
+            if self.camera_manager
+            else 0,
+            "last_updated": datetime.utcnow().isoformat(),
         }
 
     async def _get_camera_statuses(self) -> List[Dict[str, Any]]:
@@ -224,15 +247,23 @@ class StatusTool(BaseTool):
         cameras_status = []
         for camera in self.camera_manager.get_cameras():
             stream = self.camera_manager.get_camera_stream(camera.id)
-            cameras_status.append({
-                "camera_id": camera.id,
-                "model": camera.model,
-                "status": "online" if camera.is_online() else "offline",
-                "last_seen": camera.last_seen.isoformat() if camera.last_seen else "never",
-                "stream_status": "active" if stream and stream.is_active() else "inactive",
-                "fps": stream.get_fps() if stream else 0.0,
-                "resolution": f"{stream.width}x{stream.height}" if stream else "N/A"
-            })
+            cameras_status.append(
+                {
+                    "camera_id": camera.id,
+                    "model": camera.model,
+                    "status": "online" if camera.is_online() else "offline",
+                    "last_seen": camera.last_seen.isoformat()
+                    if camera.last_seen
+                    else "never",
+                    "stream_status": "active"
+                    if stream and stream.is_active()
+                    else "inactive",
+                    "fps": stream.get_fps() if stream else 0.0,
+                    "resolution": f"{stream.width}x{stream.height}"
+                    if stream
+                    else "N/A",
+                }
+            )
         return cameras_status
 
     async def _get_detailed_system_status(self) -> Dict[str, Any]:
@@ -244,16 +275,18 @@ class StatusTool(BaseTool):
             "process_info": {
                 "pid": os.getpid(),
                 "memory_mb": psutil.Process().memory_info().rss / (1024 * 1024),
-                "threads": psutil.Process().num_threads()
-            }
+                "threads": psutil.Process().num_threads(),
+            },
         }
 
     def _get_grafana_status(self) -> Dict[str, Any]:
         """Get Grafana integration status."""
         return {
-            "plugin_installed": os.path.exists("/var/lib/grafana/plugins/tapo-camera-stream"),
+            "plugin_installed": os.path.exists(
+                "/var/lib/grafana/plugins/tapo-camera-stream"
+            ),
             "dashboards_imported": len(self._find_grafana_dashboards()) > 0,
-            "api_accessible": self._check_grafana_api()
+            "api_accessible": self._check_grafana_api(),
         }
 
     def _get_storage_status(self) -> Dict[str, Any]:
@@ -261,7 +294,7 @@ class StatusTool(BaseTool):
         return {
             "total_recordings": self._count_recordings(),
             "storage_used_gb": self._get_storage_used_gb(),
-            "retention_days": self._get_retention_days()
+            "retention_days": self._get_retention_days(),
         }
 
     def _get_network_status(self) -> Dict[str, Any]:
@@ -270,7 +303,7 @@ class StatusTool(BaseTool):
         return {
             "bytes_sent_mb": net_io.bytes_sent / (1024 * 1024),
             "bytes_recv_mb": net_io.bytes_recv / (1024 * 1024),
-            "active_connections": len(psutil.net_connections())
+            "active_connections": len(psutil.net_connections()),
         }
 
     def _format_uptime(self, boot_time: float) -> str:

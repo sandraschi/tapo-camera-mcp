@@ -11,17 +11,17 @@ from .exceptions import (
     TapoCameraError,
     CameraConnectionError,
     CameraAuthError,
-    CameraNotSupportedError
+    CameraNotSupportedError,
 )
 
 __all__ = [
-    'setup_logging',
-    'get_logger',
-    'load_config',
-    'save_config',
-    'CameraManager',
-    'TapoCameraError',
-    'CameraConnectionError',
-    'CameraAuthError',
-    'CameraNotSupportedError'
+    "setup_logging",
+    "get_logger",
+    "load_config",
+    "save_config",
+    "CameraManager",
+    "TapoCameraError",
+    "CameraConnectionError",
+    "CameraAuthError",
+    "CameraNotSupportedError",
 ]

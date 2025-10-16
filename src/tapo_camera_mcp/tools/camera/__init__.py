@@ -14,25 +14,26 @@ from .camera_tools import (
     ConnectCameraTool,
     DisconnectCameraTool,
     GetCameraInfoTool,
-    ManageCameraGroupsTool
+    ManageCameraGroupsTool,
 )
 
 # Export all tools for discovery
 __all__ = [
-    'CameraStatus',
-    'ListCamerasTool',
-    'AddCameraTool',
-    'RemoveCameraTool',
-    'SetActiveCameraTool',
-    'GetCameraStatusTool',
-    'ConnectCameraTool',
-    'DisconnectCameraTool',
-    'GetCameraInfoTool',
-    'ManageCameraGroupsTool'
+    "CameraStatus",
+    "ListCamerasTool",
+    "AddCameraTool",
+    "RemoveCameraTool",
+    "SetActiveCameraTool",
+    "GetCameraStatusTool",
+    "ConnectCameraTool",
+    "DisconnectCameraTool",
+    "GetCameraInfoTool",
+    "ManageCameraGroupsTool",
 ]
 
 # This ensures the tools are registered when the module is imported
 from .. import register_tool
+
 for tool in [
     ListCamerasTool,
     AddCameraTool,
@@ -42,6 +43,6 @@ for tool in [
     ConnectCameraTool,
     DisconnectCameraTool,
     GetCameraInfoTool,
-    ManageCameraGroupsTool
+    ManageCameraGroupsTool,
 ]:
     register_tool(tool)

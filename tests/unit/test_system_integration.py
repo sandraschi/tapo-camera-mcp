@@ -2,6 +2,7 @@
 """
 Full system integration test - testing webcam connection and server functionality.
 """
+
 import sys
 import os
 import asyncio
@@ -9,11 +10,14 @@ import logging
 import time
 
 # Add the src path to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 def test_full_system_integration():
     """Test full system integration including webcam and server."""
@@ -37,8 +41,8 @@ def test_full_system_integration():
         # Test 2: Initialize camera manager
         logger.info("📷 Testing camera manager...")
         camera_manager = CameraManager()
-        assert hasattr(camera_manager, 'cameras')
-        assert hasattr(camera_manager, 'groups')
+        assert hasattr(camera_manager, "cameras")
+        assert hasattr(camera_manager, "groups")
         assert isinstance(camera_manager.cameras, dict)
         logger.info("✅ Camera manager initialized")
 
@@ -47,7 +51,7 @@ def test_full_system_integration():
         webcam_config = CameraConfig(
             name="test_webcam_integration",
             type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            params={"device_id": 0},
         )
 
         webcam = WebCamera(webcam_config)
@@ -64,17 +68,19 @@ def test_full_system_integration():
 
         # Test 5: Discover and test tools
         logger.info("🔧 Testing tools discovery...")
-        all_tools = discover_tools('tapo_camera_mcp.tools')
+        all_tools = discover_tools("tapo_camera_mcp.tools")
         assert len(all_tools) > 0, f"Should discover tools, found {len(all_tools)}"
 
         registered_tools = get_all_tools()
         assert len(registered_tools) > 0, "Tools should be registered"
 
         # Test specific tools
-        camera_tools_found = [t for t in all_tools if 'camera' in t.__module__.lower()]
-        system_tools_found = [t for t in all_tools if 'system' in t.__module__.lower()]
+        camera_tools_found = [t for t in all_tools if "camera" in t.__module__.lower()]
+        system_tools_found = [t for t in all_tools if "system" in t.__module__.lower()]
 
-        logger.info(f"✅ Discovered {len(all_tools)} tools ({len(camera_tools_found)} camera, {len(system_tools_found)} system)")
+        logger.info(
+            f"✅ Discovered {len(all_tools)} tools ({len(camera_tools_found)} camera, {len(system_tools_found)} system)"
+        )
 
         # Test 6: Test validation functions
         logger.info("✅ Testing validation functions...")
@@ -88,9 +94,7 @@ def test_full_system_integration():
         # Test 7: Test core models
         logger.info("📊 Testing core models...")
         config = TapoCameraConfig(
-            host="192.168.1.100",
-            username="testuser",
-            password="testpass"
+            host="192.168.1.100", username="testuser", password="testpass"
         )
         assert config.host == "192.168.1.100"
 
@@ -100,7 +104,7 @@ def test_full_system_integration():
             motion_detected=False,
             mac_address="00:11:22:33:44:55",
             firmware_version="1.0.0",
-            hardware_version="1.0"
+            hardware_version="1.0",
         )
         assert status.online is True
         logger.info("✅ Core models working")
@@ -109,8 +113,8 @@ def test_full_system_integration():
         logger.info("🌐 Testing web server...")
         try:
             web_server = WebServer()
-            assert hasattr(web_server, 'app')
-            assert hasattr(web_server, 'templates')
+            assert hasattr(web_server, "app")
+            assert hasattr(web_server, "templates")
             logger.info("✅ Web server structure OK")
         except Exception as e:
             logger.warning(f"Web server creation failed (expected without config): {e}")
@@ -123,16 +127,18 @@ def test_full_system_integration():
             # Both should be the same instance (singleton)
             logger.info("✅ Server singleton pattern working")
         except Exception as e:
-            logger.warning(f"Server singleton test failed (expected without config): {e}")
+            logger.warning(
+                f"Server singleton test failed (expected without config): {e}"
+            )
 
         # Test 10: Test webcam status
         logger.info("📷 Testing webcam status...")
         try:
             status = asyncio.run(webcam.get_status())
             assert isinstance(status, dict)
-            assert 'connected' in status
-            assert 'streaming' in status
-            assert 'type' in status
+            assert "connected" in status
+            assert "streaming" in status
+            assert "type" in status
             logger.info("✅ Webcam status method working")
         except Exception as e:
             logger.warning(f"Webcam status failed (expected without camera): {e}")
@@ -143,8 +149,10 @@ def test_full_system_integration():
     except Exception as e:
         logger.error(f"❌ Full system integration test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_webcam_connection_simulation():
     """Test webcam connection simulation."""
@@ -158,24 +166,24 @@ def test_webcam_connection_simulation():
         webcam_config = CameraConfig(
             name="connection_test_webcam",
             type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            params={"device_id": 0},
         )
 
         webcam = WebCamera(webcam_config)
 
         # Test connection method exists and is callable
-        assert hasattr(webcam, 'connect')
+        assert hasattr(webcam, "connect")
         assert callable(webcam.connect)
 
         # Test disconnect method
-        assert hasattr(webcam, 'disconnect')
+        assert hasattr(webcam, "disconnect")
         assert callable(webcam.disconnect)
 
         # Test that webcam reports correct status when not connected
         try:
             status = asyncio.run(webcam.get_status())
-            assert status['type'] == 'webcam'
-            assert not status['connected']  # Should not be connected initially
+            assert status["type"] == "webcam"
+            assert not status["connected"]  # Should not be connected initially
             logger.info("✅ Webcam status reporting working")
         except Exception as e:
             logger.warning(f"Webcam status check failed: {e}")
@@ -186,8 +194,10 @@ def test_webcam_connection_simulation():
     except Exception as e:
         logger.error(f"❌ Webcam connection simulation test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_server_camera_integration():
     """Test server and camera integration."""
@@ -206,7 +216,7 @@ def test_server_camera_integration():
         webcam_config = CameraConfig(
             name="server_integration_webcam",
             type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            params={"device_id": 0},
         )
 
         webcam = WebCamera(webcam_config)
@@ -218,7 +228,7 @@ def test_server_camera_integration():
         # Test server structure for camera integration
         try:
             server = asyncio.run(TapoCameraServer.get_instance())
-            assert hasattr(server, 'camera_manager')
+            assert hasattr(server, "camera_manager")
             logger.info("✅ Server has camera manager")
         except Exception:
             # Server might need config, but we tested the structure
@@ -230,8 +240,10 @@ def test_server_camera_integration():
     except Exception as e:
         logger.error(f"❌ Server-camera integration test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_tools_execution_simulation():
     """Test tools execution simulation."""
@@ -243,17 +255,17 @@ def test_tools_execution_simulation():
         from tapo_camera_mcp.tools.system.help_tool import HelpTool
 
         # Discover tools
-        all_tools = discover_tools('tapo_camera_mcp.tools')
+        all_tools = discover_tools("tapo_camera_mcp.tools")
 
         # Test StatusTool
         status_tool = StatusTool(section="system")
-        assert hasattr(status_tool, 'execute')
-        assert hasattr(status_tool, 'Meta')
+        assert hasattr(status_tool, "execute")
+        assert hasattr(status_tool, "Meta")
 
         # Test HelpTool
         help_tool = HelpTool(section="tools")
-        assert hasattr(help_tool, 'execute')
-        assert hasattr(help_tool, 'Meta')
+        assert hasattr(help_tool, "execute")
+        assert hasattr(help_tool, "Meta")
 
         # Test that tools can be executed (basic structure test)
         try:
@@ -275,8 +287,10 @@ def test_tools_execution_simulation():
     except Exception as e:
         logger.error(f"❌ Tools execution simulation test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_end_to_end_workflow():
     """Test end-to-end workflow simulation."""
@@ -293,6 +307,7 @@ def test_end_to_end_workflow():
         # 1. Server startup simulation
         try:
             from tapo_camera_mcp.core.server import TapoCameraServer
+
             server = asyncio.run(TapoCameraServer.get_instance())
             logger.info("✅ Server startup simulated")
         except Exception:
@@ -300,6 +315,7 @@ def test_end_to_end_workflow():
 
         # 2. Camera manager setup
         from tapo_camera_mcp.camera.manager import CameraManager
+
         camera_manager = CameraManager()
         logger.info("✅ Camera manager setup")
 
@@ -308,21 +324,21 @@ def test_end_to_end_workflow():
         from tapo_camera_mcp.camera.base import CameraConfig, CameraType
 
         webcam_config = CameraConfig(
-            name="e2e_webcam",
-            type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            name="e2e_webcam", type=CameraType.WEBCAM, params={"device_id": 0}
         )
         webcam = WebCamera(webcam_config)
         logger.info("✅ Webcam creation")
 
         # 4. Tools discovery
         from tapo_camera_mcp.tools.discovery import discover_tools
-        tools = discover_tools('tapo_camera_mcp.tools')
+
+        tools = discover_tools("tapo_camera_mcp.tools")
         logger.info(f"✅ Tools discovery: {len(tools)} tools")
 
         # 5. Web server structure
         try:
             from tapo_camera_mcp.web.server import WebServer
+
             web_server = WebServer()
             logger.info("✅ Web server structure")
         except Exception:
@@ -334,8 +350,10 @@ def test_end_to_end_workflow():
     except Exception as e:
         logger.error(f"❌ End-to-end workflow test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     print("🚀 Starting COMPREHENSIVE SYSTEM INTEGRATION TEST")
@@ -372,8 +390,8 @@ if __name__ == "__main__":
     print("\n" + "=" * 60)
     print("📊 FINAL RESULTS:")
     print(f"   Tests passed: {passed}/{total}")
-    print(f"   Success rate: {(passed/total)*100".1f"}%")
-    print(f"   Duration: {duration".2f"} seconds")
+    print(f"   Success rate: {(passed / total) * 100:.1f}%")
+    print(f"   Duration: {duration:.2f} seconds")
 
     if passed >= total * 0.8:
         print("🎉 EXCELLENT! System integration tests mostly passed!")

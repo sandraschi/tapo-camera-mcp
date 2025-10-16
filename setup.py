@@ -1,7 +1,7 @@
 """
 Setup script for Tapo Camera MCP.
 """
-import os
+
 from setuptools import setup, find_packages
 
 # Read the README for the long description

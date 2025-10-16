@@ -8,13 +8,12 @@ dashboards, mobile apps, and third-party services.
 
 import asyncio
 import logging
-from typing import Dict, List, Optional, Any
+from typing import List, Optional
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Depends, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import FastAPI, HTTPException
+from fastapi.security import HTTPBearer
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import uvicorn
 
@@ -30,6 +29,7 @@ security = HTTPBearer()
 
 class CameraInfo(BaseModel):
     """Camera information response model"""
+
     id: str
     name: str
     type: str
@@ -40,6 +40,7 @@ class CameraInfo(BaseModel):
 
 class StreamResponse(BaseModel):
     """Stream URL response model"""
+
     stream_url: str
     camera_id: str
     status: str
@@ -47,6 +48,7 @@ class StreamResponse(BaseModel):
 
 class SystemStatus(BaseModel):
     """System status response model"""
+
     status: str
     cameras_online: int
     cameras_total: int
@@ -98,7 +100,7 @@ class TapoCameraDualServer:
             title="Tapo Camera MCP API",
             description="REST API for Tapo Camera MCP - Dual Interface Server",
             version="1.0.0",
-            lifespan=lifespan
+            lifespan=lifespan,
         )
 
         # CORS middleware
@@ -117,7 +119,7 @@ class TapoCameraDualServer:
             return {
                 "status": "healthy",
                 "service": "tapo-camera-mcp",
-                "version": "1.0.0"
+                "version": "1.0.0",
             }
 
         # System status endpoint
@@ -125,14 +127,16 @@ class TapoCameraDualServer:
         async def get_system_status():
             """Get system status"""
             cameras = await self.core_server.list_cameras()
-            cameras_data = cameras.get('cameras', [])
-            online_count = sum(1 for cam in cameras_data if cam.get('status') == 'online')
+            cameras_data = cameras.get("cameras", [])
+            online_count = sum(
+                1 for cam in cameras_data if cam.get("status") == "online"
+            )
 
             return SystemStatus(
                 status="operational",
                 cameras_online=online_count,
                 cameras_total=len(cameras_data),
-                server_version="1.0.0"
+                server_version="1.0.0",
             )
 
         # Legacy endpoint for dashboard compatibility
@@ -140,13 +144,15 @@ class TapoCameraDualServer:
         async def get_cameras_status():
             """Legacy endpoint for dashboard compatibility"""
             cameras = await self.core_server.list_cameras()
-            cameras_data = cameras.get('cameras', [])
-            online_count = sum(1 for cam in cameras_data if cam.get('status') == 'online')
+            cameras_data = cameras.get("cameras", [])
+            online_count = sum(
+                1 for cam in cameras_data if cam.get("status") == "online"
+            )
 
             return {
                 "total": len(cameras_data),
                 "online": online_count,
-                "cameras": cameras_data
+                "cameras": cameras_data,
             }
 
         # Events endpoint for dashboard compatibility
@@ -154,10 +160,7 @@ class TapoCameraDualServer:
         async def get_recent_events():
             """Get recent events for dashboard compatibility"""
             # For now, return empty list - in full implementation would return actual events
-            return {
-                "events": [],
-                "total": 0
-            }
+            return {"events": [], "total": 0}
 
         # List cameras endpoint
         @app.get("/api/cameras", response_model=List[CameraInfo])
@@ -165,17 +168,17 @@ class TapoCameraDualServer:
             """List all cameras"""
             try:
                 result = await self.core_server.list_cameras()
-                cameras_data = result.get('cameras', [])
+                cameras_data = result.get("cameras", [])
 
                 cameras = []
                 for cam in cameras_data:
                     camera = CameraInfo(
-                        id=cam.get('id', ''),
-                        name=cam.get('name', cam.get('id', '')),
-                        type=cam.get('type', 'tapo'),
-                        status=cam.get('status', 'unknown'),
-                        ip_address=cam.get('host'),
-                        model=cam.get('model')
+                        id=cam.get("id", ""),
+                        name=cam.get("name", cam.get("id", "")),
+                        type=cam.get("type", "tapo"),
+                        status=cam.get("status", "unknown"),
+                        ip_address=cam.get("host"),
+                        model=cam.get("model"),
                     )
                     cameras.append(camera)
 
@@ -191,17 +194,17 @@ class TapoCameraDualServer:
             """Get camera details"""
             try:
                 result = await self.core_server.list_cameras()
-                cameras_data = result.get('cameras', [])
+                cameras_data = result.get("cameras", [])
 
                 for cam in cameras_data:
-                    if cam.get('id') == camera_id or cam.get('name') == camera_id:
+                    if cam.get("id") == camera_id or cam.get("name") == camera_id:
                         return CameraInfo(
-                            id=cam.get('id', ''),
-                            name=cam.get('name', cam.get('id', '')),
-                            type=cam.get('type', 'tapo'),
-                            status=cam.get('status', 'unknown'),
-                            ip_address=cam.get('host'),
-                            model=cam.get('model')
+                            id=cam.get("id", ""),
+                            name=cam.get("name", cam.get("id", "")),
+                            type=cam.get("type", "tapo"),
+                            status=cam.get("status", "unknown"),
+                            ip_address=cam.get("host"),
+                            model=cam.get("model"),
                         )
 
                 raise HTTPException(status_code=404, detail="Camera not found")
@@ -222,9 +225,7 @@ class TapoCameraDualServer:
                 stream_url = f"rtsp://placeholder/stream/{camera_id}"
 
                 return StreamResponse(
-                    stream_url=stream_url,
-                    camera_id=camera_id,
-                    status="available"
+                    stream_url=stream_url, camera_id=camera_id, status="available"
                 )
 
             except Exception as e:
@@ -238,11 +239,11 @@ class TapoCameraDualServer:
             try:
                 # Find the camera
                 result = await self.core_server.list_cameras()
-                cameras_data = result.get('cameras', [])
+                cameras_data = result.get("cameras", [])
 
                 camera = None
                 for cam in cameras_data:
-                    if cam.get('id') == camera_id or cam.get('name') == camera_id:
+                    if cam.get("id") == camera_id or cam.get("name") == camera_id:
                         camera = cam
                         break
 
@@ -254,14 +255,16 @@ class TapoCameraDualServer:
                     "success": True,
                     "camera_id": camera_id,
                     "message": "Snapshot captured successfully",
-                    "timestamp": "2025-01-01T00:00:00Z"
+                    "timestamp": "2025-01-01T00:00:00Z",
                 }
 
             except HTTPException:
                 raise
             except Exception as e:
                 logger.error(f"Error capturing snapshot for camera {camera_id}: {e}")
-                raise HTTPException(status_code=500, detail="Failed to capture snapshot")
+                raise HTTPException(
+                    status_code=500, detail="Failed to capture snapshot"
+                )
 
         return app
 
@@ -271,6 +274,7 @@ class TapoCameraDualServer:
             logger.info("Starting MCP server (stdio mode)")
             # Import and start MCP server
             from .mcp_server import start_mcp_server
+
             await start_mcp_server()
         except Exception as e:
             logger.error(f"Failed to start MCP server: {e}")
@@ -282,10 +286,7 @@ class TapoCameraDualServer:
             logger.info(f"Starting REST API server on {host}:{port}")
 
             config = uvicorn.Config(
-                app=self.rest_app,
-                host=host,
-                port=port,
-                log_level="info"
+                app=self.rest_app, host=host, port=port, log_level="info"
             )
             server = uvicorn.Server(config)
             await server.serve()
@@ -294,7 +295,9 @@ class TapoCameraDualServer:
             logger.error(f"Failed to start REST API server: {e}")
             raise
 
-    async def start_dual_server(self, rest_host: str = "0.0.0.0", rest_port: int = 8123):
+    async def start_dual_server(
+        self, rest_host: str = "0.0.0.0", rest_port: int = 8123
+    ):
         """Start both MCP and REST servers concurrently"""
         logger.info("Starting dual interface server (MCP + REST API)")
 

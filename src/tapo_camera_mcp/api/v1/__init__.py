@@ -16,4 +16,4 @@ router.include_router(ptz.router, prefix="/ptz", tags=["ptz"])
 router.include_router(media.router, prefix="/media", tags=["media"])
 router.include_router(system.router, prefix="/system", tags=["system"])
 
-__all__ = ['router']
+__all__ = ["router"]

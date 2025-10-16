@@ -2,11 +2,13 @@
 """
 Test camera functionality and models.
 """
+
 import sys
 import os
 
 # Add the src path to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
 
 def test_camera_models():
     """Test camera model definitions."""
@@ -15,30 +17,35 @@ def test_camera_models():
         from tapo_camera_mcp.core.models import TapoCameraConfig
 
         # Test CameraType enum
-        camera_types = [CameraType.TAPO, CameraType.WEBCAM, CameraType.RING, CameraType.FURBO]
+        camera_types = [
+            CameraType.TAPO,
+            CameraType.WEBCAM,
+            CameraType.RING,
+            CameraType.FURBO,
+        ]
         print(f"✅ Camera types: {[ct.value for ct in camera_types]}")
 
         # Test CameraConfig creation
         config = CameraConfig(
             name="test_camera",
             type=CameraType.TAPO,
-            params={"host": "192.168.1.100", "username": "test", "password": "test"}
+            params={"host": "192.168.1.100", "username": "test", "password": "test"},
         )
         print(f"✅ Camera config created: {config.name}")
 
         # Test TapoCameraConfig
         tapo_config = TapoCameraConfig(
-            host="192.168.1.100",
-            username="test",
-            password="test"
+            host="192.168.1.100", username="test", password="test"
         )
         print("✅ TapoCamera config created")
         return True
     except Exception as e:
         print(f"❌ Camera models test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_camera_manager():
     """Test camera manager functionality."""
@@ -49,8 +56,8 @@ def test_camera_manager():
         print("✅ Camera manager created")
 
         # Test that manager is properly initialized
-        assert hasattr(manager, 'cameras')
-        assert hasattr(manager, 'groups')
+        assert hasattr(manager, "cameras")
+        assert hasattr(manager, "groups")
         assert isinstance(manager.cameras, dict)
 
         print("✅ Camera manager structure test passed")
@@ -58,13 +65,19 @@ def test_camera_manager():
     except Exception as e:
         print(f"❌ Camera manager test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_exceptions():
     """Test exception classes."""
     try:
-        from tapo_camera_mcp.exceptions import TapoCameraError, ConnectionError, AuthenticationError
+        from tapo_camera_mcp.exceptions import (
+            TapoCameraError,
+            ConnectionError,
+            AuthenticationError,
+        )
 
         # Test exception creation
         error = TapoCameraError("Test error")
@@ -78,8 +91,10 @@ def test_exceptions():
     except Exception as e:
         print(f"❌ Exception test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     tests = [

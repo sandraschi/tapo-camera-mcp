@@ -2,20 +2,23 @@
 """
 FINAL REAL EXECUTION TEST - Force 80% coverage by executing ALL code paths!
 """
+
 import sys
 import os
 import asyncio
 import logging
 import cv2
-import numpy as np
 from PIL import Image
 
 # Add the src path to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 # Setup logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 def test_execute_all_core_functions():
     """Execute ALL core functions to force maximum coverage."""
@@ -24,8 +27,11 @@ def test_execute_all_core_functions():
 
         # 1. Execute validation functions (these run real validation logic)
         from tapo_camera_mcp.validation import (
-            validate_ip_address, validate_port, validate_camera_name,
-            validate_credentials, ToolValidationError, validate_string_length
+            validate_ip_address,
+            validate_port,
+            validate_camera_name,
+            validate_credentials,
+            validate_string_length,
         )
 
         logger.info("✅ Executing validation functions...")
@@ -37,9 +43,14 @@ def test_execute_all_core_functions():
 
         # 2. Execute model creation (these run Pydantic validation)
         from tapo_camera_mcp.core.models import (
-            CameraModel, StreamType, VideoQuality, PTZDirection,
-            MotionDetectionSensitivity, CameraStatus, PTZPosition,
-            MotionEvent, CameraInfo, TapoCameraConfig
+            CameraModel,
+            StreamType,
+            VideoQuality,
+            PTZDirection,
+            MotionDetectionSensitivity,
+            CameraStatus,
+            PTZPosition,
+            TapoCameraConfig,
         )
 
         logger.info("📊 Executing model creation...")
@@ -50,25 +61,30 @@ def test_execute_all_core_functions():
         sens = MotionDetectionSensitivity.HIGH
 
         status = CameraStatus(
-            online=True, recording=False, motion_detected=False,
-            mac_address="00:11:22:33:44:55", firmware_version="1.0.0", hardware_version="1.0"
+            online=True,
+            recording=False,
+            motion_detected=False,
+            mac_address="00:11:22:33:44:55",
+            firmware_version="1.0.0",
+            hardware_version="1.0",
         )
 
         position = PTZPosition(pan=0.5, tilt=-0.3, zoom=0.8)
-        config = TapoCameraConfig(host="192.168.1.100", username="testuser", password="testpass")
+        config = TapoCameraConfig(
+            host="192.168.1.100", username="testuser", password="testpass"
+        )
 
         # 3. Execute camera creation and methods
-        from tapo_camera_mcp.camera.base import CameraType, CameraConfig, CameraFactory
+        from tapo_camera_mcp.camera.base import CameraType, CameraConfig
         from tapo_camera_mcp.camera.manager import CameraManager
 
         logger.info("📷 Executing camera creation...")
         webcam_config = CameraConfig(
-            name="coverage_webcam",
-            type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            name="coverage_webcam", type=CameraType.WEBCAM, params={"device_id": 0}
         )
 
         from tapo_camera_mcp.camera.webcam import WebCamera
+
         webcam = WebCamera(webcam_config)
 
         # Execute camera methods
@@ -77,10 +93,10 @@ def test_execute_all_core_functions():
 
         # 4. Execute tools discovery and registration
         from tapo_camera_mcp.tools.discovery import discover_tools
-        from tapo_camera_mcp.tools.base_tool import get_all_tools, register_tool
+        from tapo_camera_mcp.tools.base_tool import get_all_tools
 
         logger.info("🔧 Executing tools discovery...")
-        tools = discover_tools('tapo_camera_mcp.tools')
+        tools = discover_tools("tapo_camera_mcp.tools")
         registered = get_all_tools()
 
         # 5. Execute specific tool creation and methods
@@ -148,7 +164,7 @@ def test_execute_all_core_functions():
             logger.warning("Webcam not available for hardware testing")
 
         # 9. Execute exception handling
-        from tapo_camera_mcp.exceptions import TapoCameraError, ConnectionError, AuthenticationError
+        from tapo_camera_mcp.exceptions import TapoCameraError, ConnectionError
 
         logger.info("🚨 Executing exception handling...")
         try:
@@ -172,8 +188,10 @@ def test_execute_all_core_functions():
     except Exception as e:
         logger.error(f"❌ Core functions execution failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_real_camera_operations():
     """Test real camera operations with hardware."""
@@ -197,7 +215,7 @@ def test_real_camera_operations():
                 frames_captured += 1
                 # Execute frame analysis
                 height, width, channels = frame.shape
-                logger.info(f"Frame {i+1}: {width}x{height}x{channels}")
+                logger.info(f"Frame {i + 1}: {width}x{height}x{channels}")
 
                 # Execute image processing
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -207,12 +225,14 @@ def test_real_camera_operations():
                 pil_image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
             else:
-                logger.warning(f"Failed to capture frame {i+1}")
+                logger.warning(f"Failed to capture frame {i + 1}")
 
         cap.release()
 
         if frames_captured > 0:
-            logger.info(f"✅ Real camera operations test PASSED: {frames_captured} frames processed")
+            logger.info(
+                f"✅ Real camera operations test PASSED: {frames_captured} frames processed"
+            )
             return True
         else:
             logger.error("❌ No frames captured from webcam!")
@@ -221,8 +241,10 @@ def test_real_camera_operations():
     except Exception as e:
         logger.error(f"❌ Real camera operations test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_server_camera_integration():
     """Test server and camera integration."""
@@ -247,9 +269,7 @@ def test_server_camera_integration():
 
         # Execute webcam creation and operations
         webcam_config = CameraConfig(
-            name="integration_webcam",
-            type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            name="integration_webcam", type=CameraType.WEBCAM, params={"device_id": 0}
         )
 
         webcam = WebCamera(webcam_config)
@@ -262,7 +282,7 @@ def test_server_camera_integration():
             logger.warning(f"Webcam status check failed: {e}")
 
         # Execute server-camera manager integration
-        if hasattr(server, 'camera_manager'):
+        if hasattr(server, "camera_manager"):
             logger.info("✅ Server-camera manager integration exists")
         else:
             logger.warning("❌ Server missing camera_manager")
@@ -273,8 +293,10 @@ def test_server_camera_integration():
     except Exception as e:
         logger.error(f"❌ Server-camera integration test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_full_system_execution():
     """Execute the full system end-to-end."""
@@ -286,19 +308,32 @@ def test_full_system_execution():
 
         logger.info("1. Executing validation...")
         from tapo_camera_mcp.validation import validate_ip_address, validate_camera_name
+
         ip = validate_ip_address("192.168.1.100", "test")
         name = validate_camera_name("test_webcam", "test")
 
         logger.info("2. Executing models...")
         from tapo_camera_mcp.core.models import CameraStatus, TapoCameraConfig
-        status = CameraStatus(online=True, recording=False, motion_detected=False,
-                           mac_address="00:11:22:33:44:55", firmware_version="1.0.0", hardware_version="1.0")
-        config = TapoCameraConfig(host="192.168.1.100", username="testuser", password="testpass")
+
+        status = CameraStatus(
+            online=True,
+            recording=False,
+            motion_detected=False,
+            mac_address="00:11:22:33:44:55",
+            firmware_version="1.0.0",
+            hardware_version="1.0",
+        )
+        config = TapoCameraConfig(
+            host="192.168.1.100", username="testuser", password="testpass"
+        )
 
         logger.info("3. Executing camera operations...")
         from tapo_camera_mcp.camera.webcam import WebCamera
         from tapo_camera_mcp.camera.base import CameraType, CameraConfig
-        webcam_config = CameraConfig(name="e2e_webcam", type=CameraType.WEBCAM, params={"device_id": 0})
+
+        webcam_config = CameraConfig(
+            name="e2e_webcam", type=CameraType.WEBCAM, params={"device_id": 0}
+        )
         webcam = WebCamera(webcam_config)
 
         try:
@@ -310,7 +345,8 @@ def test_full_system_execution():
         logger.info("4. Executing tools...")
         from tapo_camera_mcp.tools.discovery import discover_tools
         from tapo_camera_mcp.tools.system.status_tool import StatusTool
-        tools = discover_tools('tapo_camera_mcp.tools')
+
+        tools = discover_tools("tapo_camera_mcp.tools")
         status_tool = StatusTool(section="system")
 
         try:
@@ -321,6 +357,7 @@ def test_full_system_execution():
 
         logger.info("5. Executing server...")
         from tapo_camera_mcp.core.server import TapoCameraServer
+
         try:
             server = asyncio.run(TapoCameraServer.get_instance())
             logger.info("✅ Server executed")
@@ -328,7 +365,7 @@ def test_full_system_execution():
             logger.warning("Server execution failed")
 
         logger.info("6. Executing integration...")
-        if hasattr(server, 'camera_manager'):
+        if hasattr(server, "camera_manager"):
             logger.info("✅ Server-camera integration working")
 
         logger.info("🎉 FULL SYSTEM EXECUTION COMPLETED!")
@@ -337,8 +374,10 @@ def test_full_system_execution():
     except Exception as e:
         logger.error(f"❌ Full system execution test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     print("🚀 FINAL ATTEMPT - EXECUTING EVERYTHING FOR 80% COVERAGE!")
@@ -372,7 +411,7 @@ if __name__ == "__main__":
     print("\n" + "=" * 70)
     print("📊 EXECUTION RESULTS:")
     print(f"   Functions executed: {passed}/{total}")
-    print(f"   Code paths covered: {passed/total*100:.1f}%")
+    print(f"   Code paths covered: {passed / total * 100:.1f}%")
     print("🎯 WEBCAM HARDWARE: DETECTED ✅")
     print("🖥️ SERVER INTEGRATION: WORKING ✅")
     print("🔧 TOOLS EXECUTION: OPERATIONAL ✅")

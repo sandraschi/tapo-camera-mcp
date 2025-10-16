@@ -1,23 +1,24 @@
 """
 Help tool for Tapo Camera MCP that provides comprehensive documentation.
 """
+
 from typing import Dict, Any, Optional
 from pydantic import Field, ConfigDict
 from tapo_camera_mcp.tools.base_tool import tool, ToolCategory, BaseTool
 
+
 @tool(name="get_help")
 class HelpTool(BaseTool):
     """Tool to get help about Tapo Camera MCP functionality and Grafana integration."""
-    
+
     class Meta:
         name = "get_help"
         category = ToolCategory.SYSTEM
-    
+
     section: Optional[str] = Field(
-        default="all",
-        description="Section of the help to display"
+        default="all", description="Section of the help to display"
     )
-    
+
     model_config = ConfigDict(
         json_schema_extra={
             "enum": ["all", "core", "grafana", "api", "ptz", "troubleshooting"]
@@ -33,12 +34,14 @@ class HelpTool(BaseTool):
             "ptz": self._get_ptz_help(),
             "troubleshooting": self._get_troubleshooting_help(),
         }
-        
+
         if section == "all":
             return {"status": "success", "help": "\n\n".join(help_sections.values())}
-        help_text = help_sections.get(section, "Invalid help section. Try: " + ", ".join(help_sections.keys()))
+        help_text = help_sections.get(
+            section, "Invalid help section. Try: " + ", ".join(help_sections.keys())
+        )
         return {"status": "success", "help": help_text}
-    
+
     def _get_core_help(self) -> str:
         return """# Tapo Camera MCP - Core Functionality
 

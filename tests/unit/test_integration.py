@@ -2,13 +2,14 @@
 """
 Integration tests for the full tapo-camera-mcp system.
 """
+
 import sys
 import os
-import asyncio
 import unittest.mock as mock
 
 # Add the src path to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
 
 def test_server_initialization():
     """Test server initialization and basic setup."""
@@ -19,8 +20,8 @@ def test_server_initialization():
         server_class = TapoCameraServer
 
         # Test that we can reference the server class
-        assert hasattr(TapoCameraServer, 'get_instance')
-        assert hasattr(TapoCameraServer, '__init__')
+        assert hasattr(TapoCameraServer, "get_instance")
+        assert hasattr(TapoCameraServer, "__init__")
 
         # Test singleton pattern
         # Note: We can't actually instantiate without proper setup, but we can test the structure
@@ -30,22 +31,23 @@ def test_server_initialization():
     except Exception as e:
         print(f"❌ Server initialization test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_camera_manager_integration():
     """Test camera manager integration with server."""
     try:
         from tapo_camera_mcp.camera.manager import CameraManager
-        from tapo_camera_mcp.core.server import TapoCameraServer
 
         # Test CameraManager creation
         manager = CameraManager()
 
         # Test that manager has expected attributes
-        assert hasattr(manager, 'cameras')
-        assert hasattr(manager, 'groups')
-        assert hasattr(manager, '_initialized')
+        assert hasattr(manager, "cameras")
+        assert hasattr(manager, "groups")
+        assert hasattr(manager, "_initialized")
 
         # Test server reference to camera manager
         # We can't easily test the full integration without proper setup,
@@ -56,15 +58,20 @@ def test_camera_manager_integration():
     except Exception as e:
         print(f"❌ Camera manager integration test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_validation_module():
     """Test validation module functionality."""
     try:
         from tapo_camera_mcp.validation import (
-            validate_ip_address, validate_port, validate_camera_name,
-            validate_credentials, ToolValidationError
+            validate_ip_address,
+            validate_port,
+            validate_camera_name,
+            validate_credentials,
+            ToolValidationError,
         )
 
         # Test IP address validation
@@ -110,16 +117,25 @@ def test_validation_module():
     except Exception as e:
         print(f"❌ Validation module test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_exception_hierarchy():
     """Test exception hierarchy and error handling."""
     try:
         from tapo_camera_mcp.exceptions import (
-            TapoCameraError, ConnectionError, AuthenticationError,
-            CameraNotSupportedError, StreamError, PTZError,
-            StorageError, ConfigurationError, TimeoutError, FirmwareError
+            TapoCameraError,
+            ConnectionError,
+            AuthenticationError,
+            CameraNotSupportedError,
+            StreamError,
+            PTZError,
+            StorageError,
+            ConfigurationError,
+            TimeoutError,
+            FirmwareError,
         )
 
         # Test exception inheritance
@@ -145,18 +161,23 @@ def test_exception_hierarchy():
     except Exception as e:
         print(f"❌ Exception hierarchy test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_camera_base_classes():
     """Test camera base classes and factory pattern."""
     try:
-        from tapo_camera_mcp.camera.base import (
-            CameraType, CameraConfig, BaseCamera, CameraFactory
-        )
+        from tapo_camera_mcp.camera.base import CameraType, CameraConfig, CameraFactory
 
         # Test CameraType enum
-        camera_types = [CameraType.TAPO, CameraType.WEBCAM, CameraType.RING, CameraType.FURBO]
+        camera_types = [
+            CameraType.TAPO,
+            CameraType.WEBCAM,
+            CameraType.RING,
+            CameraType.FURBO,
+        ]
         for ct in camera_types:
             assert isinstance(ct.value, str)
             assert len(ct.value) > 0
@@ -165,7 +186,7 @@ def test_camera_base_classes():
         config = CameraConfig(
             name="test_camera",
             type=CameraType.TAPO,
-            params={"host": "192.168.1.100", "username": "test", "password": "test"}
+            params={"host": "192.168.1.100", "username": "test", "password": "test"},
         )
 
         assert config.name == "test_camera"
@@ -181,16 +202,23 @@ def test_camera_base_classes():
     except Exception as e:
         print(f"❌ Camera base classes test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_core_models():
     """Test core data models."""
     try:
         from tapo_camera_mcp.core.models import (
-            CameraModel, StreamType, VideoQuality, PTZDirection,
-            MotionDetectionSensitivity, CameraStatus, PTZPosition,
-            MotionEvent, CameraInfo, TapoCameraConfig
+            CameraModel,
+            StreamType,
+            VideoQuality,
+            PTZDirection,
+            MotionDetectionSensitivity,
+            CameraStatus,
+            PTZPosition,
+            TapoCameraConfig,
         )
 
         # Test enums
@@ -207,7 +235,7 @@ def test_core_models():
             motion_detected=False,
             mac_address="00:11:22:33:44:55",
             firmware_version="1.0.0",
-            hardware_version="1.0"
+            hardware_version="1.0",
         )
 
         assert status.online is True
@@ -221,10 +249,7 @@ def test_core_models():
 
         # Test TapoCameraConfig with validation
         config = TapoCameraConfig(
-            host="192.168.1.100",
-            username="testuser",
-            password="testpass",
-            port=443
+            host="192.168.1.100", username="testuser", password="testpass", port=443
         )
 
         assert config.host == "192.168.1.100"
@@ -235,8 +260,10 @@ def test_core_models():
     except Exception as e:
         print(f"❌ Core models test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_web_server_routes():
     """Test web server route definitions."""
@@ -245,9 +272,11 @@ def test_web_server_routes():
         from fastapi.testclient import TestClient
 
         # Mock config for web server
-        with mock.patch('tapo_camera_mcp.web.server.get_config') as mock_get_config, \
-             mock.patch('tapo_camera_mcp.web.server.get_model') as mock_get_model:
-
+        with mock.patch(
+            "tapo_camera_mcp.web.server.get_config"
+        ) as mock_get_config, mock.patch(
+            "tapo_camera_mcp.web.server.get_model"
+        ) as mock_get_model:
             mock_get_config.return_value = {"debug": False}
             mock_get_model.return_value = mock.MagicMock()
 
@@ -261,7 +290,7 @@ def test_web_server_routes():
                 "/",
                 "/cameras",
                 "/settings",
-                "/help"
+                "/help",
             ]
 
             for route in routes_to_test:
@@ -274,8 +303,10 @@ def test_web_server_routes():
     except Exception as e:
         print(f"❌ Web server routes test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_system_health_check():
     """Test system health check functionality."""
@@ -285,8 +316,8 @@ def test_system_health_check():
         # Test StatusTool structure
         tool = StatusTool(section="system")
 
-        assert hasattr(tool, 'Meta')
-        assert hasattr(tool.Meta, 'name')
+        assert hasattr(tool, "Meta")
+        assert hasattr(tool.Meta, "name")
         assert tool.Meta.name == "status"
 
         # Test that tool can be executed (basic smoke test)
@@ -297,8 +328,10 @@ def test_system_health_check():
     except Exception as e:
         print(f"❌ System health check test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_configuration_loading():
     """Test configuration loading and validation."""
@@ -324,8 +357,10 @@ def test_configuration_loading():
     except Exception as e:
         print(f"❌ Configuration loading test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_logging_setup():
     """Test logging setup and configuration."""
@@ -347,8 +382,10 @@ def test_logging_setup():
     except Exception as e:
         print(f"❌ Logging setup test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_full_system_import():
     """Test that the full system can be imported without circular dependencies."""
@@ -361,25 +398,27 @@ def test_full_system_import():
         from tapo_camera_mcp import validation, exceptions
 
         # Test that key classes exist
-        assert hasattr(server, 'TapoCameraServer')
-        assert hasattr(models, 'TapoCameraConfig')
-        assert hasattr(base, 'CameraType')
-        assert hasattr(base, 'CameraFactory')
-        assert hasattr(manager, 'CameraManager')
-        assert hasattr(base_tool, 'BaseTool')
-        assert hasattr(base_tool, 'ToolResult')
-        assert hasattr(discovery, 'discover_tools')
-        assert hasattr(web_server, 'WebServer')
-        assert hasattr(validation, 'validate_ip_address')
-        assert hasattr(exceptions, 'TapoCameraError')
+        assert hasattr(server, "TapoCameraServer")
+        assert hasattr(models, "TapoCameraConfig")
+        assert hasattr(base, "CameraType")
+        assert hasattr(base, "CameraFactory")
+        assert hasattr(manager, "CameraManager")
+        assert hasattr(base_tool, "BaseTool")
+        assert hasattr(base_tool, "ToolResult")
+        assert hasattr(discovery, "discover_tools")
+        assert hasattr(web_server, "WebServer")
+        assert hasattr(validation, "validate_ip_address")
+        assert hasattr(exceptions, "TapoCameraError")
 
         print("✅ Full system import test passed")
         return True
     except Exception as e:
         print(f"❌ Full system import test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     tests = [

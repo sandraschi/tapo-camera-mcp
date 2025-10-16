@@ -2,20 +2,18 @@
 """
 Test models and core data structures.
 """
+
 import sys
 import os
 
 # Add the src path to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
 
 def test_core_models():
     """Test core model definitions."""
     try:
-        from tapo_camera_mcp.core.models import (
-            CameraModel, StreamType, VideoQuality, PTZDirection,
-            MotionDetectionSensitivity, CameraStatus, PTZPosition,
-            MotionEvent, CameraInfo
-        )
+        from tapo_camera_mcp.core.models import CameraModel, StreamType, VideoQuality
 
         # Test enums
         camera_models = [CameraModel.C200, CameraModel.C310, CameraModel.L530]
@@ -30,8 +28,10 @@ def test_core_models():
     except Exception as e:
         print(f"❌ Core models test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_ptz_models():
     """Test PTZ model definitions."""
@@ -40,21 +40,31 @@ def test_ptz_models():
 
         # Test PTZ directions
         directions = [
-            PTZDirection.UP, PTZDirection.DOWN, PTZDirection.LEFT, PTZDirection.RIGHT,
-            PTZDirection.UP_LEFT, PTZDirection.UP_RIGHT, PTZDirection.DOWN_LEFT, PTZDirection.DOWN_RIGHT
+            PTZDirection.UP,
+            PTZDirection.DOWN,
+            PTZDirection.LEFT,
+            PTZDirection.RIGHT,
+            PTZDirection.UP_LEFT,
+            PTZDirection.UP_RIGHT,
+            PTZDirection.DOWN_LEFT,
+            PTZDirection.DOWN_RIGHT,
         ]
         print(f"✅ PTZ directions: {[d.value for d in directions]}")
 
         # Test PTZ position
         position = PTZPosition(pan=45.0, tilt=30.0, zoom=1.5)
-        print(f"✅ PTZ position: pan={position.pan}, tilt={position.tilt}, zoom={position.zoom}")
+        print(
+            f"✅ PTZ position: pan={position.pan}, tilt={position.tilt}, zoom={position.zoom}"
+        )
 
         return True
     except Exception as e:
         print(f"❌ PTZ models test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_motion_models():
     """Test motion detection models."""
@@ -63,8 +73,9 @@ def test_motion_models():
 
         # Test sensitivity levels
         sensitivities = [
-            MotionDetectionSensitivity.LOW, MotionDetectionSensitivity.MEDIUM,
-            MotionDetectionSensitivity.HIGH
+            MotionDetectionSensitivity.LOW,
+            MotionDetectionSensitivity.MEDIUM,
+            MotionDetectionSensitivity.HIGH,
         ]
         print(f"✅ Motion sensitivities: {[s.value for s in sensitivities]}")
 
@@ -73,16 +84,20 @@ def test_motion_models():
             camera_id="test-camera",
             timestamp="2023-01-01T12:00:00Z",
             regions=[[0, 0, 100, 100]],
-            confidence=0.85
+            confidence=0.85,
         )
-        print(f"✅ Motion event: camera={event.camera_id}, confidence={event.confidence}")
+        print(
+            f"✅ Motion event: camera={event.camera_id}, confidence={event.confidence}"
+        )
 
         return True
     except Exception as e:
         print(f"❌ Motion models test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     tests = [

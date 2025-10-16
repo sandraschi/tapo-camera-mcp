@@ -1,22 +1,24 @@
 """API routes for the Tapo Camera MCP server."""
-from typing import Dict, Any, List, Optional
+
+from typing import Dict, Any, Optional
 from fastmcp import FastMCP
 from ..camera.manager import CameraManager
 
+
 class APIRouter:
     """API router for camera operations."""
-    
+
     def __init__(self, mcp: FastMCP, camera_manager: CameraManager):
         self.mcp = mcp
         self.camera_manager = camera_manager
         self._register_routes()
-    
+
     def _register_routes(self):
         """Register all API routes."""
-        
+
         @self.mcp.tool()
         async def list_cameras() -> Dict[str, Any]:
-            '''List all configured cameras with their current status and information.
+            """List all configured cameras with their current status and information.
 
             Retrieves a comprehensive list of all cameras registered in the system,
             including their connection status, configuration details, and availability.
@@ -76,19 +78,16 @@ class APIRouter:
                 - add_camera: For adding new cameras to the system
                 - remove_camera: For removing cameras from the system
                 - get_stream_url: For getting streaming URLs for specific cameras
-            '''
+            """
             try:
                 cameras = await self.camera_manager.list_cameras()
-                return {
-                    'status': 'success',
-                    'cameras': cameras
-                }
+                return {"status": "success", "cameras": cameras}
             except Exception as e:
                 return {
-                    'status': 'error',
-                    'message': f'Failed to list cameras: {str(e)}'
+                    "status": "error",
+                    "message": f"Failed to list cameras: {str(e)}",
                 }
-        
+
         @self.mcp.tool()
         async def add_camera(
             name: str,
@@ -99,9 +98,9 @@ class APIRouter:
             port: Optional[int] = None,
             stream_type: Optional[str] = None,
             verify_ssl: bool = True,
-            timeout: int = 10
+            timeout: int = 10,
         ) -> Dict[str, Any]:
-            '''Add a new camera to the system with full configuration support.
+            """Add a new camera to the system with full configuration support.
 
             Registers and connects to a new camera device using the provided configuration
             parameters. The camera will be added to the system's camera registry and made
@@ -207,50 +206,46 @@ class APIRouter:
                 - list_cameras: To verify camera was added successfully
                 - remove_camera: To remove cameras from the system
                 - get_stream_url: To get streaming URLs for the added camera
-            '''
+            """
             try:
                 if not name:
-                    return {
-                        'status': 'error',
-                        'message': 'Camera name is required'
-                    }
-                
+                    return {"status": "error", "message": "Camera name is required"}
+
                 # Construct camera configuration from parameters
                 camera_config = {
-                    'name': name,
-                    'type': camera_type,
-                    'host': host,
-                    'username': username,
-                    'password': password,
-                    'port': port,
-                    'stream_type': stream_type,
-                    'verify_ssl': verify_ssl,
-                    'timeout': timeout
+                    "name": name,
+                    "type": camera_type,
+                    "host": host,
+                    "username": username,
+                    "password": password,
+                    "port": port,
+                    "stream_type": stream_type,
+                    "verify_ssl": verify_ssl,
+                    "timeout": timeout,
                 }
 
                 # Remove None values to avoid overriding defaults
-                camera_config = {k: v for k, v in camera_config.items() if v is not None}
+                camera_config = {
+                    k: v for k, v in camera_config.items() if v is not None
+                }
 
                 success = await self.camera_manager.add_camera(camera_config)
                 if success:
                     return {
-                        'status': 'success',
-                        'message': f'Camera {name} added successfully'
+                        "status": "success",
+                        "message": f"Camera {name} added successfully",
                     }
                 else:
                     return {
-                        'status': 'error',
-                        'message': f'Failed to add camera {name}'
+                        "status": "error",
+                        "message": f"Failed to add camera {name}",
                     }
             except Exception as e:
-                return {
-                    'status': 'error',
-                    'message': f'Failed to add camera: {str(e)}'
-                }
-        
+                return {"status": "error", "message": f"Failed to add camera: {str(e)}"}
+
         @self.mcp.tool()
         async def remove_camera(name: str) -> Dict[str, Any]:
-            '''Remove a camera from the system and clean up associated resources.
+            """Remove a camera from the system and clean up associated resources.
 
             Disconnects and unregisters a camera from the system, stopping all active
             streams, recordings, and monitoring operations for that camera. All associated
@@ -318,34 +313,33 @@ class APIRouter:
                 - list_cameras: To see available cameras before removal
                 - add_camera: To add cameras back to the system
                 - get_stream_url: Will no longer work for removed cameras
-            '''
+            """
             try:
                 if not name:
-                    return {
-                        'status': 'error',
-                        'message': 'Camera name is required'
-                    }
-                
+                    return {"status": "error", "message": "Camera name is required"}
+
                 success = await self.camera_manager.remove_camera(name)
                 if success:
                     return {
-                        'status': 'success',
-                        'message': f'Camera {name} removed successfully'
+                        "status": "success",
+                        "message": f"Camera {name} removed successfully",
                     }
                 else:
                     return {
-                        'status': 'error',
-                        'message': f'Failed to remove camera {name}'
+                        "status": "error",
+                        "message": f"Failed to remove camera {name}",
                     }
             except Exception as e:
                 return {
-                    'status': 'error',
-                    'message': f'Failed to remove camera: {str(e)}'
+                    "status": "error",
+                    "message": f"Failed to remove camera: {str(e)}",
                 }
-        
+
         @self.mcp.tool()
-        async def capture_still(camera: str, save_path: Optional[str] = None) -> Dict[str, Any]:
-            '''Capture a still image from a specified camera.
+        async def capture_still(
+            camera: str, save_path: Optional[str] = None
+        ) -> Dict[str, Any]:
+            """Capture a still image from a specified camera.
 
             Takes a snapshot from the specified camera and either returns the image data
             directly or saves it to a specified file path. This operation provides immediate
@@ -432,29 +426,23 @@ class APIRouter:
                 - list_cameras: To verify camera availability before capture
                 - get_stream_url: For continuous video streaming instead of snapshots
                 - add_camera: To ensure cameras are properly configured
-            '''
+            """
             try:
                 if not camera:
-                    return {
-                        'status': 'error',
-                        'message': 'Camera name is required'
-                    }
-                
-                result = await self.camera_manager.capture_still(
-                    camera,
-                    save_path
-                )
+                    return {"status": "error", "message": "Camera name is required"}
+
+                result = await self.camera_manager.capture_still(camera, save_path)
                 return result
-                
+
             except Exception as e:
                 return {
-                    'status': 'error',
-                    'message': f'Failed to capture image: {str(e)}'
+                    "status": "error",
+                    "message": f"Failed to capture image: {str(e)}",
                 }
-        
+
         @self.mcp.tool()
         async def get_stream_url(camera: str) -> Dict[str, Any]:
-            '''Get the streaming URL for a specified camera.
+            """Get the streaming URL for a specified camera.
 
             Retrieves the appropriate streaming endpoint URL for the specified camera,
             allowing access to live video feeds. The URL format depends on the camera
@@ -545,39 +533,27 @@ class APIRouter:
                 - list_cameras: To verify camera availability before getting stream URL
                 - capture_still: For single image capture instead of streaming
                 - add_camera: To ensure cameras are properly configured for streaming
-            '''
+            """
             try:
                 if not camera:
-                    return {
-                        'status': 'error',
-                        'message': 'Camera name is required'
-                    }
-                
+                    return {"status": "error", "message": "Camera name is required"}
+
                 camera_obj = await self.camera_manager.get_camera(camera)
                 if not camera_obj:
-                    return {
-                        'status': 'error',
-                        'message': f'Camera {camera} not found'
-                    }
-                
+                    return {"status": "error", "message": f"Camera {camera} not found"}
+
                 stream_url = await camera_obj.get_stream_url()
                 if not stream_url:
-                    return {
-                        'status': 'error',
-                        'message': 'Stream URL not available'
-                    }
-                
-                return {
-                    'status': 'success',
-                    'camera': camera,
-                    'stream_url': stream_url
-                }
-                
+                    return {"status": "error", "message": "Stream URL not available"}
+
+                return {"status": "success", "camera": camera, "stream_url": stream_url}
+
             except Exception as e:
                 return {
-                    'status': 'error',
-                    'message': f'Failed to get stream URL: {str(e)}'
+                    "status": "error",
+                    "message": f"Failed to get stream URL: {str(e)}",
                 }
+
 
 def setup_api_routes(server) -> APIRouter:
     """Set up API routes for the server."""

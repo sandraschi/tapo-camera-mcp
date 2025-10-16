@@ -17,7 +17,7 @@ from tapo_camera_mcp.tools.base_tool import (
     ToolCategory,
     ToolDefinition,
     ToolResult,
-    _tool_registry as tools_registry
+    _tool_registry as tools_registry,
 )
 
 # Import discovery functions
@@ -36,35 +36,39 @@ logger = logging.getLogger(__name__)
 get_tool = _get_tool
 get_all_tools = _get_all_tools
 
+
 def discover_tools(package: Optional[str] = None) -> List[Type[BaseTool]]:
     """Discover and import all tools in the specified package.
-    
+
     Args:
         package: The package to search for tools (default: current package)
-        
+
     Returns:
         List of discovered tool classes
     """
     if package is None:
         package = __name__
-    
+
     # Get the directory containing the tools
     package_path = os.path.dirname(os.path.abspath(__file__))
-    
+
     # Determine subpackage directory names to avoid importing same-named .py modules
-    subpackage_dirs = {name for name in os.listdir(package_path) 
-                      if os.path.isdir(os.path.join(package_path, name))}
+    subpackage_dirs = {
+        name
+        for name in os.listdir(package_path)
+        if os.path.isdir(os.path.join(package_path, name))
+    }
 
     # Import all modules in the tools directory
     for finder, module_name, is_pkg in pkgutil.iter_modules([package_path]):
         # Skip the base module and private modules
-        if module_name == 'base_tool' or module_name.startswith('_'):
+        if module_name == "base_tool" or module_name.startswith("_"):
             continue
-            
+
         # If there exists a subpackage with the same name, skip importing the .py module to avoid conflicts
         if not is_pkg and module_name in subpackage_dirs:
             continue
-            
+
         full_module_name = f"{package}.{module_name}"
         try:
             # Use finder.find_spec to properly handle package imports
@@ -77,12 +81,13 @@ def discover_tools(package: Optional[str] = None) -> List[Type[BaseTool]]:
                     discover_tools_in_path(subpackage_path, full_module_name)
         except ImportError as e:
             logger.error(f"Failed to import tool module {full_module_name}: {e}")
-    
+
     return _get_all_tools()
+
 
 def discover_tools_in_path(package_path: str, package_name: str) -> None:
     """Discover tools in a specific package path.
-    
+
     Args:
         package_path: The directory path to search
         package_name: The full package name for imports
@@ -90,9 +95,9 @@ def discover_tools_in_path(package_path: str, package_name: str) -> None:
     # Import all modules in the subpackage directory
     for finder, module_name, is_pkg in pkgutil.iter_modules([package_path]):
         # Skip private modules
-        if module_name.startswith('_'):
+        if module_name.startswith("_"):
             continue
-            
+
         full_module_name = f"{package_name}.{module_name}"
         try:
             # Use finder.find_spec to properly handle package imports
@@ -106,6 +111,7 @@ def discover_tools_in_path(package_path: str, package_name: str) -> None:
         except ImportError as e:
             logger.error(f"Failed to import tool module {full_module_name}: {e}")
 
+
 # Re-export functions from base_tool
 get_tool = _get_tool
 get_all_tools = _get_all_tools
@@ -114,13 +120,13 @@ get_all_tools = _get_all_tools
 discover_tools()
 
 __all__ = [
-    'BaseTool',
-    'ToolCategory',
-    'ToolResult',
-    'register_tool',
-    'get_tool',
-    'get_all_tools',
-    'discover_tools',
-    'tools_registry',
-    'ToolDefinition'
+    "BaseTool",
+    "ToolCategory",
+    "ToolResult",
+    "register_tool",
+    "get_tool",
+    "get_all_tools",
+    "discover_tools",
+    "tools_registry",
+    "ToolDefinition",
 ]

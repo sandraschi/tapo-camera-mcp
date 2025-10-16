@@ -2,13 +2,15 @@
 """
 Advanced tool execution tests with actual server integration.
 """
+
 import sys
 import os
 import asyncio
 import unittest.mock as mock
 
 # Add the src path to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
 
 def test_server_singleton_pattern():
     """Test server singleton pattern implementation."""
@@ -19,17 +21,19 @@ def test_server_singleton_pattern():
         # We can't easily test the actual singleton without proper setup,
         # but we can test the class structure
 
-        assert hasattr(TapoCameraServer, '__new__')
-        assert hasattr(TapoCameraServer, '_instance')
-        assert hasattr(TapoCameraServer, '_initialized')
+        assert hasattr(TapoCameraServer, "__new__")
+        assert hasattr(TapoCameraServer, "_instance")
+        assert hasattr(TapoCameraServer, "_initialized")
 
         print("✅ Server singleton pattern test passed")
         return True
     except Exception as e:
         print(f"❌ Server singleton pattern test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_camera_factory_creation():
     """Test camera factory creation with different camera types."""
@@ -40,13 +44,11 @@ def test_camera_factory_creation():
         tapo_config = CameraConfig(
             name="test_tapo",
             type=CameraType.TAPO,
-            params={"host": "192.168.1.100", "username": "test", "password": "test"}
+            params={"host": "192.168.1.100", "username": "test", "password": "test"},
         )
 
         webcam_config = CameraConfig(
-            name="test_webcam",
-            type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            name="test_webcam", type=CameraType.WEBCAM, params={"device_id": 0}
         )
 
         # Test that factory can create cameras (without actual connection)
@@ -68,20 +70,24 @@ def test_camera_factory_creation():
     except Exception as e:
         print(f"❌ Camera factory creation test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_tool_execution_with_mocking():
     """Test tool execution with comprehensive mocking."""
     try:
-        from tapo_camera_mcp.tools.camera.camera_tools import ListCamerasTool, AddCameraTool
+        from tapo_camera_mcp.tools.camera.camera_tools import ListCamerasTool
         from tapo_camera_mcp.tools.system.status_tool import StatusTool
         from tapo_camera_mcp.tools.system.help_tool import HelpTool
 
         # Test ListCamerasTool with full mocking
         list_tool = ListCamerasTool()
 
-        with mock.patch('tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer') as mock_server_class:
+        with mock.patch(
+            "tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer"
+        ) as mock_server_class:
             # Mock the entire server instance and camera manager
             mock_server = mock.AsyncMock()
             mock_camera_manager = mock.AsyncMock()
@@ -90,16 +96,22 @@ def test_tool_execution_with_mocking():
             mock_camera1 = mock.MagicMock()
             mock_camera1.config.name = "camera1"
             mock_camera1.config.type.value = "tapo"
-            mock_camera1.get_status.return_value = {"connected": True, "streaming": False}
+            mock_camera1.get_status.return_value = {
+                "connected": True,
+                "streaming": False,
+            }
 
             mock_camera2 = mock.MagicMock()
             mock_camera2.config.name = "camera2"
             mock_camera2.config.type.value = "webcam"
-            mock_camera2.get_status.return_value = {"connected": False, "streaming": False}
+            mock_camera2.get_status.return_value = {
+                "connected": False,
+                "streaming": False,
+            }
 
             mock_camera_manager.cameras = {
                 "camera1": mock_camera1,
-                "camera2": mock_camera2
+                "camera2": mock_camera2,
             }
             mock_camera_manager.groups = mock.MagicMock()
 
@@ -111,7 +123,7 @@ def test_tool_execution_with_mocking():
 
             # Should get a result
             assert result is not None
-            assert hasattr(result, 'is_error') or isinstance(result, dict)
+            assert hasattr(result, "is_error") or isinstance(result, dict)
 
         # Test StatusTool execution
         status_tool = StatusTool(section="system")
@@ -130,25 +142,28 @@ def test_tool_execution_with_mocking():
     except Exception as e:
         print(f"❌ Tool execution with mocking test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_validation_error_scenarios():
     """Test validation error scenarios in tools."""
     try:
         from tapo_camera_mcp.tools.camera.camera_tools import AddCameraTool
-        from tapo_camera_mcp.validation import ToolValidationError
 
         # Test tool with invalid parameters
         tool = AddCameraTool(
             camera_name="",  # Invalid empty name
             ip_address="192.168.1.100",
             username="test_user",
-            password="test_pass"
+            password="test_pass",
         )
 
         # Mock server to avoid actual execution
-        with mock.patch('tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer') as mock_server_class:
+        with mock.patch(
+            "tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer"
+        ) as mock_server_class:
             mock_server = mock.AsyncMock()
             mock_server.add_camera.return_value = {"success": True}
             mock_server_class.get_instance.return_value = mock_server
@@ -157,7 +172,7 @@ def test_validation_error_scenarios():
             result = asyncio.run(tool.execute())
 
             # Should return an error result due to validation failure
-            if hasattr(result, 'is_error'):
+            if hasattr(result, "is_error"):
                 assert result.is_error
 
         print("✅ Validation error scenarios test passed")
@@ -165,8 +180,10 @@ def test_validation_error_scenarios():
     except Exception as e:
         print(f"❌ Validation error scenarios test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_camera_connection_scenarios():
     """Test camera connection scenarios and error handling."""
@@ -174,45 +191,44 @@ def test_camera_connection_scenarios():
         from tapo_camera_mcp.camera.tapo import TapoCamera
         from tapo_camera_mcp.camera.webcam import WebCamera
         from tapo_camera_mcp.camera.base import CameraConfig, CameraType
-        from tapo_camera_mcp.exceptions import ConnectionError, AuthenticationError
 
         # Test Tapo camera connection error handling
         tapo_config = CameraConfig(
             name="test_tapo",
             type=CameraType.TAPO,
-            params={"host": "192.168.1.100", "username": "test", "password": "test"}
+            params={"host": "192.168.1.100", "username": "test", "password": "test"},
         )
 
         tapo_camera = TapoCamera(tapo_config)
 
         # Test that camera has proper error handling structure
-        assert hasattr(tapo_camera, '_is_connected')
-        assert hasattr(tapo_camera, '_last_error')
-        assert hasattr(tapo_camera, 'connect')
-        assert hasattr(tapo_camera, 'disconnect')
-        assert hasattr(tapo_camera, 'get_status')
+        assert hasattr(tapo_camera, "_is_connected")
+        assert hasattr(tapo_camera, "_last_error")
+        assert hasattr(tapo_camera, "connect")
+        assert hasattr(tapo_camera, "disconnect")
+        assert hasattr(tapo_camera, "get_status")
 
         # Test webcam connection error handling
         webcam_config = CameraConfig(
-            name="test_webcam",
-            type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            name="test_webcam", type=CameraType.WEBCAM, params={"device_id": 0}
         )
 
         webcam_camera = WebCamera(webcam_config)
 
-        assert hasattr(webcam_camera, '_is_connected')
-        assert hasattr(webcam_camera, '_cap')
-        assert hasattr(webcam_camera, 'connect')
-        assert hasattr(webcam_camera, 'disconnect')
+        assert hasattr(webcam_camera, "_is_connected")
+        assert hasattr(webcam_camera, "_cap")
+        assert hasattr(webcam_camera, "connect")
+        assert hasattr(webcam_camera, "disconnect")
 
         print("✅ Camera connection scenarios test passed")
         return True
     except Exception as e:
         print(f"❌ Camera connection scenarios test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_web_api_error_handling():
     """Test web API error handling."""
@@ -221,9 +237,11 @@ def test_web_api_error_handling():
         from fastapi.testclient import TestClient
 
         # Mock config
-        with mock.patch('tapo_camera_mcp.web.server.get_config') as mock_get_config, \
-             mock.patch('tapo_camera_mcp.web.server.get_model') as mock_get_model:
-
+        with mock.patch(
+            "tapo_camera_mcp.web.server.get_config"
+        ) as mock_get_config, mock.patch(
+            "tapo_camera_mcp.web.server.get_model"
+        ) as mock_get_model:
             mock_get_config.return_value = {"debug": False}
             mock_get_model.return_value = mock.MagicMock()
 
@@ -248,13 +266,20 @@ def test_web_api_error_handling():
     except Exception as e:
         print(f"❌ Web API error handling test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_tool_registry_operations():
     """Test tool registry operations and edge cases."""
     try:
-        from tapo_camera_mcp.tools.base_tool import register_tool, get_tool, get_all_tools, _tool_registry
+        from tapo_camera_mcp.tools.base_tool import (
+            register_tool,
+            get_tool,
+            get_all_tools,
+            _tool_registry,
+        )
 
         # Clear registry for clean test
         _tool_registry.clear()
@@ -291,26 +316,34 @@ def test_tool_registry_operations():
     except Exception as e:
         print(f"❌ Tool registry operations test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_async_tool_execution():
     """Test async tool execution patterns."""
     try:
-        from tapo_camera_mcp.tools.camera.camera_tools import ListCamerasTool, GetCameraStatusTool
+        from tapo_camera_mcp.tools.camera.camera_tools import (
+            ListCamerasTool,
+            GetCameraStatusTool,
+        )
         from tapo_camera_mcp.tools.system.status_tool import StatusTool
 
         # Test that tools have async execute methods
         tools_to_test = [
             ListCamerasTool(),
             GetCameraStatusTool(camera_id="test"),
-            StatusTool(section="system")
+            StatusTool(section="system"),
         ]
 
         for tool in tools_to_test:
             # Check that execute is a coroutine function
             import inspect
-            assert inspect.iscoroutinefunction(tool.execute), f"Tool {tool.__class__.__name__} execute should be async"
+
+            assert inspect.iscoroutinefunction(tool.execute), (
+                f"Tool {tool.__class__.__name__} execute should be async"
+            )
 
         # Test concurrent execution
         async def test_concurrent_execution():
@@ -330,8 +363,10 @@ def test_async_tool_execution():
     except Exception as e:
         print(f"❌ Async tool execution test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_system_resource_monitoring():
     """Test system resource monitoring in status tools."""
@@ -357,19 +392,25 @@ def test_system_resource_monitoring():
     except Exception as e:
         print(f"❌ System resource monitoring test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_error_recovery_mechanisms():
     """Test error recovery mechanisms in the system."""
     try:
-        from tapo_camera_mcp.exceptions import TapoCameraError, ConnectionError, AuthenticationError
+        from tapo_camera_mcp.exceptions import (
+            TapoCameraError,
+            ConnectionError,
+            AuthenticationError,
+        )
 
         # Test exception hierarchy and error types
         exceptions_to_test = [
             TapoCameraError("Base error"),
             ConnectionError("Connection failed"),
-            AuthenticationError("Auth failed")
+            AuthenticationError("Auth failed"),
         ]
 
         for exc in exceptions_to_test:
@@ -388,8 +429,10 @@ def test_error_recovery_mechanisms():
     except Exception as e:
         print(f"❌ Error recovery mechanisms test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_configuration_validation():
     """Test configuration validation across the system."""
@@ -404,7 +447,7 @@ def test_configuration_validation():
             port=443,
             use_https=True,
             verify_ssl=False,
-            timeout=10
+            timeout=10,
         )
 
         assert valid_config.host == "192.168.1.100"
@@ -417,7 +460,7 @@ def test_configuration_validation():
                 host="192.168.1.100",
                 username="testuser",
                 password="testpass",
-                port=70000  # Invalid port
+                port=70000,  # Invalid port
             )
             assert False, "Should have failed validation"
         except Exception:
@@ -429,7 +472,7 @@ def test_configuration_validation():
                 host="192.168.1.100",
                 username="testuser",
                 password="testpass",
-                timeout=0  # Invalid timeout
+                timeout=0,  # Invalid timeout
             )
             assert False, "Should have failed validation"
         except Exception:
@@ -440,8 +483,10 @@ def test_configuration_validation():
     except Exception as e:
         print(f"❌ Configuration validation test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     tests = [

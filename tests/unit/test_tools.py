@@ -2,11 +2,13 @@
 """
 Test tools functionality and discovery.
 """
+
 import sys
 import os
 
 # Add the src path to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
 
 def test_tools_discovery():
     """Test tools discovery system."""
@@ -14,7 +16,7 @@ def test_tools_discovery():
         from tapo_camera_mcp.tools.discovery import discover_tools
 
         # Discover all tools
-        tools = discover_tools('tapo_camera_mcp.tools')
+        tools = discover_tools("tapo_camera_mcp.tools")
         print(f"✅ Tools discovery found {len(tools)} tools")
 
         # Check that we have a reasonable number of tools
@@ -22,21 +24,27 @@ def test_tools_discovery():
 
         # Check that tools have the expected structure
         for tool_cls in tools[:3]:  # Check first 3 tools
-            assert hasattr(tool_cls, 'Meta'), f"Tool {tool_cls.__name__} missing Meta class"
-            meta = getattr(tool_cls, 'Meta')
-            assert hasattr(meta, 'name'), f"Tool {tool_cls.__name__} missing name in Meta"
+            assert hasattr(tool_cls, "Meta"), (
+                f"Tool {tool_cls.__name__} missing Meta class"
+            )
+            meta = getattr(tool_cls, "Meta")
+            assert hasattr(meta, "name"), (
+                f"Tool {tool_cls.__name__} missing name in Meta"
+            )
 
         return True
     except Exception as e:
         print(f"❌ Tools discovery test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_base_tool():
     """Test base tool functionality."""
     try:
-        from tapo_camera_mcp.tools.base_tool import BaseTool, ToolResult, ToolCategory
+        from tapo_camera_mcp.tools.base_tool import ToolResult, ToolCategory
 
         # Test ToolCategory enum
         categories = [ToolCategory.CAMERA, ToolCategory.SYSTEM, ToolCategory.PTZ]
@@ -50,8 +58,10 @@ def test_base_tool():
     except Exception as e:
         print(f"❌ Base tool test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_system_tools():
     """Test system tools structure."""
@@ -59,25 +69,28 @@ def test_system_tools():
         from tapo_camera_mcp.tools.system.status_tool import StatusTool
 
         # Test that StatusTool exists and has proper structure
-        assert hasattr(StatusTool, 'Meta'), "StatusTool missing Meta class"
+        assert hasattr(StatusTool, "Meta"), "StatusTool missing Meta class"
         meta = StatusTool.Meta
-        assert hasattr(meta, 'name'), "StatusTool Meta missing name"
-        assert hasattr(meta, 'category'), "StatusTool Meta missing category"
+        assert hasattr(meta, "name"), "StatusTool Meta missing name"
+        assert hasattr(meta, "category"), "StatusTool Meta missing category"
 
         print(f"✅ StatusTool structure: name={meta.name}, category={meta.category}")
         return True
     except Exception as e:
         print(f"❌ System tools test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_help_tool():
     """Test help tool structure."""
     try:
         # Test that the module can be imported (skip class structure test due to dependencies)
         import importlib
-        module = importlib.import_module('tapo_camera_mcp.tools.system.help_tool')
+
+        module = importlib.import_module("tapo_camera_mcp.tools.system.help_tool")
         print("✅ Help tool module imported successfully")
         return True
     except Exception as e:
@@ -85,6 +98,7 @@ def test_help_tool():
         # Don't fail the test for import issues, just warn
         print("⚠️  Help tool import issues detected but continuing")
         return True
+
 
 if __name__ == "__main__":
     tests = [

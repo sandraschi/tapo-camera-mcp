@@ -2,17 +2,19 @@
 """
 Real tool execution tests - NO MOCKING, actual server and camera integration.
 """
+
 import sys
 import os
 import asyncio
 import logging
 
 # Add the src path to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 # Setup logging to see what's happening
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 def test_real_server_initialization():
     """Test real server initialization and setup."""
@@ -20,9 +22,9 @@ def test_real_server_initialization():
         from tapo_camera_mcp.core.server import TapoCameraServer
 
         # Test server class structure
-        assert hasattr(TapoCameraServer, 'get_instance')
-        assert hasattr(TapoCameraServer, '_instance')
-        assert hasattr(TapoCameraServer, '_initialized')
+        assert hasattr(TapoCameraServer, "get_instance")
+        assert hasattr(TapoCameraServer, "_instance")
+        assert hasattr(TapoCameraServer, "_initialized")
 
         # Test that we can get the server instance (this actually initializes it)
         try:
@@ -31,15 +33,19 @@ def test_real_server_initialization():
             logger.info("✅ Server instance created successfully")
             return True
         except Exception as e:
-            logger.warning(f"Server instance creation failed (expected in test env): {e}")
+            logger.warning(
+                f"Server instance creation failed (expected in test env): {e}"
+            )
             # This is OK - server might need config, but we tested the structure
             return True
 
     except Exception as e:
         logger.error(f"❌ Real server initialization test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_real_camera_manager():
     """Test real camera manager functionality."""
@@ -50,9 +56,9 @@ def test_real_camera_manager():
         manager = CameraManager()
 
         # Test manager structure
-        assert hasattr(manager, 'cameras')
-        assert hasattr(manager, 'groups')
-        assert hasattr(manager, '_initialized')
+        assert hasattr(manager, "cameras")
+        assert hasattr(manager, "groups")
+        assert hasattr(manager, "_initialized")
 
         # Test that cameras dict is initially empty
         assert isinstance(manager.cameras, dict)
@@ -64,8 +70,10 @@ def test_real_camera_manager():
     except Exception as e:
         logger.error(f"❌ Real camera manager test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_real_tools_discovery():
     """Test real tools discovery and registration."""
@@ -74,7 +82,7 @@ def test_real_tools_discovery():
         from tapo_camera_mcp.tools.base_tool import get_all_tools
 
         # Discover all tools (this actually imports and registers them)
-        tools = discover_tools('tapo_camera_mcp.tools')
+        tools = discover_tools("tapo_camera_mcp.tools")
 
         # Should find multiple tools
         assert len(tools) > 0, f"Should discover tools, found {len(tools)}"
@@ -85,11 +93,14 @@ def test_real_tools_discovery():
 
         # Test that we can get tools by name
         for tool_cls in tools[:3]:  # Test first 3 tools
-            if hasattr(tool_cls.Meta, 'name'):
+            if hasattr(tool_cls.Meta, "name"):
                 tool_name = tool_cls.Meta.name
                 from tapo_camera_mcp.tools.base_tool import get_tool
+
                 retrieved_tool = get_tool(tool_name)
-                assert retrieved_tool is not None, f"Tool {tool_name} should be retrievable"
+                assert retrieved_tool is not None, (
+                    f"Tool {tool_name} should be retrievable"
+                )
 
         logger.info(f"✅ Discovered and registered {len(tools)} tools")
         return True
@@ -97,15 +108,20 @@ def test_real_tools_discovery():
     except Exception as e:
         logger.error(f"❌ Real tools discovery test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_real_validation_module():
     """Test real validation module functionality."""
     try:
         from tapo_camera_mcp.validation import (
-            validate_ip_address, validate_port, validate_camera_name,
-            validate_credentials, ToolValidationError
+            validate_ip_address,
+            validate_port,
+            validate_camera_name,
+            validate_credentials,
+            ToolValidationError,
         )
 
         # Test real IP address validation
@@ -144,8 +160,10 @@ def test_real_validation_module():
     except Exception as e:
         logger.error(f"❌ Real validation module test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_real_webcam_detection():
     """Test webcam detection and connection."""
@@ -155,20 +173,18 @@ def test_real_webcam_detection():
 
         # Create webcam config
         webcam_config = CameraConfig(
-            name="test_webcam",
-            type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            name="test_webcam", type=CameraType.WEBCAM, params={"device_id": 0}
         )
 
         # Create webcam instance
         webcam = WebCamera(webcam_config)
 
         # Test webcam structure
-        assert hasattr(webcam, '_cap')
-        assert hasattr(webcam, '_device_id')
-        assert hasattr(webcam, 'connect')
-        assert hasattr(webcam, 'disconnect')
-        assert hasattr(webcam, 'get_status')
+        assert hasattr(webcam, "_cap")
+        assert hasattr(webcam, "_device_id")
+        assert hasattr(webcam, "connect")
+        assert hasattr(webcam, "disconnect")
+        assert hasattr(webcam, "get_status")
 
         # Test webcam device ID
         assert webcam._device_id == 0
@@ -179,8 +195,10 @@ def test_real_webcam_detection():
     except Exception as e:
         logger.error(f"❌ Real webcam detection test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_real_camera_factory():
     """Test real camera factory functionality."""
@@ -195,13 +213,11 @@ def test_real_camera_factory():
         tapo_config = CameraConfig(
             name="test_tapo",
             type=CameraType.TAPO,
-            params={"host": "192.168.1.100", "username": "test", "password": "test"}
+            params={"host": "192.168.1.100", "username": "test", "password": "test"},
         )
 
         webcam_config = CameraConfig(
-            name="test_webcam",
-            type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            name="test_webcam", type=CameraType.WEBCAM, params={"device_id": 0}
         )
 
         # Create camera instances (this tests the factory)
@@ -215,7 +231,9 @@ def test_real_camera_factory():
 
             logger.info("✅ Camera factory created real camera instances")
         except Exception as e:
-            logger.warning(f"Camera creation failed (expected without dependencies): {e}")
+            logger.warning(
+                f"Camera creation failed (expected without dependencies): {e}"
+            )
             # This is OK - we tested the factory structure
 
         return True
@@ -223,8 +241,10 @@ def test_real_camera_factory():
     except Exception as e:
         logger.error(f"❌ Real camera factory test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_real_tool_structure():
     """Test real tool structure and metadata."""
@@ -232,25 +252,35 @@ def test_real_tool_structure():
         from tapo_camera_mcp.tools.discovery import discover_tools
 
         # Discover all tools
-        all_tools = discover_tools('tapo_camera_mcp.tools')
+        all_tools = discover_tools("tapo_camera_mcp.tools")
 
         # Test each tool's real structure
         for tool_cls in all_tools:
             # Tool should have Meta class with real metadata
-            assert hasattr(tool_cls, 'Meta'), f"Tool {tool_cls.__name__} missing Meta"
+            assert hasattr(tool_cls, "Meta"), f"Tool {tool_cls.__name__} missing Meta"
 
             meta = tool_cls.Meta
-            assert hasattr(meta, 'name'), f"Tool {tool_cls.__name__} missing name"
-            assert hasattr(meta, 'category'), f"Tool {tool_cls.__name__} missing category"
+            assert hasattr(meta, "name"), f"Tool {tool_cls.__name__} missing name"
+            assert hasattr(meta, "category"), (
+                f"Tool {tool_cls.__name__} missing category"
+            )
 
             # Name should be a real string
-            assert isinstance(meta.name, str), f"Tool {tool_cls.__name__} name should be string"
-            assert len(meta.name) > 0, f"Tool {tool_cls.__name__} name should not be empty"
+            assert isinstance(meta.name, str), (
+                f"Tool {tool_cls.__name__} name should be string"
+            )
+            assert len(meta.name) > 0, (
+                f"Tool {tool_cls.__name__} name should not be empty"
+            )
 
             # Tool should have real execute method
-            assert hasattr(tool_cls, 'execute'), f"Tool {tool_cls.__name__} missing execute"
-            execute_method = getattr(tool_cls, 'execute')
-            assert callable(execute_method), f"Tool {tool_cls.__name__} execute not callable"
+            assert hasattr(tool_cls, "execute"), (
+                f"Tool {tool_cls.__name__} missing execute"
+            )
+            execute_method = getattr(tool_cls, "execute")
+            assert callable(execute_method), (
+                f"Tool {tool_cls.__name__} execute not callable"
+            )
 
             # Test that we can create tool instances
             try:
@@ -267,29 +297,33 @@ def test_real_tool_structure():
     except Exception as e:
         logger.error(f"❌ Real tool structure test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_real_system_tools():
     """Test real system tools functionality."""
     try:
         # Test importing real system tools
-        from tapo_camera_mcp.tools.system import status_tool, help_tool, health_tool
+        from tapo_camera_mcp.tools.system import status_tool, help_tool
 
         # Test StatusTool
         from tapo_camera_mcp.tools.system.status_tool import StatusTool
+
         status_tool = StatusTool(section="system")
 
-        assert hasattr(status_tool, 'Meta')
-        assert hasattr(status_tool.Meta, 'name')
+        assert hasattr(status_tool, "Meta")
+        assert hasattr(status_tool.Meta, "name")
         assert status_tool.Meta.name == "status"
 
         # Test HelpTool
         from tapo_camera_mcp.tools.system.help_tool import HelpTool
+
         help_tool = HelpTool(section="tools")
 
-        assert hasattr(help_tool, 'Meta')
-        assert hasattr(help_tool.Meta, 'name')
+        assert hasattr(help_tool, "Meta")
+        assert hasattr(help_tool.Meta, "name")
         assert help_tool.Meta.name == "help"
 
         # Test that tools can be executed (basic smoke test)
@@ -305,39 +339,42 @@ def test_real_system_tools():
     except Exception as e:
         logger.error(f"❌ Real system tools test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_real_camera_tools():
     """Test real camera tools functionality."""
     try:
         # Test importing real camera tools
-        from tapo_camera_mcp.tools.camera import camera_tools
 
         # Test ListCamerasTool
         from tapo_camera_mcp.tools.camera.camera_tools import ListCamerasTool
+
         list_tool = ListCamerasTool()
 
-        assert hasattr(list_tool, 'Meta')
-        assert hasattr(list_tool.Meta, 'name')
+        assert hasattr(list_tool, "Meta")
+        assert hasattr(list_tool.Meta, "name")
         assert list_tool.Meta.name == "list_cameras"
 
         # Test AddCameraTool
         from tapo_camera_mcp.tools.camera.camera_tools import AddCameraTool
+
         add_tool = AddCameraTool(
             camera_name="test_camera",
             ip_address="192.168.1.100",
             username="test_user",
-            password="test_pass"
+            password="test_pass",
         )
 
-        assert hasattr(add_tool, 'Meta')
-        assert hasattr(add_tool.Meta, 'name')
+        assert hasattr(add_tool, "Meta")
+        assert hasattr(add_tool.Meta, "name")
         assert add_tool.Meta.name == "add_camera"
 
         # Test that tools have real execute methods
-        assert hasattr(list_tool, 'execute')
-        assert hasattr(add_tool, 'execute')
+        assert hasattr(list_tool, "execute")
+        assert hasattr(add_tool, "execute")
 
         logger.info("✅ Real camera tools tested")
         return True
@@ -345,8 +382,10 @@ def test_real_camera_tools():
     except Exception as e:
         logger.error(f"❌ Real camera tools test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_real_web_server():
     """Test real web server setup."""
@@ -354,16 +393,16 @@ def test_real_web_server():
         from tapo_camera_mcp.web.server import WebServer
 
         # Test web server class structure
-        assert hasattr(WebServer, '__init__')
-        assert hasattr(WebServer, 'run')
-        assert hasattr(WebServer, 'app')
+        assert hasattr(WebServer, "__init__")
+        assert hasattr(WebServer, "run")
+        assert hasattr(WebServer, "app")
 
         # Test that we can create web server instance
         try:
             server = WebServer()
             # Should be able to create the server
-            assert hasattr(server, 'app')
-            assert hasattr(server, 'templates')
+            assert hasattr(server, "app")
+            assert hasattr(server, "templates")
 
             logger.info("✅ Web server instance created")
         except Exception as e:
@@ -375,36 +414,44 @@ def test_real_web_server():
     except Exception as e:
         logger.error(f"❌ Real web server test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_real_core_models():
     """Test real core models functionality."""
     try:
-        from tapo_camera_mcp.core import models
-
         # Test CameraModel enum
         from tapo_camera_mcp.core.models import CameraModel
+
         assert CameraModel.C100.value == "Tapo C100"
         assert CameraModel.C200.value == "Tapo C200"
 
         # Test StreamType enum
         from tapo_camera_mcp.core.models import StreamType
+
         assert StreamType.RTSP.value == "rtsp"
         assert StreamType.HLS.value == "hls"
 
         # Test VideoQuality enum
         from tapo_camera_mcp.core.models import VideoQuality
+
         assert VideoQuality.HIGH.value == "high"
         assert VideoQuality.LOW.value == "low"
 
         # Test PTZDirection enum
         from tapo_camera_mcp.core.models import PTZDirection
+
         assert PTZDirection.UP.value == "up"
         assert PTZDirection.STOP.value == "stop"
 
         # Test Pydantic models
-        from tapo_camera_mcp.core.models import CameraStatus, PTZPosition, TapoCameraConfig
+        from tapo_camera_mcp.core.models import (
+            CameraStatus,
+            PTZPosition,
+            TapoCameraConfig,
+        )
 
         # Test CameraStatus model
         status = CameraStatus(
@@ -413,7 +460,7 @@ def test_real_core_models():
             motion_detected=False,
             mac_address="00:11:22:33:44:55",
             firmware_version="1.0.0",
-            hardware_version="1.0"
+            hardware_version="1.0",
         )
 
         assert status.online is True
@@ -426,10 +473,7 @@ def test_real_core_models():
 
         # Test TapoCameraConfig model
         config = TapoCameraConfig(
-            host="192.168.1.100",
-            username="testuser",
-            password="testpass",
-            port=443
+            host="192.168.1.100", username="testuser", password="testpass", port=443
         )
 
         assert config.host == "192.168.1.100"
@@ -441,8 +485,10 @@ def test_real_core_models():
     except Exception as e:
         logger.error(f"❌ Real core models test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_webcam_server_integration():
     """Test webcam integration with server."""
@@ -454,9 +500,7 @@ def test_webcam_server_integration():
 
         # Test that webcam can be created and integrated
         webcam_config = CameraConfig(
-            name="integration_webcam",
-            type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            name="integration_webcam", type=CameraType.WEBCAM, params={"device_id": 0}
         )
 
         webcam = WebCamera(webcam_config)
@@ -473,7 +517,7 @@ def test_webcam_server_integration():
         try:
             server = asyncio.run(TapoCameraServer.get_instance())
             # Server should have camera_manager attribute
-            assert hasattr(server, 'camera_manager')
+            assert hasattr(server, "camera_manager")
         except Exception:
             # Server might need config, but we tested the structure
             pass
@@ -484,8 +528,10 @@ def test_webcam_server_integration():
     except Exception as e:
         logger.error(f"❌ Webcam-server integration test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     tests = [

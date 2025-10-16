@@ -2,13 +2,15 @@
 """
 Comprehensive tests for camera implementations (Tapo, Webcam, Ring, Furbo).
 """
+
 import sys
 import os
 import asyncio
 import unittest.mock as mock
 
 # Add the src path to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
 
 def test_camera_implementations_creation():
     """Test creation of all camera implementation classes."""
@@ -21,7 +23,7 @@ def test_camera_implementations_creation():
         tapo_config = CameraConfig(
             name="test_tapo",
             type=CameraType.TAPO,
-            params={"host": "192.168.1.100", "username": "test", "password": "test"}
+            params={"host": "192.168.1.100", "username": "test", "password": "test"},
         )
         tapo_camera = TapoCamera(tapo_config)
         assert tapo_camera.config == tapo_config
@@ -30,9 +32,7 @@ def test_camera_implementations_creation():
 
         # Test Webcam creation
         webcam_config = CameraConfig(
-            name="test_webcam",
-            type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            name="test_webcam", type=CameraType.WEBCAM, params={"device_id": 0}
         )
         webcam_camera = WebCamera(webcam_config)
         assert webcam_camera.config == webcam_config
@@ -45,8 +45,10 @@ def test_camera_implementations_creation():
     except Exception as e:
         print(f"❌ Camera implementation creation tests failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_camera_factory_registration():
     """Test camera factory registration system."""
@@ -61,13 +63,13 @@ def test_camera_factory_registration():
         tapo_config = {
             "name": "factory_tapo",
             "type": CameraType.TAPO,
-            "params": {"host": "192.168.1.100", "username": "test", "password": "test"}
+            "params": {"host": "192.168.1.100", "username": "test", "password": "test"},
         }
 
         webcam_config = {
             "name": "factory_webcam",
             "type": CameraType.WEBCAM,
-            "params": {"device_id": 0}
+            "params": {"device_id": 0},
         }
 
         from tapo_camera_mcp.camera.tapo import TapoCamera
@@ -84,8 +86,10 @@ def test_camera_factory_registration():
     except Exception as e:
         print(f"❌ Camera factory registration tests failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_camera_connection_handling():
     """Test camera connection handling with mocked dependencies."""
@@ -99,12 +103,12 @@ def test_camera_connection_handling():
         tapo_config = CameraConfig(
             name="test_tapo_connect",
             type=CameraType.TAPO,
-            params={"host": "invalid_host", "username": "test", "password": "test"}
+            params={"host": "invalid_host", "username": "test", "password": "test"},
         )
         tapo_camera = TapoCamera(tapo_config)
 
         # Mock the Tapo class to raise an exception
-        with mock.patch('tapo_camera_mcp.camera.tapo.Tapo') as mock_tapo_class:
+        with mock.patch("tapo_camera_mcp.camera.tapo.Tapo") as mock_tapo_class:
             mock_tapo_instance = mock_tapo_class.return_value
             mock_tapo_instance.getBasicInfo.side_effect = Exception("Connection failed")
 
@@ -119,12 +123,12 @@ def test_camera_connection_handling():
         webcam_config = CameraConfig(
             name="test_webcam_connect",
             type=CameraType.WEBCAM,
-            params={"device_id": 999}  # Invalid device
+            params={"device_id": 999},  # Invalid device
         )
         webcam_camera = WebCamera(webcam_config)
 
         # Mock cv2.VideoCapture to fail
-        with mock.patch('cv2.VideoCapture') as mock_cap:
+        with mock.patch("cv2.VideoCapture") as mock_cap:
             mock_cap_instance = mock_cap.return_value
             mock_cap_instance.isOpened.return_value = False
 
@@ -139,8 +143,10 @@ def test_camera_connection_handling():
     except Exception as e:
         print(f"❌ Camera connection handling tests failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_camera_status_reporting():
     """Test camera status reporting functionality."""
@@ -153,39 +159,39 @@ def test_camera_status_reporting():
         tapo_config = CameraConfig(
             name="test_tapo_status",
             type=CameraType.TAPO,
-            params={"host": "192.168.1.100", "username": "test", "password": "test"}
+            params={"host": "192.168.1.100", "username": "test", "password": "test"},
         )
         tapo_camera = TapoCamera(tapo_config)
 
         status = asyncio.run(tapo_camera.get_status())
-        assert not status['connected']
-        assert not status['streaming']
-        assert status['type'] == 'tapo'
-        assert not status['enabled']
-        assert 'last_error' in status
+        assert not status["connected"]
+        assert not status["streaming"]
+        assert status["type"] == "tapo"
+        assert not status["enabled"]
+        assert "last_error" in status
 
         # Test Webcam status when disconnected
         webcam_config = CameraConfig(
-            name="test_webcam_status",
-            type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            name="test_webcam_status", type=CameraType.WEBCAM, params={"device_id": 0}
         )
         webcam_camera = WebCamera(webcam_config)
 
         status = asyncio.run(webcam_camera.get_status())
-        assert not status['connected']
-        assert not status['streaming']
-        assert status['type'] == 'webcam'
-        assert not status['enabled']
-        assert 'last_error' in status
+        assert not status["connected"]
+        assert not status["streaming"]
+        assert status["type"] == "webcam"
+        assert not status["enabled"]
+        assert "last_error" in status
 
         print("✅ Camera status reporting tests passed")
         return True
     except Exception as e:
         print(f"❌ Camera status reporting tests failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_camera_streaming_functionality():
     """Test camera streaming functionality (mocked)."""
@@ -197,7 +203,7 @@ def test_camera_streaming_functionality():
         tapo_config = CameraConfig(
             name="test_tapo_stream",
             type=CameraType.TAPO,
-            params={"host": "192.168.1.100", "username": "test", "password": "test"}
+            params={"host": "192.168.1.100", "username": "test", "password": "test"},
         )
         tapo_camera = TapoCamera(tapo_config)
 
@@ -209,8 +215,10 @@ def test_camera_streaming_functionality():
     except Exception as e:
         print(f"❌ Camera streaming functionality tests failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_ring_camera_implementation():
     """Test Ring camera implementation (if available)."""
@@ -225,8 +233,8 @@ def test_ring_camera_implementation():
             params={
                 "device_id": "test_device",
                 "api_key": "test_key",
-                "refresh_token": "test_token"
-            }
+                "refresh_token": "test_token",
+            },
         )
 
         # Create camera instance
@@ -245,8 +253,10 @@ def test_ring_camera_implementation():
     except Exception as e:
         print(f"❌ Ring camera implementation tests failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_furbo_camera_implementation():
     """Test Furbo camera implementation (if available)."""
@@ -258,10 +268,7 @@ def test_furbo_camera_implementation():
         furbo_config = CameraConfig(
             name="test_furbo",
             type=CameraType.FURBO,
-            params={
-                "device_id": "test_device",
-                "api_key": "test_key"
-            }
+            params={"device_id": "test_device", "api_key": "test_key"},
         )
 
         # Create camera instance
@@ -280,8 +287,10 @@ def test_furbo_camera_implementation():
     except Exception as e:
         print(f"❌ Furbo camera implementation tests failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_camera_error_handling():
     """Test camera error handling and exception raising."""
@@ -293,7 +302,7 @@ def test_camera_error_handling():
         tapo_config = CameraConfig(
             name="test_error_handling",
             type=CameraType.TAPO,
-            params={"host": "192.168.1.100", "username": "test", "password": "test"}
+            params={"host": "192.168.1.100", "username": "test", "password": "test"},
         )
         tapo_camera = TapoCamera(tapo_config)
 
@@ -314,8 +323,10 @@ def test_camera_error_handling():
     except Exception as e:
         print(f"❌ Camera error handling tests failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     tests = [

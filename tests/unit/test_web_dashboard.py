@@ -2,14 +2,14 @@
 """
 Comprehensive tests for web dashboard and API endpoints.
 """
+
 import sys
 import os
-import asyncio
-import json
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from unittest.mock import Mock, AsyncMock, patch
 
 # Add the src path to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
 
 def test_web_server_initialization():
     """Test web server initialization and setup."""
@@ -17,9 +17,9 @@ def test_web_server_initialization():
         from tapo_camera_mcp.web.server import WebServer
 
         # Mock the config functions
-        with patch('tapo_camera_mcp.web.server.get_config') as mock_get_config, \
-             patch('tapo_camera_mcp.web.server.get_model') as mock_get_model:
-
+        with patch("tapo_camera_mcp.web.server.get_config") as mock_get_config, patch(
+            "tapo_camera_mcp.web.server.get_model"
+        ) as mock_get_model:
             mock_config = {"debug": False, "log_level": "info"}
             mock_web_config = Mock()
             mock_web_config.title = "Test Server"
@@ -34,28 +34,34 @@ def test_web_server_initialization():
             mock_security_config = Mock()
 
             mock_get_config.return_value = mock_config
-            mock_get_model.side_effect = lambda cls: mock_web_config if cls.__name__ == 'WebUISettings' else mock_security_config
+            mock_get_model.side_effect = (
+                lambda cls: mock_web_config
+                if cls.__name__ == "WebUISettings"
+                else mock_security_config
+            )
 
             # Create web server instance
             server = WebServer()
 
             # Test that FastAPI app is created
-            assert hasattr(server, 'app')
+            assert hasattr(server, "app")
             assert server.app.title == "Tapo Camera MCP"
 
             # Test that middleware is set up
             assert len(server.app.user_middleware) > 0
 
             # Test that templates are configured
-            assert hasattr(server, 'templates')
+            assert hasattr(server, "templates")
 
             print("✅ Web server initialization test passed")
             return True
     except Exception as e:
         print(f"❌ Web server initialization test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_api_status_endpoint():
     """Test the /api/status endpoint."""
@@ -64,9 +70,9 @@ def test_api_status_endpoint():
         from fastapi.testclient import TestClient
 
         # Mock config
-        with patch('tapo_camera_mcp.web.server.get_config') as mock_get_config, \
-             patch('tapo_camera_mcp.web.server.get_model'):
-
+        with patch("tapo_camera_mcp.web.server.get_config") as mock_get_config, patch(
+            "tapo_camera_mcp.web.server.get_model"
+        ):
             mock_get_config.return_value = {"debug": False}
             mock_get_model.return_value = Mock()
 
@@ -87,8 +93,10 @@ def test_api_status_endpoint():
     except Exception as e:
         print(f"❌ API status endpoint test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_api_cameras_endpoint():
     """Test the /api/cameras endpoint."""
@@ -97,16 +105,17 @@ def test_api_cameras_endpoint():
         from fastapi.testclient import TestClient
 
         # Mock config and server
-        with patch('tapo_camera_mcp.web.server.get_config') as mock_get_config, \
-             patch('tapo_camera_mcp.web.server.get_model'), \
-             patch('tapo_camera_mcp.web.server.TapoCameraServer') as mock_server_class:
-
+        with patch("tapo_camera_mcp.web.server.get_config") as mock_get_config, patch(
+            "tapo_camera_mcp.web.server.get_model"
+        ), patch("tapo_camera_mcp.web.server.TapoCameraServer") as mock_server_class:
             mock_get_config.return_value = {"debug": False}
             mock_get_model.return_value = Mock()
 
             # Mock server instance
             mock_server_instance = AsyncMock()
-            mock_server_instance.list_cameras.return_value = {"cameras": ["camera1", "camera2"]}
+            mock_server_instance.list_cameras.return_value = {
+                "cameras": ["camera1", "camera2"]
+            }
             mock_server_class.get_instance.return_value = mock_server_instance
 
             server = WebServer()
@@ -124,8 +133,10 @@ def test_api_cameras_endpoint():
     except Exception as e:
         print(f"❌ API cameras endpoint test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_api_camera_stream_endpoint():
     """Test the /api/cameras/{camera_id}/stream endpoint."""
@@ -134,10 +145,9 @@ def test_api_camera_stream_endpoint():
         from fastapi.testclient import TestClient
 
         # Mock config and server
-        with patch('tapo_camera_mcp.web.server.get_config') as mock_get_config, \
-             patch('tapo_camera_mcp.web.server.get_model'), \
-             patch('tapo_camera_mcp.web.server.TapoCameraServer') as mock_server_class:
-
+        with patch("tapo_camera_mcp.web.server.get_config") as mock_get_config, patch(
+            "tapo_camera_mcp.web.server.get_model"
+        ), patch("tapo_camera_mcp.web.server.TapoCameraServer") as mock_server_class:
             mock_get_config.return_value = {"debug": False}
             mock_get_model.return_value = Mock()
 
@@ -167,8 +177,10 @@ def test_api_camera_stream_endpoint():
     except Exception as e:
         print(f"❌ API camera stream endpoint test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_api_camera_snapshot_endpoint():
     """Test the /api/cameras/{camera_id}/snapshot endpoint."""
@@ -177,10 +189,9 @@ def test_api_camera_snapshot_endpoint():
         from fastapi.testclient import TestClient
 
         # Mock config and server
-        with patch('tapo_camera_mcp.web.server.get_config') as mock_get_config, \
-             patch('tapo_camera_mcp.web.server.get_model'), \
-             patch('tapo_camera_mcp.web.server.TapoCameraServer') as mock_server_class:
-
+        with patch("tapo_camera_mcp.web.server.get_config") as mock_get_config, patch(
+            "tapo_camera_mcp.web.server.get_model"
+        ), patch("tapo_camera_mcp.web.server.TapoCameraServer") as mock_server_class:
             mock_get_config.return_value = {"debug": False}
             mock_get_model.return_value = Mock()
 
@@ -207,8 +218,10 @@ def test_api_camera_snapshot_endpoint():
     except Exception as e:
         print(f"❌ API camera snapshot endpoint test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_dashboard_pages():
     """Test dashboard page routes."""
@@ -217,9 +230,9 @@ def test_dashboard_pages():
         from fastapi.testclient import TestClient
 
         # Mock config
-        with patch('tapo_camera_mcp.web.server.get_config') as mock_get_config, \
-             patch('tapo_camera_mcp.web.server.get_model'):
-
+        with patch("tapo_camera_mcp.web.server.get_config") as mock_get_config, patch(
+            "tapo_camera_mcp.web.server.get_model"
+        ):
             mock_get_config.return_value = {"debug": False}
             mock_get_model.return_value = Mock()
 
@@ -248,8 +261,10 @@ def test_dashboard_pages():
     except Exception as e:
         print(f"❌ Dashboard pages test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_error_handling():
     """Test error handling for API and web routes."""
@@ -258,9 +273,9 @@ def test_error_handling():
         from fastapi.testclient import TestClient
 
         # Mock config
-        with patch('tapo_camera_mcp.web.server.get_config') as mock_get_config, \
-             patch('tapo_camera_mcp.web.server.get_model'):
-
+        with patch("tapo_camera_mcp.web.server.get_config") as mock_get_config, patch(
+            "tapo_camera_mcp.web.server.get_model"
+        ):
             mock_get_config.return_value = {"debug": False}
             mock_get_model.return_value = Mock()
 
@@ -282,8 +297,10 @@ def test_error_handling():
     except Exception as e:
         print(f"❌ Error handling test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_middleware_functionality():
     """Test middleware functionality (CORS, security headers, etc.)."""
@@ -292,9 +309,9 @@ def test_middleware_functionality():
         from fastapi.testclient import TestClient
 
         # Mock config with CORS enabled
-        with patch('tapo_camera_mcp.web.server.get_config') as mock_get_config, \
-             patch('tapo_camera_mcp.web.server.get_model') as mock_get_model:
-
+        with patch("tapo_camera_mcp.web.server.get_config") as mock_get_config, patch(
+            "tapo_camera_mcp.web.server.get_model"
+        ) as mock_get_model:
             mock_config = {"debug": False}
             mock_web_config = Mock()
             mock_web_config.enable_cors = True
@@ -302,7 +319,11 @@ def test_middleware_functionality():
             mock_security_config = Mock()
 
             mock_get_config.return_value = mock_config
-            mock_get_model.side_effect = lambda cls: mock_web_config if cls.__name__ == 'WebUISettings' else mock_security_config
+            mock_get_model.side_effect = (
+                lambda cls: mock_web_config
+                if cls.__name__ == "WebUISettings"
+                else mock_security_config
+            )
 
             server = WebServer()
             client = TestClient(server.app)
@@ -313,8 +334,8 @@ def test_middleware_functionality():
                 headers={
                     "Origin": "http://localhost:3000",
                     "Access-Control-Request-Method": "GET",
-                    "Access-Control-Request-Headers": "Content-Type"
-                }
+                    "Access-Control-Request-Headers": "Content-Type",
+                },
             )
 
             # CORS headers should be present
@@ -331,8 +352,10 @@ def test_middleware_functionality():
     except Exception as e:
         print(f"❌ Middleware functionality test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_template_rendering():
     """Test template rendering with context variables."""
@@ -341,9 +364,9 @@ def test_template_rendering():
         from fastapi.testclient import TestClient
 
         # Mock config
-        with patch('tapo_camera_mcp.web.server.get_config') as mock_get_config, \
-             patch('tapo_camera_mcp.web.server.get_model') as mock_get_model:
-
+        with patch("tapo_camera_mcp.web.server.get_config") as mock_get_config, patch(
+            "tapo_camera_mcp.web.server.get_model"
+        ) as mock_get_model:
             mock_config = {"debug": False}
             mock_web_config = Mock()
             mock_web_config.title = "Test Camera MCP"
@@ -351,7 +374,11 @@ def test_template_rendering():
             mock_security_config = Mock()
 
             mock_get_config.return_value = mock_config
-            mock_get_model.side_effect = lambda cls: mock_web_config if cls.__name__ == 'WebUISettings' else mock_security_config
+            mock_get_model.side_effect = (
+                lambda cls: mock_web_config
+                if cls.__name__ == "WebUISettings"
+                else mock_security_config
+            )
 
             server = WebServer()
             client = TestClient(server.app)
@@ -370,8 +397,10 @@ def test_template_rendering():
     except Exception as e:
         print(f"❌ Template rendering test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     tests = [

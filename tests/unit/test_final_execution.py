@@ -2,17 +2,21 @@
 """
 FINAL ATTEMPT - Execute actual server and tool code to force coverage.
 """
+
 import sys
 import os
 import asyncio
 import logging
 
 # Add the src path to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 # Setup logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 def force_execute_server_code():
     """Force execution of server code."""
@@ -26,10 +30,10 @@ def force_execute_server_code():
         logger.info("Testing server class structure...")
 
         # Check server class attributes
-        assert hasattr(TapoCameraServer, '_instance')
-        assert hasattr(TapoCameraServer, '_initialized')
-        assert hasattr(TapoCameraServer, 'get_instance')
-        assert hasattr(TapoCameraServer, '__init__')
+        assert hasattr(TapoCameraServer, "_instance")
+        assert hasattr(TapoCameraServer, "_initialized")
+        assert hasattr(TapoCameraServer, "get_instance")
+        assert hasattr(TapoCameraServer, "__init__")
 
         # Try to get server instance (this should execute initialization code)
         try:
@@ -37,7 +41,7 @@ def force_execute_server_code():
             logger.info("✅ Server instance creation executed")
 
             # Check that server has expected attributes
-            if hasattr(server, 'camera_manager'):
+            if hasattr(server, "camera_manager"):
                 logger.info("✅ Server has camera_manager")
             else:
                 logger.warning("❌ Server missing camera_manager")
@@ -50,8 +54,10 @@ def force_execute_server_code():
     except Exception as e:
         logger.error(f"❌ Server code execution failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def force_execute_camera_code():
     """Force execution of camera code."""
@@ -68,9 +74,7 @@ def force_execute_camera_code():
 
         # Execute camera creation code
         webcam_config = CameraConfig(
-            name="force_test_webcam",
-            type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            name="force_test_webcam", type=CameraType.WEBCAM, params={"device_id": 0}
         )
 
         webcam = WebCamera(webcam_config)
@@ -92,8 +96,10 @@ def force_execute_camera_code():
     except Exception as e:
         logger.error(f"❌ Camera code execution failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def force_execute_tools_code():
     """Force execution of tools code."""
@@ -105,7 +111,7 @@ def force_execute_tools_code():
         from tapo_camera_mcp.tools.system.help_tool import HelpTool
 
         # Execute tools discovery code
-        tools = discover_tools('tapo_camera_mcp.tools')
+        tools = discover_tools("tapo_camera_mcp.tools")
         logger.info(f"✅ Tools discovery executed: {len(tools)} tools")
 
         # Execute StatusTool code
@@ -129,8 +135,10 @@ def force_execute_tools_code():
     except Exception as e:
         logger.error(f"❌ Tools code execution failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def force_execute_validation_code():
     """Force execution of validation code."""
@@ -138,8 +146,11 @@ def force_execute_validation_code():
         logger.info("✅ FORCING VALIDATION CODE EXECUTION...")
 
         from tapo_camera_mcp.validation import (
-            validate_ip_address, validate_port, validate_camera_name,
-            validate_credentials, ToolValidationError
+            validate_ip_address,
+            validate_port,
+            validate_camera_name,
+            validate_credentials,
+            ToolValidationError,
         )
 
         # Execute validation functions
@@ -161,8 +172,10 @@ def force_execute_validation_code():
     except Exception as e:
         logger.error(f"❌ Validation code execution failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def force_execute_models_code():
     """Force execution of models code."""
@@ -170,9 +183,13 @@ def force_execute_models_code():
         logger.info("📊 FORCING MODELS CODE EXECUTION...")
 
         from tapo_camera_mcp.core.models import (
-            CameraModel, StreamType, VideoQuality, PTZDirection,
-            MotionDetectionSensitivity, CameraStatus, PTZPosition,
-            MotionEvent, CameraInfo, TapoCameraConfig
+            CameraModel,
+            StreamType,
+            VideoQuality,
+            PTZDirection,
+            CameraStatus,
+            PTZPosition,
+            TapoCameraConfig,
         )
 
         # Execute enum access (this runs enum code)
@@ -189,25 +206,27 @@ def force_execute_models_code():
             motion_detected=False,
             mac_address="00:11:22:33:44:55",
             firmware_version="1.0.0",
-            hardware_version="1.0"
+            hardware_version="1.0",
         )
 
         position = PTZPosition(pan=0.5, tilt=-0.3, zoom=0.8)
         config = TapoCameraConfig(
-            host="192.168.1.100",
-            username="testuser",
-            password="testpass"
+            host="192.168.1.100", username="testuser", password="testpass"
         )
 
-        logger.info(f"✅ Models created: status={status.online}, position={position.pan}")
+        logger.info(
+            f"✅ Models created: status={status.online}, position={position.pan}"
+        )
 
         return True
 
     except Exception as e:
         logger.error(f"❌ Models code execution failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_webcam_connected_to_server():
     """Test that webcam is properly connected to server."""
@@ -226,7 +245,7 @@ def test_webcam_connected_to_server():
         webcam_config = CameraConfig(
             name="server_connected_webcam",
             type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            params={"device_id": 0},
         )
         webcam = WebCamera(webcam_config)
 
@@ -238,7 +257,7 @@ def test_webcam_connected_to_server():
         try:
             server = asyncio.run(TapoCameraServer.get_instance())
             # Server should have camera_manager for webcam integration
-            assert hasattr(server, 'camera_manager')
+            assert hasattr(server, "camera_manager")
             logger.info("✅ Webcam connected to server structure")
         except Exception:
             logger.warning("Server integration test failed")
@@ -248,8 +267,10 @@ def test_webcam_connected_to_server():
     except Exception as e:
         logger.error(f"❌ Webcam-server connection test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     print("🚀 FINAL ATTEMPT - FORCING REAL CODE EXECUTION")

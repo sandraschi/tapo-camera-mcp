@@ -22,7 +22,7 @@ from .core import (
     CameraStatus,
     PTZPosition,
     MotionEvent,
-    CameraInfo
+    CameraInfo,
 )
 
 from .exceptions import TapoCameraError
@@ -31,6 +31,7 @@ from . import presets
 # For backward compatibility
 from .core.server import TapoCameraServer as Server  # noqa: F401
 from .core.server import TapoCameraServer as TapoCameraMCP  # noqa: F401
+
 __all__ = [
     # Core components
     "TapoCameraServer",
@@ -39,7 +40,6 @@ __all__ = [
     "TapoWebServer",
     "TapoCameraError",
     "presets",
-    
     # Models
     "CameraModel",
     "StreamType",
@@ -49,5 +49,5 @@ __all__ = [
     "CameraStatus",
     "PTZPosition",
     "MotionEvent",
-    "CameraInfo"
+    "CameraInfo",
 ]

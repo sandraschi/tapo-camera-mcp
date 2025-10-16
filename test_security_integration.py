@@ -27,13 +27,8 @@ async def test_nest_protect_integration():
 
     # Configure for Nest Protect
     config = {
-        "nest_protect": {
-            "enabled": True,
-            "server_url": "http://localhost:8123"
-        },
-        "ring_mcp": {
-            "enabled": False
-        }
+        "nest_protect": {"enabled": True, "server_url": "http://localhost:8123"},
+        "ring_mcp": {"enabled": False},
     }
 
     try:
@@ -64,8 +59,8 @@ async def test_nest_protect_integration():
         print(f"Online devices: {overview.get('online_devices', 0)}")
         print(f"Active alerts: {overview.get('active_alerts', 0)}")
 
-        if overview.get('systems'):
-            for system_name, system_data in overview['systems'].items():
+        if overview.get("systems"):
+            for system_name, system_data in overview["systems"].items():
                 print(f"  - {system_name}: {system_data}")
 
         print("\n✅ Nest Protect integration test completed successfully!")
@@ -73,6 +68,7 @@ async def test_nest_protect_integration():
     except Exception as e:
         print(f"❌ Nest Protect integration test failed: {e}")
         import traceback
+
         traceback.print_exc()
 
 
@@ -83,13 +79,8 @@ async def test_ring_mcp_integration():
 
     # Configure for Ring MCP
     config = {
-        "nest_protect": {
-            "enabled": False
-        },
-        "ring_mcp": {
-            "enabled": True,
-            "server_path": "D:\\Dev\\repos\\ring-mcp"
-        }
+        "nest_protect": {"enabled": False},
+        "ring_mcp": {"enabled": True, "server_path": "D:\\Dev\\repos\\ring-mcp"},
     }
 
     try:
@@ -128,6 +119,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
 

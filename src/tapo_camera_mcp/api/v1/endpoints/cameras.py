@@ -2,14 +2,13 @@
 Camera-related API endpoints.
 """
 
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
-from ....tools.base_tool import BaseTool
+from typing import List
+from fastapi import APIRouter, HTTPException, status
 
 from ....core.models import CameraInfo, CameraStatus
-from ....tools import get_tool
 
 router = APIRouter()
+
 
 @router.get("/", response_model=List[CameraInfo])
 async def list_cameras():
@@ -17,23 +16,24 @@ async def list_cameras():
     # This would typically query your camera manager
     return []
 
+
 @router.get("/{camera_id}", response_model=CameraInfo)
 async def get_camera(camera_id: str):
     """Get details for a specific camera."""
     # This would typically query your camera manager
     raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Camera {camera_id} not found"
+        status_code=status.HTTP_404_NOT_FOUND, detail=f"Camera {camera_id} not found"
     )
+
 
 @router.get("/{camera_id}/status", response_model=CameraStatus)
 async def get_camera_status(camera_id: str):
     """Get the status of a specific camera."""
     # This would typically query your camera manager
     raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Camera {camera_id} not found"
+        status_code=status.HTTP_404_NOT_FOUND, detail=f"Camera {camera_id} not found"
     )
+
 
 @router.post("/{camera_id}/refresh")
 async def refresh_camera(camera_id: str):

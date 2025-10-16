@@ -17,9 +17,8 @@ RESPOND WITH:
 - Description of what you see
 - Specific security concerns
 - Recommended action""",
-        "description": "Security threat detection and assessment"
+        "description": "Security threat detection and assessment",
     },
-    
     "food": {
         "prompt": """Food quality analysis:
         
@@ -34,9 +33,8 @@ PERFECT FOR:
 - Monitoring schnitzel perfection!
 - Cooking progress assessment
 - Food safety evaluation""",
-        "description": "Food quality and cooking analysis"
+        "description": "Food quality and cooking analysis",
     },
-    
     "pets": {
         "prompt": """Pet activity monitoring:
         
@@ -51,9 +49,8 @@ OBSERVE:
 GREAT FOR:
 - Benny monitoring and activity tracking
 - Pet behavior assessment""",
-        "description": "Pet behavior and activity analysis"
+        "description": "Pet behavior and activity analysis",
     },
-    
     "delivery": {
         "prompt": """Delivery detection:
         
@@ -67,9 +64,8 @@ CHECK FOR:
 USEFUL FOR:
 - Package delivery monitoring
 - Entrance activity tracking""",
-        "description": "Package and delivery monitoring"
+        "description": "Package and delivery monitoring",
     },
-    
     "general": {
         "prompt": """General image analysis:
         
@@ -84,6 +80,6 @@ USEFUL FOR:
 - General monitoring
 - Activity logging
 - Situational awareness""",
-        "description": "General purpose image analysis"
-    }
+        "description": "General purpose image analysis",
+    },
 }

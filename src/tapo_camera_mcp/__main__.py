@@ -7,10 +7,11 @@ import asyncio
 import logging
 import sys
 
+
 def main():
     """Run the Tapo Camera MCP server."""
     from .core.server import main as server_main
-    
+
     try:
         asyncio.run(server_main())
     except KeyboardInterrupt:
@@ -19,6 +20,7 @@ def main():
     except Exception as e:
         logging.error(f"Error running server: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

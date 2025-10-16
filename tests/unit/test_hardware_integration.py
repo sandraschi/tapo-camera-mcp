@@ -2,20 +2,22 @@
 """
 REAL HARDWARE TESTING - Test actual webcam connected to server!
 """
+
 import sys
 import os
 import asyncio
 import logging
 import cv2
-import numpy as np
-from PIL import Image
 
 # Add the src path to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 def test_real_webcam_connection():
     """Test real webcam hardware connection."""
@@ -56,8 +58,10 @@ def test_real_webcam_connection():
     except Exception as e:
         logger.error(f"❌ Real webcam connection test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_webcam_server_integration():
     """Test webcam integration with server using real hardware."""
@@ -74,9 +78,7 @@ def test_webcam_server_integration():
 
         # Create webcam config for real hardware
         webcam_config = CameraConfig(
-            name="real_webcam_hardware",
-            type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            name="real_webcam_hardware", type=CameraType.WEBCAM, params={"device_id": 0}
         )
 
         # Create webcam instance
@@ -95,14 +97,16 @@ def test_webcam_server_integration():
             logger.info(f"Webcam status: {status}")
 
         except Exception as e:
-            logger.warning(f"Webcam connection attempt failed (expected if no camera): {e}")
+            logger.warning(
+                f"Webcam connection attempt failed (expected if no camera): {e}"
+            )
 
         # Test server integration
         try:
             server = asyncio.run(TapoCameraServer.get_instance())
             logger.info("✅ Server instance created")
 
-            if hasattr(server, 'camera_manager'):
+            if hasattr(server, "camera_manager"):
                 logger.info("✅ Server has camera manager for webcam integration")
             else:
                 logger.warning("❌ Server missing camera_manager")
@@ -116,8 +120,10 @@ def test_webcam_server_integration():
     except Exception as e:
         logger.error(f"❌ Webcam-server integration test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_camera_tools_with_hardware():
     """Test camera tools with real webcam hardware."""
@@ -125,11 +131,14 @@ def test_camera_tools_with_hardware():
         logger.info("🔧 TESTING CAMERA TOOLS WITH REAL HARDWARE...")
 
         from tapo_camera_mcp.tools.discovery import discover_tools
-        from tapo_camera_mcp.tools.camera.camera_tools import ListCamerasTool, CaptureSnapshotTool
+        from tapo_camera_mcp.tools.camera.camera_tools import (
+            ListCamerasTool,
+            CaptureSnapshotTool,
+        )
 
         # Discover camera tools
-        tools = discover_tools('tapo_camera_mcp.tools')
-        camera_tools = [t for t in tools if 'camera' in t.__module__.lower()]
+        tools = discover_tools("tapo_camera_mcp.tools")
+        camera_tools = [t for t in tools if "camera" in t.__module__.lower()]
 
         logger.info(f"Found {len(camera_tools)} camera tools")
 
@@ -154,8 +163,10 @@ def test_camera_tools_with_hardware():
     except Exception as e:
         logger.error(f"❌ Camera tools hardware test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_webcam_streaming():
     """Test webcam streaming functionality."""
@@ -178,20 +189,22 @@ def test_webcam_streaming():
             if ret:
                 frames_captured += 1
                 height, width = frame.shape[:2]
-                logger.info(f"Frame {i+1}: {width}x{height}")
+                logger.info(f"Frame {i + 1}: {width}x{height}")
 
                 # Test frame processing during streaming
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 if gray is not None:
-                    logger.info(f"  Processed frame {i+1}")
+                    logger.info(f"  Processed frame {i + 1}")
             else:
-                logger.warning(f"Failed to capture frame {i+1}")
+                logger.warning(f"Failed to capture frame {i + 1}")
                 break
 
         cap.release()
 
         if frames_captured > 0:
-            logger.info(f"✅ Webcam streaming test PASSED: {frames_captured} frames captured")
+            logger.info(
+                f"✅ Webcam streaming test PASSED: {frames_captured} frames captured"
+            )
             return True
         else:
             logger.error("❌ No frames captured from webcam!")
@@ -200,8 +213,10 @@ def test_webcam_streaming():
     except Exception as e:
         logger.error(f"❌ Webcam streaming test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_server_with_camera_integration():
     """Test server functionality with camera integration."""
@@ -229,7 +244,7 @@ def test_server_with_camera_integration():
         webcam_config = CameraConfig(
             name="server_integration_webcam",
             type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            params={"device_id": 0},
         )
 
         webcam = WebCamera(webcam_config)
@@ -242,7 +257,7 @@ def test_server_with_camera_integration():
             logger.warning(f"Webcam status check failed: {e}")
 
         # Test that server and camera manager are connected
-        if hasattr(server, 'camera_manager'):
+        if hasattr(server, "camera_manager"):
             logger.info("✅ Server-camera manager integration exists")
 
             # Test camera manager cameras dict
@@ -254,8 +269,10 @@ def test_server_with_camera_integration():
     except Exception as e:
         logger.error(f"❌ Server-camera integration test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_full_hardware_integration():
     """Test complete hardware integration workflow."""
@@ -281,6 +298,7 @@ def test_full_hardware_integration():
         # Step 2: Test server initialization
         logger.info("Step 2: Testing server initialization...")
         from tapo_camera_mcp.core.server import TapoCameraServer
+
         try:
             server = asyncio.run(TapoCameraServer.get_instance())
             logger.info("✅ Server initialized")
@@ -295,7 +313,7 @@ def test_full_hardware_integration():
         webcam_config = CameraConfig(
             name="full_integration_webcam",
             type=CameraType.WEBCAM,
-            params={"device_id": 0}
+            params={"device_id": 0},
         )
 
         webcam = WebCamera(webcam_config)
@@ -304,12 +322,14 @@ def test_full_hardware_integration():
         # Step 4: Test tool execution
         logger.info("Step 4: Testing tool execution...")
         from tapo_camera_mcp.tools.discovery import discover_tools
-        tools = discover_tools('tapo_camera_mcp.tools')
+
+        tools = discover_tools("tapo_camera_mcp.tools")
         logger.info(f"✅ Tools discovered: {len(tools)}")
 
         # Step 5: Test validation
         logger.info("Step 5: Testing validation...")
         from tapo_camera_mcp.validation import validate_ip_address, validate_camera_name
+
         ip_valid = validate_ip_address("192.168.1.100", "test")
         name_valid = validate_camera_name("test_webcam", "test")
         logger.info(f"✅ Validation working: IP={ip_valid}, Name={name_valid}")
@@ -321,8 +341,10 @@ def test_full_hardware_integration():
     except Exception as e:
         logger.error(f"❌ Full hardware integration test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     print("🚀 TESTING REAL WEBCAM HARDWARE INTEGRATION!")
@@ -358,7 +380,7 @@ if __name__ == "__main__":
     print("\n" + "=" * 60)
     print("📊 HARDWARE INTEGRATION RESULTS:")
     print(f"   Tests passed: {passed}/{total}")
-    print(f"   Success rate: {(passed/total)*100:.1f}%")
+    print(f"   Success rate: {(passed / total) * 100:.1f}%")
     print("🎥 WEBCAM HARDWARE STATUS: CONNECTED ✅")
     print("🖥️ SERVER INTEGRATION STATUS: WORKING ✅")
     print("🔧 TOOLS INTEGRATION STATUS: OPERATIONAL ✅")

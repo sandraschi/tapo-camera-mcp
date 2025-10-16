@@ -5,7 +5,6 @@ This module provides integration clients for various security MCP servers
 to create a unified home security monitoring platform.
 """
 
-import asyncio
 import logging
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
@@ -19,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SecurityDevice:
     """Unified security device representation"""
+
     id: str
     name: str
     type: str  # 'smoke_detector', 'co_detector', 'camera', 'doorbell'
@@ -36,6 +36,7 @@ class SecurityDevice:
 @dataclass
 class SecurityAlert:
     """Unified security alert representation"""
+
     id: str
     device_id: str
     device_name: str
@@ -55,7 +56,7 @@ class NestProtectClient:
     """
 
     def __init__(self, base_url: str = "http://localhost:8123", timeout: int = 10):
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self._session: Optional[aiohttp.ClientSession] = None
 
@@ -109,7 +110,7 @@ class NestProtectClient:
                 battery_level=device_data.get("battery_level"),
                 last_seen=self._parse_timestamp(device_data.get("last_seen")),
                 location=device_data.get("location", "Unknown"),
-                alerts=device_data.get("active_alerts", [])
+                alerts=device_data.get("active_alerts", []),
             )
             devices.append(device)
 
@@ -130,7 +131,7 @@ class NestProtectClient:
                 severity=alert_data.get("severity", "warning"),
                 message=alert_data.get("message", ""),
                 timestamp=self._parse_timestamp(alert_data.get("timestamp")),
-                resolved=alert_data.get("resolved", False)
+                resolved=alert_data.get("resolved", False),
             )
             alerts.append(alert)
 
@@ -144,7 +145,7 @@ class NestProtectClient:
             "total_devices": data.get("total_devices", 0),
             "active_alerts": data.get("active_alerts", 0),
             "last_update": self._parse_timestamp(data.get("last_update")),
-            "system_health": data.get("health", "unknown")
+            "system_health": data.get("health", "unknown"),
         }
 
     def _map_device_type(self, nest_type: str) -> str:
@@ -163,7 +164,7 @@ class NestProtectClient:
             "offline": "offline",
             "alert": "alert",
             "warning": "online",  # Warnings are still online
-            "ok": "online"
+            "ok": "online",
         }
         return status_mapping.get(nest_status.lower(), "offline")
 
@@ -174,7 +175,7 @@ class NestProtectClient:
             "co": "co",
             "heat": "smoke",  # Heat alerts treated as smoke
             "test": "info",
-            "maintenance": "warning"
+            "maintenance": "warning",
         }
         return alert_mapping.get(nest_alert_type.lower(), "warning")
 
@@ -185,7 +186,7 @@ class NestProtectClient:
 
         try:
             # Try ISO format first
-            return datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+            return datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
         except ValueError:
             try:
                 # Try common formats
@@ -245,7 +246,9 @@ class SecurityIntegrationManager:
 
         # Ring MCP integration (when ready)
         if config.get("ring_mcp", {}).get("enabled", False):
-            ring_path = config["ring_mcp"].get("server_path", "D:\\Dev\\repos\\ring-mcp")
+            ring_path = config["ring_mcp"].get(
+                "server_path", "D:\\Dev\\repos\\ring-mcp"
+            )
             self.ring_client = RingMCPClient(mcp_server_path=ring_path)
             logger.info(f"Initialized Ring MCP integration: {ring_path}")
 
@@ -300,7 +303,7 @@ class SecurityIntegrationManager:
             "online_devices": 0,
             "active_alerts": 0,
             "systems": {},
-            "last_update": datetime.now()
+            "last_update": datetime.now(),
         }
 
         # Nest Protect overview
@@ -329,6 +332,4 @@ class SecurityIntegrationManager:
 
 # Global instance for dashboard use
 security_manager = SecurityIntegrationManager()
-
-
 

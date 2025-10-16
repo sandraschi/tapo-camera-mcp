@@ -10,6 +10,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 async def test_dual_server():
     """Test the dual server startup"""
     try:
@@ -29,8 +30,7 @@ async def test_dual_server():
     except Exception as e:
         logger.error(f"Error testing dual server: {e}", exc_info=True)
 
+
 if __name__ == "__main__":
     asyncio.run(test_dual_server())
-
-
 

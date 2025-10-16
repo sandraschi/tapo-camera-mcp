@@ -2,13 +2,15 @@
 """
 Comprehensive tests for all camera tools.
 """
+
 import sys
 import os
 import asyncio
 import unittest.mock as mock
 
 # Add the src path to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
 
 def test_list_cameras_tool():
     """Test ListCamerasTool functionality."""
@@ -20,19 +22,21 @@ def test_list_cameras_tool():
         tool = ListCamerasTool()
 
         # Test that tool has required attributes
-        assert hasattr(tool, 'Meta')
-        assert hasattr(tool.Meta, 'name')
-        assert hasattr(tool.Meta, 'category')
+        assert hasattr(tool, "Meta")
+        assert hasattr(tool.Meta, "name")
+        assert hasattr(tool.Meta, "category")
         assert tool.Meta.name == "list_cameras"
         assert tool.Meta.category.value == "Camera"
 
         # Mock server and camera manager
-        with mock.patch('tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer') as mock_server_class:
+        with mock.patch(
+            "tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer"
+        ) as mock_server_class:
             mock_server_instance = mock.AsyncMock()
             mock_camera_manager = mock.AsyncMock()
             mock_camera_manager.cameras = {
                 "camera1": mock.MagicMock(),
-                "camera2": mock.MagicMock()
+                "camera2": mock.MagicMock(),
             }
             mock_server_instance.camera_manager = mock_camera_manager
             mock_server_class.get_instance.return_value = mock_server_instance
@@ -52,8 +56,10 @@ def test_list_cameras_tool():
     except Exception as e:
         print(f"❌ ListCamerasTool test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_add_camera_tool():
     """Test AddCameraTool functionality."""
@@ -67,20 +73,24 @@ def test_add_camera_tool():
             ip_address="192.168.1.100",
             username="test_user",
             password="test_pass",
-            stream_url="rtsp://test.url"
+            stream_url="rtsp://test.url",
         )
 
         # Test that tool has required attributes
-        assert hasattr(tool, 'Meta')
-        assert hasattr(tool.Meta, 'name')
+        assert hasattr(tool, "Meta")
+        assert hasattr(tool.Meta, "name")
         assert tool.Meta.name == "add_camera"
 
         # Mock server and validation functions
-        with mock.patch('tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer') as mock_server_class, \
-             mock.patch('tapo_camera_mcp.tools.camera.camera_tools.validate_camera_name') as mock_validate_name, \
-             mock.patch('tapo_camera_mcp.tools.camera.camera_tools.validate_ip_address') as mock_validate_ip, \
-             mock.patch('tapo_camera_mcp.tools.camera.camera_tools.validate_credentials') as mock_validate_creds:
-
+        with mock.patch(
+            "tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer"
+        ) as mock_server_class, mock.patch(
+            "tapo_camera_mcp.tools.camera.camera_tools.validate_camera_name"
+        ) as mock_validate_name, mock.patch(
+            "tapo_camera_mcp.tools.camera.camera_tools.validate_ip_address"
+        ) as mock_validate_ip, mock.patch(
+            "tapo_camera_mcp.tools.camera.camera_tools.validate_credentials"
+        ) as mock_validate_creds:
             mock_validate_name.return_value = "test_camera"
             mock_validate_ip.return_value = "192.168.1.100"
             mock_validate_creds.return_value = ("test_user", "test_pass")
@@ -101,8 +111,10 @@ def test_add_camera_tool():
     except Exception as e:
         print(f"❌ AddCameraTool test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_connect_camera_tool():
     """Test ConnectCameraTool functionality."""
@@ -115,19 +127,22 @@ def test_connect_camera_tool():
             host="192.168.1.100",
             username="test_user",
             password="test_pass",
-            verify_ssl=False
+            verify_ssl=False,
         )
 
         # Test that tool has required attributes
-        assert hasattr(tool, 'Meta')
-        assert hasattr(tool.Meta, 'name')
+        assert hasattr(tool, "Meta")
+        assert hasattr(tool.Meta, "name")
         assert tool.Meta.name == "connect_camera"
 
         # Mock server and validation functions
-        with mock.patch('tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer') as mock_server_class, \
-             mock.patch('tapo_camera_mcp.tools.camera.camera_tools.validate_ip_address') as mock_validate_ip, \
-             mock.patch('tapo_camera_mcp.tools.camera.camera_tools.validate_credentials') as mock_validate_creds:
-
+        with mock.patch(
+            "tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer"
+        ) as mock_server_class, mock.patch(
+            "tapo_camera_mcp.tools.camera.camera_tools.validate_ip_address"
+        ) as mock_validate_ip, mock.patch(
+            "tapo_camera_mcp.tools.camera.camera_tools.validate_credentials"
+        ) as mock_validate_creds:
             mock_validate_ip.return_value = "192.168.1.100"
             mock_validate_creds.return_value = ("test_user", "test_pass")
 
@@ -147,8 +162,10 @@ def test_connect_camera_tool():
     except Exception as e:
         print(f"❌ ConnectCameraTool test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_disconnect_camera_tool():
     """Test DisconnectCameraTool functionality."""
@@ -160,12 +177,14 @@ def test_disconnect_camera_tool():
         tool = DisconnectCameraTool(camera_id="test_camera")
 
         # Test that tool has required attributes
-        assert hasattr(tool, 'Meta')
-        assert hasattr(tool.Meta, 'name')
+        assert hasattr(tool, "Meta")
+        assert hasattr(tool.Meta, "name")
         assert tool.Meta.name == "disconnect_camera"
 
         # Mock server
-        with mock.patch('tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer') as mock_server_class:
+        with mock.patch(
+            "tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer"
+        ) as mock_server_class:
             mock_server_instance = mock.AsyncMock()
             mock_server_instance.disconnect_camera.return_value = {"success": True}
             mock_server_class.get_instance.return_value = mock_server_instance
@@ -182,8 +201,10 @@ def test_disconnect_camera_tool():
     except Exception as e:
         print(f"❌ DisconnectCameraTool test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_get_camera_status_tool():
     """Test GetCameraStatusTool functionality."""
@@ -195,14 +216,19 @@ def test_get_camera_status_tool():
         tool = GetCameraStatusTool(camera_id="test_camera")
 
         # Test that tool has required attributes
-        assert hasattr(tool, 'Meta')
-        assert hasattr(tool.Meta, 'name')
+        assert hasattr(tool, "Meta")
+        assert hasattr(tool.Meta, "name")
         assert tool.Meta.name == "get_camera_status"
 
         # Mock server
-        with mock.patch('tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer') as mock_server_class:
+        with mock.patch(
+            "tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer"
+        ) as mock_server_class:
             mock_server_instance = mock.AsyncMock()
-            mock_server_instance.get_camera_status.return_value = {"online": True, "recording": False}
+            mock_server_instance.get_camera_status.return_value = {
+                "online": True,
+                "recording": False,
+            }
             mock_server_class.get_instance.return_value = mock_server_instance
 
             # Test tool execution
@@ -217,8 +243,10 @@ def test_get_camera_status_tool():
     except Exception as e:
         print(f"❌ GetCameraStatusTool test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_capture_snapshot_tool():
     """Test CaptureSnapshotTool functionality."""
@@ -230,12 +258,14 @@ def test_capture_snapshot_tool():
         tool = CaptureSnapshotTool(camera_id="test_camera")
 
         # Test that tool has required attributes
-        assert hasattr(tool, 'Meta')
-        assert hasattr(tool.Meta, 'name')
+        assert hasattr(tool, "Meta")
+        assert hasattr(tool.Meta, "name")
         assert tool.Meta.name == "capture_snapshot"
 
         # Mock server and camera
-        with mock.patch('tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer') as mock_server_class:
+        with mock.patch(
+            "tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer"
+        ) as mock_server_class:
             mock_server_instance = mock.AsyncMock()
             mock_camera_manager = mock.AsyncMock()
             mock_camera = mock.AsyncMock()
@@ -256,8 +286,10 @@ def test_capture_snapshot_tool():
     except Exception as e:
         print(f"❌ CaptureSnapshotTool test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_get_stream_url_tool():
     """Test GetStreamUrlTool functionality."""
@@ -269,12 +301,14 @@ def test_get_stream_url_tool():
         tool = GetStreamUrlTool(camera_id="test_camera")
 
         # Test that tool has required attributes
-        assert hasattr(tool, 'Meta')
-        assert hasattr(tool.Meta, 'name')
+        assert hasattr(tool, "Meta")
+        assert hasattr(tool.Meta, "name")
         assert tool.Meta.name == "get_stream_url"
 
         # Mock server and camera
-        with mock.patch('tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer') as mock_server_class:
+        with mock.patch(
+            "tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer"
+        ) as mock_server_class:
             mock_server_instance = mock.AsyncMock()
             mock_camera_manager = mock.AsyncMock()
             mock_camera = mock.AsyncMock()
@@ -295,32 +329,40 @@ def test_get_stream_url_tool():
     except Exception as e:
         print(f"❌ GetStreamUrlTool test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_ptz_tools():
     """Test PTZ tools functionality."""
     try:
         # Check if PTZ tools exist
         try:
-            from tapo_camera_mcp.tools.ptz.ptz_tools import SetCameraPresetTool, GetCameraPresetsTool, PTZControlTool
+            from tapo_camera_mcp.tools.ptz.ptz_tools import (
+                SetCameraPresetTool,
+                GetCameraPresetsTool,
+                PTZControlTool,
+            )
         except ImportError:
             print("⚠️ PTZ tools not available, skipping test")
             return True
 
         # Test SetCameraPresetTool
-        tool = SetCameraPresetTool(camera_id="test_camera", preset_name="home", position_x=0.0, position_y=0.0)
-        assert hasattr(tool, 'Meta')
+        tool = SetCameraPresetTool(
+            camera_id="test_camera", preset_name="home", position_x=0.0, position_y=0.0
+        )
+        assert hasattr(tool, "Meta")
         assert tool.Meta.name == "set_camera_preset"
 
         # Test GetCameraPresetsTool
         tool = GetCameraPresetsTool(camera_id="test_camera")
-        assert hasattr(tool, 'Meta')
+        assert hasattr(tool, "Meta")
         assert tool.Meta.name == "get_camera_presets"
 
         # Test PTZControlTool
         tool = PTZControlTool(camera_id="test_camera", direction="up", duration=1.0)
-        assert hasattr(tool, 'Meta')
+        assert hasattr(tool, "Meta")
         assert tool.Meta.name == "ptz_control"
 
         print("✅ PTZ tools structure test passed")
@@ -328,8 +370,10 @@ def test_ptz_tools():
     except Exception as e:
         print(f"❌ PTZ tools test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_system_tools():
     """Test system tools functionality."""
@@ -339,12 +383,12 @@ def test_system_tools():
 
         # Test StatusTool
         tool = StatusTool(section="system")
-        assert hasattr(tool, 'Meta')
+        assert hasattr(tool, "Meta")
         assert tool.Meta.name == "status"
 
         # Test HelpTool
         tool = HelpTool(section="tools")
-        assert hasattr(tool, 'Meta')
+        assert hasattr(tool, "Meta")
         assert tool.Meta.name == "help"
 
         print("✅ System tools structure test passed")
@@ -352,8 +396,10 @@ def test_system_tools():
     except Exception as e:
         print(f"❌ System tools test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_all_tools_metadata():
     """Test that all tools have proper metadata."""
@@ -361,36 +407,53 @@ def test_all_tools_metadata():
         from tapo_camera_mcp.tools.discovery import discover_tools
 
         # Discover all tools
-        all_tools = discover_tools('tapo_camera_mcp.tools')
+        all_tools = discover_tools("tapo_camera_mcp.tools")
 
         # Test that all tools have proper metadata
         for tool_cls in all_tools:
-            assert hasattr(tool_cls, 'Meta'), f"Tool {tool_cls.__name__} missing Meta class"
+            assert hasattr(tool_cls, "Meta"), (
+                f"Tool {tool_cls.__name__} missing Meta class"
+            )
             meta = tool_cls.Meta
 
             # Required metadata
-            assert hasattr(meta, 'name'), f"Tool {tool_cls.__name__} missing name"
-            assert hasattr(meta, 'category'), f"Tool {tool_cls.__name__} missing category"
+            assert hasattr(meta, "name"), f"Tool {tool_cls.__name__} missing name"
+            assert hasattr(meta, "category"), (
+                f"Tool {tool_cls.__name__} missing category"
+            )
 
             # Name should be valid
-            assert isinstance(meta.name, str), f"Tool {tool_cls.__name__} name should be string"
-            assert len(meta.name) > 0, f"Tool {tool_cls.__name__} name should not be empty"
+            assert isinstance(meta.name, str), (
+                f"Tool {tool_cls.__name__} name should be string"
+            )
+            assert len(meta.name) > 0, (
+                f"Tool {tool_cls.__name__} name should not be empty"
+            )
 
             # Category should be valid
             from tapo_camera_mcp.tools.base_tool import ToolCategory
-            assert isinstance(meta.category, ToolCategory), f"Tool {tool_cls.__name__} category should be ToolCategory"
+
+            assert isinstance(meta.category, ToolCategory), (
+                f"Tool {tool_cls.__name__} category should be ToolCategory"
+            )
 
             # Tool should have execute method
-            assert hasattr(tool_cls, 'execute'), f"Tool {tool_cls.__name__} missing execute method"
-            assert callable(getattr(tool_cls, 'execute')), f"Tool {tool_cls.__name__} execute should be callable"
+            assert hasattr(tool_cls, "execute"), (
+                f"Tool {tool_cls.__name__} missing execute method"
+            )
+            assert callable(getattr(tool_cls, "execute")), (
+                f"Tool {tool_cls.__name__} execute should be callable"
+            )
 
         print(f"✅ All tools metadata test passed - validated {len(all_tools)} tools")
         return True
     except Exception as e:
         print(f"❌ All tools metadata test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     tests = [

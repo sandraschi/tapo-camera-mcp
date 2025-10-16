@@ -1,4 +1,5 @@
 """Camera module imports."""
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -12,11 +13,13 @@ try:
     # Apply patch before importing ring module
     try:
         import patch_ring_doorbell
+
         patch_ring_doorbell.patch_ring_doorbell()
     except Exception as e:
         logger.warning(f"Failed to apply ring_doorbell patch: {e}")
-    
+
     from .ring import RingCamera
+
     RING_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Failed to import RingCamera: {e}")
@@ -24,12 +27,8 @@ except ImportError as e:
 
 from .webcam import WebCamera
 
-__all__ = [
-    'TapoCamera',
-    'PetcubeCamera',
-    'WebCamera'
-]
+__all__ = ["TapoCamera", "PetcubeCamera", "WebCamera"]
 
 # Only add RingCamera to __all__ if it's available
 if RING_AVAILABLE:
-    __all__.append('RingCamera')
+    __all__.append("RingCamera")

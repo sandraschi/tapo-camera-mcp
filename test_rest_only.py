@@ -5,11 +5,11 @@ Test script for REST-only server
 
 import asyncio
 import logging
-import uvicorn
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 async def test_rest_server():
     """Test just the REST server"""
@@ -26,8 +26,7 @@ async def test_rest_server():
     except Exception as e:
         logger.error(f"Error testing REST server: {e}", exc_info=True)
 
+
 if __name__ == "__main__":
     asyncio.run(test_rest_server())
-
-
 

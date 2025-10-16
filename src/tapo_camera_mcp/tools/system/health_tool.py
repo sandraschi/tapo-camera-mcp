@@ -1,23 +1,28 @@
 """
 Dedicated health check tool for comprehensive system monitoring.
 """
-import asyncio
+
 import logging
 import time
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Dict, Any
+from datetime import datetime
+from pydantic import BaseModel, Field
 
 from tapo_camera_mcp.tools.base_tool import tool, ToolCategory, BaseTool
 
 logger = logging.getLogger(__name__)
 
+
 class HealthCheckResult(BaseModel):
     """Result of a comprehensive health check."""
-    status: str = Field(..., description="Overall health status: healthy/warning/critical")
+
+    status: str = Field(
+        ..., description="Overall health status: healthy/warning/critical"
+    )
     checks: Dict[str, Any] = Field(..., description="Individual health check results")
     response_time_ms: float = Field(..., description="Time taken for health check")
     timestamp: str = Field(..., description="Timestamp of health check")
+
 
 @tool(name="health_check")
 class HealthCheckTool(BaseTool):
@@ -30,12 +35,10 @@ class HealthCheckTool(BaseTool):
 
         class Parameters:
             include_cameras: bool = Field(
-                True,
-                description="Whether to include camera health checks"
+                True, description="Whether to include camera health checks"
             )
             include_performance: bool = Field(
-                True,
-                description="Whether to include performance metrics"
+                True, description="Whether to include performance metrics"
             )
 
     include_cameras: bool = True
@@ -45,7 +48,7 @@ class HealthCheckTool(BaseTool):
         super().__init__(**data)
         self._performance_metrics = {
             "response_times": [],
-            "last_reset": datetime.utcnow()
+            "last_reset": datetime.utcnow(),
         }
 
     async def execute(self) -> Dict[str, Any]:
@@ -74,14 +77,20 @@ class HealthCheckTool(BaseTool):
                 "server": server_health,
                 "system": system_health,
                 **camera_health,
-                **performance_metrics
+                **performance_metrics,
             }
 
             # Determine overall status
-            critical_issues = [name for name, check in all_checks.items()
-                             if check.get("status") == "critical"]
-            warning_issues = [name for name, check in all_checks.items()
-                            if check.get("status") == "warning"]
+            critical_issues = [
+                name
+                for name, check in all_checks.items()
+                if check.get("status") == "critical"
+            ]
+            warning_issues = [
+                name
+                for name, check in all_checks.items()
+                if check.get("status") == "warning"
+            ]
 
             if critical_issues:
                 overall_status = "critical"
@@ -96,10 +105,12 @@ class HealthCheckTool(BaseTool):
                 status=overall_status,
                 checks=all_checks,
                 response_time_ms=response_time_ms,
-                timestamp=datetime.utcnow().isoformat()
+                timestamp=datetime.utcnow().isoformat(),
             )
 
-            logger.info(f"Health check completed: {overall_status} ({response_time_ms:.1f}ms)")
+            logger.info(
+                f"Health check completed: {overall_status} ({response_time_ms:.1f}ms)"
+            )
             return result.dict()
 
         except Exception as e:
@@ -109,7 +120,7 @@ class HealthCheckTool(BaseTool):
                 status="critical",
                 checks={"error": {"status": "critical", "message": str(e)}},
                 response_time_ms=response_time_ms,
-                timestamp=datetime.utcnow().isoformat()
+                timestamp=datetime.utcnow().isoformat(),
             ).dict()
 
     async def _check_server_health(self) -> Dict[str, Any]:
@@ -121,7 +132,7 @@ class HealthCheckTool(BaseTool):
             server = await TapoCameraServer.get_instance()
 
             # Basic responsiveness check
-            server_responsive = hasattr(server, 'mcp') and server.mcp is not None
+            server_responsive = hasattr(server, "mcp") and server.mcp is not None
 
             # Check for registered tools
             tools_count = len(server.mcp.list_tools()) if server_responsive else 0
@@ -136,16 +147,12 @@ class HealthCheckTool(BaseTool):
                 "status": status,
                 "responsive": server_responsive,
                 "tools_registered": tools_count,
-                "issues": issues
+                "issues": issues,
             }
 
         except Exception as e:
             logger.error(f"Server health check failed: {e}")
-            return {
-                "status": "critical",
-                "error": str(e),
-                "issues": [str(e)]
-            }
+            return {"status": "critical", "error": str(e), "issues": [str(e)]}
 
     async def _check_system_health(self) -> Dict[str, Any]:
         """Check system resource health."""
@@ -155,7 +162,7 @@ class HealthCheckTool(BaseTool):
             # Get resource usage
             cpu_percent = psutil.cpu_percent(interval=0.1)
             memory = psutil.virtual_memory()
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
 
             issues = []
 
@@ -188,16 +195,12 @@ class HealthCheckTool(BaseTool):
                 "cpu_percent": cpu_percent,
                 "memory_percent": memory.percent,
                 "disk_percent": disk.percent,
-                "issues": issues
+                "issues": issues,
             }
 
         except Exception as e:
             logger.error(f"System health check failed: {e}")
-            return {
-                "status": "critical",
-                "error": str(e),
-                "issues": [str(e)]
-            }
+            return {"status": "critical", "error": str(e), "issues": [str(e)]}
 
     async def _check_camera_health(self) -> Dict[str, Any]:
         """Check camera connectivity and health."""
@@ -208,7 +211,10 @@ class HealthCheckTool(BaseTool):
             camera_manager = server.camera_manager
 
             if not camera_manager:
-                return {"status": "no_manager", "issues": ["No camera manager available"]}
+                return {
+                    "status": "no_manager",
+                    "issues": ["No camera manager available"],
+                }
 
             cameras = camera_manager.get_cameras()
             total_cameras = len(cameras)
@@ -240,16 +246,12 @@ class HealthCheckTool(BaseTool):
                 "status": camera_status,
                 "total_cameras": total_cameras,
                 "online_cameras": online_cameras,
-                "issues": issues
+                "issues": issues,
             }
 
         except Exception as e:
             logger.error(f"Camera health check failed: {e}")
-            return {
-                "status": "critical",
-                "error": str(e),
-                "issues": [str(e)]
-            }
+            return {"status": "critical", "error": str(e), "issues": [str(e)]}
 
     async def _get_performance_metrics(self) -> Dict[str, Any]:
         """Get performance monitoring metrics."""
@@ -259,13 +261,18 @@ class HealthCheckTool(BaseTool):
 
             # Clean old metrics (keep last 100)
             if len(self._performance_metrics["response_times"]) > 100:
-                self._performance_metrics["response_times"] = self._performance_metrics["response_times"][-100:]
+                self._performance_metrics["response_times"] = self._performance_metrics[
+                    "response_times"
+                ][-100:]
 
             # Calculate metrics
             response_times = self._performance_metrics["response_times"]
-            avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+            avg_response_time = (
+                sum(response_times) / len(response_times) if response_times else 0
+            )
 
             import psutil
+
             process = psutil.Process()
             memory_mb = process.memory_info().rss / (1024 * 1024)
 
@@ -274,12 +281,9 @@ class HealthCheckTool(BaseTool):
                 "avg_response_time_ms": avg_response_time * 1000,
                 "memory_usage_mb": memory_mb,
                 "cpu_usage_percent": process.cpu_percent(),
-                "health_checks_count": len(response_times)
+                "health_checks_count": len(response_times),
             }
 
         except Exception as e:
             logger.error(f"Performance metrics failed: {e}")
-            return {
-                "status": "warning",
-                "error": str(e)
-            }
+            return {"status": "warning", "error": str(e)}
