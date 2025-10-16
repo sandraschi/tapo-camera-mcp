@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, master, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, master, develop ]
 
 jobs:
   test:
@@ -70,7 +70,7 @@ jobs:
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
@@ -80,7 +80,7 @@ jobs:
     name: Build package
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
     
     steps:
     - uses: actions/checkout@v3
@@ -112,7 +112,7 @@ jobs:
         path: dist/
     
     - name: Publish to PyPI
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         user: __token__
