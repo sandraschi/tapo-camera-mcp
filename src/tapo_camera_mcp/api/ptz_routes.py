@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from ...tools.ptz.preset_manager import PTZPreset, PTZPresetManager
+from ...tools.ptz.preset_manager import PTZPresetManager
 from ...tools.ptz.ptz_models import PTZMoveDirection, PTZPosition, PTZSpeed
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,6 @@ class PTZZoomRequest(BaseModel):
 class PTZStopRequest(BaseModel):
     """Request model to stop all PTZ movement"""
 
-    pass
 
 
 class PTZPresetCreate(BaseModel):
@@ -95,7 +94,7 @@ async def move_ptz(
             "message": f"Moving camera {camera_id} {move_request.direction}",
         }
     except Exception as e:
-        logger.error(f"Failed to move PTZ: {e}")
+        logger.exception(f"Failed to move PTZ: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -119,7 +118,7 @@ async def zoom_ptz(
         # )
         return {"status": "success", "message": f"Zooming {zoom_request.direction}"}
     except Exception as e:
-        logger.error(f"Failed to zoom: {e}")
+        logger.exception(f"Failed to zoom: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -130,7 +129,7 @@ async def stop_ptz(camera_id: str, camera_client: Any = Depends(get_camera_clien
         # await camera_client.stop_ptz()
         return {"status": "success", "message": "PTZ movement stopped"}
     except Exception as e:
-        logger.error(f"Failed to stop PTZ: {e}")
+        logger.exception(f"Failed to stop PTZ: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -142,7 +141,7 @@ async def list_presets(camera_id: str, camera_client: Any = Depends(get_camera_c
             ptz_managers[camera_id] = PTZPresetManager(camera_client)
         return ptz_managers[camera_id].get_presets()
     except Exception as e:
-        logger.error(f"Failed to list PTZ presets: {e}")
+        logger.exception(f"Failed to list PTZ presets: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -164,14 +163,13 @@ async def create_preset(
             # position = PTZPosition(**current_position)
             position = PTZPosition(pan=0, tilt=0, zoom=0)  # Default for demo
 
-        preset = await ptz_managers[camera_id].save_preset(
+        return await ptz_managers[camera_id].save_preset(
             name=preset_data.name,
             position=position,
             description=preset_data.description,
         )
-        return preset
     except Exception as e:
-        logger.error(f"Failed to create PTZ preset: {e}")
+        logger.exception(f"Failed to create PTZ preset: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -192,7 +190,7 @@ async def get_preset(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get PTZ preset: {e}")
+        logger.exception(f"Failed to get PTZ preset: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -229,7 +227,7 @@ async def update_preset(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update PTZ preset: {e}")
+        logger.exception(f"Failed to update PTZ preset: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -246,11 +244,11 @@ async def delete_preset(
         if not success:
             raise HTTPException(status_code=404, detail=f"Preset {preset_id} not found")
 
-        return None
+        return
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete PTZ preset: {e}")
+        logger.exception(f"Failed to delete PTZ preset: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -271,7 +269,7 @@ async def recall_preset(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to recall PTZ preset: {e}")
+        logger.exception(f"Failed to recall PTZ preset: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

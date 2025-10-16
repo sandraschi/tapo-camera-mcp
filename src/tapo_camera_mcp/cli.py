@@ -31,7 +31,6 @@ def main():
 
     if args.command == "generate-llms":
         generate_llms_txt(output_dir=args.output_dir, base_url=args.base_url)
-        print(f"Generated LLMs.txt files in {args.output_dir}")
     else:
         parser.print_help()
 

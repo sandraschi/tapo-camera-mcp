@@ -156,6 +156,60 @@ skip-string-normalization = true
 profile = "black"
 line_length = 100
 
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+    "N",  # pep8-naming
+    "S",  # flake8-bandit
+    "T20", # flake8-print
+    "SIM", # flake8-simplify
+    "RET", # flake8-return
+    "ARG", # flake8-unused-arguments
+    "PIE", # flake8-pie
+    "TCH", # flake8-type-checking
+    "ERA", # eradicate
+    "PD",  # pandas-vet
+    "PGH", # pygrep-hooks
+    "PL",  # pylint
+    "TRY", # tryceratops
+    "NPY", # numpy
+    "RUF", # ruff-specific rules
+]
+ignore = [
+    "E501", # line too long, handled by black
+    "B008", # do not perform function calls in argument defaults
+    "PLR0913", # too many arguments
+    "PLR0912", # too many branches
+    "PLR0915", # too many statements
+    "PLR2004", # magic value used in comparison
+    "S101", # use of assert detected
+    "S311", # standard pseudo-random generators are not suitable for cryptographic purposes
+    "S603", # subprocess call - check for execution of untrusted input
+    "S607", # starting a process with a partial executable path
+    "TRY003", # avoid specifying long messages outside the exception class
+    "NPY002", # replace legacy numpy.random
+    "RUF012", # mutable class attributes should be annotated with `typing.ClassVar`
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = [
+    "S101", # use of assert detected
+    "S106", # possible hardcoded password
+    "PLR2004", # magic value used in comparison
+    "ARG", # unused function argument
+    "RET504", # unnecessary assignment before return
+]
+
 [tool.pylint.master]
 load-plugins = "pylint.ext.mccabe"
 

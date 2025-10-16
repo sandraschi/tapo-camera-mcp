@@ -14,7 +14,7 @@ def test_dependency(dep_name, dep_spec):
 
     # First check if it's already installed
     check_cmd = [sys.executable, "-m", "pip", "show", dep_name]
-    result = subprocess.run(check_cmd, capture_output=True, text=True)
+    result = subprocess.run(check_cmd, check=False, capture_output=True, text=True)
 
     if result.returncode == 0:
         print(f"✅ {dep_name} is already installed")
@@ -39,17 +39,16 @@ def test_dependency(dep_name, dep_spec):
         ]
 
         print(f"   Testing installation: {' '.join(install_cmd)}")
-        result = subprocess.run(install_cmd, capture_output=True, text=True)
+        result = subprocess.run(install_cmd, check=False, capture_output=True, text=True)
 
         if result.returncode == 0:
             print(f"✅ {dep_spec} can be installed successfully")
             return True
-        else:
-            print(f"❌ {dep_spec} installation failed")
-            print(f"   Error: {result.stderr}")
-            if result.stdout:
-                print(f"   Output: {result.stdout}")
-            return False
+        print(f"❌ {dep_spec} installation failed")
+        print(f"   Error: {result.stderr}")
+        if result.stdout:
+            print(f"   Output: {result.stdout}")
+        return False
 
 
 def main():
@@ -80,9 +79,8 @@ def main():
         for dep in failed_deps:
             print(f"   - {dep}")
         return 1
-    else:
-        print("\n🎯 All dependencies can be installed successfully!")
-        return 0
+    print("\n🎯 All dependencies can be installed successfully!")
+    return 0
 
 
 if __name__ == "__main__":

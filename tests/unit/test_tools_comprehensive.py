@@ -6,7 +6,7 @@ Advanced comprehensive tests for all tools with actual execution testing.
 import asyncio
 import os
 import sys
-import unittest.mock as mock
+from unittest import mock
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
@@ -423,7 +423,7 @@ def test_all_tools_comprehensive():
             assert hasattr(tool_cls, "execute"), f"Tool {tool_cls.__name__} missing execute"
 
             # Execute method should be callable
-            execute_method = getattr(tool_cls, "execute")
+            execute_method = tool_cls.execute
             assert callable(execute_method), f"Tool {tool_cls.__name__} execute not callable"
 
             # Test that we can instantiate the tool (basic instantiation test)

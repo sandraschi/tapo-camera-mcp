@@ -16,7 +16,7 @@ def test_basic_pip_install():
     # Test 1: Check pip version
     print("\n1. Checking pip version...")
     result = subprocess.run(
-        [sys.executable, "-m", "pip", "--version"], capture_output=True, text=True
+        [sys.executable, "-m", "pip", "--version"], check=False, capture_output=True, text=True
     )
     if result.returncode == 0:
         print(f"✅ Pip version: {result.stdout.strip()}")
@@ -30,7 +30,7 @@ def test_basic_pip_install():
         cmd = [sys.executable, "-m", "pip", "install", "--target", temp_dir, "requests"]
         print(f"Command: {' '.join(cmd)}")
 
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True)
 
         if result.returncode == 0:
             print("✅ Basic pip install --target works")
@@ -58,7 +58,7 @@ def test_basic_pip_install():
         print(f"\n   Testing {dep}...")
         with tempfile.TemporaryDirectory() as temp_dir:
             cmd = [sys.executable, "-m", "pip", "install", "--target", temp_dir, dep]
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
 
             if result.returncode == 0:
                 print(f"   ✅ {dep} - SUCCESS")

@@ -47,7 +47,7 @@ class DINOv3Processor:
             )
 
         except Exception as e:
-            raise RuntimeError(f"Failed to initialize DINOv3 model: {str(e)}")
+            raise RuntimeError(f"Failed to initialize DINOv3 model: {e!s}")
 
     @torch.no_grad()
     def extract_features(self, image: Union[Image.Image, str, np.ndarray]) -> torch.Tensor:
@@ -130,8 +130,8 @@ class DINOv3Processor:
                 cos = torch.nn.CosineSimilarity(dim=1, eps=1e-6)
                 sim = cos(query_feat, img_feat).item()
                 similarities.append((img_path, (sim + 1) / 2))  # Convert to 0-1 range
-            except Exception as e:
-                print(f"Error processing {img_path}: {str(e)}")
+            except Exception:
+                pass
 
         # Sort by similarity and return top_k
         similarities.sort(key=lambda x: x[1], reverse=True)

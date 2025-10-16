@@ -118,13 +118,13 @@ class TapoCameraConfig(BaseModel):
     )
 
     @field_validator("port")
-    def validate_port(cls, v):
+    def validate_port(self, v):
         if not (1 <= v <= 65535):
             raise ValueError("Port must be between 1 and 65535")
         return v
 
     @field_validator("timeout")
-    def validate_timeout(cls, v):
+    def validate_timeout(self, v):
         if v < 1:
             raise ValueError("Timeout must be at least 1 second")
         return v

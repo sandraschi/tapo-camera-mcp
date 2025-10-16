@@ -55,7 +55,7 @@ class TapoCameraPlugin:
             await self.tapo_camera.connect()
             self.mcp.logger.info("Connected to Tapo camera")
         except Exception as e:
-            self.mcp.logger.error(f"Failed to connect to Tapo camera: {str(e)}")
+            self.mcp.logger.exception(f"Failed to connect to Tapo camera: {e!s}")
 
     async def on_shutdown(self):
         """Called when the FastMCP server shuts down."""

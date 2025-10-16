@@ -58,7 +58,7 @@ class PetcubeAPI:
                 return self._token
 
         except Exception as e:
-            logger.error(f"Petcube login error: {e}")
+            logger.exception(f"Petcube login error: {e}")
             raise
 
     async def get_devices(self) -> list:
@@ -74,7 +74,7 @@ class PetcubeAPI:
                 return devices.get("devices", devices) if isinstance(devices, dict) else devices
 
         except Exception as e:
-            logger.error(f"Error getting devices: {e}")
+            logger.exception(f"Error getting devices: {e}")
             raise
 
     async def get_device_status(self, device_id: str) -> dict:
@@ -89,7 +89,7 @@ class PetcubeAPI:
                 return await response.json()
 
         except Exception as e:
-            logger.error(f"Error getting device status: {e}")
+            logger.exception(f"Error getting device status: {e}")
             raise
 
     async def get_stream_url(self, device_id: str) -> str:
@@ -105,7 +105,7 @@ class PetcubeAPI:
                 return data.get("stream_url") or data.get("url")
 
         except Exception as e:
-            logger.error(f"Error getting stream URL: {e}")
+            logger.exception(f"Error getting stream URL: {e}")
             raise
 
     async def dispense_treat(self, device_id: str, amount: int = 1) -> dict:
@@ -122,7 +122,7 @@ class PetcubeAPI:
                 return await response.json()
 
         except Exception as e:
-            logger.error(f"Error dispensing treat: {e}")
+            logger.exception(f"Error dispensing treat: {e}")
             raise
 
     async def close(self):
@@ -158,7 +158,7 @@ class PetcubeCamera(BaseCamera):
                     raise ValueError("No Petcube devices found for this account")
 
             # Verify device access
-            device_info = await self.api.get_device_status(self.device_id)
+            await self.api.get_device_status(self.device_id)
 
             self._is_connected = True
             logger.info(f"Connected to Petcube device: {self.device_id}")
@@ -166,7 +166,7 @@ class PetcubeCamera(BaseCamera):
 
         except Exception as e:
             self._is_connected = False
-            logger.error(f"Failed to connect to Petcube camera: {e}")
+            logger.exception(f"Failed to connect to Petcube camera: {e}")
             raise ConnectionError(f"Failed to connect to Petcube camera: {e}")
 
     async def disconnect(self) -> None:
@@ -226,7 +226,7 @@ class PetcubeCamera(BaseCamera):
             self._stream_url = await self.api.get_stream_url(self.device_id)
             return self._stream_url
         except Exception as e:
-            logger.error(f"Failed to get stream URL: {e}")
+            logger.exception(f"Failed to get stream URL: {e}")
             return None
 
     async def get_status(self) -> Dict:
@@ -313,7 +313,7 @@ class PetcubeCamera(BaseCamera):
             return info
 
         except Exception as e:
-            logger.error(f"Error getting Petcube info: {e}")
+            logger.exception(f"Error getting Petcube info: {e}")
             return {
                 "name": self.config.name,
                 "type": self.config.type.value,

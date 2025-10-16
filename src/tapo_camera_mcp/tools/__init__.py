@@ -21,13 +21,11 @@ from tapo_camera_mcp.tools.base_tool import (
     ToolCategory,
     ToolDefinition,
     ToolResult,
+    register_tool,
 )
 from tapo_camera_mcp.tools.base_tool import _tool_registry as tools_registry
 from tapo_camera_mcp.tools.base_tool import get_all_tools as _get_all_tools
 from tapo_camera_mcp.tools.base_tool import get_tool as _get_tool
-from tapo_camera_mcp.tools.base_tool import (
-    register_tool,
-)
 
 # Import discovery functions
 from tapo_camera_mcp.tools.discovery import discover_tools
@@ -75,13 +73,13 @@ def discover_tools(package: Optional[str] = None) -> List[Type[BaseTool]]:
             # Use finder.find_spec to properly handle package imports
             spec = finder.find_spec(module_name)
             if spec is not None:
-                module = import_module(full_module_name)
+                import_module(full_module_name)
                 if is_pkg:
                     # Recursively discover tools in subpackages
                     subpackage_path = os.path.join(package_path, module_name)
                     discover_tools_in_path(subpackage_path, full_module_name)
         except ImportError as e:
-            logger.error(f"Failed to import tool module {full_module_name}: {e}")
+            logger.exception(f"Failed to import tool module {full_module_name}: {e}")
 
     return _get_all_tools()
 
@@ -110,7 +108,7 @@ def discover_tools_in_path(package_path: str, package_name: str) -> None:
                     subpackage_path = os.path.join(package_path, module_name)
                     discover_tools_in_path(subpackage_path, full_module_name)
         except ImportError as e:
-            logger.error(f"Failed to import tool module {full_module_name}: {e}")
+            logger.exception(f"Failed to import tool module {full_module_name}: {e}")
 
 
 # Re-export functions from base_tool
@@ -123,11 +121,11 @@ discover_tools()
 __all__ = [
     "BaseTool",
     "ToolCategory",
-    "ToolResult",
-    "register_tool",
-    "get_tool",
-    "get_all_tools",
-    "discover_tools",
-    "tools_registry",
     "ToolDefinition",
+    "ToolResult",
+    "discover_tools",
+    "get_all_tools",
+    "get_tool",
+    "register_tool",
+    "tools_registry",
 ]

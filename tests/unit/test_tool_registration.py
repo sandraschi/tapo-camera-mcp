@@ -62,9 +62,8 @@ def test_tool_registration():
             for tool in missing_tools:
                 logger.error(f"- {tool}")
             return False
-        else:
-            logger.info("\n✅ All expected tools are registered!")
-            return True
+        logger.info("\n✅ All expected tools are registered!")
+        return True
 
     except Exception as e:
         logger.error(f"Error testing tool registration: {e}", exc_info=True)

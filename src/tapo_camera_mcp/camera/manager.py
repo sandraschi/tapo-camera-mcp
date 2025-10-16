@@ -18,7 +18,7 @@ class CameraManager:
         self._initialized = False
         self.groups = CameraGroupManager()
 
-    async def initialize(self, configs: List[dict] = None) -> None:
+    async def initialize(self, configs: Optional[List[dict]] = None) -> None:
         """Initialize camera manager with configuration.
 
         Args:
@@ -61,7 +61,7 @@ class CameraManager:
             return False
 
         except Exception as e:
-            logger.error(f"Failed to add camera {config.name}: {e}")
+            logger.exception(f"Failed to add camera {config.name}: {e}")
             return False
 
     async def remove_camera(self, name: str) -> bool:
@@ -86,7 +86,7 @@ class CameraManager:
             logger.info(f"Removed camera: {name}")
             return True
         except Exception as e:
-            logger.error(f"Error removing camera {name}: {e}")
+            logger.exception(f"Error removing camera {name}: {e}")
             return False
 
     async def get_camera(self, name: str):
@@ -121,7 +121,7 @@ class CameraManager:
                     }
                 )
             except Exception as e:
-                logger.error(f"Error getting status for {name}: {e}")
+                logger.exception(f"Error getting status for {name}: {e}")
                 result.append(
                     {
                         "name": name,

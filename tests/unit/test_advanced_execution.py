@@ -6,7 +6,7 @@ Advanced tool execution tests with actual server integration.
 import asyncio
 import os
 import sys
-import unittest.mock as mock
+from unittest import mock
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))

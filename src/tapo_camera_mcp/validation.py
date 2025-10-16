@@ -10,7 +10,7 @@ import inspect
 import logging
 import re
 from enum import Enum
-from typing import Any, Callable, Type, Union, get_type_hints
+from typing import Any, Callable, Optional, Type, Union, get_type_hints
 
 from pydantic import ValidationError
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class ValidationError(Exception):
     """Raised when input validation fails."""
 
-    def __init__(self, message: str, field: str = None, value: Any = None):
+    def __init__(self, message: str, field: Optional[str] = None, value: Any = None):
         self.message = message
         self.field = field
         self.value = value
@@ -30,7 +30,6 @@ class ValidationError(Exception):
 class ToolValidationError(ValidationError):
     """Raised when tool input validation fails."""
 
-    pass
 
 
 def validate_required(value: Any, field_name: str) -> Any:
@@ -43,7 +42,7 @@ def validate_required(value: Any, field_name: str) -> Any:
 
 
 def validate_string_length(
-    value: str, field_name: str, min_length: int = None, max_length: int = None
+    value: str, field_name: str, min_length: Optional[int] = None, max_length: Optional[int] = None
 ) -> str:
     """Validate string length constraints."""
     if not isinstance(value, str):
@@ -163,27 +162,24 @@ def validate_tool_input(func: Callable) -> Callable:
                     validate_ip_address(param_value, param_name)
                 elif param_name in ["port"]:
                     validate_port(param_value, param_name)
-                elif param_name in ["username"]:
-                    validate_string_length(param_value, param_name, min_length=1, max_length=100)
-                elif param_name in ["password"]:
+                elif param_name in ["username"] or param_name in ["password"]:
                     validate_string_length(param_value, param_name, min_length=1, max_length=100)
                 elif (
                     param_type
                     and hasattr(param_type, "__origin__")
                     and param_type.__origin__ is list
-                ):
-                    if not isinstance(param_value, list):
-                        raise ToolValidationError(f"Field '{param_name}' must be a list")
+                ) and not isinstance(param_value, list):
+                    raise ToolValidationError(f"Field '{param_name}' must be a list")
 
             # Execute the original function
             return await func(*args, **kwargs)
 
         except ValidationError as e:
-            logger.error(f"Input validation failed for {func.__name__}: {e.message}")
+            logger.exception(f"Input validation failed for {func.__name__}: {e.message}")
             return ToolResult(content={"error": e.message, "field": e.field}, is_error=True)
         except Exception as e:
-            logger.error(f"Unexpected error in {func.__name__}: {str(e)}")
-            return ToolResult(content={"error": f"Internal error: {str(e)}"}, is_error=True)
+            logger.exception(f"Unexpected error in {func.__name__}: {e!s}")
+            return ToolResult(content={"error": f"Internal error: {e!s}"}, is_error=True)
 
     return wrapper
 
@@ -214,27 +210,27 @@ def handle_tool_errors(func: Callable) -> Callable:
             )
 
         except ConnectionError as e:
-            logger.error(f"Connection error in {func.__name__}: {str(e)}")
+            logger.exception(f"Connection error in {func.__name__}: {e!s}")
             return ToolResult(
                 content={"error": "Camera connection failed", "details": str(e)},
                 is_error=True,
             )
 
         except TimeoutError as e:
-            logger.error(f"Timeout error in {func.__name__}: {str(e)}")
+            logger.exception(f"Timeout error in {func.__name__}: {e!s}")
             return ToolResult(
                 content={"error": "Operation timed out", "details": str(e)},
                 is_error=True,
             )
 
         except PermissionError as e:
-            logger.error(f"Permission error in {func.__name__}: {str(e)}")
+            logger.exception(f"Permission error in {func.__name__}: {e!s}")
             return ToolResult(
                 content={"error": "Permission denied", "details": str(e)}, is_error=True
             )
 
         except Exception as e:
-            logger.error(f"Unexpected error in {func.__name__}: {str(e)}", exc_info=True)
+            logger.error(f"Unexpected error in {func.__name__}: {e!s}", exc_info=True)
             return ToolResult(
                 content={"error": "Internal server error", "details": str(e)},
                 is_error=True,

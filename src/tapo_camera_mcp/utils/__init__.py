@@ -15,13 +15,13 @@ from .exceptions import (
 from .logging import get_logger, setup_logging
 
 __all__ = [
-    "setup_logging",
+    "CameraAuthError",
+    "CameraConnectionError",
+    "CameraManager",
+    "CameraNotSupportedError",
+    "TapoCameraError",
     "get_logger",
     "load_config",
     "save_config",
-    "CameraManager",
-    "TapoCameraError",
-    "CameraConnectionError",
-    "CameraAuthError",
-    "CameraNotSupportedError",
+    "setup_logging",
 ]

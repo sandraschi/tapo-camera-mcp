@@ -1,7 +1,7 @@
 """Advanced image analysis tools using DINOv3."""
 
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from .vision.dinov3 import DINOv3Processor
 
@@ -54,13 +54,13 @@ class ImageAnalyzer:
             }
 
         except Exception as e:
-            return {"status": "error", "message": f"Image analysis failed: {str(e)}"}
+            return {"status": "error", "message": f"Image analysis failed: {e!s}"}
 
     async def find_similar_images(
         self,
         query_image: Union[str, Path],
         search_dir: Union[str, Path],
-        extensions: List[str] = None,
+        extensions: Optional[List[str]] = None,
         top_k: int = 5,
     ) -> Dict[str, any]:
         """Find similar images in a directory.
@@ -112,7 +112,7 @@ class ImageAnalyzer:
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"Failed to find similar images: {str(e)}",
+                "message": f"Failed to find similar images: {e!s}",
             }
 
 

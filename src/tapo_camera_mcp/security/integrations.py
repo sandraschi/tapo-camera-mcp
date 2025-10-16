@@ -90,10 +90,10 @@ class NestProtectClient:
                 response.raise_for_status()
                 return await response.json()
         except aiohttp.ClientError as e:
-            logger.error(f"Nest Protect API error: {e}")
+            logger.exception(f"Nest Protect API error: {e}")
             return {}
         except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON response from Nest Protect: {e}")
+            logger.exception(f"Invalid JSON response from Nest Protect: {e}")
             return {}
 
     async def get_devices(self) -> List[SecurityDevice]:
@@ -261,7 +261,7 @@ class SecurityIntegrationManager:
                 nest_devices = await self.nest_client.get_devices()
                 devices.extend(nest_devices)
             except Exception as e:
-                logger.error(f"Failed to fetch Nest Protect devices: {e}")
+                logger.exception(f"Failed to fetch Nest Protect devices: {e}")
 
         # Ring devices (when implemented)
         if self.ring_client:
@@ -269,7 +269,7 @@ class SecurityIntegrationManager:
                 ring_devices = await self.ring_client.get_devices()
                 devices.extend(ring_devices)
             except Exception as e:
-                logger.error(f"Failed to fetch Ring devices: {e}")
+                logger.exception(f"Failed to fetch Ring devices: {e}")
 
         return devices
 
@@ -283,7 +283,7 @@ class SecurityIntegrationManager:
                 nest_alerts = await self.nest_client.get_alerts()
                 alerts.extend(nest_alerts)
             except Exception as e:
-                logger.error(f"Failed to fetch Nest Protect alerts: {e}")
+                logger.exception(f"Failed to fetch Nest Protect alerts: {e}")
 
         # Ring alerts (when implemented)
         if self.ring_client:
@@ -291,7 +291,7 @@ class SecurityIntegrationManager:
                 ring_alerts = await self.ring_client.get_alerts()
                 alerts.extend(ring_alerts)
             except Exception as e:
-                logger.error(f"Failed to fetch Ring alerts: {e}")
+                logger.exception(f"Failed to fetch Ring alerts: {e}")
 
         return alerts
 
@@ -314,7 +314,7 @@ class SecurityIntegrationManager:
                 overview["online_devices"] += nest_status.get("online_devices", 0)
                 overview["active_alerts"] += nest_status.get("active_alerts", 0)
             except Exception as e:
-                logger.error(f"Failed to get Nest Protect system status: {e}")
+                logger.exception(f"Failed to get Nest Protect system status: {e}")
                 overview["systems"]["nest_protect"] = {"error": str(e)}
 
         # Ring overview (placeholder)

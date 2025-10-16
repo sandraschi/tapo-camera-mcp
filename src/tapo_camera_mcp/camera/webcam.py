@@ -1,6 +1,7 @@
 """Webcam implementation using OpenCV."""
 
 import asyncio
+import contextlib
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -53,10 +54,8 @@ class WebCamera(BaseCamera):
         self._is_connected = False
         if hasattr(self, "_capture_task"):
             self._capture_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._capture_task
-            except asyncio.CancelledError:
-                pass
 
         if self._cap:
             self._cap.release()

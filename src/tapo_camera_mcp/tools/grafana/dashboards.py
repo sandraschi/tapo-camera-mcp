@@ -75,7 +75,7 @@ class ViennaDashboardTool(BaseTool):
         except Exception as e:
             return {
                 "success": False,
-                "error": f"Failed to generate dashboard data: {str(e)}",
+                "error": f"Failed to generate dashboard data: {e!s}",
                 "content_type": "application/json",
             }
 
@@ -107,10 +107,9 @@ class ViennaDashboardTool(BaseTool):
         # More activity during typical business hours (9-17)
         if 9 <= hour < 17:
             return random.randint(70, 100)  # 70-100% activity
-        elif 7 <= hour < 9 or 17 <= hour < 22:
+        if 7 <= hour < 9 or 17 <= hour < 22:
             return random.randint(30, 70)  # 30-70% activity
-        else:
-            return random.randint(0, 30)  # 0-30% activity at night
+        return random.randint(0, 30)  # 0-30% activity at night
 
     def _format_camera_data(self, cam_id: str, camera) -> Dict[str, Any]:
         """Format camera data for the dashboard."""

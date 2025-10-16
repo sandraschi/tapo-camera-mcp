@@ -79,7 +79,7 @@ class CameraManager:
             return camera
 
         except Exception as e:
-            logger.error(f"Failed to add camera {camera_config.get('name')}: {e}")
+            logger.exception(f"Failed to add camera {camera_config.get('name')}: {e}")
             raise CameraConnectionError(f"Failed to add camera: {e}")
 
     async def remove_camera(self, camera_id: str) -> bool:
@@ -210,8 +210,7 @@ class CameraManager:
         # This would generate the appropriate stream URL
         if stream_type.lower() == "rtsp":
             return f"rtsp://{camera.ip_address}/stream1"
-        else:
-            raise CameraNotSupportedError(f"Stream type not supported: {stream_type}")
+        raise CameraNotSupportedError(f"Stream type not supported: {stream_type}")
 
     async def refresh_all(self) -> None:
         """
@@ -224,5 +223,5 @@ class CameraManager:
                 self.cameras[camera_id].is_online = status.is_online
                 self.cameras[camera_id].last_seen = status.last_seen
             except Exception as e:
-                logger.error(f"Error refreshing camera {camera_id}: {e}")
+                logger.exception(f"Error refreshing camera {camera_id}: {e}")
                 self.cameras[camera_id].is_online = False

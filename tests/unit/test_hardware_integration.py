@@ -201,9 +201,8 @@ def test_webcam_streaming():
         if frames_captured > 0:
             logger.info(f"✅ Webcam streaming test PASSED: {frames_captured} frames captured")
             return True
-        else:
-            logger.error("❌ No frames captured from webcam!")
-            return False
+        logger.error("❌ No frames captured from webcam!")
+        return False
 
     except Exception as e:
         logger.error(f"❌ Webcam streaming test failed: {e}")

@@ -334,10 +334,10 @@ class GoToHomePTZTool(BaseTool):
         try:
             return await server.go_to_home_ptz()
         except Exception as e:
-            logger.error(f"Failed to move PTZ to home position: {str(e)}")
+            logger.exception(f"Failed to move PTZ to home position: {e!s}")
             return {
                 "status": "error",
-                "message": f"Failed to move PTZ to home position: {str(e)}",
+                "message": f"Failed to move PTZ to home position: {e!s}",
             }
 
 
@@ -378,13 +378,12 @@ class StopPTZTool(BaseTool):
             result = await server.move_ptz({"pan": 0, "tilt": 0, "zoom": 0, "relative": True})
             if result.get("status") == "success":
                 return {"status": "success", "message": "PTZ movement stopped"}
-            else:
-                return result
+            return result
         except Exception as e:
-            logger.error(f"Failed to stop PTZ movement: {str(e)}")
+            logger.exception(f"Failed to stop PTZ movement: {e!s}")
             return {
                 "status": "error",
-                "message": f"Failed to stop PTZ movement: {str(e)}",
+                "message": f"Failed to stop PTZ movement: {e!s}",
             }
 
 
@@ -549,26 +548,25 @@ class GetPTZPositionTool(BaseTool):
                     },
                     "message": "Current PTZ position retrieved successfully",
                 }
-            else:
-                return {
-                    "status": "error",
-                    "message": "Camera not properly initialized for PTZ operations",
-                }
-        except Exception as e:
-            logger.error(f"Failed to get PTZ position: {str(e)}")
             return {
                 "status": "error",
-                "message": f"Failed to get PTZ position: {str(e)}",
+                "message": "Camera not properly initialized for PTZ operations",
+            }
+        except Exception as e:
+            logger.exception(f"Failed to get PTZ position: {e!s}")
+            return {
+                "status": "error",
+                "message": f"Failed to get PTZ position: {e!s}",
             }
 
 
 # Update __all__ to include the new tools
 __all__ = [
-    "MovePTZTool",
-    "SavePTZPresetTool",
-    "RecallPTZPresetTool",
+    "GetPTZPositionTool",
     "GetPTZPresetsTool",
     "GoToHomePTZTool",
+    "MovePTZTool",
+    "RecallPTZPresetTool",
+    "SavePTZPresetTool",
     "StopPTZTool",
-    "GetPTZPositionTool",
 ]

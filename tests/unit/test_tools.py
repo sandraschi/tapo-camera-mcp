@@ -25,7 +25,7 @@ def test_tools_discovery():
         # Check that tools have the expected structure
         for tool_cls in tools[:3]:  # Check first 3 tools
             assert hasattr(tool_cls, "Meta"), f"Tool {tool_cls.__name__} missing Meta class"
-            meta = getattr(tool_cls, "Meta")
+            meta = tool_cls.Meta
             assert hasattr(meta, "name"), f"Tool {tool_cls.__name__} missing name in Meta"
 
         return True

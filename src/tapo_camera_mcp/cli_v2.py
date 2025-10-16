@@ -4,7 +4,6 @@ Command-line interface for Tapo Camera MCP (FastMCP 2.10).
 
 import argparse
 import asyncio
-import json
 import sys
 from typing import Any
 
@@ -20,22 +19,18 @@ COLOR_END = "\033[0m"
 
 def print_success(message: str) -> None:
     """Print a success message."""
-    print(f"{COLOR_GREEN}✓ {message}{COLOR_END}")
 
 
 def print_error(message: str) -> None:
     """Print an error message."""
-    print(f"{COLOR_RED}✗ {message}{COLOR_END}", file=sys.stderr)
 
 
 def print_warning(message: str) -> None:
     """Print a warning message."""
-    print(f"{COLOR_YELLOW}⚠ {message}{COLOR_END}")
 
 
 def print_info(message: str) -> None:
     """Print an info message."""
-    print(f"{COLOR_BLUE}ℹ {message}{COLOR_END}")
 
 
 class TapoCameraCLI:
@@ -173,7 +168,7 @@ class TapoCameraCLI:
                 import traceback
 
                 traceback.print_exc()
-            print_error(f"An error occurred: {str(e)}")
+            print_error(f"An error occurred: {e!s}")
             return 1
         finally:
             if self.client:
@@ -191,9 +186,8 @@ class TapoCameraCLI:
             print_success("Successfully connected to camera")
             self._print_json(result["camera_info"])
             return 0
-        else:
-            print_error(f"Failed to connect: {result.get('message', 'Unknown error')}")
-            return 1
+        print_error(f"Failed to connect: {result.get('message', 'Unknown error')}")
+        return 1
 
     async def _handle_camera(self, args) -> int:
         """Handle camera commands."""
@@ -202,12 +196,12 @@ class TapoCameraCLI:
             self._print_json(info.content)
             return 0
 
-        elif args.camera_command == "status":
+        if args.camera_command == "status":
             status = await self.client.call_tool("get_camera_status", {})
             self._print_json(status.content)
             return 0
 
-        elif args.camera_command == "ptz":
+        if args.camera_command == "ptz":
             if args.action == "move":
                 result = await self.client.call_tool(
                     "move_ptz",
@@ -216,18 +210,17 @@ class TapoCameraCLI:
                 if result.content.get("status") == "success":
                     print_success("PTZ movement completed")
                     return 0
-                else:
-                    print_error(f"Failed to move PTZ: {result.content.get('message')}")
-                    return 1
+                print_error(f"Failed to move PTZ: {result.content.get('message')}")
+                return 1
 
         elif args.camera_command == "stream":
             if args.action == "start":
                 result = await self.client.call_tool("get_stream_url", {"quality": args.quality})
                 self._print_json(result.content)
                 return 0
-            else:  # stop
-                print_warning("Stream stop not yet implemented")
-                return 0
+            # stop
+            print_warning("Stream stop not yet implemented")
+            return 0
 
         elif args.camera_command == "motion":
             if args.action == "enable":
@@ -244,9 +237,8 @@ class TapoCameraCLI:
                 state = "enabled" if args.action == "enable" else "disabled"
                 print_success(f"Motion detection {state}")
                 return 0
-            else:
-                print_error(f"Failed to {args.action} motion detection")
-                return 1
+            print_error(f"Failed to {args.action} motion detection")
+            return 1
 
         elif args.camera_command == "led":
             if args.action in ["on", "off"]:
@@ -256,14 +248,13 @@ class TapoCameraCLI:
                 if result.content.get("status") == "success":
                     print_success(f"LED turned {args.action}")
                     return 0
-                else:
-                    print_error(f"Failed to turn LED {args.action}")
-                    return 1
-            else:  # status
-                status = await self.client.call_tool("get_camera_status", {})
-                enabled = status.content.get("led_enabled", False)
-                print_info(f"LED is {'on' if enabled else 'off'}")
-                return 0
+                print_error(f"Failed to turn LED {args.action}")
+                return 1
+            # status
+            status = await self.client.call_tool("get_camera_status", {})
+            enabled = status.content.get("led_enabled", False)
+            print_info(f"LED is {'on' if enabled else 'off'}")
+            return 0
 
         elif args.camera_command == "privacy":
             if args.action in ["on", "off"]:
@@ -274,14 +265,13 @@ class TapoCameraCLI:
                     state = "enabled" if args.action == "on" else "disabled"
                     print_success(f"Privacy mode {state}")
                     return 0
-                else:
-                    print_error(f"Failed to {args.action} privacy mode")
-                    return 1
-            else:  # status
-                status = await self.client.call_tool("get_camera_status", {})
-                enabled = status.content.get("privacy_mode", False)
-                print_info(f"Privacy mode is {'on' if enabled else 'off'}")
-                return 0
+                print_error(f"Failed to {args.action} privacy mode")
+                return 1
+            # status
+            status = await self.client.call_tool("get_camera_status", {})
+            enabled = status.content.get("privacy_mode", False)
+            print_info(f"Privacy mode is {'on' if enabled else 'off'}")
+            return 0
 
         elif args.camera_command == "reboot":
             confirm = input("Are you sure you want to reboot the camera? (y/N): ")
@@ -293,19 +283,18 @@ class TapoCameraCLI:
             if result.content.get("status") == "success":
                 print_success("Camera is rebooting...")
                 return 0
-            else:
-                print_error("Failed to reboot camera")
-                return 1
+            print_error("Failed to reboot camera")
+            return 1
 
         else:
             print_error(f"Unknown camera command: {args.camera_command}")
             return 1
+        return None
 
     def _print_json(self, data: Any) -> None:
         """Print data as formatted JSON."""
         if isinstance(data, dict) and "content" in data:
             data = data["content"]
-        print(json.dumps(data, indent=2, default=str))
 
 
 def main():

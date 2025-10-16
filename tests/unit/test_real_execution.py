@@ -263,7 +263,7 @@ def test_real_tool_structure():
 
             # Tool should have real execute method
             assert hasattr(tool_cls, "execute"), f"Tool {tool_cls.__name__} missing execute"
-            execute_method = getattr(tool_cls, "execute")
+            execute_method = tool_cls.execute
             assert callable(execute_method), f"Tool {tool_cls.__name__} execute not callable"
 
             # Test that we can create tool instances

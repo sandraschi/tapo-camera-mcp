@@ -47,13 +47,12 @@ class PTZPresetManager:
             # self.presets = {p['id']: self._create_preset_from_data(p) for p in presets_data}
             pass
         except Exception as e:
-            logger.error(f"Failed to load PTZ presets: {e}")
+            logger.exception(f"Failed to load PTZ presets: {e}")
             self.presets = {}
 
     def _save_presets(self) -> None:
         """Save presets to persistent storage"""
         # This would save to a database or config file
-        pass
 
     def get_presets(self) -> List[PTZPreset]:
         """Get all available presets"""
@@ -96,7 +95,7 @@ class PTZPresetManager:
             return preset
 
         except Exception as e:
-            logger.error(f"Failed to save PTZ preset: {e}")
+            logger.exception(f"Failed to save PTZ preset: {e}")
             raise
 
     async def update_preset(
@@ -146,7 +145,7 @@ class PTZPresetManager:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to delete PTZ preset {preset_id}: {e}")
+            logger.exception(f"Failed to delete PTZ preset {preset_id}: {e}")
             return False
 
     async def recall_preset(self, preset_id: int) -> bool:
@@ -155,12 +154,12 @@ class PTZPresetManager:
             return False
 
         try:
-            preset = self.presets[preset_id]
+            self.presets[preset_id]
             # await self.camera_client.move_to_preset(preset_id)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to recall PTZ preset {preset_id}: {e}")
+            logger.exception(f"Failed to recall PTZ preset {preset_id}: {e}")
             return False
 
     async def capture_thumbnail(self, preset_id: int) -> Optional[str]:
@@ -177,5 +176,5 @@ class PTZPresetManager:
             return None
 
         except Exception as e:
-            logger.error(f"Failed to capture thumbnail for preset {preset_id}: {e}")
+            logger.exception(f"Failed to capture thumbnail for preset {preset_id}: {e}")
             return None

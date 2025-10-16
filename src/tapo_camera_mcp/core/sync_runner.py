@@ -37,7 +37,7 @@ def create_mcp_server() -> FastMCP:
             except Exception as e:
                 # If we can't create with defaults, skip this tool
                 logger.warning(
-                    f"Skipping tool {tool_name}: Could not instantiate with defaults: {str(e)}"
+                    f"Skipping tool {tool_name}: Could not instantiate with defaults: {e!s}"
                 )
                 continue
 
@@ -53,7 +53,7 @@ def create_mcp_server() -> FastMCP:
                     else:
                         logger.debug(f"Skipping async initialization for tool: {tool_name}")
                 except Exception as e:
-                    logger.warning(f"Failed to initialize tool {tool_name}: {str(e)}")
+                    logger.warning(f"Failed to initialize tool {tool_name}: {e!s}")
                     continue
 
             # Create a synchronous wrapper for the tool
@@ -76,7 +76,7 @@ def create_mcp_server() -> FastMCP:
                         return result
 
                     except Exception as e:
-                        logger.error(f"Error executing tool {tool_name}: {e}")
+                        logger.exception(f"Error executing tool {tool_name}: {e}")
                         return {"error": str(e), "success": False}
 
                 return sync_tool_wrapper
@@ -101,7 +101,7 @@ def create_mcp_server() -> FastMCP:
                 continue
 
         except Exception as e:
-            logger.error(f"Unexpected error processing tool {tool_name}: {str(e)}", exc_info=True)
+            logger.error(f"Unexpected error processing tool {tool_name}: {e!s}", exc_info=True)
             continue
 
     logger.info(f"Registered {len(tools)} tools")
@@ -129,6 +129,6 @@ def run_direct_server():
     except KeyboardInterrupt:
         logger.info("Server shutdown requested")
     except Exception as e:
-        logger.error(f"Direct server error: {e}")
+        logger.exception(f"Direct server error: {e}")
         logger.exception("Full traceback:")
         raise

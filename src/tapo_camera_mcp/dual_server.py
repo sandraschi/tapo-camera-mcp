@@ -8,7 +8,7 @@ dashboards, mobile apps, and third-party services.
 
 import asyncio
 import logging
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from typing import List, Optional
 
 import uvicorn
@@ -181,7 +181,7 @@ class TapoCameraDualServer:
                 return cameras
 
             except Exception as e:
-                logger.error(f"Error listing cameras: {e}")
+                logger.exception(f"Error listing cameras: {e}")
                 raise HTTPException(status_code=500, detail="Failed to list cameras")
 
         # Get camera details endpoint
@@ -208,7 +208,7 @@ class TapoCameraDualServer:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error getting camera {camera_id}: {e}")
+                logger.exception(f"Error getting camera {camera_id}: {e}")
                 raise HTTPException(status_code=500, detail="Failed to get camera")
 
         # Get camera stream endpoint
@@ -225,7 +225,7 @@ class TapoCameraDualServer:
                 )
 
             except Exception as e:
-                logger.error(f"Error getting stream for camera {camera_id}: {e}")
+                logger.exception(f"Error getting stream for camera {camera_id}: {e}")
                 raise HTTPException(status_code=500, detail="Failed to get stream")
 
         # Capture snapshot endpoint
@@ -257,7 +257,7 @@ class TapoCameraDualServer:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error capturing snapshot for camera {camera_id}: {e}")
+                logger.exception(f"Error capturing snapshot for camera {camera_id}: {e}")
                 raise HTTPException(status_code=500, detail="Failed to capture snapshot")
 
         return app
@@ -271,7 +271,7 @@ class TapoCameraDualServer:
 
             await start_mcp_server()
         except Exception as e:
-            logger.error(f"Failed to start MCP server: {e}")
+            logger.exception(f"Failed to start MCP server: {e}")
             raise
 
     async def start_rest_server(self, host: str = "0.0.0.0", port: int = 8123):
@@ -284,7 +284,7 @@ class TapoCameraDualServer:
             await server.serve()
 
         except Exception as e:
-            logger.error(f"Failed to start REST API server: {e}")
+            logger.exception(f"Failed to start REST API server: {e}")
             raise
 
     async def start_dual_server(self, rest_host: str = "0.0.0.0", rest_port: int = 8123):
@@ -303,10 +303,8 @@ class TapoCameraDualServer:
         # Cancel REST task if running
         if self.rest_task and not self.rest_task.done():
             self.rest_task.cancel()
-            try:
+            with suppress(asyncio.CancelledError):
                 await self.rest_task
-            except asyncio.CancelledError:
-                pass
 
         # Cleanup core server
         await self.core_server.cleanup()

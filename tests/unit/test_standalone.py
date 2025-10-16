@@ -61,7 +61,7 @@ async def test_server():
                 if isinstance(result, dict):
                     return self.ResultWrapper(result)
                 return result
-            elif result is None:
+            if result is None:
                 # For methods that don't return anything, return a success response
                 return self.ResultWrapper({"status": "success"})
             return result

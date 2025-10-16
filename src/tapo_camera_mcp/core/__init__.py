@@ -16,15 +16,15 @@ from .models import (
 from .server import TapoCameraServer, get_server
 
 __all__ = [
-    "TapoCameraServer",
-    "get_server",
-    "CameraModel",
-    "StreamType",
-    "VideoQuality",
-    "PTZDirection",
-    "MotionDetectionSensitivity",
-    "CameraStatus",
-    "PTZPosition",
-    "MotionEvent",
     "CameraInfo",
+    "CameraModel",
+    "CameraStatus",
+    "MotionDetectionSensitivity",
+    "MotionEvent",
+    "PTZDirection",
+    "PTZPosition",
+    "StreamType",
+    "TapoCameraServer",
+    "VideoQuality",
+    "get_server",
 ]

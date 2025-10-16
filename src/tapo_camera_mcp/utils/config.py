@@ -33,7 +33,7 @@ def load_config(config_file: str = "config.yaml", config_class: Type[T] = Server
     if not config_path.exists():
         raise FileNotFoundError(f"Configuration file not found: {config_file}")
 
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         if config_path.suffix.lower() in (".yaml", ".yml"):
             config_data = yaml.safe_load(f)
         elif config_path.suffix.lower() == ".json":
@@ -63,12 +63,11 @@ def save_config(config: Any, config_file: str = "config.yaml", format: str = "ya
     def to_dict(obj):
         if hasattr(obj, "__dataclass_fields__"):
             return {k: to_dict(v) for k, v in obj.__dict__.items()}
-        elif isinstance(obj, (list, tuple)):
+        if isinstance(obj, (list, tuple)):
             return [to_dict(x) for x in obj]
-        elif isinstance(obj, dict):
+        if isinstance(obj, dict):
             return {k: to_dict(v) for k, v in obj.items()}
-        else:
-            return obj
+        return obj
 
     config_dict = to_dict(config)
 

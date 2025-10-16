@@ -7,7 +7,7 @@ This module provides base classes and utilities for FastMCP 2.12 compatibility.
 import inspect
 import logging
 from enum import Enum
-from typing import Generic, TypeVar
+from typing import Generic, Optional, TypeVar
 
 from fastmcp.tools import Tool as FastMCPTool
 from pydantic import BaseModel, Field
@@ -73,7 +73,7 @@ class BaseTool(FastMCPTool):
         }
 
 
-def tool(name: str = None, **kwargs):
+def tool(name: Optional[str] = None, **kwargs):
     """Decorator for FastMCP 2.12+ tools.
 
     Args:
@@ -101,7 +101,7 @@ def tool(name: str = None, **kwargs):
                 setattr(cls.Meta, key, value)
 
             # Make sure the class has an execute method
-            if not hasattr(cls, "execute") or not callable(getattr(cls, "execute")):
+            if not hasattr(cls, "execute") or not callable(cls.execute):
                 raise TypeError(f"Tool class {cls.__name__} must implement an 'execute' method")
 
             # Add the tool to the registry
@@ -110,33 +110,32 @@ def tool(name: str = None, **kwargs):
             register_tool(cls)
 
             return cls
-        else:
-            # For functions, wrap them in a class
-            func = func_or_cls
-            tool_name = name or func.__name__
+        # For functions, wrap them in a class
+        func = func_or_cls
+        tool_name = name or func.__name__
 
-            # Create Meta class with name and other attributes
-            meta_dict = {"name": tool_name}
-            meta_dict.update(kwargs)
-            Meta = type("Meta", (), meta_dict)
+        # Create Meta class with name and other attributes
+        meta_dict = {"name": tool_name}
+        meta_dict.update(kwargs)
+        Meta = type("Meta", (), meta_dict)
 
-            class WrappedTool(BaseTool):
-                """Wrapper class for function-based tools."""
+        class WrappedTool(BaseTool):
+            """Wrapper class for function-based tools."""
 
-                Meta = Meta
+            Meta = Meta
 
-                async def execute(self, *args, **kwargs):
-                    return await func(*args, **kwargs)
+            async def execute(self, *args, **kwargs):
+                return await func(*args, **kwargs)
 
-            WrappedTool.__name__ = func.__name__
-            WrappedTool.__qualname__ = func.__qualname__
-            WrappedTool.__module__ = func.__module__
+        WrappedTool.__name__ = func.__name__
+        WrappedTool.__qualname__ = func.__qualname__
+        WrappedTool.__module__ = func.__module__
 
-            # Add the tool to the registry
-            from ..tools.discovery import register_tool
+        # Add the tool to the registry
+        from ..tools.discovery import register_tool
 
-            register_tool(WrappedTool)
+        register_tool(WrappedTool)
 
-            return WrappedTool
+        return WrappedTool
 
     return decorator

@@ -3,11 +3,11 @@
 ANALYSIS_PRESETS = {
     "security": {
         "prompt": """Security analysis - Look for potential threats:
-        
+
 ASSESS FOR:
 - Unknown people (not family members)
 - Suspicious or unusual activity
-- Packages or deliveries  
+- Packages or deliveries
 - Unusual objects or vehicles
 - Animals (pets vs wildlife)
 - Entry/exit activity
@@ -21,7 +21,7 @@ RESPOND WITH:
     },
     "food": {
         "prompt": """Food quality analysis:
-        
+
 ANALYZE:
 - Food presentation and appearance
 - Cooking status and doneness
@@ -37,7 +37,7 @@ PERFECT FOR:
     },
     "pets": {
         "prompt": """Pet activity monitoring:
-        
+
 OBSERVE:
 - Animals present and their species
 - Pet behavior and activity
@@ -53,7 +53,7 @@ GREAT FOR:
     },
     "delivery": {
         "prompt": """Delivery detection:
-        
+
 CHECK FOR:
 - Packages at door or entrance
 - Delivery personnel present
@@ -68,7 +68,7 @@ USEFUL FOR:
     },
     "general": {
         "prompt": """General image analysis:
-        
+
 DESCRIBE:
 - Main subjects and objects
 - Activity or action taking place

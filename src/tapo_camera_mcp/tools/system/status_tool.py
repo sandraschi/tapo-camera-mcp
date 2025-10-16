@@ -94,10 +94,10 @@ class StatusTool(BaseTool):
             return result
 
         except Exception as e:
-            logger.error(f"Error getting system status: {e}")
+            logger.exception(f"Error getting system status: {e}")
             return {
                 "success": False,
-                "error": f"Failed to get status: {str(e)}",
+                "error": f"Failed to get status: {e!s}",
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
@@ -153,7 +153,7 @@ class StatusTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Error in comprehensive health check: {e}")
+            logger.exception(f"Error in comprehensive health check: {e}")
             return {
                 "overall": "critical",
                 "error": str(e),
@@ -186,7 +186,7 @@ class StatusTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Error assessing camera health: {e}")
+            logger.exception(f"Error assessing camera health: {e}")
             return {"status": "error", "warnings": [str(e)]}
 
     async def _assess_server_health(self) -> Dict[str, Any]:
@@ -211,7 +211,7 @@ class StatusTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Error assessing server health: {e}")
+            logger.exception(f"Error assessing server health: {e}")
             return {"status": "error", "warnings": [str(e)]}
 
     async def _get_system_status(self) -> Dict[str, Any]:

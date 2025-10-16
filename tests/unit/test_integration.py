@@ -5,7 +5,7 @@ Integration tests for the full tapo-camera-mcp system.
 
 import os
 import sys
-import unittest.mock as mock
+from unittest import mock
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))

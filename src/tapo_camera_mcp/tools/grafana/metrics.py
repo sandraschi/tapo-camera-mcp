@@ -86,7 +86,7 @@ class GrafanaMetricsTool(BaseTool):
         except Exception as e:
             return {
                 "success": False,
-                "error": f"Failed to collect metrics: {str(e)}",
+                "error": f"Failed to collect metrics: {e!s}",
                 "data": {
                     "timestamp": datetime.utcnow().isoformat() + "Z",
                     "cameras": {},
@@ -98,12 +98,11 @@ class GrafanaMetricsTool(BaseTool):
         month = datetime.now().month
         if month in [12, 1, 2]:
             return "winter"
-        elif month in [3, 4, 5]:
+        if month in [3, 4, 5]:
             return "spring"
-        elif month in [6, 7, 8]:
+        if month in [6, 7, 8]:
             return "summer"
-        else:
-            return "autumn"
+        return "autumn"
 
     def _is_heating_period(self) -> bool:
         """Check if it's heating period in Vienna (Oct-May)."""
@@ -146,7 +145,7 @@ class GrafanaMetricsTool(BaseTool):
             return 0
 
         except Exception as e:
-            logger.error(f"Failed to get motion events for {camera_id}: {e}")
+            logger.exception(f"Failed to get motion events for {camera_id}: {e}")
             return 0
 
     async def _get_last_motion_time(self, camera_id: str) -> str:

@@ -6,7 +6,7 @@ Comprehensive tests for all camera tools.
 import asyncio
 import os
 import sys
-import unittest.mock as mock
+from unittest import mock
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
@@ -432,7 +432,7 @@ def test_all_tools_metadata():
             # Tool should have execute method
             assert hasattr(tool_cls, "execute"), f"Tool {tool_cls.__name__} missing execute method"
             assert callable(
-                getattr(tool_cls, "execute")
+                tool_cls.execute
             ), f"Tool {tool_cls.__name__} execute should be callable"
 
         print(f"✅ All tools metadata test passed - validated {len(all_tools)} tools")

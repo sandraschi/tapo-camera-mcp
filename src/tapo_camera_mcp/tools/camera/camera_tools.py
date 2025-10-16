@@ -169,18 +169,17 @@ class ListCamerasTool(BaseTool):
                         )
 
                 return {"success": True, "cameras": cameras, "total": len(cameras)}
-            else:
-                return {
-                    "success": True,
-                    "cameras": [],
-                    "total": 0,
-                    "message": "No camera manager initialized",
-                }
+            return {
+                "success": True,
+                "cameras": [],
+                "total": 0,
+                "message": "No camera manager initialized",
+            }
         except Exception as e:
-            logger.error(f"Failed to list cameras: {e}")
+            logger.exception(f"Failed to list cameras: {e}")
             return {
                 "success": False,
-                "error": f"Failed to list cameras: {str(e)}",
+                "error": f"Failed to list cameras: {e!s}",
                 "cameras": [],
             }
 
@@ -388,8 +387,8 @@ class AddCameraTool(BaseTool):
                 "field": e.field,
             }
         except Exception as e:
-            logger.error(f"Failed to add camera {self.camera_name}: {e}")
-            return {"success": False, "error": f"Failed to add camera: {str(e)}"}
+            logger.exception(f"Failed to add camera {self.camera_name}: {e}")
+            return {"success": False, "error": f"Failed to add camera: {e!s}"}
 
 
 @tool("remove_camera")
@@ -595,14 +594,14 @@ class ConnectCameraTool(BaseTool):
                 "field": e.field,
             }
         except ConnectionError as e:
-            logger.error(f"Connection failed to camera {self.host}: {e}")
-            return {"success": False, "error": f"Connection failed: {str(e)}"}
+            logger.exception(f"Connection failed to camera {self.host}: {e}")
+            return {"success": False, "error": f"Connection failed: {e!s}"}
         except AuthenticationError as e:
-            logger.error(f"Authentication failed for camera {self.host}: {e}")
-            return {"success": False, "error": f"Authentication failed: {str(e)}"}
+            logger.exception(f"Authentication failed for camera {self.host}: {e}")
+            return {"success": False, "error": f"Authentication failed: {e!s}"}
         except Exception as e:
-            logger.error(f"Unexpected error connecting to camera {self.host}: {e}")
-            return {"success": False, "error": f"Connection error: {str(e)}"}
+            logger.exception(f"Unexpected error connecting to camera {self.host}: {e}")
+            return {"success": False, "error": f"Connection error: {e!s}"}
 
 
 @tool("disconnect_camera")
@@ -748,20 +747,19 @@ class ManageCameraGroupsTool(BaseTool):
 
         if self.action == "list":
             return await server.list_camera_groups()
-        elif self.action == "list_group":
+        if self.action == "list_group":
             if not self.group:
                 raise ValueError("Group name is required for list_group action")
             return await server.list_cameras_in_group(self.group)
-        elif self.action == "add":
+        if self.action == "add":
             if not self.group or not self.camera:
                 raise ValueError("Both group name and camera name are required for add action")
             return await server.add_camera_to_group(self.camera, self.group)
-        elif self.action == "remove":
+        if self.action == "remove":
             if not self.group or not self.camera:
                 raise ValueError("Both group name and camera name are required for remove action")
             return await server.remove_camera_from_group(self.camera, self.group)
-        else:
-            raise ValueError(f"Unknown action: {self.action}")
+        raise ValueError(f"Unknown action: {self.action}")
 
 
 # Register all tools

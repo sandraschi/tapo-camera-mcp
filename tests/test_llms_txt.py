@@ -204,7 +204,6 @@ def test_error_handling():
             generate_llms_txt(tmpdir)
 
     # Test with invalid base URL
-    with tempfile.TemporaryDirectory() as tmpdir:
-        with pytest.raises(ValueError):
-            generator = LLMsTxtGenerator("not-a-valid-url")
-            generator.write_files(tmpdir)
+    with tempfile.TemporaryDirectory() as tmpdir, pytest.raises(ValueError):
+        generator = LLMsTxtGenerator("not-a-valid-url")
+        generator.write_files(tmpdir)

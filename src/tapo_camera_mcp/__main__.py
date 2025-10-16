@@ -18,7 +18,7 @@ def main():
         logging.info("Server stopped by user")
         sys.exit(0)
     except Exception as e:
-        logging.error(f"Error running server: {e}")
+        logging.exception(f"Error running server: {e}")
         sys.exit(1)
 
 

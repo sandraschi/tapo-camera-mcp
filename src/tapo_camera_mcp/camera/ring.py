@@ -72,7 +72,7 @@ class RingCamera(BaseCamera):
 
         except Exception as e:
             self._is_connected = False
-            logger.error(f"Failed to connect to Ring: {e}")
+            logger.exception(f"Failed to connect to Ring: {e}")
             raise ConnectionError(f"Failed to connect to Ring: {e}")
 
     async def disconnect(self) -> None:
@@ -108,7 +108,7 @@ class RingCamera(BaseCamera):
 
         except Exception as e:
             self._is_connected = False
-            logger.error(f"Failed to capture image from Ring: {e}")
+            logger.exception(f"Failed to capture image from Ring: {e}")
             raise RuntimeError(f"Failed to capture image: {e}")
 
     async def get_stream_url(self) -> Optional[str]:
@@ -118,14 +118,13 @@ class RingCamera(BaseCamera):
 
         try:
             # Get live stream URL
-            stream_url = await asyncio.get_event_loop().run_in_executor(
+            return await asyncio.get_event_loop().run_in_executor(
                 None, lambda: self._device.recording_url()
             )
 
-            return stream_url
 
         except Exception as e:
-            logger.error(f"Failed to get stream URL from Ring: {e}")
+            logger.exception(f"Failed to get stream URL from Ring: {e}")
             return None
 
     async def get_status(self) -> Dict:
@@ -149,7 +148,7 @@ class RingCamera(BaseCamera):
 
         except Exception as e:
             self._is_connected = False
-            logger.error(f"Error getting Ring status: {e}")
+            logger.exception(f"Error getting Ring status: {e}")
             return {"connected": False, "error": str(e)}
 
     async def get_info(self) -> Dict:

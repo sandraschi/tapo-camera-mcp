@@ -5,6 +5,7 @@ This module provides real-time camera metrics in a format compatible with Grafan
 """
 
 import asyncio
+import contextlib
 import logging
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
@@ -70,10 +71,10 @@ class CameraMetrics:
             if data[field]:
                 data[field] = data[field].isoformat()
         # Convert Enum to string
-        if "status" in data and data["status"]:
+        if data.get("status"):
             data["status"] = data["status"].value
         # Convert PTZPosition to dict
-        if "ptz_position" in data and data["ptz_position"]:
+        if data.get("ptz_position"):
             data["ptz_position"] = asdict(data["ptz_position"])
         return data
 
@@ -104,10 +105,8 @@ class MetricsCollector:
         self._running = False
         if self._task:
             self._task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._task
-            except asyncio.CancelledError:
-                pass
         logger.info("Metrics collection service stopped")
 
     async def _collect_loop(self):
@@ -119,14 +118,14 @@ class MetricsCollector:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Error in metrics collection: {e}")
+                logger.exception(f"Error in metrics collection: {e}")
                 await asyncio.sleep(30)  # Wait before retry
 
     async def collect_metrics(self):
         """Collect metrics from all cameras"""
         # This would be implemented to collect actual metrics from Tapo cameras
         # For now, we'll just update the last_seen timestamp
-        for camera_id, metrics in self.metrics.items():
+        for _camera_id, metrics in self.metrics.items():
             if metrics.status == CameraStatus.ONLINE:
                 metrics.last_seen = datetime.now()
 
@@ -308,8 +307,8 @@ class MetricsServer:
             await self._server.serve()
 
         except ImportError as e:
-            logger.error(f"Failed to start metrics server: {e}")
-            logger.error(
+            logger.exception(f"Failed to start metrics server: {e}")
+            logger.exception(
                 "Please install the required dependencies with: pip install fastapi uvicorn"
             )
             raise

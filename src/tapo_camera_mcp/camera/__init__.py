@@ -28,7 +28,7 @@ except ImportError as e:
 
 from .webcam import WebCamera
 
-__all__ = ["TapoCamera", "PetcubeCamera", "WebCamera"]
+__all__ = ["PetcubeCamera", "TapoCamera", "WebCamera"]
 
 # Only add RingCamera to __all__ if it's available
 if RING_AVAILABLE:

@@ -15,10 +15,10 @@ from .integrations import (
 )
 
 __all__ = [
-    "SecurityDevice",
-    "SecurityAlert",
     "NestProtectClient",
     "RingMCPClient",
+    "SecurityAlert",
+    "SecurityDevice",
     "SecurityIntegrationManager",
     "security_manager",
 ]

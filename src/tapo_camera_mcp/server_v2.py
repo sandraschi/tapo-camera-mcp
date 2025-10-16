@@ -137,17 +137,14 @@ def main():
 
     except KeyboardInterrupt:
         logger.info("=== SERVER SHUTDOWN REQUESTED (Ctrl+C) ===")
-        print("Server shutdown requested", file=sys.stderr)
         sys.exit(0)
     except Exception as e:
         logger.error("=== SERVER FAILED TO START ===", exc_info=True)
-        logger.error(f"Error type: {type(e).__name__}")
-        logger.error(f"Error message: {e}")
-        print(f"Server failed to start: {e}", file=sys.stderr)
+        logger.exception(f"Error type: {type(e).__name__}")
+        logger.exception(f"Error message: {e}")
         sys.exit(1)
 
     logger.info("=== MAIN FUNCTION COMPLETE ===")
-    print("Main function completed", file=sys.stderr)
 
 
 if __name__ == "__main__":

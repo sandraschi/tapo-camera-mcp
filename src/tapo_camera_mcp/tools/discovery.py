@@ -42,7 +42,7 @@ def is_tool_class(obj: Any) -> bool:
 
         # Check if the Meta class has the required Parameters class (optional for Pydantic-based tools)
         # Some tools use Pydantic fields directly instead of Parameters classes
-        has_parameters = hasattr(obj.Meta, "Parameters")
+        hasattr(obj.Meta, "Parameters")
         # For now, we'll accept tools with or without Parameters classes
         # TODO: Standardize on one approach across all tools
 
@@ -80,7 +80,7 @@ def discover_tools(package: str = "tapo_camera_mcp.tools") -> List[Type[Any]]:
             logger.debug(f"Package {package} path: {package_path}")
 
             # Walk through all modules in the package
-            for finder, name, is_pkg in pkgutil.walk_packages(package_path, prefix=f"{package}."):
+            for _finder, name, _is_pkg in pkgutil.walk_packages(package_path, prefix=f"{package}."):
                 # Skip __pycache__ and other special directories
                 if any(part.startswith("__") for part in name.split(".")):
                     continue
@@ -109,15 +109,15 @@ def discover_tools(package: str = "tapo_camera_mcp.tools") -> List[Type[Any]]:
                     logger.warning(f"Could not import module {name}: {e}")
                     logger.debug(traceback.format_exc())
                 except Exception as e:
-                    logger.error(f"Error processing module {name}: {e}")
+                    logger.exception(f"Error processing module {name}: {e}")
                     logger.debug(traceback.format_exc())
 
         except ImportError as e:
-            logger.error(f"Failed to import package {package}: {e}")
+            logger.exception(f"Failed to import package {package}: {e}")
             logger.debug(traceback.format_exc())
 
     except Exception as e:
-        logger.error(f"Unexpected error in discover_tools: {e}")
+        logger.exception(f"Unexpected error in discover_tools: {e}")
         logger.debug(traceback.format_exc())
 
     logger.info(f"Discovered {len(tools)} tools from {package}")

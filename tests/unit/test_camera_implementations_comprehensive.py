@@ -6,7 +6,7 @@ Comprehensive tests for camera implementations (Tapo, Webcam, Ring, Furbo).
 import asyncio
 import os
 import sys
-import unittest.mock as mock
+from unittest import mock
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
@@ -261,8 +261,9 @@ def test_ring_camera_implementation():
 def test_furbo_camera_implementation():
     """Test Furbo camera implementation (if available)."""
     try:
-        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
         from tapo_camera_mcp.camera.furbo import FurboCamera
+
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
 
         # Create Furbo camera config
         furbo_config = CameraConfig(

@@ -231,9 +231,8 @@ def test_real_camera_operations():
                 f"✅ Real camera operations test PASSED: {frames_captured} frames processed"
             )
             return True
-        else:
-            logger.error("❌ No frames captured from webcam!")
-            return False
+        logger.error("❌ No frames captured from webcam!")
+        return False
 
     except Exception as e:
         logger.error(f"❌ Real camera operations test failed: {e}")

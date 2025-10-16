@@ -27,7 +27,7 @@ def main():
     # Test importing base_tool
     print_section("Testing base_tool Import")
     try:
-        import tapo_camera_mcp.tools.base_tool as base_tool
+        from tapo_camera_mcp.tools import base_tool
 
         print("✅ Successfully imported tapo_camera_mcp.tools.base_tool")
         print(f"  Location: {base_tool.__file__}")

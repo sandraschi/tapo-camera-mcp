@@ -155,10 +155,7 @@ class ConfigManager:
                 yaml.safe_dump(default_config, f, default_flow_style=False, sort_keys=False)
         except PermissionError:
             # If we can't write to the specified path, create a warning but don't crash
-            print(
-                f"Warning: Cannot write config to {path}. Using read-only mode.",
-                file=sys.stderr,
-            )
+            pass
 
     def load_config(self) -> Dict[str, Any]:
         """Load configuration from file.
@@ -180,7 +177,7 @@ class ConfigManager:
             }
 
         try:
-            with open(self.config_path, "r", encoding="utf-8") as f:
+            with open(self.config_path, encoding="utf-8") as f:
                 if self.config_path.suffix.lower() in (".yaml", ".yml"):
                     config = yaml.safe_load(f)
                 elif self.config_path.suffix.lower() == ".json":
@@ -195,11 +192,7 @@ class ConfigManager:
             self._config_cache = config
             return config
 
-        except Exception as e:
-            print(
-                f"Warning: Error loading config from {self.config_path}: {e}",
-                file=sys.stderr,
-            )
+        except Exception:
             # Return minimal config on error
             return {
                 "host": "0.0.0.0",
@@ -278,18 +271,17 @@ class ConfigManager:
                 cache_dir=Path(config.get("cache_dir", "cache")),
                 api_key=config.get("api_key"),
             )
-        elif hasattr(model_class, "model_validate"):
+        if hasattr(model_class, "model_validate"):
             # Handle Pydantic v2 models
             model_config = config.get(model_name, {})
             return model_class.model_validate(model_config)
-        elif hasattr(model_class, "parse_obj"):
+        if hasattr(model_class, "parse_obj"):
             # Handle Pydantic v1 models
             model_config = config.get(model_name, {})
             return model_class.parse_obj(model_config)
-        else:
-            # Handle dataclasses
-            model_config = config.get(model_name, {})
-            return model_class(**model_config)
+        # Handle dataclasses
+        model_config = config.get(model_name, {})
+        return model_class(**model_config)
 
 
 # Global configuration instance
@@ -302,15 +294,15 @@ get_model = config_manager.get_model
 
 # Export models and utilities
 __all__ = [
-    "ServerConfig",
     "CameraConfig",
-    "WebUISettings",
-    "SecuritySettings",
-    "LoggingSettings",
-    "StorageSettings",
     "ConfigManager",
+    "LoggingSettings",
+    "SecuritySettings",
+    "ServerConfig",
+    "StorageSettings",
+    "WebUISettings",
     "config_manager",
     "get_config",
-    "get_setting",
     "get_model",
+    "get_setting",
 ]

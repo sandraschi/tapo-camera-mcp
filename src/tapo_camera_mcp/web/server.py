@@ -220,7 +220,7 @@ class WebServer:
                 cameras_data.append(camera_info)
 
         except Exception as e:
-            logger.error(f"Error getting cameras data: {e}")
+            logger.exception(f"Error getting cameras data: {e}")
             cameras_data = []
 
         return self.templates.TemplateResponse(
@@ -280,8 +280,7 @@ class WebServer:
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
                 server = await TapoCameraServer.get_instance()
-                cameras_data = await server.list_cameras()
-                return cameras_data
+                return await server.list_cameras()
             except Exception as e:
                 return {"success": False, "error": str(e), "cameras": []}
 
@@ -308,7 +307,7 @@ class WebServer:
                                 media_type="multipart/x-mixed-replace; boundary=frame",
                             )
                         # For Tapo cameras, return RTSP stream URL
-                        elif camera_type == "tapo":
+                        if camera_type == "tapo":
                             stream_url = await camera.get_stream_url()
                             if stream_url:
                                 return {"stream_url": stream_url, "type": "rtsp"}
@@ -341,7 +340,7 @@ class WebServer:
 
                 return Response(content="Camera not found", status_code=404)
             except Exception as e:
-                return Response(content=f"Error: {str(e)}", status_code=500)
+                return Response(content=f"Error: {e!s}", status_code=500)
 
         # Camera control endpoints
         @self.app.post("/api/cameras/{camera_id}/control")
@@ -360,26 +359,26 @@ class WebServer:
                             stream_url = await camera.get_stream_url()
                             return {"success": True, "stream_url": stream_url}
 
-                        elif action == "stop_stream":
+                        if action == "stop_stream":
                             # Stop streaming
                             await camera.disconnect()
                             return {"success": True}
 
-                        elif action == "start_audio":
+                        if action == "start_audio":
                             # Start audio recording (this is client-side)
                             return {
                                 "success": True,
                                 "message": "Audio recording started on client",
                             }
 
-                        elif action == "stop_audio":
+                        if action == "stop_audio":
                             # Stop audio recording (this is client-side)
                             return {
                                 "success": True,
                                 "message": "Audio recording stopped on client",
                             }
 
-                        elif action == "snapshot":
+                        if action == "snapshot":
                             # Take snapshot
                             image = await camera.capture_still()
                             import io
@@ -607,7 +606,7 @@ class WebServer:
                 logger.info(f"Settings update requested: {settings}")
                 return {"status": "success", "message": "Settings saved successfully"}
             except Exception as e:
-                logger.error(f"Error saving settings: {e}")
+                logger.exception(f"Error saving settings: {e}")
                 return {"status": "error", "message": str(e)}
 
     async def _generate_webcam_stream(self, camera) -> Generator[bytes, None, None]:
@@ -645,7 +644,7 @@ class WebServer:
                     await asyncio.sleep(0.033)  # ~30 FPS
 
         except Exception as e:
-            logger.error(f"Error generating webcam stream: {e}")
+            logger.exception(f"Error generating webcam stream: {e}")
             # Send error frame
             error_frame = (
                 b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"

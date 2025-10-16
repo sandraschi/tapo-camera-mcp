@@ -39,9 +39,8 @@ class ToolResult(BaseModel):
             if inspect.iscoroutinefunction(execute_method):
                 # Return the coroutine directly - let caller handle await
                 return execute_method(**kwargs)
-            else:
-                # Call sync execute method directly
-                return execute_method(**kwargs)
+            # Call sync execute method directly
+            return execute_method(**kwargs)
 
         # Fallback: raise error if no execute method
         raise NotImplementedError("Tool must implement execute method")
@@ -169,7 +168,7 @@ class BaseTool(BaseModel):
 
 
 def tool(
-    name: str = None,
+    name: Optional[str] = None,
     description: str = "",
     category: "ToolCategory" = ToolCategory.UTILITY,
     **extra_metadata,
@@ -199,13 +198,13 @@ def tool(
 
         # Set the tool name (default to class name if not provided)
         tool_name = name or cls.__name__.replace("Tool", "").lower()
-        setattr(cls.Meta, "name", tool_name)
+        cls.Meta.name = tool_name
 
         # Set description and category
         if description:
-            setattr(cls.Meta, "description", description)
+            cls.Meta.description = description
         if category:
-            setattr(cls.Meta, "category", category)
+            cls.Meta.category = category
 
         # Set additional metadata
         for key, value in extra_metadata.items():

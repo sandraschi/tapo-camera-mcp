@@ -107,7 +107,7 @@ class HealthCheckTool(BaseTool):
             return result.dict()
 
         except Exception as e:
-            logger.error(f"Health check failed: {e}")
+            logger.exception(f"Health check failed: {e}")
             response_time_ms = (time.time() - start_time) * 1000
             return HealthCheckResult(
                 status="critical",
@@ -144,7 +144,7 @@ class HealthCheckTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Server health check failed: {e}")
+            logger.exception(f"Server health check failed: {e}")
             return {"status": "critical", "error": str(e), "issues": [str(e)]}
 
     async def _check_system_health(self) -> Dict[str, Any]:
@@ -192,7 +192,7 @@ class HealthCheckTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"System health check failed: {e}")
+            logger.exception(f"System health check failed: {e}")
             return {"status": "critical", "error": str(e), "issues": [str(e)]}
 
     async def _check_camera_health(self) -> Dict[str, Any]:
@@ -222,7 +222,7 @@ class HealthCheckTool(BaseTool):
                     else:
                         issues.append(f"Camera {camera.id} is offline")
                 except Exception as e:
-                    issues.append(f"Error checking camera {camera.id}: {str(e)}")
+                    issues.append(f"Error checking camera {camera.id}: {e!s}")
 
             # Overall camera health
             if total_cameras == 0:
@@ -243,7 +243,7 @@ class HealthCheckTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Camera health check failed: {e}")
+            logger.exception(f"Camera health check failed: {e}")
             return {"status": "critical", "error": str(e), "issues": [str(e)]}
 
     async def _get_performance_metrics(self) -> Dict[str, Any]:
@@ -276,5 +276,5 @@ class HealthCheckTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Performance metrics failed: {e}")
+            logger.exception(f"Performance metrics failed: {e}")
             return {"status": "warning", "error": str(e)}

@@ -80,7 +80,7 @@ class TapoCameraServer:
                     else:
                         logger.warning(f"Failed to load camera: {camera_name}")
                 except Exception as e:
-                    logger.error(f"Error loading camera {camera_name}: {e}")
+                    logger.exception(f"Error loading camera {camera_name}: {e}")
 
         # Register all tools
         await self._register_tools()
@@ -175,24 +175,24 @@ async def tool_wrapper("""
 
         # Create tool instance with parameters
         tool_instance = tool_cls(**kwargs)
-        
+
         # If the tool has an async initialize method, call it
         if hasattr(tool_instance, 'initialize') and callable(tool_instance.initialize):
             if asyncio.iscoroutinefunction(tool_instance.initialize):
                 await tool_instance.initialize()
             else:
                 tool_instance.initialize()
-        
+
         # Call the tool's execute method
         if hasattr(tool_instance, 'execute'):
             execute_method = tool_instance.execute
-            
+
             # Handle both sync and async execute methods
             if asyncio.iscoroutinefunction(execute_method):
                 result = await execute_method()
             else:
                 result = execute_method()
-                
+
             # Handle the result
             if isinstance(result, ToolResult):
                 return {
@@ -210,7 +210,7 @@ async def tool_wrapper("""
             raise ValueError("Tool """
                     + tool_name
                     + """ has no execute method")
-            
+
     except Exception as e:
         error_msg = "Error executing tool """
                     + tool_name
@@ -267,16 +267,14 @@ async def tool_wrapper("""
                                     "content": result.content,
                                     "is_error": result.is_error,
                                 }
-                            elif isinstance(result, dict):
+                            if isinstance(result, dict):
                                 return result
-                            else:
-                                return {"content": str(result), "is_error": False}
-                        else:
-                            raise ValueError(f"Tool {tool_name} has no execute method")
+                            return {"content": str(result), "is_error": False}
+                        raise ValueError(f"Tool {tool_name} has no execute method")
 
                     except Exception as e:
                         error_msg = f"Error executing tool {tool_name}: {e}"
-                        logger.error(error_msg)
+                        logger.exception(error_msg)
                         logger.exception("Full traceback:")
                         return {"content": error_msg, "is_error": True}
 
