@@ -393,6 +393,23 @@ class WebServer:
             except Exception as e:
                 return {"error": str(e)}
 
+        # Include onboarding API routes
+        from .api.onboarding import router as onboarding_router
+        self.app.include_router(onboarding_router)
+
+        # Onboarding route
+        @self.app.get("/onboarding", response_class=HTMLResponse, name="onboarding")
+        async def onboarding_page(request: Request):
+            """Serve the onboarding dashboard page."""
+            return self.templates.TemplateResponse(
+                "onboarding.html",
+                {
+                    "request": request,
+                    "title": "Device Onboarding - Tapo Camera MCP",
+                    "description": "Set up your Tapo P115 smart plugs, Nest Protect devices, Ring alarms, and USB webcams",
+                },
+            )
+
         # Web UI routes
         @self.app.get("/", response_class=HTMLResponse, name="dashboard")
         async def index(request: Request):
