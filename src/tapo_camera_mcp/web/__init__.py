@@ -15,7 +15,9 @@ from fastapi.templating import Jinja2Templates
 from ..config import ServerConfig
 
 # Re-export models for external use
-from ..core.models import CameraInfo as CameraInfo, CameraStatus as CameraStatus, PTZPosition as PTZPosition
+from ..core.models import CameraInfo as CameraInfo
+from ..core.models import CameraStatus as CameraStatus
+from ..core.models import PTZPosition as PTZPosition
 from ..utils import get_logger
 
 logger = get_logger(__name__)
