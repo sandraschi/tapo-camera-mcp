@@ -4,18 +4,18 @@ Tapo Camera MCP Web Interface
 This module provides the web interface for the Tapo Camera MCP server.
 """
 
-import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.security import APIKeyCookie
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from ..config import ServerConfig
-from ..core.models import CameraInfo, CameraStatus, PTZPosition
+
+# Re-export models for external use
+from ..core.models import CameraInfo as CameraInfo, CameraStatus as CameraStatus, PTZPosition as PTZPosition
 from ..utils import get_logger
 
 logger = get_logger(__name__)
@@ -128,7 +128,7 @@ class WebServer:
             return {"status": "success", "data": {"id": camera_id}}
 
         @self.app.get("/api/cameras/{camera_id}/snapshot")
-        async def get_camera_snapshot(camera_id: str):
+        async def get_camera_snapshot(camera_id: str):  # noqa: ARG001
             """Get a snapshot from a camera."""
             # This would fetch a real snapshot
             snapshot_path = Path(__file__).parent / "static" / "img" / "placeholder.jpg"

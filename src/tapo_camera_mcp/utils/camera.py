@@ -79,8 +79,8 @@ class CameraManager:
             return camera
 
         except Exception as e:
-            logger.exception(f"Failed to add camera {camera_config.get('name')}: {e}")
-            raise CameraConnectionError(f"Failed to add camera: {e}")
+            logger.exception("Failed to add camera %s", camera_config.get('name'))
+            raise CameraConnectionError(f"Failed to add camera: {e}") from e
 
     async def remove_camera(self, camera_id: str) -> bool:
         """
@@ -139,7 +139,7 @@ class CameraManager:
             resolution="1920x1080",  # Example
         )
 
-    async def get_ptz_position(self, camera_id: str) -> PTZPosition:
+    async def get_ptz_position(self, camera_id: str) -> PTZPosition:  # noqa: ARG002
         """
         Get the current PTZ position of a camera.
 
@@ -172,7 +172,7 @@ class CameraManager:
         # This would contain actual PTZ movement logic
         logger.info(f"Moving camera {camera_id} {direction} at speed {speed}")
 
-    async def take_snapshot(self, camera_id: str) -> bytes:
+    async def take_snapshot(self, camera_id: str) -> bytes:  # noqa: ARG002
         """
         Take a snapshot from the camera.
 
@@ -222,6 +222,6 @@ class CameraManager:
                 status = await self.get_camera_status(camera_id)
                 self.cameras[camera_id].is_online = status.is_online
                 self.cameras[camera_id].last_seen = status.last_seen
-            except Exception as e:
-                logger.exception(f"Error refreshing camera {camera_id}: {e}")
+            except Exception:
+                logger.exception("Error refreshing camera %s", camera_id)
                 self.cameras[camera_id].is_online = False

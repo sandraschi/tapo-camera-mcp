@@ -12,7 +12,9 @@ import re
 from enum import Enum
 from typing import Any, Callable, Optional, Type, Union, get_type_hints
 
-from pydantic import ValidationError
+from pydantic import ValidationError as PydanticValidationError
+
+from tapo_camera_mcp.tools.base_tool import ToolResult
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +89,7 @@ def validate_port(value: Union[int, str], field_name: str) -> int:
             raise ToolValidationError(f"Field '{field_name}' must be between 1 and 65535")
         return port
     except (ValueError, TypeError):
-        raise ToolValidationError(f"Field '{field_name}' must be a valid port number")
+        raise ToolValidationError(f"Field '{field_name}' must be a valid port number") from None
 
 
 def validate_enum_value(value: Any, field_name: str, enum_class: Type[Enum]) -> Any:
@@ -98,7 +100,7 @@ def validate_enum_value(value: Any, field_name: str, enum_class: Type[Enum]) -> 
             return enum_class(value)
         except (ValueError, TypeError):
             valid_values = [e.value for e in enum_class]
-            raise ToolValidationError(f"Field '{field_name}' must be one of: {valid_values}")
+            raise ToolValidationError(f"Field '{field_name}' must be one of: {valid_values}") from None
 
     return value
 
@@ -173,11 +175,11 @@ def validate_tool_input(func: Callable) -> Callable:
             # Execute the original function
             return await func(*args, **kwargs)
 
-        except ValidationError as e:
+        except PydanticValidationError as e:
             logger.exception(f"Input validation failed for {func.__name__}: {e.message}")
             return ToolResult(content={"error": e.message, "field": e.field}, is_error=True)
         except Exception as e:
-            logger.exception(f"Unexpected error in {func.__name__}: {e!s}")
+            logger.exception("Unexpected error in %s", func.__name__)
             return ToolResult(content={"error": f"Internal error: {e!s}"}, is_error=True)
 
     return wrapper
@@ -202,28 +204,28 @@ def handle_tool_errors(func: Callable) -> Callable:
 
             return result
 
-        except ValidationError as e:
+        except PydanticValidationError as e:
             logger.warning(f"Validation error in {func.__name__}: {e.message}")
             return ToolResult(
                 content={"error": e.message, "type": "validation_error"}, is_error=True
             )
 
         except ConnectionError as e:
-            logger.exception(f"Connection error in {func.__name__}: {e!s}")
+            logger.exception("Connection error in %s", func.__name__)
             return ToolResult(
                 content={"error": "Camera connection failed", "details": str(e)},
                 is_error=True,
             )
 
         except TimeoutError as e:
-            logger.exception(f"Timeout error in {func.__name__}: {e!s}")
+            logger.exception("Timeout error in %s", func.__name__)
             return ToolResult(
                 content={"error": "Operation timed out", "details": str(e)},
                 is_error=True,
             )
 
         except PermissionError as e:
-            logger.exception(f"Permission error in {func.__name__}: {e!s}")
+            logger.exception("Permission error in %s", func.__name__)
             return ToolResult(
                 content={"error": "Permission denied", "details": str(e)}, is_error=True
             )
@@ -259,5 +261,3 @@ def safe_execute(func: Callable) -> Callable:
     return wrapper
 
 
-# Import required modules for type checking
-from tapo_camera_mcp.tools.base_tool import ToolResult

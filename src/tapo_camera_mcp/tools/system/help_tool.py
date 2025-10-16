@@ -33,10 +33,10 @@ class HelpTool(BaseTool):
             "troubleshooting": self._get_troubleshooting_help(),
         }
 
-        if section == "all":
+        if self.section == "all":
             return {"status": "success", "help": "\n\n".join(help_sections.values())}
         help_text = help_sections.get(
-            section, "Invalid help section. Try: " + ", ".join(help_sections.keys())
+            self.section, "Invalid help section. Try: " + ", ".join(help_sections.keys())
         )
         return {"status": "success", "help": help_text}
 

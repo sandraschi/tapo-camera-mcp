@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class WebServer:
     """Web server for Tapo Camera MCP."""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None):  # noqa: ARG002
         """Initialize the web server.
 
         Args:
@@ -219,8 +219,8 @@ class WebServer:
 
                 cameras_data.append(camera_info)
 
-        except Exception as e:
-            logger.exception(f"Error getting cameras data: {e}")
+        except Exception:
+            logger.exception("Error getting cameras data")
             cameras_data = []
 
         return self.templates.TemplateResponse(
@@ -533,7 +533,7 @@ class WebServer:
 
         # 404 handler
         @self.app.exception_handler(404)
-        async def not_found(request: Request, exc: StarletteHTTPException):
+        async def not_found(request: Request, exc: StarletteHTTPException):  # noqa: ARG001
             if request.url.path.startswith("/api/"):
                 return JSONResponse(
                     status_code=404,
@@ -577,7 +577,7 @@ class WebServer:
                     server = await TapoCameraServer.get_instance()
                     cameras = await server.camera_manager.list_cameras()
                     camera_count = len(cameras)
-                except:
+                except Exception:
                     pass
 
                 return {
@@ -606,7 +606,7 @@ class WebServer:
                 logger.info(f"Settings update requested: {settings}")
                 return {"status": "success", "message": "Settings saved successfully"}
             except Exception as e:
-                logger.exception(f"Error saving settings: {e}")
+                logger.exception("Error saving settings")
                 return {"status": "error", "message": str(e)}
 
     async def _generate_webcam_stream(self, camera) -> Generator[bytes, None, None]:
@@ -643,8 +643,8 @@ class WebServer:
                     # Control frame rate
                     await asyncio.sleep(0.033)  # ~30 FPS
 
-        except Exception as e:
-            logger.exception(f"Error generating webcam stream: {e}")
+        except Exception:
+            logger.exception("Error generating webcam stream")
             # Send error frame
             error_frame = (
                 b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"

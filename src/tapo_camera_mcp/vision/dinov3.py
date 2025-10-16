@@ -4,7 +4,6 @@ from typing import Dict, List, Union
 
 import numpy as np
 import torch
-import torchvision.transforms as T
 from PIL import Image
 
 
@@ -37,17 +36,17 @@ class DINOv3Processor:
             self.model.eval()
 
             # Initialize transforms
-            self.transform = T.Compose(
+            self.transform = transforms.Compose(
                 [
-                    T.Resize(256, interpolation=T.InterpolationMode.BICUBIC),
-                    T.CenterCrop(224),
-                    T.ToTensor(),
-                    T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                    transforms.Resize(256, interpolation=transforms.InterpolationMode.BICUBIC),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                 ]
             )
 
         except Exception as e:
-            raise RuntimeError(f"Failed to initialize DINOv3 model: {e!s}")
+            raise RuntimeError(f"Failed to initialize DINOv3 model: {e!s}") from e
 
     @torch.no_grad()
     def extract_features(self, image: Union[Image.Image, str, np.ndarray]) -> torch.Tensor:
