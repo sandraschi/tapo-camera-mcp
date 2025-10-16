@@ -23,7 +23,7 @@ class ToolResult(BaseModel, Generic[T]):
     data: T = Field(default=None, description="Result data if successful")
 
     @classmethod
-    def success(cls, message: str, data: T = None) -> "ToolResult[T]":
+    def success_result(cls, message: str, data: T = None) -> "ToolResult[T]":
         """Create a successful result."""
         return cls(success=True, message=message, data=data)
 

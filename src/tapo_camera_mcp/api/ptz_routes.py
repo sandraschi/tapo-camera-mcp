@@ -100,7 +100,7 @@ async def move_ptz(
         }
     except Exception as e:
         logger.exception(f"Failed to move PTZ: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/zoom", status_code=status.HTTP_202_ACCEPTED)
@@ -124,7 +124,7 @@ async def zoom_ptz(
         return {"status": "success", "message": f"Zooming {zoom_request.direction}"}
     except Exception as e:
         logger.exception(f"Failed to zoom: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/stop", status_code=status.HTTP_202_ACCEPTED)
@@ -135,7 +135,7 @@ async def stop_ptz(camera_id: str, camera_client: Any = Depends(get_camera_clien
         return {"status": "success", "message": "PTZ movement stopped"}
     except Exception as e:
         logger.exception(f"Failed to stop PTZ: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/presets", response_model=List[PTZPresetResponse])
@@ -147,7 +147,7 @@ async def list_presets(camera_id: str, camera_client: Any = Depends(get_camera_c
         return ptz_managers[camera_id].get_presets()
     except Exception as e:
         logger.exception(f"Failed to list PTZ presets: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/presets", status_code=status.HTTP_201_CREATED, response_model=PTZPresetResponse)
@@ -175,7 +175,7 @@ async def create_preset(
         )
     except Exception as e:
         logger.exception(f"Failed to create PTZ preset: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/presets/{preset_id}", response_model=PTZPresetResponse)
@@ -196,7 +196,7 @@ async def get_preset(
         raise
     except Exception as e:
         logger.exception(f"Failed to get PTZ preset: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.put("/presets/{preset_id}", response_model=PTZPresetResponse)
@@ -233,7 +233,7 @@ async def update_preset(
         raise
     except Exception as e:
         logger.exception(f"Failed to update PTZ preset: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.delete("/presets/{preset_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -254,7 +254,7 @@ async def delete_preset(
         raise
     except Exception as e:
         logger.exception(f"Failed to delete PTZ preset: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/presets/{preset_id}/recall", status_code=status.HTTP_202_ACCEPTED)
@@ -275,7 +275,7 @@ async def recall_preset(
         raise
     except Exception as e:
         logger.exception(f"Failed to recall PTZ preset: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # Helper function to get camera client (would be implemented in your auth/dependency system)

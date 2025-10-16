@@ -47,7 +47,7 @@ class WebCamera(BaseCamera):
             if self._cap:
                 self._cap.release()
                 self._cap = None
-            raise ConnectionError(f"Failed to connect to webcam: {e}")
+            raise ConnectionError(f"Failed to connect to webcam: {e}") from e
 
     async def disconnect(self) -> None:
         """Close connection to the webcam."""
@@ -85,7 +85,7 @@ class WebCamera(BaseCamera):
 
         except Exception as e:
             self._is_connected = False
-            raise RuntimeError(f"Failed to capture image: {e}")
+            raise RuntimeError(f"Failed to capture image: {e}") from e
 
     async def get_stream_url(self) -> Optional[str]:
         """Webcams typically don't have a stream URL."""
@@ -103,8 +103,8 @@ class WebCamera(BaseCamera):
                 height = int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
                 if width > 0 and height > 0:
                     resolution = f"{width}x{height}"
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Failed to get webcam resolution: %s", exc)
 
         return {
             "connected": connected,

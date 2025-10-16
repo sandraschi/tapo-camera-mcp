@@ -47,7 +47,7 @@ class RingCamera(BaseCamera):
                 if not all(k in self.config.params for k in ["username", "password"]):
                     raise ValueError(
                         "Ring authentication requires either a token or username/password"
-                    )
+                    ) from e
 
                 await asyncio.get_event_loop().run_in_executor(
                     None,
@@ -73,7 +73,7 @@ class RingCamera(BaseCamera):
         except Exception as e:
             self._is_connected = False
             logger.exception(f"Failed to connect to Ring: {e}")
-            raise ConnectionError(f"Failed to connect to Ring: {e}")
+            raise ConnectionError(f"Failed to connect to Ring: {e}") from e
 
     async def disconnect(self) -> None:
         """Close connection to the camera."""
@@ -109,7 +109,7 @@ class RingCamera(BaseCamera):
         except Exception as e:
             self._is_connected = False
             logger.exception(f"Failed to capture image from Ring: {e}")
-            raise RuntimeError(f"Failed to capture image: {e}")
+            raise RuntimeError(f"Failed to capture image: {e}") from e
 
     async def get_stream_url(self) -> Optional[str]:
         """Get the stream URL for the camera."""

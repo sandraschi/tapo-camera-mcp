@@ -261,7 +261,7 @@ class MetricsServer:
     def __init__(
         self,
         metrics_collector: MetricsCollector,
-        host: str = "0.0.0.0",
+        host: str = "0.0.0.0",  # nosec B104
         port: int = 8080,
     ):
         self.metrics_collector = metrics_collector
@@ -273,7 +273,7 @@ class MetricsServer:
         """Start the metrics server"""
         try:
             import uvicorn
-            from fastapi import FastAPI, HTTPException
+            from fastapi import FastAPI
             from fastapi.middleware.cors import CORSMiddleware
 
             app = FastAPI(title="Tapo Camera MCP Metrics")

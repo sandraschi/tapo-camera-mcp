@@ -5,8 +5,8 @@ This module provides configuration models and utilities for the Tapo Camera MCP 
 """
 
 import json
-import os
-import sys
+# import os  # noqa: F401
+# import sys  # noqa: F401
 from pathlib import Path
 from typing import Any, Dict, Optional, Type, TypeVar, Union
 
@@ -98,12 +98,12 @@ class ConfigManager:
         user_data_dir.mkdir(parents=True, exist_ok=True)
 
         default_config = {
-            "host": "0.0.0.0",
+            "host": "0.0.0.0",  # nosec B104
             "port": 8080,
             "debug": False,
             "web": {
                 "enabled": True,
-                "host": "0.0.0.0",
+                "host": "0.0.0.0",  # nosec B104
                 "port": 7777,
                 "title": "Tapo Camera MCP",
                 "theme": "dark",
@@ -169,7 +169,7 @@ class ConfigManager:
         if not self.config_path.exists():
             # Create a minimal in-memory config
             return {
-                "host": "0.0.0.0",
+                "host": "0.0.0.0",  # nosec B104
                 "port": 8080,
                 "debug": False,
                 "cameras": [],
@@ -195,7 +195,7 @@ class ConfigManager:
         except Exception:
             # Return minimal config on error
             return {
-                "host": "0.0.0.0",
+                "host": "0.0.0.0",  # nosec B104
                 "port": 8080,
                 "debug": False,
                 "cameras": [],

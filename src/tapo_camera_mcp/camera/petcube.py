@@ -167,7 +167,7 @@ class PetcubeCamera(BaseCamera):
         except Exception as e:
             self._is_connected = False
             logger.exception(f"Failed to connect to Petcube camera: {e}")
-            raise ConnectionError(f"Failed to connect to Petcube camera: {e}")
+            raise ConnectionError(f"Failed to connect to Petcube camera: {e}") from e
 
     async def disconnect(self) -> None:
         """Close connection to the camera."""
@@ -215,7 +215,7 @@ class PetcubeCamera(BaseCamera):
 
         except Exception as e:
             self._is_connected = False
-            raise RuntimeError(f"Failed to capture image: {e}")
+            raise RuntimeError(f"Failed to capture image: {e}") from e
 
     async def get_stream_url(self) -> Optional[str]:
         """Get the video stream URL."""

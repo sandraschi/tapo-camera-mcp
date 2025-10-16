@@ -182,7 +182,7 @@ class TapoCameraDualServer:
 
             except Exception as e:
                 logger.exception(f"Error listing cameras: {e}")
-                raise HTTPException(status_code=500, detail="Failed to list cameras")
+                raise HTTPException(status_code=500, detail="Failed to list cameras") from e
 
         # Get camera details endpoint
         @app.get("/api/cameras/{camera_id}", response_model=CameraInfo)
@@ -209,7 +209,7 @@ class TapoCameraDualServer:
                 raise
             except Exception as e:
                 logger.exception(f"Error getting camera {camera_id}: {e}")
-                raise HTTPException(status_code=500, detail="Failed to get camera")
+                raise HTTPException(status_code=500, detail="Failed to get camera") from e
 
         # Get camera stream endpoint
         @app.get("/api/cameras/{camera_id}/stream", response_model=StreamResponse)
@@ -226,7 +226,7 @@ class TapoCameraDualServer:
 
             except Exception as e:
                 logger.exception(f"Error getting stream for camera {camera_id}: {e}")
-                raise HTTPException(status_code=500, detail="Failed to get stream")
+                raise HTTPException(status_code=500, detail="Failed to get stream") from e
 
         # Capture snapshot endpoint
         @app.post("/api/cameras/{camera_id}/snapshot")
@@ -258,7 +258,7 @@ class TapoCameraDualServer:
                 raise
             except Exception as e:
                 logger.exception(f"Error capturing snapshot for camera {camera_id}: {e}")
-                raise HTTPException(status_code=500, detail="Failed to capture snapshot")
+                raise HTTPException(status_code=500, detail="Failed to capture snapshot") from e
 
         return app
 
@@ -274,7 +274,7 @@ class TapoCameraDualServer:
             logger.exception(f"Failed to start MCP server: {e}")
             raise
 
-    async def start_rest_server(self, host: str = "0.0.0.0", port: int = 8123):
+    async def start_rest_server(self, host: str = "0.0.0.0", port: int = 8123):  # nosec B104
         """Start the REST API server"""
         try:
             logger.info(f"Starting REST API server on {host}:{port}")
@@ -287,7 +287,7 @@ class TapoCameraDualServer:
             logger.exception(f"Failed to start REST API server: {e}")
             raise
 
-    async def start_dual_server(self, rest_host: str = "0.0.0.0", rest_port: int = 8123):
+    async def start_dual_server(self, rest_host: str = "0.0.0.0", rest_port: int = 8123):  # nosec B104
         """Start both MCP and REST servers concurrently"""
         logger.info("Starting dual interface server (MCP + REST API)")
 
@@ -321,7 +321,7 @@ async def start_dual_server():
     await dual_server.start_dual_server()
 
 
-async def start_rest_only_server(host: str = "0.0.0.0", port: int = 8123):
+async def start_rest_only_server(host: str = "0.0.0.0", port: int = 8123):  # nosec B104
     """Convenience function to start REST API only"""
     await dual_server.start_rest_server(host, port)
 

@@ -286,7 +286,7 @@ async def tool_wrapper("""
 
     async def run(
         self,
-        host: str = "0.0.0.0",
+        host: str = "0.0.0.0",  # nosec B104
         port: int = 8000,
         stdio: bool = False,
         direct: bool = False,

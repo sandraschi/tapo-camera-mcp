@@ -577,8 +577,8 @@ class WebServer:
                     server = await TapoCameraServer.get_instance()
                     cameras = await server.camera_manager.list_cameras()
                     camera_count = len(cameras)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("Failed to get camera count: %s", exc)
 
                 return {
                     "status": "success",

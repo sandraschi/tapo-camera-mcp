@@ -36,7 +36,7 @@ class TapoCamera(BaseCamera):
             return True
         except Exception as e:
             self._is_connected = False
-            raise ConnectionError(f"Failed to connect to Tapo camera: {e}")
+            raise ConnectionError(f"Failed to connect to Tapo camera: {e}") from e
 
     async def disconnect(self) -> None:
         """Close connection to the camera."""
@@ -67,7 +67,7 @@ class TapoCamera(BaseCamera):
 
         except Exception as e:
             self._is_connected = False
-            raise RuntimeError(f"Failed to capture image: {e}")
+            raise RuntimeError(f"Failed to capture image: {e}") from e
 
     async def get_stream_url(self) -> Optional[str]:
         """Get the RTSP stream URL for the camera."""
@@ -85,7 +85,7 @@ class TapoCamera(BaseCamera):
                     host = self.config.params["host"]
                     self._stream_url = f"rtsp://{username}:{password}@{host}/stream1"
             except Exception as e:
-                raise RuntimeError(f"Failed to get stream URL: {e}")
+                raise RuntimeError(f"Failed to get stream URL: {e}") from e
 
         return self._stream_url
 
@@ -115,9 +115,9 @@ class TapoCamera(BaseCamera):
                         height = res_info.get("height", "Unknown")
                         if width != "Unknown" and height != "Unknown":
                             resolution = f"{width}x{height}"
-            except Exception:
+            except Exception as exc:
                 # Fallback to basic resolution detection
-                pass
+                logger.debug("Failed to get detailed resolution info: %s", exc)
 
             # Check PTZ capability (most Tapo cameras have PTZ)
             ptz_capable = True  # Assume true for Tapo cameras, could be enhanced
@@ -130,8 +130,8 @@ class TapoCamera(BaseCamera):
                 )
                 if audio_config and audio_config.get("enabled", False):
                     audio_capable = True
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Failed to get audio capability: %s", exc)
 
             return {
                 "connected": True,

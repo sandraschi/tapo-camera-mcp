@@ -13,7 +13,7 @@ import pkgutil
 from importlib import import_module
 
 # Import types first to avoid circular imports
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type
+from typing import List, Optional, Type
 
 # Import base tool components
 from tapo_camera_mcp.tools.base_tool import (
@@ -38,7 +38,7 @@ get_tool = _get_tool
 get_all_tools = _get_all_tools
 
 
-def discover_tools(package: Optional[str] = None) -> List[Type[BaseTool]]:
+def discover_tools_wrapper(package: Optional[str] = None) -> List[Type[BaseTool]]:
     """Discover and import all tools in the specified package.
 
     Args:

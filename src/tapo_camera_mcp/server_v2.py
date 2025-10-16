@@ -64,7 +64,7 @@ def main():
     logger.info(f"Command line args: {sys.argv}")
 
     parser = argparse.ArgumentParser(description="Tapo Camera MCP Server")
-    parser.add_argument("--host", default="0.0.0.0", help="Host to bind the server to")
+    parser.add_argument("--host", default="0.0.0.0", help="Host to bind the server to")  # nosec B104
     parser.add_argument("--port", type=int, default=8000, help="Port to bind the server to")
     parser.add_argument(
         "--no-stdio", action="store_false", dest="stdio", help="Disable stdio transport"

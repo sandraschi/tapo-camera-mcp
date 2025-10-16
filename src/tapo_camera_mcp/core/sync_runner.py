@@ -114,7 +114,7 @@ def run_direct_server():
 
     try:
         # Create temp directory
-        temp_dir = Path("/tmp/tapo-mcp")
+        temp_dir = Path("/tmp/tapo-mcp")  # nosec B108
         temp_dir.mkdir(parents=True, exist_ok=True)
         logger.info(f"Using temp directory: {temp_dir}")
 

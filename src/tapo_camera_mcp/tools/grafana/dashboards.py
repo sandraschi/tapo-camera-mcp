@@ -86,9 +86,9 @@ class ViennaDashboardTool(BaseTool):
         # More activity during typical business hours (9-17)
         return [
             (
-                random.randint(0, 5)
+                secrets.randbelow(6)
                 if 9 <= (datetime.now().hour - i) % 24 < 17
-                else random.randint(0, 2)
+                else secrets.randbelow(3)
             )
             for i in range(hours - 1, -1, -1)
         ]
@@ -106,10 +106,10 @@ class ViennaDashboardTool(BaseTool):
 
         # More activity during typical business hours (9-17)
         if 9 <= hour < 17:
-            return random.randint(70, 100)  # 70-100% activity
+            return secrets.randbelow(31) + 70  # 70-100% activity
         if 7 <= hour < 9 or 17 <= hour < 22:
-            return random.randint(30, 70)  # 30-70% activity
-        return random.randint(0, 30)  # 0-30% activity at night
+            return secrets.randbelow(41) + 30  # 30-70% activity
+        return secrets.randbelow(31)  # 0-30% activity at night
 
     def _format_camera_data(self, cam_id: str, camera) -> Dict[str, Any]:
         """Format camera data for the dashboard."""

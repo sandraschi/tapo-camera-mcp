@@ -130,8 +130,8 @@ class DINOv3Processor:
                 cos = torch.nn.CosineSimilarity(dim=1, eps=1e-6)
                 sim = cos(query_feat, img_feat).item()
                 similarities.append((img_path, (sim + 1) / 2))  # Convert to 0-1 range
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Failed to process image %s: %s", img_path, exc)
 
         # Sort by similarity and return top_k
         similarities.sort(key=lambda x: x[1], reverse=True)
