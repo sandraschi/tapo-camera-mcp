@@ -7,7 +7,7 @@
 [![Dashboard](https://img.shields.io/badge/Dashboard-Live-green)](http://localhost:7777)
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-success)](https://github.com/sandraschi/tapo-camera-mcp)
 
-🚀 **PRODUCTION READY**: Unified home security dashboard with dual MCP architecture - serving as both individual camera MCP servers AND a comprehensive security monitoring platform.
+🚀 **PRODUCTION READY**: Unified home security dashboard with comprehensive device onboarding, dual MCP architecture - serving as both individual camera MCP servers AND a complete security and energy monitoring platform.
 
 ## 🏗️ **DUAL ARCHITECTURE OVERVIEW**
 
@@ -180,6 +180,15 @@ cameras:
 - **RTSP Integration**: Direct streaming from Tapo cameras
 - **Dynamic Camera Management**: Add/remove cameras on the fly
 
+### 🎯 **DEVICE ONBOARDING SYSTEM** (NEW - January 2025)
+- **Progressive Discovery**: Automatic scanning for Tapo P115, Nest Protect, Ring devices, and USB webcams
+- **Smart Configuration**: User-friendly device naming, location assignment, and settings
+- **Authentication Integration**: OAuth setup for Nest Protect and Ring devices
+- **Cross-Device Integration**: Intelligent recommendations for device combinations
+- **Beautiful Progressive UI**: Step-by-step onboarding with real-time progress tracking
+- **Error Recovery**: Comprehensive error handling with user guidance
+- **API-First Design**: Full programmatic access to onboarding functionality
+
 ### ⚡ **ADVANCED FEATURES** (NEW - January 2025)
 
 #### 🔋 **Energy Management Dashboard**
@@ -231,6 +240,10 @@ python start.py dashboard
 - ✅ **Real-time Status**: Camera connection monitoring
 - ✅ **Professional UI**: Clean, responsive dashboard interface
 - ✅ **MCP Tools**: 30+ tools available in Claude Desktop (FastMCP 2.12 compliant)
+  - **Device Onboarding**: Progressive discovery and configuration tools
+  - **Energy Management**: Tapo P115 smart plug control and monitoring
+  - **Security Integration**: Nest Protect and Ring device management
+  - **AI Analytics**: Performance monitoring and intelligent automation
 
 ### **4. Next Steps** (Tapo Camera Integration)
 ```bash
@@ -255,6 +268,30 @@ python start.py dashboard
 - **Code Quality**: Black formatting, isort imports, mypy type checking, pylint linting
 
 ## 🚀 Getting Started
+
+### 🎯 **Device Onboarding** (NEW!)
+
+**Progressive device setup for any combination of devices:**
+
+```bash
+# Start the server
+python -m tapo_camera_mcp.web.server
+
+# Open the onboarding dashboard
+open http://localhost:7777/onboarding
+```
+
+**Supported Device Types:**
+- **Tapo P115 Smart Plugs**: Energy monitoring and control
+- **Nest Protect Devices**: Smoke and CO detector monitoring  
+- **Ring Devices**: Doorbell, motion sensors, and contact sensors
+- **USB Webcams**: Video streaming and capture
+
+**Features:**
+- **Automatic Discovery**: Network scanning for all supported devices
+- **Smart Configuration**: User-friendly naming and location assignment
+- **Cross-Device Integration**: Intelligent automation recommendations
+- **Progressive UI**: Step-by-step guided setup process
 
 ### Installation Options
 

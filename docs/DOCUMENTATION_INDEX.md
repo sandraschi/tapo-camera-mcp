@@ -8,8 +8,9 @@
 
 ### **New to the Project?**
 1. Start with [README.md](../README.md) - Project overview
-2. See [Installation Guide](#installation) - Get started
-3. Review [Repository Protection](#repository-protection) - Stay safe
+2. See [Device Onboarding System](#device-onboarding) - Set up your devices
+3. Check [Installation Guide](#installation) - Get started
+4. Review [Repository Protection](#repository-protection) - Stay safe
 
 ### **Want to Contribute?**
 1. Read [CONTRIBUTING.md](../CONTRIBUTING.md) - Guidelines
@@ -20,6 +21,11 @@
 1. Check [Troubleshooting](#troubleshooting) - Common issues
 2. See [API Documentation](#api-docs) - Tool reference
 3. Review [Security](#security) - Report issues
+
+### **Setting Up Devices?**
+1. Read [Device Onboarding System](DEVICE_ONBOARDING_SYSTEM.md) - Complete setup guide
+2. Check [Home Security Energy Plan](HOME_SECURITY_ENERGY_PLAN.md) - Integration strategies
+3. Review [FastMCP 2.12 Compliance](FASTMCP_2.12_COMPLIANCE_GUIDE.md) - Technical standards
 
 ---
 
@@ -46,7 +52,32 @@ docs/
 │   ├── GLAMA_AI_RESCAN_GUIDE.md → Rescan procedures
 │   └── GLAMA_RESCAN_EMAIL.txt → Support templates
 │
-├── notepadpp/                  📝 Complete Notepad++ reference (NEW!)
+├── DEVICE_ONBOARDING_SYSTEM.md 🎯 **NEW**: Comprehensive device onboarding system
+│                           → Progressive discovery for Tapo P115, Nest Protect, Ring, webcams
+│                           → Smart configuration wizard and cross-device integration
+│                           → Beautiful progressive UI with real-time progress tracking
+│
+├── FASTMCP_2.12_COMPLIANCE_GUIDE.md 🔧 **NEW**: FastMCP 2.12 compliance standards
+│                                      → Tool registration patterns and decorators
+│                                      → Meta class structure and Parameters
+│                                      → Multiline docstring formatting
+│                                      → Type safety and validation guidelines
+│
+├── HOME_SECURITY_ENERGY_PLAN.md ⚡ **NEW**: Home security and energy integration
+│                             → Tapo P115 smart plug energy monitoring
+│                             → Nest Protect and Ring alarm integration
+│                             → Cross-device automation and recommendations
+│                             → Data storage strategies and limitations
+│
+├── API_DOCUMENTATION.md 📚 **NEW**: Complete API reference guide
+│                       → Device onboarding API endpoints
+│                       → Energy management and control APIs
+│                       → Security integration (Nest Protect, Ring)
+│                       → Analytics and AI scene analysis APIs
+│                       → Camera control and streaming APIs
+│                       → WebSocket support and mobile APIs
+│
+├── notepadpp/                  📝 Complete Notepad++ reference
 │   ├── README.md              → Notepad++ documentation hub
 │   ├── NOTEPADPP_COMPLETE_GUIDE.md → History, features, config (15+ pages)
 │   ├── PLUGIN_ECOSYSTEM_COMPREHENSIVE.md → 1,400+ plugins (12+ pages)
