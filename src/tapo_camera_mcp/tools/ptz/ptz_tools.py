@@ -530,6 +530,7 @@ class GetPTZPositionTool(BaseTool):
             # Get real PTZ position from camera
             if hasattr(server.camera, "_camera") and server.camera._camera:
                 # Use pytapo to get actual PTZ position
+                import asyncio
                 position_data = await asyncio.get_event_loop().run_in_executor(
                     None, lambda: server.camera._camera.getMotorCapability()
                 )

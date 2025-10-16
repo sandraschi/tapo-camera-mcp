@@ -9,13 +9,19 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from ...tools.ptz.preset_manager import PTZPresetManager
 from ...tools.ptz.ptz_models import PTZMoveDirection, PTZPosition, PTZSpeed
 
 logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/cameras/{camera_id}/ptz", tags=["PTZ Control"])
+
+
+def get_camera_client() -> Any:
+    """Dependency to get camera client - placeholder implementation."""
+    return None
 
 # In-memory storage for demo purposes
 # In production, you'd use a database
@@ -65,7 +71,7 @@ class PTZPresetResponse(PTZPresetCreate):
     updated_at: datetime
     thumbnail_url: Optional[str] = None
 
-    model_config = ConfigDict(orm_mode=True)
+    model_config = ConfigDict(from_attributes=True)
 
 
 @router.post("/move", status_code=status.HTTP_202_ACCEPTED)

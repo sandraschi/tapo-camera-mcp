@@ -145,7 +145,9 @@ class GrafanaMetricsTool(BaseTool):
             return 0
 
         except Exception as e:
-            logger.exception(f"Failed to get motion events for {camera_id}: {e}")
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.exception("Failed to get motion events for %s", camera_id)
             return 0
 
     async def _get_last_motion_time(self, camera_id: str) -> str:
