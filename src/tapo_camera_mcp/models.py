@@ -4,6 +4,7 @@ Data models for Tapo-Camera-MCP.
 
 from enum import Enum
 from typing import Dict, List, Optional, Union
+
 from pydantic import BaseModel, Field, HttpUrl, IPvAnyAddress, field_validator
 
 
@@ -57,15 +58,9 @@ class CameraStatus(BaseModel):
     """Current status of the camera."""
 
     online: bool = Field(..., description="Whether the camera is online")
-    recording: bool = Field(
-        False, description="Whether the camera is currently recording"
-    )
-    motion_detected: bool = Field(
-        False, description="Whether motion is currently detected"
-    )
-    audio_detected: bool = Field(
-        False, description="Whether audio is currently detected"
-    )
+    recording: bool = Field(False, description="Whether the camera is currently recording")
+    motion_detected: bool = Field(False, description="Whether motion is currently detected")
+    audio_detected: bool = Field(False, description="Whether audio is currently detected")
     privacy_mode: bool = Field(False, description="Whether privacy mode is enabled")
     led_enabled: bool = Field(True, description="Whether the status LED is enabled")
     firmware_version: str = Field(..., description="Camera firmware version")
@@ -89,15 +84,11 @@ class CameraConfig(BaseModel):
 
     # Stream settings
     stream_type: StreamType = Field(StreamType.RTSP, description="Default stream type")
-    stream_quality: VideoQuality = Field(
-        VideoQuality.HIGH, description="Default stream quality"
-    )
+    stream_quality: VideoQuality = Field(VideoQuality.HIGH, description="Default stream quality")
     stream_audio: bool = Field(True, description="Enable audio in stream")
 
     # Storage settings
-    storage_path: str = Field(
-        "recordings", description="Local path for storing recordings"
-    )
+    storage_path: str = Field("recordings", description="Local path for storing recordings")
     max_storage_gb: int = Field(10, description="Maximum storage in GB for recordings")
 
     # Motion detection
@@ -105,9 +96,7 @@ class CameraConfig(BaseModel):
     motion_sensitivity: MotionDetectionSensitivity = Field(
         MotionDetectionSensitivity.MEDIUM, description="Motion detection sensitivity"
     )
-    motion_zones: List[Dict] = Field(
-        default_factory=list, description="Motion detection zones"
-    )
+    motion_zones: List[Dict] = Field(default_factory=list, description="Motion detection zones")
 
     # Privacy settings
     privacy_mode: bool = Field(False, description="Enable privacy mode")
@@ -156,21 +145,15 @@ class MotionEvent(BaseModel):
     timestamp: float = Field(..., description="Event timestamp")
     confidence: float = Field(..., description="Detection confidence (0.0 to 1.0)")
     zones: List[Dict] = Field(default_factory=list, description="Triggered zones")
-    snapshot_url: Optional[HttpUrl] = Field(
-        None, description="URL to snapshot of the event"
-    )
-    video_clip_url: Optional[HttpUrl] = Field(
-        None, description="URL to video clip of the event"
-    )
+    snapshot_url: Optional[HttpUrl] = Field(None, description="URL to snapshot of the event")
+    video_clip_url: Optional[HttpUrl] = Field(None, description="URL to video clip of the event")
 
 
 class RecordingConfig(BaseModel):
     """Recording configuration."""
 
     enabled: bool = Field(True, description="Enable/disable recording")
-    mode: str = Field(
-        "motion", description="Recording mode: 'motion', 'continuous', or 'manual'"
-    )
+    mode: str = Field("motion", description="Recording mode: 'motion', 'continuous', or 'manual'")
     pre_buffer: int = Field(5, description="Pre-motion buffer in seconds")
     post_buffer: int = Field(10, description="Post-motion buffer in seconds")
     max_clip_length: int = Field(300, description="Maximum clip length in seconds")

@@ -3,10 +3,10 @@
 Real tool execution tests - NO MOCKING, actual server and camera integration.
 """
 
-import sys
-import os
 import asyncio
 import logging
+import os
+import sys
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
@@ -33,9 +33,7 @@ def test_real_server_initialization():
             logger.info("✅ Server instance created successfully")
             return True
         except Exception as e:
-            logger.warning(
-                f"Server instance creation failed (expected in test env): {e}"
-            )
+            logger.warning(f"Server instance creation failed (expected in test env): {e}")
             # This is OK - server might need config, but we tested the structure
             return True
 
@@ -78,8 +76,8 @@ def test_real_camera_manager():
 def test_real_tools_discovery():
     """Test real tools discovery and registration."""
     try:
-        from tapo_camera_mcp.tools.discovery import discover_tools
         from tapo_camera_mcp.tools.base_tool import get_all_tools
+        from tapo_camera_mcp.tools.discovery import discover_tools
 
         # Discover all tools (this actually imports and registers them)
         tools = discover_tools("tapo_camera_mcp.tools")
@@ -98,9 +96,7 @@ def test_real_tools_discovery():
                 from tapo_camera_mcp.tools.base_tool import get_tool
 
                 retrieved_tool = get_tool(tool_name)
-                assert retrieved_tool is not None, (
-                    f"Tool {tool_name} should be retrievable"
-                )
+                assert retrieved_tool is not None, f"Tool {tool_name} should be retrievable"
 
         logger.info(f"✅ Discovered and registered {len(tools)} tools")
         return True
@@ -117,11 +113,11 @@ def test_real_validation_module():
     """Test real validation module functionality."""
     try:
         from tapo_camera_mcp.validation import (
-            validate_ip_address,
-            validate_port,
+            ToolValidationError,
             validate_camera_name,
             validate_credentials,
-            ToolValidationError,
+            validate_ip_address,
+            validate_port,
         )
 
         # Test real IP address validation
@@ -168,8 +164,8 @@ def test_real_validation_module():
 def test_real_webcam_detection():
     """Test webcam detection and connection."""
     try:
-        from tapo_camera_mcp.camera.webcam import WebCamera
         from tapo_camera_mcp.camera.base import CameraConfig, CameraType
+        from tapo_camera_mcp.camera.webcam import WebCamera
 
         # Create webcam config
         webcam_config = CameraConfig(
@@ -203,7 +199,7 @@ def test_real_webcam_detection():
 def test_real_camera_factory():
     """Test real camera factory functionality."""
     try:
-        from tapo_camera_mcp.camera.base import CameraFactory, CameraType, CameraConfig
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraFactory, CameraType
 
         # Test camera type registration
         assert CameraType.TAPO in CameraFactory._camera_classes
@@ -231,9 +227,7 @@ def test_real_camera_factory():
 
             logger.info("✅ Camera factory created real camera instances")
         except Exception as e:
-            logger.warning(
-                f"Camera creation failed (expected without dependencies): {e}"
-            )
+            logger.warning(f"Camera creation failed (expected without dependencies): {e}")
             # This is OK - we tested the factory structure
 
         return True
@@ -261,26 +255,16 @@ def test_real_tool_structure():
 
             meta = tool_cls.Meta
             assert hasattr(meta, "name"), f"Tool {tool_cls.__name__} missing name"
-            assert hasattr(meta, "category"), (
-                f"Tool {tool_cls.__name__} missing category"
-            )
+            assert hasattr(meta, "category"), f"Tool {tool_cls.__name__} missing category"
 
             # Name should be a real string
-            assert isinstance(meta.name, str), (
-                f"Tool {tool_cls.__name__} name should be string"
-            )
-            assert len(meta.name) > 0, (
-                f"Tool {tool_cls.__name__} name should not be empty"
-            )
+            assert isinstance(meta.name, str), f"Tool {tool_cls.__name__} name should be string"
+            assert len(meta.name) > 0, f"Tool {tool_cls.__name__} name should not be empty"
 
             # Tool should have real execute method
-            assert hasattr(tool_cls, "execute"), (
-                f"Tool {tool_cls.__name__} missing execute"
-            )
+            assert hasattr(tool_cls, "execute"), f"Tool {tool_cls.__name__} missing execute"
             execute_method = getattr(tool_cls, "execute")
-            assert callable(execute_method), (
-                f"Tool {tool_cls.__name__} execute not callable"
-            )
+            assert callable(execute_method), f"Tool {tool_cls.__name__} execute not callable"
 
             # Test that we can create tool instances
             try:
@@ -306,7 +290,7 @@ def test_real_system_tools():
     """Test real system tools functionality."""
     try:
         # Test importing real system tools
-        from tapo_camera_mcp.tools.system import status_tool, help_tool
+        from tapo_camera_mcp.tools.system import help_tool, status_tool
 
         # Test StatusTool
         from tapo_camera_mcp.tools.system.status_tool import StatusTool
@@ -493,10 +477,10 @@ def test_real_core_models():
 def test_webcam_server_integration():
     """Test webcam integration with server."""
     try:
-        from tapo_camera_mcp.core.server import TapoCameraServer
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
         from tapo_camera_mcp.camera.manager import CameraManager
         from tapo_camera_mcp.camera.webcam import WebCamera
-        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
+        from tapo_camera_mcp.core.server import TapoCameraServer
 
         # Test that webcam can be created and integrated
         webcam_config = CameraConfig(

@@ -5,29 +5,32 @@ This package contains all the tools for the Tapo Camera MCP server,
 organized into logical modules for better maintainability.
 """
 
+import logging
+import os
+import pkgutil
+
+# Import standard library modules
+from importlib import import_module
+
 # Import types first to avoid circular imports
-from typing import Dict, Type, List, Optional, TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type
 
 # Import base tool components
 from tapo_camera_mcp.tools.base_tool import (
     BaseTool,
-    register_tool,
-    get_tool as _get_tool,
-    get_all_tools as _get_all_tools,
     ToolCategory,
     ToolDefinition,
     ToolResult,
-    _tool_registry as tools_registry,
+)
+from tapo_camera_mcp.tools.base_tool import _tool_registry as tools_registry
+from tapo_camera_mcp.tools.base_tool import get_all_tools as _get_all_tools
+from tapo_camera_mcp.tools.base_tool import get_tool as _get_tool
+from tapo_camera_mcp.tools.base_tool import (
+    register_tool,
 )
 
 # Import discovery functions
 from tapo_camera_mcp.tools.discovery import discover_tools
-
-# Import standard library modules
-from importlib import import_module
-import pkgutil
-import os
-import logging
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -54,9 +57,7 @@ def discover_tools(package: Optional[str] = None) -> List[Type[BaseTool]]:
 
     # Determine subpackage directory names to avoid importing same-named .py modules
     subpackage_dirs = {
-        name
-        for name in os.listdir(package_path)
-        if os.path.isdir(os.path.join(package_path, name))
+        name for name in os.listdir(package_path) if os.path.isdir(os.path.join(package_path, name))
     }
 
     # Import all modules in the tools directory

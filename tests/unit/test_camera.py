@@ -3,8 +3,8 @@
 Test camera functionality and models.
 """
 
-import sys
 import os
+import sys
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 def test_camera_models():
     """Test camera model definitions."""
     try:
-        from tapo_camera_mcp.camera.base import CameraType, CameraConfig
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
         from tapo_camera_mcp.core.models import TapoCameraConfig
 
         # Test CameraType enum
@@ -34,9 +34,7 @@ def test_camera_models():
         print(f"✅ Camera config created: {config.name}")
 
         # Test TapoCameraConfig
-        tapo_config = TapoCameraConfig(
-            host="192.168.1.100", username="test", password="test"
-        )
+        tapo_config = TapoCameraConfig(host="192.168.1.100", username="test", password="test")
         print("✅ TapoCamera config created")
         return True
     except Exception as e:
@@ -74,9 +72,9 @@ def test_exceptions():
     """Test exception classes."""
     try:
         from tapo_camera_mcp.exceptions import (
-            TapoCameraError,
-            ConnectionError,
             AuthenticationError,
+            ConnectionError,
+            TapoCameraError,
         )
 
         # Test exception creation

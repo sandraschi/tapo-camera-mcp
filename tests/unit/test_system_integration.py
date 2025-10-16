@@ -3,10 +3,10 @@
 Full system integration test - testing webcam connection and server functionality.
 """
 
-import sys
-import os
 import asyncio
 import logging
+import os
+import sys
 import time
 
 # Add the src path to Python path
@@ -26,15 +26,15 @@ def test_full_system_integration():
 
         # Test 1: Import all major components
         logger.info("📦 Testing imports...")
-        from tapo_camera_mcp.core.server import TapoCameraServer
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraFactory, CameraType
         from tapo_camera_mcp.camera.manager import CameraManager
         from tapo_camera_mcp.camera.webcam import WebCamera
-        from tapo_camera_mcp.camera.base import CameraType, CameraConfig, CameraFactory
-        from tapo_camera_mcp.tools.discovery import discover_tools
+        from tapo_camera_mcp.core.models import CameraStatus, TapoCameraConfig
+        from tapo_camera_mcp.core.server import TapoCameraServer
         from tapo_camera_mcp.tools.base_tool import get_all_tools
+        from tapo_camera_mcp.tools.discovery import discover_tools
+        from tapo_camera_mcp.validation import validate_camera_name, validate_ip_address
         from tapo_camera_mcp.web.server import WebServer
-        from tapo_camera_mcp.validation import validate_ip_address, validate_camera_name
-        from tapo_camera_mcp.core.models import TapoCameraConfig, CameraStatus
 
         logger.info("✅ All major components imported successfully")
 
@@ -93,9 +93,7 @@ def test_full_system_integration():
 
         # Test 7: Test core models
         logger.info("📊 Testing core models...")
-        config = TapoCameraConfig(
-            host="192.168.1.100", username="testuser", password="testpass"
-        )
+        config = TapoCameraConfig(host="192.168.1.100", username="testuser", password="testpass")
         assert config.host == "192.168.1.100"
 
         status = CameraStatus(
@@ -127,9 +125,7 @@ def test_full_system_integration():
             # Both should be the same instance (singleton)
             logger.info("✅ Server singleton pattern working")
         except Exception as e:
-            logger.warning(
-                f"Server singleton test failed (expected without config): {e}"
-            )
+            logger.warning(f"Server singleton test failed (expected without config): {e}")
 
         # Test 10: Test webcam status
         logger.info("📷 Testing webcam status...")
@@ -159,8 +155,8 @@ def test_webcam_connection_simulation():
     try:
         logger.info("🔌 Testing webcam connection simulation...")
 
-        from tapo_camera_mcp.camera.webcam import WebCamera
         from tapo_camera_mcp.camera.base import CameraConfig, CameraType
+        from tapo_camera_mcp.camera.webcam import WebCamera
 
         # Create webcam with test configuration
         webcam_config = CameraConfig(
@@ -204,10 +200,10 @@ def test_server_camera_integration():
     try:
         logger.info("🔗 Testing server-camera integration...")
 
-        from tapo_camera_mcp.core.server import TapoCameraServer
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
         from tapo_camera_mcp.camera.manager import CameraManager
         from tapo_camera_mcp.camera.webcam import WebCamera
-        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
+        from tapo_camera_mcp.core.server import TapoCameraServer
 
         # Create camera manager
         camera_manager = CameraManager()
@@ -251,8 +247,8 @@ def test_tools_execution_simulation():
         logger.info("⚙️ Testing tools execution simulation...")
 
         from tapo_camera_mcp.tools.discovery import discover_tools
-        from tapo_camera_mcp.tools.system.status_tool import StatusTool
         from tapo_camera_mcp.tools.system.help_tool import HelpTool
+        from tapo_camera_mcp.tools.system.status_tool import StatusTool
 
         # Discover tools
         all_tools = discover_tools("tapo_camera_mcp.tools")
@@ -320,8 +316,8 @@ def test_end_to_end_workflow():
         logger.info("✅ Camera manager setup")
 
         # 3. Webcam creation
-        from tapo_camera_mcp.camera.webcam import WebCamera
         from tapo_camera_mcp.camera.base import CameraConfig, CameraType
+        from tapo_camera_mcp.camera.webcam import WebCamera
 
         webcam_config = CameraConfig(
             name="e2e_webcam", type=CameraType.WEBCAM, params={"device_id": 0}

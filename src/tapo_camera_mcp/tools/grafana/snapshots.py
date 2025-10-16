@@ -2,7 +2,8 @@
 
 import base64
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
+
 from ..base_tool import BaseTool, ToolCategory
 
 
@@ -11,7 +12,9 @@ class GrafanaSnapshotsTool(BaseTool):
 
     class Meta:
         name: str = "get_camera_snapshot"
-        description: str = "Capture live camera snapshot for Grafana image panels - MANDATORY FOR VIDEO/IMAGES"
+        description: str = (
+            "Capture live camera snapshot for Grafana image panels - MANDATORY FOR VIDEO/IMAGES"
+        )
         category: ToolCategory = ToolCategory.UTILITY
 
     async def execute(self, **kwargs) -> Dict[str, Any]:
@@ -31,9 +34,7 @@ class GrafanaSnapshotsTool(BaseTool):
                 raise ValueError(f"Camera {camera_id} not found")
 
             # Capture snapshot
-            image_data = await camera.get_snapshot(
-                quality=quality, width=width, height=height
-            )
+            image_data = await camera.get_snapshot(quality=quality, width=width, height=height)
 
             # Convert to base64 for web display
             image_base64 = base64.b64encode(image_data).decode("utf-8")

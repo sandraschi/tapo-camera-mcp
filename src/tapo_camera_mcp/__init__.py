@@ -10,27 +10,27 @@ __version__ = "1.1.0"
 __author__ = "Tapo Camera MCP Team <tapo-camera-mcp@example.com>"
 __license__ = "MIT"
 
+from . import presets
+
 # Import core components
 from .core import (
-    TapoCameraServer,
-    get_server,
-    CameraModel,
-    StreamType,
-    VideoQuality,
-    PTZDirection,
-    MotionDetectionSensitivity,
-    CameraStatus,
-    PTZPosition,
-    MotionEvent,
     CameraInfo,
+    CameraModel,
+    CameraStatus,
+    MotionDetectionSensitivity,
+    MotionEvent,
+    PTZDirection,
+    PTZPosition,
+    StreamType,
+    TapoCameraServer,
+    VideoQuality,
+    get_server,
 )
-
-from .exceptions import TapoCameraError
-from . import presets
 
 # For backward compatibility
 from .core.server import TapoCameraServer as Server  # noqa: F401
-from .core.server import TapoCameraServer as TapoCameraMCP  # noqa: F401
+from .core.server import TapoCameraServer as TapoCameraMCP
+from .exceptions import TapoCameraError
 
 __all__ = [
     # Core components

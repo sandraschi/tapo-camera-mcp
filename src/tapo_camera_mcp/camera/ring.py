@@ -1,14 +1,14 @@
 """Ring doorbell camera implementation."""
 
 import asyncio
-from typing import Dict, Optional
-from pathlib import Path
-from PIL import Image
 import io
 import logging
+from pathlib import Path
+from typing import Dict, Optional
 
-from ring_doorbell import Ring, Auth
 from oauthlib.oauth2 import MissingTokenError
+from PIL import Image
+from ring_doorbell import Auth, Ring
 
 from .base import BaseCamera, CameraFactory, CameraType
 

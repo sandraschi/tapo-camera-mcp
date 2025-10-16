@@ -5,16 +5,15 @@ Configuration loading and saving utilities.
 import json
 from pathlib import Path
 from typing import Any, Type, TypeVar
+
 import yaml
 
-from ..config import ServerConfig, CameraConfig
+from ..config import CameraConfig, ServerConfig
 
 T = TypeVar("T")
 
 
-def load_config(
-    config_file: str = "config.yaml", config_class: Type[T] = ServerConfig
-) -> T:
+def load_config(config_file: str = "config.yaml", config_class: Type[T] = ServerConfig) -> T:
     """
     Load configuration from a YAML or JSON file.
 
@@ -45,9 +44,7 @@ def load_config(
     return config_class(**config_data)
 
 
-def save_config(
-    config: Any, config_file: str = "config.yaml", format: str = "yaml"
-) -> None:
+def save_config(config: Any, config_file: str = "config.yaml", format: str = "yaml") -> None:
     """
     Save configuration to a file.
 

@@ -1,10 +1,11 @@
 """DINOv3 model integration for advanced image analysis."""
 
 from typing import Dict, List, Union
-import torch
+
 import numpy as np
-from PIL import Image
+import torch
 import torchvision.transforms as T
+from PIL import Image
 
 
 class DINOv3Processor:
@@ -49,9 +50,7 @@ class DINOv3Processor:
             raise RuntimeError(f"Failed to initialize DINOv3 model: {str(e)}")
 
     @torch.no_grad()
-    def extract_features(
-        self, image: Union[Image.Image, str, np.ndarray]
-    ) -> torch.Tensor:
+    def extract_features(self, image: Union[Image.Image, str, np.ndarray]) -> torch.Tensor:
         """Extract features from an image using DINOv3.
 
         Args:
@@ -136,10 +135,7 @@ class DINOv3Processor:
 
         # Sort by similarity and return top_k
         similarities.sort(key=lambda x: x[1], reverse=True)
-        return [
-            {"path": path, "similarity": float(sim)}
-            for path, sim in similarities[:top_k]
-        ]
+        return [{"path": path, "similarity": float(sim)} for path, sim in similarities[:top_k]]
 
 
 # Global instance for easy access

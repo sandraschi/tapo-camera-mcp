@@ -2,8 +2,8 @@
 Test script to verify tool imports and registration.
 """
 
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Add src to path

@@ -30,9 +30,7 @@ class TestTapoCameraServer(unittest.IsolatedAsyncioTestCase):
         self.mock_camera.host = self.test_host
 
         # Patch the Tapo class to return our mock
-        self.patcher = patch(
-            "tapo_camera_mcp.server_v2.Tapo", return_value=self.mock_camera
-        )
+        self.patcher = patch("tapo_camera_mcp.server_v2.Tapo", return_value=self.mock_camera)
         self.mock_tapo_class = self.patcher.start()
 
         # Connect to the server
@@ -128,18 +126,14 @@ class TestTapoCameraServer(unittest.IsolatedAsyncioTestCase):
         self.mock_camera.setMotionDetection = AsyncMock()
 
         # Test enabling motion detection
-        result = await self.server.mcp.call_tool(
-            "set_motion_detection", {"enabled": True}
-        )
+        result = await self.server.mcp.call_tool("set_motion_detection", {"enabled": True})
         self.assertEqual(result.content["status"], "success")
         self.assertTrue(result.content["motion_detection"])
         self.mock_camera.setMotionDetection.assert_awaited_once_with(True)
 
         # Test disabling motion detection
         self.mock_camera.setMotionDetection.reset_mock()
-        result = await self.server.mcp.call_tool(
-            "set_motion_detection", {"enabled": False}
-        )
+        result = await self.server.mcp.call_tool("set_motion_detection", {"enabled": False})
         self.assertEqual(result.content["status"], "success")
         self.assertFalse(result.content["motion_detection"])
         self.mock_camera.setMotionDetection.assert_awaited_once_with(False)

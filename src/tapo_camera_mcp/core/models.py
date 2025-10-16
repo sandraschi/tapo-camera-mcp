@@ -3,7 +3,8 @@ Core data models for Tapo-Camera-MCP.
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Union, Any
+from typing import Any, Dict, List, Optional, Union
+
 from pydantic import BaseModel, Field, HttpUrl, IPvAnyAddress, field_validator
 
 
@@ -56,15 +57,9 @@ class CameraStatus(BaseModel):
     """Current status of the camera."""
 
     online: bool = Field(..., description="Whether the camera is online")
-    recording: bool = Field(
-        False, description="Whether the camera is currently recording"
-    )
-    motion_detected: bool = Field(
-        False, description="Whether motion is currently detected"
-    )
-    audio_detected: bool = Field(
-        False, description="Whether audio is currently detected"
-    )
+    recording: bool = Field(False, description="Whether the camera is currently recording")
+    motion_detected: bool = Field(False, description="Whether motion is currently detected")
+    audio_detected: bool = Field(False, description="Whether audio is currently detected")
     privacy_mode: bool = Field(False, description="Whether privacy mode is enabled")
     mac_address: str = Field(..., description="MAC address of the camera")
     firmware_version: str = Field(..., description="Camera firmware version")
@@ -89,12 +84,8 @@ class MotionEvent(BaseModel):
     timestamp: float = Field(..., description="Event timestamp")
     confidence: float = Field(..., description="Detection confidence (0.0 to 1.0)")
     zones: List[Dict] = Field(default_factory=list, description="Triggered zones")
-    snapshot_url: Optional[HttpUrl] = Field(
-        None, description="URL to snapshot of the event"
-    )
-    video_clip_url: Optional[HttpUrl] = Field(
-        None, description="URL to video clip of the event"
-    )
+    snapshot_url: Optional[HttpUrl] = Field(None, description="URL to snapshot of the event")
+    video_clip_url: Optional[HttpUrl] = Field(None, description="URL to video clip of the event")
 
 
 class CameraInfo(BaseModel):
@@ -146,9 +137,7 @@ class SystemInfo(BaseModel):
     python_version: str = Field(..., description="Python version")
     platform: str = Field(..., description="Operating system platform")
     uptime: Optional[float] = Field(None, description="Server uptime in seconds")
-    memory_usage: Optional[Dict[str, Any]] = Field(
-        None, description="Memory usage statistics"
-    )
+    memory_usage: Optional[Dict[str, Any]] = Field(None, description="Memory usage statistics")
     cpu_usage: Optional[float] = Field(None, description="CPU usage percentage")
 
 
@@ -163,6 +152,4 @@ class SystemStatus(BaseModel):
         None, description="Last camera health check timestamp"
     )
     active_streams: int = Field(0, description="Number of active video streams")
-    disk_usage: Optional[Dict[str, Any]] = Field(
-        None, description="Disk usage statistics"
-    )
+    disk_usage: Optional[Dict[str, Any]] = Field(None, description="Disk usage statistics")

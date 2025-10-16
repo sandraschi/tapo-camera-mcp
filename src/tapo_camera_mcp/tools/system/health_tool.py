@@ -4,11 +4,12 @@ Dedicated health check tool for comprehensive system monitoring.
 
 import logging
 import time
-from typing import Dict, Any
 from datetime import datetime
+from typing import Any, Dict
+
 from pydantic import BaseModel, Field
 
-from tapo_camera_mcp.tools.base_tool import tool, ToolCategory, BaseTool
+from tapo_camera_mcp.tools.base_tool import BaseTool, ToolCategory, tool
 
 logger = logging.getLogger(__name__)
 
@@ -16,9 +17,7 @@ logger = logging.getLogger(__name__)
 class HealthCheckResult(BaseModel):
     """Result of a comprehensive health check."""
 
-    status: str = Field(
-        ..., description="Overall health status: healthy/warning/critical"
-    )
+    status: str = Field(..., description="Overall health status: healthy/warning/critical")
     checks: Dict[str, Any] = Field(..., description="Individual health check results")
     response_time_ms: float = Field(..., description="Time taken for health check")
     timestamp: str = Field(..., description="Timestamp of health check")
@@ -82,14 +81,10 @@ class HealthCheckTool(BaseTool):
 
             # Determine overall status
             critical_issues = [
-                name
-                for name, check in all_checks.items()
-                if check.get("status") == "critical"
+                name for name, check in all_checks.items() if check.get("status") == "critical"
             ]
             warning_issues = [
-                name
-                for name, check in all_checks.items()
-                if check.get("status") == "warning"
+                name for name, check in all_checks.items() if check.get("status") == "warning"
             ]
 
             if critical_issues:
@@ -108,9 +103,7 @@ class HealthCheckTool(BaseTool):
                 timestamp=datetime.utcnow().isoformat(),
             )
 
-            logger.info(
-                f"Health check completed: {overall_status} ({response_time_ms:.1f}ms)"
-            )
+            logger.info(f"Health check completed: {overall_status} ({response_time_ms:.1f}ms)")
             return result.dict()
 
         except Exception as e:
@@ -267,9 +260,7 @@ class HealthCheckTool(BaseTool):
 
             # Calculate metrics
             response_times = self._performance_metrics["response_times"]
-            avg_response_time = (
-                sum(response_times) / len(response_times) if response_times else 0
-            )
+            avg_response_time = sum(response_times) / len(response_times) if response_times else 0
 
             import psutil
 

@@ -79,9 +79,7 @@ async def run_tests():
     mock_camera.moveRight = AsyncMock()
     mock_camera.moveUp = AsyncMock()
 
-    result = await server.mcp.call_tool(
-        "move_ptz", {"pan": 0.5, "tilt": 0.3, "speed": 0.7}
-    )
+    result = await server.mcp.call_tool("move_ptz", {"pan": 0.5, "tilt": 0.3, "speed": 0.7})
 
     print("PTZ result:", json.dumps(result.content, indent=2))
     assert result.content["status"] == "success", "PTZ move failed"

@@ -2,8 +2,8 @@
 """Test script to verify all imports in the project."""
 
 import importlib
-import sys
 import os
+import sys
 from pathlib import Path
 from typing import Any, Optional
 
@@ -62,9 +62,7 @@ def test_imports():
 
     # Test tool imports
     print("\nTesting tool imports...")
-    tools_dir = os.path.join(
-        os.path.dirname(__file__), "src", "tapo_camera_mcp", "tools"
-    )
+    tools_dir = os.path.join(os.path.dirname(__file__), "src", "tapo_camera_mcp", "tools")
     if os.path.exists(tools_dir):
         for filename in os.listdir(tools_dir):
             if filename.endswith(".py") and not filename.startswith("_"):

@@ -47,9 +47,7 @@ class TapoCameraCLI:
 
     def _create_parser(self) -> argparse.ArgumentParser:
         """Create the argument parser."""
-        parser = argparse.ArgumentParser(
-            description="Tapo Camera MCP CLI (FastMCP 2.10)"
-        )
+        parser = argparse.ArgumentParser(description="Tapo Camera MCP CLI (FastMCP 2.10)")
         parser.add_argument(
             "--url",
             default="http://localhost:8000",
@@ -66,9 +64,7 @@ class TapoCameraCLI:
         # Server commands
         server_parser = subparsers.add_parser("serve", help="Start the MCP server")
         server_parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
-        server_parser.add_argument(
-            "--port", type=int, default=8000, help="Port to listen on"
-        )
+        server_parser.add_argument("--port", type=int, default=8000, help="Port to listen on")
         server_parser.add_argument(
             "--no-stdio",
             action="store_false",
@@ -84,9 +80,7 @@ class TapoCameraCLI:
 
         # Camera commands
         camera_parser = subparsers.add_parser("camera", help="Camera operations")
-        camera_subparsers = camera_parser.add_subparsers(
-            dest="camera_command", required=True
-        )
+        camera_subparsers = camera_parser.add_subparsers(dest="camera_command", required=True)
 
         # Camera info
         camera_subparsers.add_parser("info", help="Get camera information")
@@ -97,9 +91,7 @@ class TapoCameraCLI:
         # PTZ control
         ptz_parser = camera_subparsers.add_parser("ptz", help="PTZ control")
         ptz_parser.add_argument("action", choices=["move", "preset"], help="PTZ action")
-        ptz_parser.add_argument(
-            "--pan", type=float, default=0.0, help="Pan position (-1.0 to 1.0)"
-        )
+        ptz_parser.add_argument("--pan", type=float, default=0.0, help="Pan position (-1.0 to 1.0)")
         ptz_parser.add_argument(
             "--tilt", type=float, default=0.0, help="Tilt position (-1.0 to 1.0)"
         )
@@ -109,31 +101,23 @@ class TapoCameraCLI:
 
         # Stream control
         stream_parser = camera_subparsers.add_parser("stream", help="Stream operations")
-        stream_parser.add_argument(
-            "action", choices=["start", "stop"], help="Action to perform"
-        )
+        stream_parser.add_argument("action", choices=["start", "stop"], help="Action to perform")
         stream_parser.add_argument(
             "--quality", choices=["hd", "sd"], default="hd", help="Stream quality"
         )
 
         # Motion detection
-        motion_parser = camera_subparsers.add_parser(
-            "motion", help="Motion detection control"
-        )
+        motion_parser = camera_subparsers.add_parser("motion", help="Motion detection control")
         motion_parser.add_argument(
             "action", choices=["enable", "disable", "status"], help="Action to perform"
         )
 
         # LED control
         led_parser = camera_subparsers.add_parser("led", help="LED control")
-        led_parser.add_argument(
-            "action", choices=["on", "off", "status"], help="Action to perform"
-        )
+        led_parser.add_argument("action", choices=["on", "off", "status"], help="Action to perform")
 
         # Privacy mode
-        privacy_parser = camera_subparsers.add_parser(
-            "privacy", help="Privacy mode control"
-        )
+        privacy_parser = camera_subparsers.add_parser("privacy", help="Privacy mode control")
         privacy_parser.add_argument(
             "action", choices=["on", "off", "status"], help="Action to perform"
         )
@@ -162,9 +146,7 @@ class TapoCameraCLI:
                 from .core.server import TapoCameraServer
 
                 server = TapoCameraServer()
-                print_info(
-                    f"Starting Tapo Camera MCP server on {args.host}:{args.port}"
-                )
+                print_info(f"Starting Tapo Camera MCP server on {args.host}:{args.port}")
                 if args.stdio:
                     print_info("Stdio transport enabled")
                 server.run(host=args.host, port=args.port, stdio=args.stdio)
@@ -240,9 +222,7 @@ class TapoCameraCLI:
 
         elif args.camera_command == "stream":
             if args.action == "start":
-                result = await self.client.call_tool(
-                    "get_stream_url", {"quality": args.quality}
-                )
+                result = await self.client.call_tool("get_stream_url", {"quality": args.quality})
                 self._print_json(result.content)
                 return 0
             else:  # stop
@@ -251,19 +231,13 @@ class TapoCameraCLI:
 
         elif args.camera_command == "motion":
             if args.action == "enable":
-                result = await self.client.call_tool(
-                    "set_motion_detection", {"enabled": True}
-                )
+                result = await self.client.call_tool("set_motion_detection", {"enabled": True})
             elif args.action == "disable":
-                result = await self.client.call_tool(
-                    "set_motion_detection", {"enabled": False}
-                )
+                result = await self.client.call_tool("set_motion_detection", {"enabled": False})
             else:  # status
                 status = await self.client.call_tool("get_camera_status", {})
                 enabled = status.content.get("motion_detected", False)
-                print_info(
-                    f"Motion detection is {'enabled' if enabled else 'disabled'}"
-                )
+                print_info(f"Motion detection is {'enabled' if enabled else 'disabled'}")
                 return 0
 
             if result.content.get("status") == "success":

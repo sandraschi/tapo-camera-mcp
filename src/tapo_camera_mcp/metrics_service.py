@@ -4,12 +4,12 @@ Metrics collection and serving for Grafana integration.
 This module provides real-time camera metrics in a format compatible with Grafana.
 """
 
-from datetime import datetime
-from dataclasses import dataclass, asdict, field
-from typing import Dict, List, Any, Optional, Union
 import asyncio
 import logging
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -232,8 +232,7 @@ class MetricsCollector:
                             "camera_id": camera_id,
                             "name": camera_metrics.name,
                             "preset_id": str(camera_metrics.ptz_position.preset_id),
-                            "preset_name": camera_metrics.ptz_position.preset_name
-                            or "",
+                            "preset_name": camera_metrics.ptz_position.preset_name or "",
                         },
                         timestamp,
                         camera_metrics.ptz_position.preset_id,
@@ -274,9 +273,9 @@ class MetricsServer:
     async def start(self):
         """Start the metrics server"""
         try:
+            import uvicorn
             from fastapi import FastAPI, HTTPException
             from fastapi.middleware.cors import CORSMiddleware
-            import uvicorn
 
             app = FastAPI(title="Tapo Camera MCP Metrics")
 
@@ -304,9 +303,7 @@ class MetricsServer:
                     for camera_id, metrics in self.metrics_collector.metrics.items()
                 }
 
-            config = uvicorn.Config(
-                app, host=self.host, port=self.port, log_level="info"
-            )
+            config = uvicorn.Config(app, host=self.host, port=self.port, log_level="info")
             self._server = uvicorn.Server(config)
             await self._server.serve()
 

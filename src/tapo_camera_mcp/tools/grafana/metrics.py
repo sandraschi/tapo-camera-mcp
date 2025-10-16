@@ -2,7 +2,8 @@
 
 import asyncio
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
+
 from ..base_tool import BaseTool, ToolCategory
 
 
@@ -11,9 +12,7 @@ class GrafanaMetricsTool(BaseTool):
 
     class Meta:
         name: str = "get_grafana_metrics"
-        description: str = (
-            "Export comprehensive camera metrics for Grafana HTTP data source"
-        )
+        description: str = "Export comprehensive camera metrics for Grafana HTTP data source"
         category: ToolCategory = ToolCategory.UTILITY
 
     async def execute(self, **kwargs) -> Dict[str, Any]:
@@ -46,16 +45,10 @@ class GrafanaMetricsTool(BaseTool):
                     status = await camera.get_device_info()
 
                     camera_metrics = {
-                        "status": "online"
-                        if status.get("online", False)
-                        else "offline",
+                        "status": "online" if status.get("online", False) else "offline",
                         "uptime_minutes": status.get("uptime", 0) // 60,
-                        "motion_events_1h": await self._get_motion_events(
-                            camera_id, hours=1
-                        ),
-                        "motion_events_24h": await self._get_motion_events(
-                            camera_id, hours=24
-                        ),
+                        "motion_events_1h": await self._get_motion_events(camera_id, hours=1),
+                        "motion_events_24h": await self._get_motion_events(camera_id, hours=24),
                         "last_motion_time": await self._get_last_motion_time(camera_id),
                         "recording_active": status.get("recording", False),
                         "temperature_celsius": status.get("temperature", 25.0),

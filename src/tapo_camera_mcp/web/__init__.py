@@ -6,13 +6,13 @@ This module provides the web interface for the Tapo Camera MCP server.
 
 import os
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, Request, Depends, HTTPException
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.security import APIKeyCookie
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 from ..config import ServerConfig
 from ..core.models import CameraInfo, CameraStatus, PTZPosition
@@ -36,15 +36,11 @@ class WebServer:
         )
 
         # Set up templates and static files
-        self.templates = Jinja2Templates(
-            directory=str(Path(__file__).parent / "templates")
-        )
+        self.templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
         # Mount static files
         static_path = Path(__file__).parent / "static"
-        self.app.mount(
-            "/static", StaticFiles(directory=str(static_path)), name="static"
-        )
+        self.app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
         # Set up security
         self.security = APIKeyCookie(name="session")
@@ -178,8 +174,7 @@ class WebServer:
         import uvicorn
 
         logger.info(
-            f"Starting web server on http://{self.config.web_host}:"
-            f"{self.config.web_port}"
+            f"Starting web server on http://{self.config.web_host}:" f"{self.config.web_port}"
         )
 
         uvicorn.run(

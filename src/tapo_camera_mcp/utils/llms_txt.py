@@ -5,9 +5,10 @@ This module implements the LLMs.txt standard (https://llmstxt.org) for LLM-optim
 providing a structured way to document APIs and tools for large language models.
 """
 
-from pathlib import Path
-from typing import Dict, List, Optional, Union, TypedDict
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, TypedDict, Union
+
 import pkg_resources
 
 
@@ -37,9 +38,7 @@ class LLMsTxtGenerator:
 
     VERSION = "1.0.0"
 
-    def __init__(
-        self, base_url: str = "https://github.com/yourusername/tapo-camera-mcp"
-    ):
+    def __init__(self, base_url: str = "https://github.com/yourusername/tapo-camera-mcp"):
         """Initialize the LLMs.txt generator.
 
         Args:
@@ -307,9 +306,7 @@ For support, please contact support@example.com or visit our [GitHub repository]
         full_docs_path.write_text(self.generate_full_documentation(), encoding="utf-8")
 
 
-def generate_llms_txt(
-    output_dir: Union[str, Path], base_url: Optional[str] = None
-) -> None:
+def generate_llms_txt(output_dir: Union[str, Path], base_url: Optional[str] = None) -> None:
     """Generate LLMs.txt files for the project.
 
     Args:

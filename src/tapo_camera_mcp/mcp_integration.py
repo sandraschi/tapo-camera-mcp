@@ -4,10 +4,10 @@ FastMCP 2.12 integration for Tapo Camera MCP.
 This module provides base classes and utilities for FastMCP 2.12 compatibility.
 """
 
-from typing import TypeVar, Generic
-from enum import Enum
-import logging
 import inspect
+import logging
+from enum import Enum
+from typing import Generic, TypeVar
 
 from fastmcp.tools import Tool as FastMCPTool
 from pydantic import BaseModel, Field
@@ -65,9 +65,9 @@ class BaseTool(FastMCPTool):
             "name": getattr(cls, "name", cls.__name__),
             "description": cls.__doc__ or "",
             "meta": {
-                "category": cls.Meta.category
-                if hasattr(cls.Meta, "category")
-                else ToolCategory.UTILITY,
+                "category": (
+                    cls.Meta.category if hasattr(cls.Meta, "category") else ToolCategory.UTILITY
+                ),
                 **getattr(cls.Meta, "meta", {}),
             },
         }
@@ -102,9 +102,7 @@ def tool(name: str = None, **kwargs):
 
             # Make sure the class has an execute method
             if not hasattr(cls, "execute") or not callable(getattr(cls, "execute")):
-                raise TypeError(
-                    f"Tool class {cls.__name__} must implement an 'execute' method"
-                )
+                raise TypeError(f"Tool class {cls.__name__} must implement an 'execute' method")
 
             # Add the tool to the registry
             from ..tools.discovery import register_tool

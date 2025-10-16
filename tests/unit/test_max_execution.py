@@ -3,10 +3,11 @@
 FINAL REAL EXECUTION TEST - Force 80% coverage by executing ALL code paths!
 """
 
-import sys
-import os
 import asyncio
 import logging
+import os
+import sys
+
 import cv2
 from PIL import Image
 
@@ -14,9 +15,7 @@ from PIL import Image
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 # Setup logging
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -27,10 +26,10 @@ def test_execute_all_core_functions():
 
         # 1. Execute validation functions (these run real validation logic)
         from tapo_camera_mcp.validation import (
-            validate_ip_address,
-            validate_port,
             validate_camera_name,
             validate_credentials,
+            validate_ip_address,
+            validate_port,
             validate_string_length,
         )
 
@@ -44,13 +43,13 @@ def test_execute_all_core_functions():
         # 2. Execute model creation (these run Pydantic validation)
         from tapo_camera_mcp.core.models import (
             CameraModel,
-            StreamType,
-            VideoQuality,
-            PTZDirection,
-            MotionDetectionSensitivity,
             CameraStatus,
+            MotionDetectionSensitivity,
+            PTZDirection,
             PTZPosition,
+            StreamType,
             TapoCameraConfig,
+            VideoQuality,
         )
 
         logger.info("📊 Executing model creation...")
@@ -70,12 +69,10 @@ def test_execute_all_core_functions():
         )
 
         position = PTZPosition(pan=0.5, tilt=-0.3, zoom=0.8)
-        config = TapoCameraConfig(
-            host="192.168.1.100", username="testuser", password="testpass"
-        )
+        config = TapoCameraConfig(host="192.168.1.100", username="testuser", password="testpass")
 
         # 3. Execute camera creation and methods
-        from tapo_camera_mcp.camera.base import CameraType, CameraConfig
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
         from tapo_camera_mcp.camera.manager import CameraManager
 
         logger.info("📷 Executing camera creation...")
@@ -92,17 +89,17 @@ def test_execute_all_core_functions():
         stream_url = asyncio.run(webcam.get_stream_url())
 
         # 4. Execute tools discovery and registration
-        from tapo_camera_mcp.tools.discovery import discover_tools
         from tapo_camera_mcp.tools.base_tool import get_all_tools
+        from tapo_camera_mcp.tools.discovery import discover_tools
 
         logger.info("🔧 Executing tools discovery...")
         tools = discover_tools("tapo_camera_mcp.tools")
         registered = get_all_tools()
 
         # 5. Execute specific tool creation and methods
-        from tapo_camera_mcp.tools.system.status_tool import StatusTool
-        from tapo_camera_mcp.tools.system.help_tool import HelpTool
         from tapo_camera_mcp.tools.camera.camera_tools import ListCamerasTool
+        from tapo_camera_mcp.tools.system.help_tool import HelpTool
+        from tapo_camera_mcp.tools.system.status_tool import StatusTool
 
         logger.info("⚙️ Executing tool creation...")
         status_tool = StatusTool(section="system")
@@ -164,7 +161,7 @@ def test_execute_all_core_functions():
             logger.warning("Webcam not available for hardware testing")
 
         # 9. Execute exception handling
-        from tapo_camera_mcp.exceptions import TapoCameraError, ConnectionError
+        from tapo_camera_mcp.exceptions import ConnectionError, TapoCameraError
 
         logger.info("🚨 Executing exception handling...")
         try:
@@ -251,10 +248,10 @@ def test_server_camera_integration():
     try:
         logger.info("🔗 TESTING SERVER-CAMERA INTEGRATION...")
 
-        from tapo_camera_mcp.core.server import TapoCameraServer
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
         from tapo_camera_mcp.camera.manager import CameraManager
         from tapo_camera_mcp.camera.webcam import WebCamera
-        from tapo_camera_mcp.camera.base import CameraType, CameraConfig
+        from tapo_camera_mcp.core.server import TapoCameraServer
 
         # Execute server creation
         try:
@@ -307,7 +304,7 @@ def test_full_system_execution():
         # 1. Validation → 2. Models → 3. Camera → 4. Tools → 5. Server → 6. Integration
 
         logger.info("1. Executing validation...")
-        from tapo_camera_mcp.validation import validate_ip_address, validate_camera_name
+        from tapo_camera_mcp.validation import validate_camera_name, validate_ip_address
 
         ip = validate_ip_address("192.168.1.100", "test")
         name = validate_camera_name("test_webcam", "test")
@@ -323,13 +320,11 @@ def test_full_system_execution():
             firmware_version="1.0.0",
             hardware_version="1.0",
         )
-        config = TapoCameraConfig(
-            host="192.168.1.100", username="testuser", password="testpass"
-        )
+        config = TapoCameraConfig(host="192.168.1.100", username="testuser", password="testpass")
 
         logger.info("3. Executing camera operations...")
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
         from tapo_camera_mcp.camera.webcam import WebCamera
-        from tapo_camera_mcp.camera.base import CameraType, CameraConfig
 
         webcam_config = CameraConfig(
             name="e2e_webcam", type=CameraType.WEBCAM, params={"device_id": 0}

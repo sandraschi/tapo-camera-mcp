@@ -10,11 +10,12 @@ warnings.filterwarnings(
     "ignore", category=DeprecationWarning, message=".*Support for class-based.*"
 )
 
-from typing import Dict, Any, Optional
 import logging
-from pydantic import Field, ConfigDict
+from typing import Any, Dict, Optional
 
-from tapo_camera_mcp.tools.base_tool import tool, ToolCategory, BaseTool, ToolResult
+from pydantic import ConfigDict, Field
+
+from tapo_camera_mcp.tools.base_tool import BaseTool, ToolCategory, ToolResult, tool
 
 logger = logging.getLogger(__name__)
 
@@ -52,17 +53,11 @@ class MovePTZTool(BaseTool):
         }
     )
 
-    pan: float = Field(
-        default=0.0, ge=-1.0, le=1.0, description="Pan position (-1.0 to 1.0)"
-    )
+    pan: float = Field(default=0.0, ge=-1.0, le=1.0, description="Pan position (-1.0 to 1.0)")
 
-    tilt: float = Field(
-        default=0.0, ge=-1.0, le=1.0, description="Tilt position (-1.0 to 1.0)"
-    )
+    tilt: float = Field(default=0.0, ge=-1.0, le=1.0, description="Tilt position (-1.0 to 1.0)")
 
-    zoom: float = Field(
-        default=0.0, ge=0.0, le=1.0, description="Zoom level (0.0 to 1.0)"
-    )
+    zoom: float = Field(default=0.0, ge=0.0, le=1.0, description="Zoom level (0.0 to 1.0)")
 
     speed: int = Field(default=5, ge=1, le=8, description="Movement speed (1-8)")
 
@@ -179,9 +174,9 @@ class MovePTZTool(BaseTool):
             - recall_ptz_preset_tool: To move to saved preset position
             - go_to_home_ptz_tool: To return to default position
         """
-        from tapo_camera_mcp.core.server import (
+        from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
-        )  # Lazy import to avoid circular imports
+        )
 
         server = await TapoCameraServer.get_instance()
         return await server.move_ptz(
@@ -230,9 +225,7 @@ class SavePTZPresetTool(BaseTool):
         from ...core.server import TapoCameraServer
 
         server = await TapoCameraServer.get_instance()
-        return await server.save_ptz_preset(
-            {"name": self.name, "preset_id": self.preset_id}
-        )
+        return await server.save_ptz_preset({"name": self.name, "preset_id": self.preset_id})
 
 
 @tool(name="recall_ptz_preset", category=ToolCategory.PTZ)
@@ -375,16 +368,14 @@ class StopPTZTool(BaseTool):
 
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Stop all PTZ movement."""
-        from tapo_camera_mcp.core.server import (
+        from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
-        )  # Lazy import to avoid circular imports
+        )
 
         server = await TapoCameraServer.get_instance()
         try:
             # Use move_ptz with all zeros to stop movement
-            result = await server.move_ptz(
-                {"pan": 0, "tilt": 0, "zoom": 0, "relative": True}
-            )
+            result = await server.move_ptz({"pan": 0, "tilt": 0, "zoom": 0, "relative": True})
             if result.get("status") == "success":
                 return {"status": "success", "message": "PTZ movement stopped"}
             else:
@@ -525,9 +516,9 @@ class GetPTZPositionTool(BaseTool):
             - recall_ptz_preset_tool: To move to saved preset position
             - go_to_home_ptz_tool: To return to default position
         """
-        from tapo_camera_mcp.core.server import (
+        from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
-        )  # Lazy import to avoid circular imports
+        )
 
         server = await TapoCameraServer.get_instance()
         try:

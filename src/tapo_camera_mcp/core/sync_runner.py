@@ -24,9 +24,7 @@ def create_mcp_server() -> FastMCP:
 
     for tool_cls in tools:
         # Get the tool name and description from the Meta class or class attributes
-        tool_name = getattr(
-            tool_cls, "name", getattr(tool_cls.Meta, "name", tool_cls.__name__)
-        )
+        tool_name = getattr(tool_cls, "name", getattr(tool_cls.Meta, "name", tool_cls.__name__))
         tool_description = getattr(
             tool_cls, "description", getattr(tool_cls.Meta, "description", "")
         )
@@ -46,18 +44,14 @@ def create_mcp_server() -> FastMCP:
             logger.debug(f"Registering tool: {tool_name}")
 
             # If the tool has a sync initialize method, call it
-            if hasattr(tool_instance, "initialize") and callable(
-                tool_instance.initialize
-            ):
+            if hasattr(tool_instance, "initialize") and callable(tool_instance.initialize):
                 try:
                     # Check if it's async (has __await__ method)
                     if not hasattr(tool_instance.initialize, "__await__"):
                         tool_instance.initialize()
                         logger.debug(f"Initialized tool: {tool_name}")
                     else:
-                        logger.debug(
-                            f"Skipping async initialization for tool: {tool_name}"
-                        )
+                        logger.debug(f"Skipping async initialization for tool: {tool_name}")
                 except Exception as e:
                     logger.warning(f"Failed to initialize tool {tool_name}: {str(e)}")
                     continue
@@ -107,9 +101,7 @@ def create_mcp_server() -> FastMCP:
                 continue
 
         except Exception as e:
-            logger.error(
-                f"Unexpected error processing tool {tool_name}: {str(e)}", exc_info=True
-            )
+            logger.error(f"Unexpected error processing tool {tool_name}: {str(e)}", exc_info=True)
             continue
 
     logger.info(f"Registered {len(tools)} tools")

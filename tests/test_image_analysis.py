@@ -56,9 +56,7 @@ class TestImageAnalysis(unittest.IsolatedAsyncioTestCase):
             f.write(b"fake image data")
 
         # Test analysis
-        result = await self.server._analyze_image(
-            test_image_path, "Describe this image"
-        )
+        result = await self.server._analyze_image(test_image_path, "Describe this image")
 
         # Verify results
         self.assertIn("image_base64", result)

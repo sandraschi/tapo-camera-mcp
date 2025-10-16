@@ -1,12 +1,13 @@
 """Tapo camera implementation."""
 
 import asyncio
-from typing import Dict, Optional
-from pathlib import Path
-from PIL import Image
 import io
+from pathlib import Path
+from typing import Dict, Optional
 
+from PIL import Image
 from pytapo import Tapo
+
 from .base import BaseCamera, CameraFactory, CameraType
 
 

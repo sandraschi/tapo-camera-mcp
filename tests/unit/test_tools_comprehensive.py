@@ -3,9 +3,9 @@
 Advanced comprehensive tests for all tools with actual execution testing.
 """
 
-import sys
-import os
 import asyncio
+import os
+import sys
 import unittest.mock as mock
 
 # Add the src path to Python path
@@ -15,13 +15,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 def test_camera_tools_execution():
     """Test actual execution of camera tools with mocked dependencies."""
     try:
+        from tapo_camera_mcp.tools.base_tool import ToolResult
         from tapo_camera_mcp.tools.camera.camera_tools import (
-            ListCamerasTool,
             AddCameraTool,
             ConnectCameraTool,
             GetCameraStatusTool,
+            ListCamerasTool,
         )
-        from tapo_camera_mcp.tools.base_tool import ToolResult
 
         # Test ListCamerasTool execution
         list_tool = ListCamerasTool()
@@ -124,9 +124,9 @@ def test_ptz_tools_execution():
         # Check if PTZ tools are available
         try:
             from tapo_camera_mcp.tools.ptz.ptz_tools import (
-                SetCameraPresetTool,
                 GetCameraPresetsTool,
                 PTZControlTool,
+                SetCameraPresetTool,
             )
         except ImportError:
             print("⚠️ PTZ tools not available, skipping execution test")
@@ -186,8 +186,8 @@ def test_ptz_tools_execution():
 def test_system_tools_execution():
     """Test system tools execution."""
     try:
-        from tapo_camera_mcp.tools.system.status_tool import StatusTool
         from tapo_camera_mcp.tools.system.help_tool import HelpTool
+        from tapo_camera_mcp.tools.system.status_tool import StatusTool
 
         # Test StatusTool execution
         status_tool = StatusTool(section="system")
@@ -226,9 +226,7 @@ def test_tool_validation_integration():
             )
 
             # This should fail during validation in execute()
-            with mock.patch(
-                "tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer"
-            ):
+            with mock.patch("tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer"):
                 result = asyncio.run(tool.execute())
                 # Should return error result
                 assert hasattr(result, "is_error") and result.is_error
@@ -245,9 +243,7 @@ def test_tool_validation_integration():
                 password="test_pass",
             )
 
-            with mock.patch(
-                "tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer"
-            ):
+            with mock.patch("tapo_camera_mcp.tools.camera.camera_tools.TapoCameraServer"):
                 result = asyncio.run(tool.execute())
                 # Should return error result
                 assert hasattr(result, "is_error") and result.is_error
@@ -267,11 +263,11 @@ def test_tool_validation_integration():
 def test_tool_error_handling():
     """Test tool error handling with various failure scenarios."""
     try:
-        from tapo_camera_mcp.tools.camera.camera_tools import (
-            ListCamerasTool,
-            AddCameraTool,
-        )
         from tapo_camera_mcp.exceptions import ConnectionError
+        from tapo_camera_mcp.tools.camera.camera_tools import (
+            AddCameraTool,
+            ListCamerasTool,
+        )
 
         # Test ListCamerasTool with server failure
         list_tool = ListCamerasTool()
@@ -328,8 +324,8 @@ def test_tool_async_behavior():
     """Test that tools properly handle async execution."""
     try:
         from tapo_camera_mcp.tools.camera.camera_tools import (
-            ListCamerasTool,
             GetCameraStatusTool,
+            ListCamerasTool,
         )
 
         # Test that execute methods are async
@@ -371,8 +367,8 @@ def test_tool_async_behavior():
 def test_tool_registry_integration():
     """Test tool registry integration with discovery."""
     try:
+        from tapo_camera_mcp.tools.base_tool import _tool_registry, get_all_tools
         from tapo_camera_mcp.tools.discovery import discover_tools
-        from tapo_camera_mcp.tools.base_tool import get_all_tools, _tool_registry
 
         # Clear registry for clean test
         _tool_registry.clear()
@@ -389,9 +385,7 @@ def test_tool_registry_integration():
             if hasattr(tool_cls.Meta, "name"):
                 tool_name = tool_cls.Meta.name
                 retrieved_tool = get_tool(tool_name)
-                assert retrieved_tool is not None, (
-                    f"Tool {tool_name} should be retrievable"
-                )
+                assert retrieved_tool is not None, f"Tool {tool_name} should be retrievable"
 
         print(
             f"✅ Tool registry integration test passed - {len(registered_tools)} tools registered"
@@ -423,28 +417,20 @@ def test_all_tools_comprehensive():
             # Meta should have name and category
             meta = tool_cls.Meta
             assert hasattr(meta, "name"), f"Tool {tool_cls.__name__} missing name"
-            assert hasattr(meta, "category"), (
-                f"Tool {tool_cls.__name__} missing category"
-            )
+            assert hasattr(meta, "category"), f"Tool {tool_cls.__name__} missing category"
 
             # Tool should have execute method
-            assert hasattr(tool_cls, "execute"), (
-                f"Tool {tool_cls.__name__} missing execute"
-            )
+            assert hasattr(tool_cls, "execute"), f"Tool {tool_cls.__name__} missing execute"
 
             # Execute method should be callable
             execute_method = getattr(tool_cls, "execute")
-            assert callable(execute_method), (
-                f"Tool {tool_cls.__name__} execute not callable"
-            )
+            assert callable(execute_method), f"Tool {tool_cls.__name__} execute not callable"
 
             # Test that we can instantiate the tool (basic instantiation test)
             try:
                 # Try to create instance with minimal parameters
                 # This is a basic smoke test for instantiation
-                if hasattr(meta, "Parameters") and hasattr(
-                    meta.Parameters, "__annotations__"
-                ):
+                if hasattr(meta, "Parameters") and hasattr(meta.Parameters, "__annotations__"):
                     # For tools with parameters, we can't easily instantiate without knowing the params
                     # Just check that the class can be referenced
                     pass
@@ -456,9 +442,7 @@ def test_all_tools_comprehensive():
                 # This is OK for this basic test
                 pass
 
-        print(
-            f"✅ All tools comprehensive test passed - validated {len(all_tools)} tools"
-        )
+        print(f"✅ All tools comprehensive test passed - validated {len(all_tools)} tools")
         return True
     except Exception as e:
         print(f"❌ All tools comprehensive test failed: {e}")

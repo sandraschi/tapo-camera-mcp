@@ -1,7 +1,7 @@
-import sys
+import importlib
 import os
 import platform
-import importlib
+import sys
 from pathlib import Path
 
 

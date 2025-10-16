@@ -3,6 +3,7 @@ Camera-related API endpoints.
 """
 
 from typing import List
+
 from fastapi import APIRouter, HTTPException, status
 
 from ....core.models import CameraInfo, CameraStatus

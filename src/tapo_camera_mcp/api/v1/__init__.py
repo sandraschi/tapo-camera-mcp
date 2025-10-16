@@ -5,7 +5,8 @@ This module contains all the v1 API endpoints.
 """
 
 from fastapi import APIRouter
-from .endpoints import cameras, ptz, system, media
+
+from .endpoints import cameras, media, ptz, system
 
 # Create the main router for v1 API
 router = APIRouter()

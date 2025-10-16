@@ -7,9 +7,7 @@ from .utils.llms_txt import generate_llms_txt
 
 def main():
     """Main CLI entry point."""
-    parser = argparse.ArgumentParser(
-        description="Tapo Camera MCP - Command Line Interface"
-    )
+    parser = argparse.ArgumentParser(description="Tapo Camera MCP - Command Line Interface")
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
     # LLMs.txt generation command

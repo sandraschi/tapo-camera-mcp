@@ -37,9 +37,7 @@ def test_basic_pip_install():
             # Check what was installed
             temp_path = Path(temp_dir)
             installed = list(temp_path.iterdir())
-            print(
-                f"   Installed {len(installed)} items: {[p.name for p in installed[:5]]}"
-            )
+            print(f"   Installed {len(installed)} items: {[p.name for p in installed[:5]]}")
         else:
             print("❌ Basic pip install --target failed")
             print(f"   stdout: {result.stdout}")

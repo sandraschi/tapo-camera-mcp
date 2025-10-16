@@ -4,11 +4,12 @@ System tools for Tapo Camera MCP.
 This module contains tools for system-level operations and configuration.
 """
 
-from typing import Dict, Any, Optional, List
 import logging
+from typing import Any, Dict, List, Optional
+
 from pydantic import Field
 
-from tapo_camera_mcp.tools.base_tool import ToolCategory, BaseTool, register_tool
+from tapo_camera_mcp.tools.base_tool import BaseTool, ToolCategory, register_tool
 
 logger = logging.getLogger(__name__)
 
@@ -82,9 +83,7 @@ class GetLogsTool(BaseTool):
             level: str = Field(
                 default="info",
                 description="Log level to retrieve",
-                json_schema_extra={
-                    "enum": ["debug", "info", "warning", "error", "critical"]
-                },
+                json_schema_extra={"enum": ["debug", "info", "warning", "error", "critical"]},
             )
             limit: int = Field(
                 default=100, ge=1, description="Maximum number of log entries to return"
@@ -114,9 +113,7 @@ class GetHelpTool(BaseTool):
         category = ToolCategory.UTILITY
 
         class Parameters:
-            tool_name: Optional[str] = Field(
-                None, description="Name of the tool to get help for"
-            )
+            tool_name: Optional[str] = Field(None, description="Name of the tool to get help for")
 
     tool_name: Optional[str] = None
 
@@ -145,9 +142,7 @@ class SetMotionDetectionTool(BaseTool):
             sensitivity: Optional[int] = Field(
                 None, ge=1, le=100, description="Sensitivity level (1-100)"
             )
-            zones: Optional[List[Any]] = Field(
-                None, description="List of motion detection zones"
-            )
+            zones: Optional[List[Any]] = Field(None, description="List of motion detection zones")
 
     enabled: bool
     sensitivity: Optional[int] = None
@@ -226,12 +221,8 @@ class HelpTool(BaseTool):
         category = ToolCategory.UTILITY
 
         class Parameters:
-            tool_name: Optional[str] = Field(
-                None, description="Name of the tool to get help for"
-            )
-            category: Optional[str] = Field(
-                None, description="Filter tools by category"
-            )
+            tool_name: Optional[str] = Field(None, description="Name of the tool to get help for")
+            category: Optional[str] = Field(None, description="Filter tools by category")
 
     tool_name: Optional[str] = None
     category: Optional[str] = None

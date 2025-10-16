@@ -2,9 +2,10 @@
 Check Pydantic version and compatibility.
 """
 
-import pydantic
-import sys
 import logging
+import sys
+
+import pydantic
 
 # Configure logging
 logging.basicConfig(

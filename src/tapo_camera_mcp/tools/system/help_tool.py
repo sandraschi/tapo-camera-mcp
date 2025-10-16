@@ -2,9 +2,11 @@
 Help tool for Tapo Camera MCP that provides comprehensive documentation.
 """
 
-from typing import Dict, Any, Optional
-from pydantic import Field, ConfigDict
-from tapo_camera_mcp.tools.base_tool import tool, ToolCategory, BaseTool
+from typing import Any, Dict, Optional
+
+from pydantic import ConfigDict, Field
+
+from tapo_camera_mcp.tools.base_tool import BaseTool, ToolCategory, tool
 
 
 @tool(name="get_help")
@@ -15,14 +17,10 @@ class HelpTool(BaseTool):
         name = "get_help"
         category = ToolCategory.SYSTEM
 
-    section: Optional[str] = Field(
-        default="all", description="Section of the help to display"
-    )
+    section: Optional[str] = Field(default="all", description="Section of the help to display")
 
     model_config = ConfigDict(
-        json_schema_extra={
-            "enum": ["all", "core", "grafana", "api", "ptz", "troubleshooting"]
-        }
+        json_schema_extra={"enum": ["all", "core", "grafana", "api", "ptz", "troubleshooting"]}
     )
 
     async def execute(self) -> Dict[str, Any]:

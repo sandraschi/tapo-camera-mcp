@@ -2,13 +2,13 @@
 Tests for the Tapo Camera MCP server.
 """
 
-from unittest.mock import AsyncMock, patch, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from fastmcp.server import FastMCP
 
 from tapo_camera_mcp.core.server import TapoCameraServer
-from tapo_camera_mcp.exceptions import ConnectionError, AuthenticationError
+from tapo_camera_mcp.exceptions import AuthenticationError, ConnectionError
 from tapo_camera_mcp.tools.camera import GetCameraInfoTool
 
 # Test data
@@ -306,9 +306,7 @@ async def test_stream_control(tapo_camera, mock_session):
 
     # Test start stream
     result = await tapo_camera.handle_start_stream(
-        McpMessage(
-            type="stream_start", data={"stream_id": "test", "stream_type": "rtsp"}
-        )
+        McpMessage(type="stream_start", data={"stream_id": "test", "stream_type": "rtsp"})
     )
     assert "status" in result
     assert result["status"] == "success"
@@ -417,9 +415,7 @@ async def test_config_handling(tapo_camera, mock_session):
     await tapo_camera.connect()
 
     # Test get config
-    result = await tapo_camera.handle_get_config(
-        McpMessage(type="camera_config", data={})
-    )
+    result = await tapo_camera.handle_get_config(McpMessage(type="camera_config", data={}))
     assert "host" in result
     assert result["host"] == tapo_camera.config.host
 

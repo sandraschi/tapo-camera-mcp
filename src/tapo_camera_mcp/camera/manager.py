@@ -1,10 +1,10 @@
 """Camera manager for handling multiple camera types and groups."""
 
-from typing import Dict, List, Optional, Union, Any
-from pathlib import Path
 import logging
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
-from .base import CameraFactory, CameraConfig
+from .base import CameraConfig, CameraFactory
 from .groups import CameraGroupManager
 
 logger = logging.getLogger(__name__)
@@ -103,9 +103,7 @@ class CameraManager:
             List of camera information dictionaries
         """
         result = []
-        camera_names = (
-            self.groups.get_group_cameras(group) if group else self.cameras.keys()
-        )
+        camera_names = self.groups.get_group_cameras(group) if group else self.cameras.keys()
 
         for name in camera_names:
             if name not in self.cameras:
@@ -210,9 +208,7 @@ class CameraManager:
         groups = []
         for group_name in self.groups.list_groups():
             cameras = self.groups.get_group_cameras(group_name)
-            groups.append(
-                {"name": group_name, "cameras": cameras, "camera_count": len(cameras)}
-            )
+            groups.append({"name": group_name, "cameras": cameras, "camera_count": len(cameras)})
         return groups
 
     async def close(self):

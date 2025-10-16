@@ -3,18 +3,16 @@
 FINAL ATTEMPT - Execute actual server and tool code to force coverage.
 """
 
-import sys
-import os
 import asyncio
 import logging
+import os
+import sys
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 # Setup logging
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -64,9 +62,9 @@ def force_execute_camera_code():
     try:
         logger.info("📷 FORCING CAMERA CODE EXECUTION...")
 
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraFactory, CameraType
         from tapo_camera_mcp.camera.manager import CameraManager
         from tapo_camera_mcp.camera.webcam import WebCamera
-        from tapo_camera_mcp.camera.base import CameraType, CameraConfig, CameraFactory
 
         # Execute camera manager code
         manager = CameraManager()
@@ -107,8 +105,8 @@ def force_execute_tools_code():
         logger.info("🔧 FORCING TOOLS CODE EXECUTION...")
 
         from tapo_camera_mcp.tools.discovery import discover_tools
-        from tapo_camera_mcp.tools.system.status_tool import StatusTool
         from tapo_camera_mcp.tools.system.help_tool import HelpTool
+        from tapo_camera_mcp.tools.system.status_tool import StatusTool
 
         # Execute tools discovery code
         tools = discover_tools("tapo_camera_mcp.tools")
@@ -146,11 +144,11 @@ def force_execute_validation_code():
         logger.info("✅ FORCING VALIDATION CODE EXECUTION...")
 
         from tapo_camera_mcp.validation import (
-            validate_ip_address,
-            validate_port,
+            ToolValidationError,
             validate_camera_name,
             validate_credentials,
-            ToolValidationError,
+            validate_ip_address,
+            validate_port,
         )
 
         # Execute validation functions
@@ -184,12 +182,12 @@ def force_execute_models_code():
 
         from tapo_camera_mcp.core.models import (
             CameraModel,
-            StreamType,
-            VideoQuality,
-            PTZDirection,
             CameraStatus,
+            PTZDirection,
             PTZPosition,
+            StreamType,
             TapoCameraConfig,
+            VideoQuality,
         )
 
         # Execute enum access (this runs enum code)
@@ -210,13 +208,9 @@ def force_execute_models_code():
         )
 
         position = PTZPosition(pan=0.5, tilt=-0.3, zoom=0.8)
-        config = TapoCameraConfig(
-            host="192.168.1.100", username="testuser", password="testpass"
-        )
+        config = TapoCameraConfig(host="192.168.1.100", username="testuser", password="testpass")
 
-        logger.info(
-            f"✅ Models created: status={status.online}, position={position.pan}"
-        )
+        logger.info(f"✅ Models created: status={status.online}, position={position.pan}")
 
         return True
 
@@ -233,10 +227,10 @@ def test_webcam_connected_to_server():
     try:
         logger.info("🔗 TESTING WEBCAM-SERVER CONNECTION...")
 
-        from tapo_camera_mcp.core.server import TapoCameraServer
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
         from tapo_camera_mcp.camera.manager import CameraManager
         from tapo_camera_mcp.camera.webcam import WebCamera
-        from tapo_camera_mcp.camera.base import CameraType, CameraConfig
+        from tapo_camera_mcp.core.server import TapoCameraServer
 
         # Create camera manager
         camera_manager = CameraManager()

@@ -3,8 +3,8 @@
 Tests for camera implementations (Tapo, Webcam, Ring, Furbo).
 """
 
-import sys
 import os
+import sys
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
@@ -56,9 +56,7 @@ def test_tapo_camera():
         # Test that TapoCamera class exists and has required methods
         assert hasattr(TapoCamera, "__init__"), "TapoCamera should have __init__"
         assert hasattr(TapoCamera, "connect"), "TapoCamera should have connect method"
-        assert hasattr(TapoCamera, "get_status"), (
-            "TapoCamera should have get_status method"
-        )
+        assert hasattr(TapoCamera, "get_status"), "TapoCamera should have get_status method"
 
         print("✅ TapoCamera class structure test passed")
         return True
@@ -78,12 +76,8 @@ def test_webcam_camera():
         # Test that WebCamera class exists and has required methods
         assert hasattr(WebCamera, "__init__"), "WebCamera should have __init__"
         assert hasattr(WebCamera, "connect"), "WebCamera should have connect method"
-        assert hasattr(WebCamera, "start_stream"), (
-            "WebCamera should have start_stream method"
-        )
-        assert hasattr(WebCamera, "get_status"), (
-            "WebCamera should have get_status method"
-        )
+        assert hasattr(WebCamera, "start_stream"), "WebCamera should have start_stream method"
+        assert hasattr(WebCamera, "get_status"), "WebCamera should have get_status method"
 
         print("✅ WebCamera class structure test passed")
         return True
@@ -98,8 +92,8 @@ def test_webcam_camera():
 def test_camera_manager():
     """Test camera manager functionality."""
     try:
-        from tapo_camera_mcp.camera.manager import CameraManager
         from tapo_camera_mcp.camera.base import CameraConfig, CameraType
+        from tapo_camera_mcp.camera.manager import CameraManager
 
         # Test CameraManager creation
         manager = CameraManager()
@@ -150,9 +144,9 @@ def test_camera_factory():
         from tapo_camera_mcp.camera.base import CameraFactory
 
         # Test that CameraFactory exists
-        assert hasattr(CameraFactory, "create_camera"), (
-            "CameraFactory should have create_camera method"
-        )
+        assert hasattr(
+            CameraFactory, "create_camera"
+        ), "CameraFactory should have create_camera method"
 
         print("✅ Camera factory structure test passed")
         return True
@@ -168,11 +162,11 @@ def test_camera_exceptions():
     """Test camera exception classes."""
     try:
         from tapo_camera_mcp.exceptions import (
-            TapoCameraError,
-            ConnectionError,
             AuthenticationError,
             CameraNotFoundError,
+            ConnectionError,
             StreamError,
+            TapoCameraError,
         )
 
         # Test exception creation
@@ -184,9 +178,9 @@ def test_camera_exceptions():
 
         # Test exception hierarchy
         assert isinstance(error, Exception), "TapoCameraError should be Exception"
-        assert isinstance(connection_error, TapoCameraError), (
-            "ConnectionError should inherit from TapoCameraError"
-        )
+        assert isinstance(
+            connection_error, TapoCameraError
+        ), "ConnectionError should inherit from TapoCameraError"
 
         print("✅ Camera exceptions test passed")
         return True

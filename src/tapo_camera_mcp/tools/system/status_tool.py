@@ -2,14 +2,15 @@
 Status tool for monitoring system health and camera status in Tapo Camera MCP.
 """
 
-from typing import Dict, Any, List
-from pydantic import BaseModel, Field, ConfigDict
-from datetime import datetime
-import psutil
-import os
 import logging
+import os
+from datetime import datetime
+from typing import Any, Dict, List
 
-from tapo_camera_mcp.tools.base_tool import tool, ToolCategory, BaseTool
+import psutil
+from pydantic import BaseModel, ConfigDict, Field
+
+from tapo_camera_mcp.tools.base_tool import BaseTool, ToolCategory, tool
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +28,7 @@ class SystemStatus(BaseModel):
 class HealthStatus(BaseModel):
     """Comprehensive health status information."""
 
-    overall: str = Field(
-        ..., description="Overall health status: healthy/warning/critical"
-    )
+    overall: str = Field(..., description="Overall health status: healthy/warning/critical")
     server_status: str = Field(..., description="MCP server status")
     camera_health: Dict[str, Any] = Field(..., description="Camera health information")
     system_health: Dict[str, Any] = Field(..., description="System resource health")
@@ -54,13 +53,9 @@ class StatusTool(BaseTool):
         name = "get_status"
         category = ToolCategory.SYSTEM
 
-    detail_level: str = Field(
-        default="basic", description="Level of detail in the status report"
-    )
+    detail_level: str = Field(default="basic", description="Level of detail in the status report")
 
-    model_config = ConfigDict(
-        json_schema_extra={"enum": ["basic", "detailed", "cameras"]}
-    )
+    model_config = ConfigDict(json_schema_extra={"enum": ["basic", "detailed", "cameras"]})
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -140,9 +135,7 @@ class StatusTool(BaseTool):
             overall = (
                 "critical"
                 if any("critical" in warning.lower() for warning in all_warnings)
-                else "warning"
-                if all_warnings
-                else "healthy"
+                else "warning" if all_warnings else "healthy"
             )
 
             return {
@@ -209,9 +202,7 @@ class StatusTool(BaseTool):
             if critical_errors > 0:
                 warnings.append(f"{critical_errors} critical errors detected")
 
-            status = (
-                "healthy" if server_responsive and critical_errors == 0 else "warning"
-            )
+            status = "healthy" if server_responsive and critical_errors == 0 else "warning"
 
             return {
                 "status": status,
@@ -230,12 +221,12 @@ class StatusTool(BaseTool):
             "memory_percent": psutil.virtual_memory().percent,
             "disk_usage": psutil.disk_usage("/").percent,
             "uptime": self._format_uptime(psutil.boot_time()),
-            "active_cameras": len(self.camera_manager.get_active_cameras())
-            if self.camera_manager
-            else 0,
-            "active_streams": len(self.camera_manager.get_active_streams())
-            if self.camera_manager
-            else 0,
+            "active_cameras": (
+                len(self.camera_manager.get_active_cameras()) if self.camera_manager else 0
+            ),
+            "active_streams": (
+                len(self.camera_manager.get_active_streams()) if self.camera_manager else 0
+            ),
             "last_updated": datetime.utcnow().isoformat(),
         }
 
@@ -252,16 +243,10 @@ class StatusTool(BaseTool):
                     "camera_id": camera.id,
                     "model": camera.model,
                     "status": "online" if camera.is_online() else "offline",
-                    "last_seen": camera.last_seen.isoformat()
-                    if camera.last_seen
-                    else "never",
-                    "stream_status": "active"
-                    if stream and stream.is_active()
-                    else "inactive",
+                    "last_seen": camera.last_seen.isoformat() if camera.last_seen else "never",
+                    "stream_status": "active" if stream and stream.is_active() else "inactive",
                     "fps": stream.get_fps() if stream else 0.0,
-                    "resolution": f"{stream.width}x{stream.height}"
-                    if stream
-                    else "N/A",
+                    "resolution": f"{stream.width}x{stream.height}" if stream else "N/A",
                 }
             )
         return cameras_status
@@ -282,9 +267,7 @@ class StatusTool(BaseTool):
     def _get_grafana_status(self) -> Dict[str, Any]:
         """Get Grafana integration status."""
         return {
-            "plugin_installed": os.path.exists(
-                "/var/lib/grafana/plugins/tapo-camera-stream"
-            ),
+            "plugin_installed": os.path.exists("/var/lib/grafana/plugins/tapo-camera-stream"),
             "dashboards_imported": len(self._find_grafana_dashboards()) > 0,
             "api_accessible": self._check_grafana_api(),
         }

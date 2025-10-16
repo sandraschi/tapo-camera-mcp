@@ -6,7 +6,9 @@ for the Tapo Camera MCP server.
 """
 
 from typing import List
+
 from fastapi import APIRouter, FastAPI
+
 from ..config import ServerConfig
 
 # Import all API versions

@@ -3,9 +3,9 @@
 Comprehensive tests for all camera tools.
 """
 
-import sys
-import os
 import asyncio
+import os
+import sys
 import unittest.mock as mock
 
 # Add the src path to Python path
@@ -15,8 +15,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 def test_list_cameras_tool():
     """Test ListCamerasTool functionality."""
     try:
-        from tapo_camera_mcp.tools.camera.camera_tools import ListCamerasTool
         from tapo_camera_mcp.tools.base_tool import ToolResult
+        from tapo_camera_mcp.tools.camera.camera_tools import ListCamerasTool
 
         # Create tool instance
         tool = ListCamerasTool()
@@ -64,8 +64,8 @@ def test_list_cameras_tool():
 def test_add_camera_tool():
     """Test AddCameraTool functionality."""
     try:
-        from tapo_camera_mcp.tools.camera.camera_tools import AddCameraTool
         from tapo_camera_mcp.tools.base_tool import ToolResult
+        from tapo_camera_mcp.tools.camera.camera_tools import AddCameraTool
 
         # Create tool instance
         tool = AddCameraTool(
@@ -119,8 +119,8 @@ def test_add_camera_tool():
 def test_connect_camera_tool():
     """Test ConnectCameraTool functionality."""
     try:
-        from tapo_camera_mcp.tools.camera.camera_tools import ConnectCameraTool
         from tapo_camera_mcp.tools.base_tool import ToolResult
+        from tapo_camera_mcp.tools.camera.camera_tools import ConnectCameraTool
 
         # Create tool instance
         tool = ConnectCameraTool(
@@ -170,8 +170,8 @@ def test_connect_camera_tool():
 def test_disconnect_camera_tool():
     """Test DisconnectCameraTool functionality."""
     try:
-        from tapo_camera_mcp.tools.camera.camera_tools import DisconnectCameraTool
         from tapo_camera_mcp.tools.base_tool import ToolResult
+        from tapo_camera_mcp.tools.camera.camera_tools import DisconnectCameraTool
 
         # Create tool instance
         tool = DisconnectCameraTool(camera_id="test_camera")
@@ -209,8 +209,8 @@ def test_disconnect_camera_tool():
 def test_get_camera_status_tool():
     """Test GetCameraStatusTool functionality."""
     try:
-        from tapo_camera_mcp.tools.camera.camera_tools import GetCameraStatusTool
         from tapo_camera_mcp.tools.base_tool import ToolResult
+        from tapo_camera_mcp.tools.camera.camera_tools import GetCameraStatusTool
 
         # Create tool instance
         tool = GetCameraStatusTool(camera_id="test_camera")
@@ -251,8 +251,8 @@ def test_get_camera_status_tool():
 def test_capture_snapshot_tool():
     """Test CaptureSnapshotTool functionality."""
     try:
-        from tapo_camera_mcp.tools.camera.camera_tools import CaptureSnapshotTool
         from tapo_camera_mcp.tools.base_tool import ToolResult
+        from tapo_camera_mcp.tools.camera.camera_tools import CaptureSnapshotTool
 
         # Create tool instance
         tool = CaptureSnapshotTool(camera_id="test_camera")
@@ -294,8 +294,8 @@ def test_capture_snapshot_tool():
 def test_get_stream_url_tool():
     """Test GetStreamUrlTool functionality."""
     try:
-        from tapo_camera_mcp.tools.camera.camera_tools import GetStreamUrlTool
         from tapo_camera_mcp.tools.base_tool import ToolResult
+        from tapo_camera_mcp.tools.camera.camera_tools import GetStreamUrlTool
 
         # Create tool instance
         tool = GetStreamUrlTool(camera_id="test_camera")
@@ -340,9 +340,9 @@ def test_ptz_tools():
         # Check if PTZ tools exist
         try:
             from tapo_camera_mcp.tools.ptz.ptz_tools import (
-                SetCameraPresetTool,
                 GetCameraPresetsTool,
                 PTZControlTool,
+                SetCameraPresetTool,
             )
         except ImportError:
             print("⚠️ PTZ tools not available, skipping test")
@@ -378,8 +378,8 @@ def test_ptz_tools():
 def test_system_tools():
     """Test system tools functionality."""
     try:
-        from tapo_camera_mcp.tools.system.status_tool import StatusTool
         from tapo_camera_mcp.tools.system.help_tool import HelpTool
+        from tapo_camera_mcp.tools.system.status_tool import StatusTool
 
         # Test StatusTool
         tool = StatusTool(section="system")
@@ -411,39 +411,29 @@ def test_all_tools_metadata():
 
         # Test that all tools have proper metadata
         for tool_cls in all_tools:
-            assert hasattr(tool_cls, "Meta"), (
-                f"Tool {tool_cls.__name__} missing Meta class"
-            )
+            assert hasattr(tool_cls, "Meta"), f"Tool {tool_cls.__name__} missing Meta class"
             meta = tool_cls.Meta
 
             # Required metadata
             assert hasattr(meta, "name"), f"Tool {tool_cls.__name__} missing name"
-            assert hasattr(meta, "category"), (
-                f"Tool {tool_cls.__name__} missing category"
-            )
+            assert hasattr(meta, "category"), f"Tool {tool_cls.__name__} missing category"
 
             # Name should be valid
-            assert isinstance(meta.name, str), (
-                f"Tool {tool_cls.__name__} name should be string"
-            )
-            assert len(meta.name) > 0, (
-                f"Tool {tool_cls.__name__} name should not be empty"
-            )
+            assert isinstance(meta.name, str), f"Tool {tool_cls.__name__} name should be string"
+            assert len(meta.name) > 0, f"Tool {tool_cls.__name__} name should not be empty"
 
             # Category should be valid
             from tapo_camera_mcp.tools.base_tool import ToolCategory
 
-            assert isinstance(meta.category, ToolCategory), (
-                f"Tool {tool_cls.__name__} category should be ToolCategory"
-            )
+            assert isinstance(
+                meta.category, ToolCategory
+            ), f"Tool {tool_cls.__name__} category should be ToolCategory"
 
             # Tool should have execute method
-            assert hasattr(tool_cls, "execute"), (
-                f"Tool {tool_cls.__name__} missing execute method"
-            )
-            assert callable(getattr(tool_cls, "execute")), (
-                f"Tool {tool_cls.__name__} execute should be callable"
-            )
+            assert hasattr(tool_cls, "execute"), f"Tool {tool_cls.__name__} missing execute method"
+            assert callable(
+                getattr(tool_cls, "execute")
+            ), f"Tool {tool_cls.__name__} execute should be callable"
 
         print(f"✅ All tools metadata test passed - validated {len(all_tools)} tools")
         return True

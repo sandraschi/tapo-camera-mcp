@@ -8,17 +8,17 @@ dashboards, mobile apps, and third-party services.
 
 import asyncio
 import logging
-from typing import List, Optional
 from contextlib import asynccontextmanager
+from typing import List, Optional
 
-from fastapi import FastAPI, HTTPException
-from fastapi.security import HTTPBearer
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 import uvicorn
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer
+from pydantic import BaseModel
 
-from tapo_camera_mcp.core.server import TapoCameraServer
 from tapo_camera_mcp.config import get_config
+from tapo_camera_mcp.core.server import TapoCameraServer
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -128,9 +128,7 @@ class TapoCameraDualServer:
             """Get system status"""
             cameras = await self.core_server.list_cameras()
             cameras_data = cameras.get("cameras", [])
-            online_count = sum(
-                1 for cam in cameras_data if cam.get("status") == "online"
-            )
+            online_count = sum(1 for cam in cameras_data if cam.get("status") == "online")
 
             return SystemStatus(
                 status="operational",
@@ -145,9 +143,7 @@ class TapoCameraDualServer:
             """Legacy endpoint for dashboard compatibility"""
             cameras = await self.core_server.list_cameras()
             cameras_data = cameras.get("cameras", [])
-            online_count = sum(
-                1 for cam in cameras_data if cam.get("status") == "online"
-            )
+            online_count = sum(1 for cam in cameras_data if cam.get("status") == "online")
 
             return {
                 "total": len(cameras_data),
@@ -262,9 +258,7 @@ class TapoCameraDualServer:
                 raise
             except Exception as e:
                 logger.error(f"Error capturing snapshot for camera {camera_id}: {e}")
-                raise HTTPException(
-                    status_code=500, detail="Failed to capture snapshot"
-                )
+                raise HTTPException(status_code=500, detail="Failed to capture snapshot")
 
         return app
 
@@ -285,9 +279,7 @@ class TapoCameraDualServer:
         try:
             logger.info(f"Starting REST API server on {host}:{port}")
 
-            config = uvicorn.Config(
-                app=self.rest_app, host=host, port=port, log_level="info"
-            )
+            config = uvicorn.Config(app=self.rest_app, host=host, port=port, log_level="info")
             server = uvicorn.Server(config)
             await server.serve()
 
@@ -295,9 +287,7 @@ class TapoCameraDualServer:
             logger.error(f"Failed to start REST API server: {e}")
             raise
 
-    async def start_dual_server(
-        self, rest_host: str = "0.0.0.0", rest_port: int = 8123
-    ):
+    async def start_dual_server(self, rest_host: str = "0.0.0.0", rest_port: int = 8123):
         """Start both MCP and REST servers concurrently"""
         logger.info("Starting dual interface server (MCP + REST API)")
 

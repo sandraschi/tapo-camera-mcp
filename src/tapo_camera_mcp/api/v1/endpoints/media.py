@@ -4,15 +4,14 @@ Media streaming and recording API endpoints.
 
 from datetime import datetime
 from typing import Optional
+
 from fastapi import APIRouter, HTTPException, status
 
 router = APIRouter()
 
 
 @router.get("/{camera_id}/stream")
-async def get_live_stream(
-    camera_id: str, quality: str = "hd", stream_type: str = "rtsp"
-):
+async def get_live_stream(camera_id: str, quality: str = "hd", stream_type: str = "rtsp"):
     """
     Get a live stream from the camera.
 

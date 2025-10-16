@@ -4,19 +4,20 @@ Camera tools for Tapo Camera MCP.
 This module contains tools for managing and controlling Tapo cameras.
 """
 
-from typing import Dict, Any, Optional, Literal
-from enum import Enum
 import logging
-from pydantic import Field, ConfigDict
+from enum import Enum
+from typing import Any, Dict, Literal, Optional
 
-from tapo_camera_mcp.tools.base_tool import tool, ToolCategory, BaseTool, register_tool
+from pydantic import ConfigDict, Field
+
+from tapo_camera_mcp.exceptions import AuthenticationError, ConnectionError
+from tapo_camera_mcp.tools.base_tool import BaseTool, ToolCategory, register_tool, tool
 from tapo_camera_mcp.validation import (
-    validate_camera_name,
-    validate_ip_address,
-    validate_credentials,
     ToolValidationError,
+    validate_camera_name,
+    validate_credentials,
+    validate_ip_address,
 )
-from tapo_camera_mcp.exceptions import ConnectionError, AuthenticationError
 
 logger = logging.getLogger(__name__)
 
@@ -129,9 +130,9 @@ class ListCamerasTool(BaseTool):
             - remove_camera_tool: For removing cameras from the system
             - get_camera_status_tool: For detailed status of specific cameras
         """
-        from tapo_camera_mcp.core.server import (
+        from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
-        )  # Lazy import to avoid circular imports
+        )
 
         server = await TapoCameraServer.get_instance()
 
@@ -145,21 +146,19 @@ class ListCamerasTool(BaseTool):
                         cameras.append(
                             {
                                 "name": camera_name,
-                                "type": camera.config.type.value
-                                if hasattr(camera.config, "type")
-                                else "unknown",
-                                "status": "online"
-                                if status.get("connected", False)
-                                else "offline",
+                                "type": (
+                                    camera.config.type.value
+                                    if hasattr(camera.config, "type")
+                                    else "unknown"
+                                ),
+                                "status": "online" if status.get("connected", False) else "offline",
                                 "model": status.get("model", "Unknown"),
                                 "firmware": status.get("firmware", "Unknown"),
                                 "streaming": status.get("streaming", False),
                             }
                         )
                     except Exception as e:
-                        logger.warning(
-                            f"Failed to get status for camera {camera_name}: {e}"
-                        )
+                        logger.warning(f"Failed to get status for camera {camera_name}: {e}")
                         cameras.append(
                             {
                                 "name": camera_name,
@@ -231,9 +230,7 @@ class AddCameraTool(BaseTool):
             ip_address: str = Field(..., description="IP address of the camera")
             username: str = Field(..., description="Username for camera authentication")
             password: str = Field(..., description="Password for camera authentication")
-            stream_url: Optional[str] = Field(
-                None, description="Optional custom RTSP stream URL"
-            )
+            stream_url: Optional[str] = Field(None, description="Optional custom RTSP stream URL")
 
     camera_name: str
     ip_address: str
@@ -365,9 +362,9 @@ class AddCameraTool(BaseTool):
 
             logger.info(f"Adding camera: {camera_name} at {ip_address}")
 
-            from tapo_camera_mcp.core.server import (
+            from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
                 TapoCameraServer,
-            )  # Lazy import to avoid circular imports
+            )
 
             server = await TapoCameraServer.get_instance()
 
@@ -384,9 +381,7 @@ class AddCameraTool(BaseTool):
             return result
 
         except ToolValidationError as e:
-            logger.warning(
-                f"Validation error adding camera {self.camera_name}: {e.message}"
-            )
+            logger.warning(f"Validation error adding camera {self.camera_name}: {e.message}")
             return {
                 "success": False,
                 "error": f"Validation error: {e.message}",
@@ -426,9 +421,9 @@ class RemoveCameraTool(BaseTool):
 
     async def execute(self) -> Dict[str, Any]:
         """Remove a camera from the system."""
-        from tapo_camera_mcp.core.server import (
+        from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
-        )  # Lazy import to avoid circular imports
+        )
 
         server = await TapoCameraServer.get_instance()
         return await server.remove_camera(camera_id=self.camera_id)
@@ -458,17 +453,15 @@ class SetActiveCameraTool(BaseTool):
         category = ToolCategory.CAMERA
 
         class Parameters:
-            name: str = Field(
-                ..., description="Name or ID of the camera to set as active"
-            )
+            name: str = Field(..., description="Name or ID of the camera to set as active")
 
     name: str
 
     async def execute(self) -> Dict[str, Any]:
         """Set the active camera for operations."""
-        from tapo_camera_mcp.core.server import (
+        from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
-        )  # Lazy import to avoid circular imports
+        )
 
         server = await TapoCameraServer.get_instance()
         return await server.set_active_camera(name=self.name)
@@ -513,9 +506,9 @@ class GetCameraStatusTool(BaseTool):
 
     async def execute(self) -> Dict[str, Any]:
         """Get the status of a specific camera."""
-        from tapo_camera_mcp.core.server import (
+        from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
-        )  # Lazy import to avoid circular imports
+        )
 
         server = await TapoCameraServer.get_instance()
         return (
@@ -578,9 +571,9 @@ class ConnectCameraTool(BaseTool):
 
             logger.info(f"Connecting to camera at {host}")
 
-            from tapo_camera_mcp.core.server import (
+            from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
                 TapoCameraServer,
-            )  # Lazy import to avoid circular imports
+            )
 
             server = await TapoCameraServer.get_instance()
 
@@ -595,9 +588,7 @@ class ConnectCameraTool(BaseTool):
             return result
 
         except ToolValidationError as e:
-            logger.warning(
-                f"Validation error connecting to camera {self.host}: {e.message}"
-            )
+            logger.warning(f"Validation error connecting to camera {self.host}: {e.message}")
             return {
                 "success": False,
                 "error": f"Validation error: {e.message}",
@@ -643,9 +634,9 @@ class DisconnectCameraTool(BaseTool):
 
     async def execute(self) -> Dict[str, Any]:
         """Disconnect from the current camera."""
-        from tapo_camera_mcp.core.server import (
+        from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
-        )  # Lazy import to avoid circular imports
+        )
 
         server = await TapoCameraServer.get_instance()
         return await server.disconnect_camera()
@@ -693,9 +684,9 @@ class GetCameraInfoTool(BaseTool):
         Returns:
             Dict containing camera information
         """
-        from tapo_camera_mcp.core.server import (
+        from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
-        )  # Lazy import to avoid circular imports
+        )
 
         server = await TapoCameraServer.get_instance()
         return await server.get_camera_info()
@@ -741,9 +732,7 @@ class ManageCameraGroupsTool(BaseTool):
             group: Optional[str] = Field(
                 None, description="Group name (required for add/remove/list_group)"
             )
-            camera: Optional[str] = Field(
-                None, description="Camera name (required for add/remove)"
-            )
+            camera: Optional[str] = Field(None, description="Camera name (required for add/remove)")
 
     action: str
     group: Optional[str] = None
@@ -751,9 +740,9 @@ class ManageCameraGroupsTool(BaseTool):
 
     async def execute(self) -> Dict[str, Any]:
         """Manage camera groups."""
-        from tapo_camera_mcp.core.server import (
+        from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
-        )  # Lazy import to avoid circular imports
+        )
 
         server = await TapoCameraServer.get_instance()
 
@@ -765,15 +754,11 @@ class ManageCameraGroupsTool(BaseTool):
             return await server.list_cameras_in_group(self.group)
         elif self.action == "add":
             if not self.group or not self.camera:
-                raise ValueError(
-                    "Both group name and camera name are required for add action"
-                )
+                raise ValueError("Both group name and camera name are required for add action")
             return await server.add_camera_to_group(self.camera, self.group)
         elif self.action == "remove":
             if not self.group or not self.camera:
-                raise ValueError(
-                    "Both group name and camera name are required for remove action"
-                )
+                raise ValueError("Both group name and camera name are required for remove action")
             return await server.remove_camera_from_group(self.camera, self.group)
         else:
             raise ValueError(f"Unknown action: {self.action}")
@@ -802,6 +787,4 @@ camera_tool_classes = [
     GetCameraInfoTool,
     ManageCameraGroupsTool,
 ]
-logger.debug(
-    f"Registered camera tools: {[tool.Meta.name for tool in camera_tool_classes]}"
-)
+logger.debug(f"Registered camera tools: {[tool.Meta.name for tool in camera_tool_classes]}")

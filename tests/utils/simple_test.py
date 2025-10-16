@@ -1,5 +1,5 @@
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Add src to path
@@ -15,7 +15,7 @@ print("=== Testing Imports ===")
 
 # Test importing base_tool
 try:
-    from tapo_camera_mcp.tools.base_tool import register_tool, Tool, ToolCategory
+    from tapo_camera_mcp.tools.base_tool import Tool, ToolCategory, register_tool
 
     print("✅ Successfully imported from base_tool")
 except ImportError as e:
@@ -27,9 +27,9 @@ except ImportError as e:
 # Test importing tools/__init__.py
 try:
     from tapo_camera_mcp.tools import (
-        register_tool,
-        get_tool,
         get_all_tools,
+        get_tool,
+        register_tool,
         tools_registry,
     )
 

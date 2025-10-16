@@ -4,10 +4,11 @@ Tapo Camera MCP Server v2 - Fixed asyncio handling for Claude Desktop integratio
 Provides camera control capabilities through MCP protocol
 """
 
-# Suppress warnings before any imports to prevent JSON parsing issues in Claude Desktop
-import warnings
 import os
 import sys
+
+# Suppress warnings before any imports to prevent JSON parsing issues in Claude Desktop
+import warnings
 
 # Set environment variable to suppress warnings globally
 os.environ["PYTHONWARNINGS"] = "ignore"
@@ -35,8 +36,8 @@ except Exception as e:
 # Restore stderr after imports are complete
 sys.stderr = original_stderr
 
-import logging
 import argparse
+import logging
 import sys
 
 from tapo_camera_mcp.camera.tapo import Tapo
@@ -49,9 +50,7 @@ logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
     handlers=[
-        logging.StreamHandler(
-            sys.stderr
-        ),  # Ensure logs go to stderr for Claude Desktop
+        logging.StreamHandler(sys.stderr),  # Ensure logs go to stderr for Claude Desktop
     ],
 )
 
@@ -66,9 +65,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="Tapo Camera MCP Server")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind the server to")
-    parser.add_argument(
-        "--port", type=int, default=8000, help="Port to bind the server to"
-    )
+    parser.add_argument("--port", type=int, default=8000, help="Port to bind the server to")
     parser.add_argument(
         "--no-stdio", action="store_false", dest="stdio", help="Disable stdio transport"
     )
@@ -104,9 +101,7 @@ def main():
                 logger.info("TapoCameraServer initialized successfully")
 
                 logger.info("Starting server in direct stdio mode...")
-                await server.run(
-                    host=args.host, port=args.port, stdio=args.stdio, direct=True
-                )
+                await server.run(host=args.host, port=args.port, stdio=args.stdio, direct=True)
                 logger.info("Server started successfully in direct mode")
 
             # Run in direct mode

@@ -3,19 +3,18 @@
 REAL HARDWARE TESTING - Test actual webcam connected to server!
 """
 
-import sys
-import os
 import asyncio
 import logging
+import os
+import sys
+
 import cv2
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -68,10 +67,10 @@ def test_webcam_server_integration():
     try:
         logger.info("🔗 TESTING WEBCAM-SERVER INTEGRATION WITH REAL HARDWARE...")
 
-        from tapo_camera_mcp.core.server import TapoCameraServer
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
         from tapo_camera_mcp.camera.manager import CameraManager
         from tapo_camera_mcp.camera.webcam import WebCamera
-        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
+        from tapo_camera_mcp.core.server import TapoCameraServer
 
         # Create camera manager
         camera_manager = CameraManager()
@@ -97,9 +96,7 @@ def test_webcam_server_integration():
             logger.info(f"Webcam status: {status}")
 
         except Exception as e:
-            logger.warning(
-                f"Webcam connection attempt failed (expected if no camera): {e}"
-            )
+            logger.warning(f"Webcam connection attempt failed (expected if no camera): {e}")
 
         # Test server integration
         try:
@@ -130,11 +127,11 @@ def test_camera_tools_with_hardware():
     try:
         logger.info("🔧 TESTING CAMERA TOOLS WITH REAL HARDWARE...")
 
-        from tapo_camera_mcp.tools.discovery import discover_tools
         from tapo_camera_mcp.tools.camera.camera_tools import (
-            ListCamerasTool,
             CaptureSnapshotTool,
+            ListCamerasTool,
         )
+        from tapo_camera_mcp.tools.discovery import discover_tools
 
         # Discover camera tools
         tools = discover_tools("tapo_camera_mcp.tools")
@@ -202,9 +199,7 @@ def test_webcam_streaming():
         cap.release()
 
         if frames_captured > 0:
-            logger.info(
-                f"✅ Webcam streaming test PASSED: {frames_captured} frames captured"
-            )
+            logger.info(f"✅ Webcam streaming test PASSED: {frames_captured} frames captured")
             return True
         else:
             logger.error("❌ No frames captured from webcam!")
@@ -223,10 +218,10 @@ def test_server_with_camera_integration():
     try:
         logger.info("🖥️ TESTING SERVER WITH CAMERA INTEGRATION...")
 
-        from tapo_camera_mcp.core.server import TapoCameraServer
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
         from tapo_camera_mcp.camera.manager import CameraManager
         from tapo_camera_mcp.camera.webcam import WebCamera
-        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
+        from tapo_camera_mcp.core.server import TapoCameraServer
 
         # Initialize server
         try:
@@ -307,8 +302,8 @@ def test_full_hardware_integration():
 
         # Step 3: Test camera creation
         logger.info("Step 3: Testing camera creation...")
-        from tapo_camera_mcp.camera.webcam import WebCamera
         from tapo_camera_mcp.camera.base import CameraConfig, CameraType
+        from tapo_camera_mcp.camera.webcam import WebCamera
 
         webcam_config = CameraConfig(
             name="full_integration_webcam",
@@ -328,7 +323,7 @@ def test_full_hardware_integration():
 
         # Step 5: Test validation
         logger.info("Step 5: Testing validation...")
-        from tapo_camera_mcp.validation import validate_ip_address, validate_camera_name
+        from tapo_camera_mcp.validation import validate_camera_name, validate_ip_address
 
         ip_valid = validate_ip_address("192.168.1.100", "test")
         name_valid = validate_camera_name("test_webcam", "test")

@@ -4,9 +4,9 @@ PTZ Data Models
 Defines the data structures used for PTZ (Pan-Tilt-Zoom) camera control.
 """
 
-from enum import Enum
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from enum import Enum
+from typing import Any, Dict, Optional
 
 
 class PTZMoveDirection(str, Enum):

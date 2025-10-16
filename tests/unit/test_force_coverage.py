@@ -3,10 +3,10 @@
 EXECUTE REAL TOOLS - Force coverage increase by actually running tool execute() methods.
 """
 
-import sys
-import os
 import asyncio
 import logging
+import os
+import sys
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
@@ -22,17 +22,17 @@ def test_real_tool_execution():
         logger.info("🔥 EXECUTING REAL TOOLS - forcing code coverage...")
 
         # Import everything we need
-        from tapo_camera_mcp.tools.discovery import discover_tools
-        from tapo_camera_mcp.tools.system.status_tool import StatusTool
-        from tapo_camera_mcp.tools.system.help_tool import HelpTool
         from tapo_camera_mcp.tools.camera.camera_tools import (
-            ListCamerasTool,
             AddCameraTool,
+            ListCamerasTool,
         )
+        from tapo_camera_mcp.tools.discovery import discover_tools
+        from tapo_camera_mcp.tools.system.help_tool import HelpTool
+        from tapo_camera_mcp.tools.system.status_tool import StatusTool
         from tapo_camera_mcp.validation import (
-            validate_ip_address,
             validate_camera_name,
             validate_credentials,
+            validate_ip_address,
         )
 
         # 1. Execute StatusTool - this should exercise system monitoring code
@@ -107,8 +107,8 @@ def test_real_tool_execution():
 
         # 9. Test webcam creation - this should exercise camera creation
         logger.info("📷 Testing webcam creation...")
-        from tapo_camera_mcp.camera.webcam import WebCamera
         from tapo_camera_mcp.camera.base import CameraConfig, CameraType
+        from tapo_camera_mcp.camera.webcam import WebCamera
 
         webcam_config = CameraConfig(
             name="coverage_webcam", type=CameraType.WEBCAM, params={"device_id": 0}
@@ -140,8 +140,8 @@ def test_server_functionality():
     try:
         logger.info("🖥️ Testing server functionality...")
 
-        from tapo_camera_mcp.core.server import TapoCameraServer
         from tapo_camera_mcp.camera.manager import CameraManager
+        from tapo_camera_mcp.core.server import TapoCameraServer
 
         # Test server singleton
         server1 = asyncio.run(TapoCameraServer.get_instance())
@@ -173,9 +173,9 @@ def test_camera_creation_and_methods():
     try:
         logger.info("📷 Testing camera creation and methods...")
 
-        from tapo_camera_mcp.camera.webcam import WebCamera
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraFactory, CameraType
         from tapo_camera_mcp.camera.tapo import TapoCamera
-        from tapo_camera_mcp.camera.base import CameraConfig, CameraType, CameraFactory
+        from tapo_camera_mcp.camera.webcam import WebCamera
 
         # Test webcam creation
         webcam_config = CameraConfig(
@@ -226,11 +226,11 @@ def test_validation_execution():
         logger.info("✅ Testing validation execution...")
 
         from tapo_camera_mcp.validation import (
-            validate_ip_address,
-            validate_port,
+            ToolValidationError,
             validate_camera_name,
             validate_credentials,
-            ToolValidationError,
+            validate_ip_address,
+            validate_port,
         )
 
         # Execute validation functions
@@ -263,8 +263,8 @@ def test_tools_registry_execution():
     try:
         logger.info("📋 Testing tools registry...")
 
-        from tapo_camera_mcp.tools.discovery import discover_tools
         from tapo_camera_mcp.tools.base_tool import get_all_tools, get_tool
+        from tapo_camera_mcp.tools.discovery import discover_tools
 
         # Execute tool discovery (this actually runs the discovery code)
         tools = discover_tools("tapo_camera_mcp.tools")
@@ -299,13 +299,13 @@ def test_models_execution():
 
         from tapo_camera_mcp.core.models import (
             CameraModel,
-            StreamType,
-            VideoQuality,
-            PTZDirection,
-            MotionDetectionSensitivity,
             CameraStatus,
+            MotionDetectionSensitivity,
+            PTZDirection,
             PTZPosition,
+            StreamType,
             TapoCameraConfig,
+            VideoQuality,
         )
 
         # Test enum access (this executes enum code)
@@ -328,13 +328,9 @@ def test_models_execution():
         )
 
         position = PTZPosition(pan=0.5, tilt=-0.3, zoom=0.8)
-        config = TapoCameraConfig(
-            host="192.168.1.100", username="testuser", password="testpass"
-        )
+        config = TapoCameraConfig(host="192.168.1.100", username="testuser", password="testpass")
 
-        logger.info(
-            f"✅ Models created: status={status.online}, position={position.pan}"
-        )
+        logger.info(f"✅ Models created: status={status.online}, position={position.pan}")
 
         return True
 

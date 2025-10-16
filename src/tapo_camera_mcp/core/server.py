@@ -9,9 +9,10 @@ if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
 
 from fastmcp.server import FastMCP
-from tapo_camera_mcp.tools.discovery import discover_tools
-from tapo_camera_mcp.tools.base_tool import ToolResult
+
 from tapo_camera_mcp.camera.manager import CameraManager
+from tapo_camera_mcp.tools.base_tool import ToolResult
+from tapo_camera_mcp.tools.discovery import discover_tools
 
 # Optional camera imports - handle missing dependencies gracefully
 try:
@@ -105,22 +106,16 @@ class TapoCameraServer:
                     seen_tools.add(tool_name)
                     unique_tools.append(tool_cls)
 
-        logger.info(
-            f"Discovered {len(tools)} tools, registering {len(unique_tools)} unique tools"
-        )
+        logger.info(f"Discovered {len(tools)} tools, registering {len(unique_tools)} unique tools")
 
         for tool_cls in unique_tools:
             # Get tool metadata from the class
             tool_meta = getattr(tool_cls, "Meta", None)
             if not tool_meta:
-                logger.warning(
-                    f"Tool {tool_cls.__name__} is missing Meta class, skipping"
-                )
+                logger.warning(f"Tool {tool_cls.__name__} is missing Meta class, skipping")
                 continue
 
-            tool_name = getattr(
-                tool_meta, "name", tool_cls.__name__.replace("Tool", "").lower()
-            )
+            tool_name = getattr(tool_meta, "name", tool_cls.__name__.replace("Tool", "").lower())
             tool_description = getattr(tool_meta, "description", "")
 
             logger.debug(f"Registering tool: {tool_name}")

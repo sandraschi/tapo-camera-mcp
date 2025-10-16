@@ -1,9 +1,10 @@
 """Petcube camera implementation."""
 
-import aiohttp
 import logging
-from typing import Dict, Optional
 from pathlib import Path
+from typing import Dict, Optional
+
+import aiohttp
 from PIL import Image
 
 from .base import BaseCamera, CameraFactory, CameraType
@@ -45,9 +46,7 @@ class PetcubeAPI:
             ) as response:
                 data = await response.json()
                 if response.status != 200:
-                    raise ValueError(
-                        f"Login failed: {data.get('message', 'Unknown error')}"
-                    )
+                    raise ValueError(f"Login failed: {data.get('message', 'Unknown error')}")
 
                 self._token = data.get("token") or data.get("access_token")
                 if not self._token:
@@ -72,11 +71,7 @@ class PetcubeAPI:
                     raise ValueError(f"Failed to get devices: HTTP {response.status}")
 
                 devices = await response.json()
-                return (
-                    devices.get("devices", devices)
-                    if isinstance(devices, dict)
-                    else devices
-                )
+                return devices.get("devices", devices) if isinstance(devices, dict) else devices
 
         except Exception as e:
             logger.error(f"Error getting devices: {e}")
@@ -89,9 +84,7 @@ class PetcubeAPI:
         try:
             async with session.get(f"{self.BASE_URL}/devices/{device_id}") as response:
                 if response.status != 200:
-                    raise ValueError(
-                        f"Failed to get device status: HTTP {response.status}"
-                    )
+                    raise ValueError(f"Failed to get device status: HTTP {response.status}")
 
                 return await response.json()
 
@@ -104,13 +97,9 @@ class PetcubeAPI:
         session = await self._get_session()
 
         try:
-            async with session.get(
-                f"{self.BASE_URL}/devices/{device_id}/stream"
-            ) as response:
+            async with session.get(f"{self.BASE_URL}/devices/{device_id}/stream") as response:
                 if response.status != 200:
-                    raise ValueError(
-                        f"Failed to get stream URL: HTTP {response.status}"
-                    )
+                    raise ValueError(f"Failed to get stream URL: HTTP {response.status}")
 
                 data = await response.json()
                 return data.get("stream_url") or data.get("url")
@@ -128,9 +117,7 @@ class PetcubeAPI:
                 f"{self.BASE_URL}/devices/{device_id}/treat", json={"amount": amount}
             ) as response:
                 if response.status not in [200, 201]:
-                    raise ValueError(
-                        f"Failed to dispense treat: HTTP {response.status}"
-                    )
+                    raise ValueError(f"Failed to dispense treat: HTTP {response.status}")
 
                 return await response.json()
 
@@ -150,9 +137,7 @@ class PetcubeCamera(BaseCamera):
 
     def __init__(self, config):
         super().__init__(config)
-        self.api = PetcubeAPI(
-            config.params.get("email", ""), config.params.get("password", "")
-        )
+        self.api = PetcubeAPI(config.params.get("email", ""), config.params.get("password", ""))
         self.device_id = config.params.get("device_id")
         self._stream_url = None
 
@@ -334,4 +319,3 @@ class PetcubeCamera(BaseCamera):
                 "type": self.config.type.value,
                 "error": str(e),
             }
-

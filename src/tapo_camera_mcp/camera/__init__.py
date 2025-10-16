@@ -4,9 +4,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from .petcube import PetcubeCamera
+
 # Import all camera implementations to ensure they register with the factory
 from .tapo import TapoCamera
-from .petcube import PetcubeCamera
 
 # Import RingCamera with error handling
 try:

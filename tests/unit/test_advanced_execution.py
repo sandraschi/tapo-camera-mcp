@@ -3,9 +3,9 @@
 Advanced tool execution tests with actual server integration.
 """
 
-import sys
-import os
 import asyncio
+import os
+import sys
 import unittest.mock as mock
 
 # Add the src path to Python path
@@ -38,7 +38,7 @@ def test_server_singleton_pattern():
 def test_camera_factory_creation():
     """Test camera factory creation with different camera types."""
     try:
-        from tapo_camera_mcp.camera.base import CameraFactory, CameraType, CameraConfig
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraFactory, CameraType
 
         # Test creating different camera types
         tapo_config = CameraConfig(
@@ -79,8 +79,8 @@ def test_tool_execution_with_mocking():
     """Test tool execution with comprehensive mocking."""
     try:
         from tapo_camera_mcp.tools.camera.camera_tools import ListCamerasTool
-        from tapo_camera_mcp.tools.system.status_tool import StatusTool
         from tapo_camera_mcp.tools.system.help_tool import HelpTool
+        from tapo_camera_mcp.tools.system.status_tool import StatusTool
 
         # Test ListCamerasTool with full mocking
         list_tool = ListCamerasTool()
@@ -188,9 +188,9 @@ def test_validation_error_scenarios():
 def test_camera_connection_scenarios():
     """Test camera connection scenarios and error handling."""
     try:
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
         from tapo_camera_mcp.camera.tapo import TapoCamera
         from tapo_camera_mcp.camera.webcam import WebCamera
-        from tapo_camera_mcp.camera.base import CameraConfig, CameraType
 
         # Test Tapo camera connection error handling
         tapo_config = CameraConfig(
@@ -233,13 +233,12 @@ def test_camera_connection_scenarios():
 def test_web_api_error_handling():
     """Test web API error handling."""
     try:
-        from tapo_camera_mcp.web.server import WebServer
         from fastapi.testclient import TestClient
 
+        from tapo_camera_mcp.web.server import WebServer
+
         # Mock config
-        with mock.patch(
-            "tapo_camera_mcp.web.server.get_config"
-        ) as mock_get_config, mock.patch(
+        with mock.patch("tapo_camera_mcp.web.server.get_config") as mock_get_config, mock.patch(
             "tapo_camera_mcp.web.server.get_model"
         ) as mock_get_model:
             mock_get_config.return_value = {"debug": False}
@@ -275,10 +274,10 @@ def test_tool_registry_operations():
     """Test tool registry operations and edge cases."""
     try:
         from tapo_camera_mcp.tools.base_tool import (
-            register_tool,
-            get_tool,
-            get_all_tools,
             _tool_registry,
+            get_all_tools,
+            get_tool,
+            register_tool,
         )
 
         # Clear registry for clean test
@@ -325,8 +324,8 @@ def test_async_tool_execution():
     """Test async tool execution patterns."""
     try:
         from tapo_camera_mcp.tools.camera.camera_tools import (
-            ListCamerasTool,
             GetCameraStatusTool,
+            ListCamerasTool,
         )
         from tapo_camera_mcp.tools.system.status_tool import StatusTool
 
@@ -341,9 +340,9 @@ def test_async_tool_execution():
             # Check that execute is a coroutine function
             import inspect
 
-            assert inspect.iscoroutinefunction(tool.execute), (
-                f"Tool {tool.__class__.__name__} execute should be async"
-            )
+            assert inspect.iscoroutinefunction(
+                tool.execute
+            ), f"Tool {tool.__class__.__name__} execute should be async"
 
         # Test concurrent execution
         async def test_concurrent_execution():
@@ -401,9 +400,9 @@ def test_error_recovery_mechanisms():
     """Test error recovery mechanisms in the system."""
     try:
         from tapo_camera_mcp.exceptions import (
-            TapoCameraError,
-            ConnectionError,
             AuthenticationError,
+            ConnectionError,
+            TapoCameraError,
         )
 
         # Test exception hierarchy and error types

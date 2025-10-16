@@ -1,9 +1,10 @@
 """Webcam implementation using OpenCV."""
 
 import asyncio
-import cv2
 from pathlib import Path
 from typing import Dict, Optional
+
+import cv2
 from PIL import Image
 
 from .base import BaseCamera, CameraFactory, CameraType

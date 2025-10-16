@@ -3,9 +3,9 @@
 Comprehensive tests for core server functionality.
 """
 
-import sys
-import os
 import asyncio
+import os
+import sys
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
@@ -24,9 +24,7 @@ def test_server_initialization():
         assert server1 is server2, "Server should be singleton"
 
         # Test that server has required attributes
-        assert hasattr(server1, "_initialized"), (
-            "Server should have _initialized attribute"
-        )
+        assert hasattr(server1, "_initialized"), "Server should have _initialized attribute"
         assert hasattr(server1, "camera_manager"), "Server should have camera_manager"
         assert server1._initialized is False, "Server should start uninitialized"
 
@@ -65,15 +63,15 @@ def test_server_singleton_pattern():
 def test_camera_manager_integration():
     """Test camera manager integration with server."""
     try:
-        from tapo_camera_mcp.core.server import TapoCameraServer
         from tapo_camera_mcp.camera.manager import CameraManager
+        from tapo_camera_mcp.core.server import TapoCameraServer
 
         server = asyncio.run(TapoCameraServer.get_instance())
 
         # Test camera manager is properly initialized
-        assert isinstance(server.camera_manager, CameraManager), (
-            "Server should have CameraManager instance"
-        )
+        assert isinstance(
+            server.camera_manager, CameraManager
+        ), "Server should have CameraManager instance"
 
         # Test camera manager has required methods
         required_methods = [
@@ -83,9 +81,7 @@ def test_camera_manager_integration():
             "get_active_cameras",
         ]
         for method in required_methods:
-            assert hasattr(server.camera_manager, method), (
-                f"CameraManager missing method: {method}"
-            )
+            assert hasattr(server.camera_manager, method), f"CameraManager missing method: {method}"
 
         print("✅ Camera manager integration test passed")
         return True
@@ -150,9 +146,7 @@ def test_tools_registration():
         for tool_name in camera_tools:
             assert tool_name in tool_names, f"Missing camera tool: {tool_name}"
 
-        print(
-            f"✅ Tools registration test passed - {len(registered_tools)} tools registered"
-        )
+        print(f"✅ Tools registration test passed - {len(registered_tools)} tools registered")
         return True
     except Exception as e:
         print(f"❌ Tools registration test failed: {e}")
@@ -202,14 +196,10 @@ def test_server_configuration():
         server = asyncio.run(TapoCameraServer.get_instance())
 
         # Test server has configuration attributes
-        assert hasattr(server, "_initialized"), (
-            "Server should track initialization state"
-        )
+        assert hasattr(server, "_initialized"), "Server should track initialization state"
 
         # Test server can be configured (basic check)
-        assert server._initialized is True, (
-            "Server should be initialized after get_instance"
-        )
+        assert server._initialized is True, "Server should be initialized after get_instance"
 
         print("✅ Server configuration test passed")
         return True

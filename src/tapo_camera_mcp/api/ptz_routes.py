@@ -4,14 +4,15 @@ PTZ Control API Endpoints
 Provides RESTful API endpoints for PTZ camera control and preset management.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, status
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field
 import logging
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
 
 from ...tools.ptz.preset_manager import PTZPreset, PTZPresetManager
-from ...tools.ptz.ptz_models import PTZPosition, PTZMoveDirection, PTZSpeed
+from ...tools.ptz.ptz_models import PTZMoveDirection, PTZPosition, PTZSpeed
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/cameras/{camera_id}/ptz", tags=["PTZ Control"])
@@ -26,9 +27,7 @@ class PTZMoveRequest(BaseModel):
 
     direction: PTZMoveDirection
     speed: PTZSpeed = PTZSpeed.MEDIUM
-    duration_ms: int = Field(
-        1000, ge=100, le=10000, description="Duration in milliseconds"
-    )
+    duration_ms: int = Field(1000, ge=100, le=10000, description="Duration in milliseconds")
 
 
 class PTZZoomRequest(BaseModel):
@@ -147,9 +146,7 @@ async def list_presets(camera_id: str, camera_client: Any = Depends(get_camera_c
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post(
-    "/presets", status_code=status.HTTP_201_CREATED, response_model=PTZPresetResponse
-)
+@router.post("/presets", status_code=status.HTTP_201_CREATED, response_model=PTZPresetResponse)
 async def create_preset(
     camera_id: str,
     preset_data: PTZPresetCreate,
@@ -185,9 +182,7 @@ async def get_preset(
     """Get details of a specific PTZ preset"""
     try:
         if camera_id not in ptz_managers:
-            raise HTTPException(
-                status_code=404, detail="No presets found for this camera"
-            )
+            raise HTTPException(status_code=404, detail="No presets found for this camera")
 
         preset = ptz_managers[camera_id].get_preset(preset_id)
         if not preset:
@@ -211,9 +206,7 @@ async def update_preset(
     """Update an existing PTZ preset"""
     try:
         if camera_id not in ptz_managers:
-            raise HTTPException(
-                status_code=404, detail="No presets found for this camera"
-            )
+            raise HTTPException(status_code=404, detail="No presets found for this camera")
 
         # If position is provided, use it; otherwise, keep existing position
         position = preset_data.position
@@ -247,9 +240,7 @@ async def delete_preset(
     """Delete a PTZ preset"""
     try:
         if camera_id not in ptz_managers:
-            raise HTTPException(
-                status_code=404, detail="No presets found for this camera"
-            )
+            raise HTTPException(status_code=404, detail="No presets found for this camera")
 
         success = await ptz_managers[camera_id].delete_preset(preset_id)
         if not success:
@@ -270,9 +261,7 @@ async def recall_preset(
     """Move the camera to a saved preset position"""
     try:
         if camera_id not in ptz_managers:
-            raise HTTPException(
-                status_code=404, detail="No presets found for this camera"
-            )
+            raise HTTPException(status_code=404, detail="No presets found for this camera")
 
         success = await ptz_managers[camera_id].recall_preset(preset_id)
         if not success:

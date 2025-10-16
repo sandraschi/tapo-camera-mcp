@@ -7,12 +7,13 @@ documentation for the Tapo Camera MCP API.
 import os
 import tempfile
 from pathlib import Path
+
 import pytest
 
 from tapo_camera_mcp.utils.llms_txt import (
     LLMsTxtGenerator,
-    generate_llms_txt,
     ToolMetadata,
+    generate_llms_txt,
 )
 
 
@@ -129,16 +130,12 @@ def test_tool_documentation():
                 "GitHub Repository",
                 "Tapo API",
             ]:  # Skip external links
-                assert f"#### {link_text}" in full_docs, (
-                    f"Documentation for {link_text} not found in full docs"
-                )
+                assert (
+                    f"#### {link_text}" in full_docs
+                ), f"Documentation for {link_text} not found in full docs"
 
     # Check that some tool documentation is included
-    assert (
-        "get_camera_info" in full_docs
-        or "move_ptz" in full_docs
-        or "reboot" in full_docs
-    )
+    assert "get_camera_info" in full_docs or "move_ptz" in full_docs or "reboot" in full_docs
 
 
 def test_version_handling():

@@ -2,8 +2,8 @@
 Test script to verify tool registration in Tapo Camera MCP.
 """
 
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Set up logging

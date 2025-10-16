@@ -5,8 +5,8 @@ Camera management and control utilities.
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Any
 from datetime import datetime
+from typing import Any, Dict, Optional
 
 import httpx
 
@@ -38,9 +38,7 @@ class CameraManager:
     async def connect(self):
         """Initialize the HTTP client."""
         if self._client is None:
-            self._client = httpx.AsyncClient(
-                timeout=30.0, verify=True, follow_redirects=True
-            )
+            self._client = httpx.AsyncClient(timeout=30.0, verify=True, follow_redirects=True)
 
     async def disconnect(self):
         """Close the HTTP client."""

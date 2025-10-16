@@ -3,8 +3,8 @@
 Tests for tools discovery and registration system.
 """
 
-import sys
 import os
+import sys
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
@@ -40,9 +40,9 @@ def test_tool_registry():
     """Test tool registration system."""
     try:
         from tapo_camera_mcp.tools.base_tool import (
-            register_tool,
             get_all_tools,
             get_tool,
+            register_tool,
         )
 
         # Test initial state (should be empty)
@@ -77,7 +77,7 @@ def test_tool_registry():
 def test_base_tool_structure():
     """Test base tool class structure."""
     try:
-        from tapo_camera_mcp.tools.base_tool import ToolResult, ToolCategory
+        from tapo_camera_mcp.tools.base_tool import ToolCategory, ToolResult
 
         # Test ToolCategory enum
         categories = list(ToolCategory)
@@ -93,9 +93,7 @@ def test_base_tool_structure():
         ]
 
         for category in categories:
-            assert category.value in expected_categories, (
-                f"Unexpected category: {category.value}"
-            )
+            assert category.value in expected_categories, f"Unexpected category: {category.value}"
 
         print(f"✅ Tool categories: {[c.value for c in categories]}")
 
@@ -131,9 +129,7 @@ def test_tool_decorator():
         # Check that decorator added metadata
         assert hasattr(TestDecoratorTool, "Meta"), "Tool should have Meta class"
         assert hasattr(TestDecoratorTool.Meta, "name"), "Meta should have name"
-        assert TestDecoratorTool.Meta.name == "test_decorator_tool", (
-            "Name should be set correctly"
-        )
+        assert TestDecoratorTool.Meta.name == "test_decorator_tool", "Name should be set correctly"
 
         print("✅ Tool decorator test passed")
         return True
@@ -202,8 +198,8 @@ def test_tool_discovery_error_handling():
 def test_tool_validation_function():
     """Test the is_tool_class validation function."""
     try:
-        from tapo_camera_mcp.tools.discovery import is_tool_class
         from tapo_camera_mcp.tools.base_tool import BaseTool
+        from tapo_camera_mcp.tools.discovery import is_tool_class
 
         # Test valid tool class
         class ValidTool(BaseTool):
@@ -214,23 +210,17 @@ def test_tool_validation_function():
             async def execute(self, **kwargs):
                 return {"result": "valid"}
 
-        assert is_tool_class(ValidTool), (
-            "ValidTool should be recognized as a tool class"
-        )
+        assert is_tool_class(ValidTool), "ValidTool should be recognized as a tool class"
 
         # Test invalid cases
         class NotATool:
             pass
 
-        assert not is_tool_class(NotATool), (
-            "NotATool should not be recognized as a tool class"
-        )
-        assert not is_tool_class(BaseTool), (
-            "BaseTool itself should not be recognized as a tool class"
-        )
-        assert not is_tool_class("not a class"), (
-            "String should not be recognized as a tool class"
-        )
+        assert not is_tool_class(NotATool), "NotATool should not be recognized as a tool class"
+        assert not is_tool_class(
+            BaseTool
+        ), "BaseTool itself should not be recognized as a tool class"
+        assert not is_tool_class("not a class"), "String should not be recognized as a tool class"
 
         print("✅ Tool validation function test passed")
         return True
@@ -252,30 +242,20 @@ def test_tool_metadata_completeness():
 
         # Test that tools have required metadata
         for tool_cls in all_tools:
-            assert hasattr(tool_cls, "Meta"), (
-                f"Tool {tool_cls.__name__} missing Meta class"
-            )
+            assert hasattr(tool_cls, "Meta"), f"Tool {tool_cls.__name__} missing Meta class"
             meta = tool_cls.Meta
 
             # Required metadata fields
             required_fields = ["name", "category"]
             for field in required_fields:
-                assert hasattr(meta, field), (
-                    f"Tool {tool_cls.__name__} missing {field} in Meta"
-                )
+                assert hasattr(meta, field), f"Tool {tool_cls.__name__} missing {field} in Meta"
                 value = getattr(meta, field)
                 assert value is not None, f"Tool {tool_cls.__name__} {field} is None"
                 if field == "name":
-                    assert isinstance(value, str), (
-                        f"Tool {tool_cls.__name__} name should be string"
-                    )
-                    assert len(value) > 0, (
-                        f"Tool {tool_cls.__name__} name should not be empty"
-                    )
+                    assert isinstance(value, str), f"Tool {tool_cls.__name__} name should be string"
+                    assert len(value) > 0, f"Tool {tool_cls.__name__} name should not be empty"
 
-        print(
-            f"✅ Tool metadata completeness test passed - validated {len(all_tools)} tools"
-        )
+        print(f"✅ Tool metadata completeness test passed - validated {len(all_tools)} tools")
         return True
     except Exception as e:
         print(f"❌ Tool metadata completeness test failed: {e}")
@@ -294,29 +274,19 @@ def test_system_tools_structure():
         all_tools = discover_tools("tapo_camera_mcp.tools")
 
         # Find system tools (those with 'system' in their module name or category)
-        system_tools = [
-            tool for tool in all_tools if "system" in tool.__module__.lower()
-        ]
+        system_tools = [tool for tool in all_tools if "system" in tool.__module__.lower()]
 
         # We should have at least a few system tools
         assert len(system_tools) > 0, "Should find at least some system tools"
 
         # Test that system tools have proper metadata
         for tool_cls in system_tools[:3]:  # Test first 3
-            assert hasattr(tool_cls, "Meta"), (
-                f"Tool {tool_cls.__name__} missing Meta class"
-            )
+            assert hasattr(tool_cls, "Meta"), f"Tool {tool_cls.__name__} missing Meta class"
             meta = tool_cls.Meta
-            assert hasattr(meta, "name"), (
-                f"Tool {tool_cls.__name__} missing name in Meta"
-            )
-            assert hasattr(meta, "category"), (
-                f"Tool {tool_cls.__name__} missing category in Meta"
-            )
+            assert hasattr(meta, "name"), f"Tool {tool_cls.__name__} missing name in Meta"
+            assert hasattr(meta, "category"), f"Tool {tool_cls.__name__} missing category in Meta"
 
-        print(
-            f"✅ System tools structure test passed - found {len(system_tools)} system tools"
-        )
+        print(f"✅ System tools structure test passed - found {len(system_tools)} system tools")
         return True
     except Exception as e:
         print(f"❌ System tools structure test failed: {e}")

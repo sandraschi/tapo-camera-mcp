@@ -9,7 +9,7 @@ import inspect
 import logging
 import pkgutil
 import traceback
-from typing import List, Type, Any, Set
+from typing import Any, List, Set, Type
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +37,7 @@ def is_tool_class(obj: Any) -> bool:
             return False
 
         # Check for required attributes in FastMCP 2.12
-        if (
-            not hasattr(obj, "Meta")
-            or not hasattr(obj.Meta, "name")
-            or not hasattr(obj, "execute")
-        ):
+        if not hasattr(obj, "Meta") or not hasattr(obj.Meta, "name") or not hasattr(obj, "execute"):
             return False
 
         # Check if the Meta class has the required Parameters class (optional for Pydantic-based tools)
@@ -84,9 +80,7 @@ def discover_tools(package: str = "tapo_camera_mcp.tools") -> List[Type[Any]]:
             logger.debug(f"Package {package} path: {package_path}")
 
             # Walk through all modules in the package
-            for finder, name, is_pkg in pkgutil.walk_packages(
-                package_path, prefix=f"{package}."
-            ):
+            for finder, name, is_pkg in pkgutil.walk_packages(package_path, prefix=f"{package}."):
                 # Skip __pycache__ and other special directories
                 if any(part.startswith("__") for part in name.split(".")):
                     continue
@@ -106,13 +100,9 @@ def discover_tools(package: str = "tapo_camera_mcp.tools") -> List[Type[Any]]:
                             attr = getattr(module, attr_name)
                             if is_tool_class(attr):
                                 tools.append(attr)
-                                logger.info(
-                                    f"Discovered tool: {attr.__name__} from {name}"
-                                )
+                                logger.info(f"Discovered tool: {attr.__name__} from {name}")
                         except Exception as e:
-                            logger.warning(
-                                f"Error checking attribute {attr_name} in {name}: {e}"
-                            )
+                            logger.warning(f"Error checking attribute {attr_name} in {name}: {e}")
                             logger.debug(traceback.format_exc())
 
                 except ImportError as e:

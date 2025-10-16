@@ -3,12 +3,13 @@ System and administration API endpoints.
 """
 
 from datetime import datetime
-from typing import Dict, Any
-from fastapi import APIRouter, HTTPException, status, Depends
+from typing import Any, Dict
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
 
-from ....core.models import SystemInfo, SystemStatus
 from ....config import ServerConfig
+from ....core.models import SystemInfo, SystemStatus
 
 router = APIRouter()
 
@@ -22,9 +23,7 @@ async def verify_api_key(
 ) -> None:
     """Verify the API key from the request header."""
     if config.api_key and api_key != config.api_key:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API Key"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API Key")
 
 
 @router.get("/info", response_model=SystemInfo)
@@ -69,9 +68,7 @@ async def restart_system(_: None = Depends(verify_api_key)):
 
 
 @router.get("/logs")
-async def get_system_logs(
-    _: None = Depends(verify_api_key), lines: int = 100, level: str = "INFO"
-):
+async def get_system_logs(_: None = Depends(verify_api_key), lines: int = 100, level: str = "INFO"):
     """Get system logs (requires authentication)."""
     # This would return the system logs
     return {

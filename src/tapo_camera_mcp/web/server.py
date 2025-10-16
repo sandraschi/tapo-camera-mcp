@@ -6,24 +6,24 @@ This module provides the web server implementation using FastAPI.
 
 import logging
 from pathlib import Path
-from typing import Optional, Generator
+from typing import Generator, Optional
 
-from fastapi import FastAPI, Request, status, Form
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI, Form, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import (
     HTMLResponse,
     JSONResponse,
     RedirectResponse,
-    StreamingResponse,
     Response,
+    StreamingResponse,
 )
-from fastapi.exceptions import RequestValidationError
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from ..config import get_config, get_model, WebUISettings, SecuritySettings
+from ..config import SecuritySettings, WebUISettings, get_config, get_model
 from ..utils.logging import setup_logging
 
 # Setup logging
@@ -63,9 +63,7 @@ class WebServer:
         self._setup_routes()
 
         # Setup templates
-        self.templates = Jinja2Templates(
-            directory=str(Path(__file__).parent / "templates")
-        )
+        self.templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
         self.templates.env.globals.update(
             {
                 "app_title": self.web_config.title,
@@ -125,9 +123,7 @@ class WebServer:
             )
 
         @self.app.exception_handler(RequestValidationError)
-        async def validation_exception_handler(
-            request: Request, exc: RequestValidationError
-        ):
+        async def validation_exception_handler(request: Request, exc: RequestValidationError):
             if request.url.path.startswith("/api/"):
                 return JSONResponse(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -159,22 +155,16 @@ class WebServer:
                 try:
                     if camera.get("status") == "online":
                         # Get detailed camera info if available
-                        camera_obj = await server.camera_manager.get_camera(
-                            camera["name"]
-                        )
+                        camera_obj = await server.camera_manager.get_camera(camera["name"])
                         if camera_obj:
                             # Get detailed status including capabilities
                             detailed_status = await camera_obj.get_status()
 
                             # Add resolution info (mock for now, would come from camera)
-                            camera_info["resolution"] = detailed_status.get(
-                                "resolution", "Unknown"
-                            )
+                            camera_info["resolution"] = detailed_status.get("resolution", "Unknown")
 
                             # Add PTZ capability
-                            camera_info["ptz_capable"] = detailed_status.get(
-                                "ptz_capable", False
-                            )
+                            camera_info["ptz_capable"] = detailed_status.get("ptz_capable", False)
 
                             # Add audio capability
                             camera_info["audio_capable"] = detailed_status.get(
@@ -182,12 +172,8 @@ class WebServer:
                             )
 
                             # Add model and firmware
-                            camera_info["model"] = detailed_status.get(
-                                "model", "Unknown"
-                            )
-                            camera_info["firmware"] = detailed_status.get(
-                                "firmware", "Unknown"
-                            )
+                            camera_info["model"] = detailed_status.get("model", "Unknown")
+                            camera_info["firmware"] = detailed_status.get("firmware", "Unknown")
 
                             # Add streaming capability
                             camera_info["streaming_capable"] = detailed_status.get(
@@ -244,9 +230,7 @@ class WebServer:
                 "active_page": "cameras",
                 "cameras": cameras_data,
                 "total_cameras": len(cameras_data),
-                "online_cameras": sum(
-                    1 for cam in cameras_data if cam.get("status") == "online"
-                ),
+                "online_cameras": sum(1 for cam in cameras_data if cam.get("status") == "online"),
             },
         )
 
@@ -404,9 +388,7 @@ class WebServer:
                             image.save(buffer, format="JPEG", quality=75)
                             image_bytes = buffer.getvalue()
 
-                            return Response(
-                                content=image_bytes, media_type="image/jpeg"
-                            )
+                            return Response(content=image_bytes, media_type="image/jpeg")
 
                 return {"error": "Camera not found"}
             except Exception as e:
@@ -433,16 +415,12 @@ class WebServer:
                 # Get camera list from camera manager
                 cameras = await server.camera_manager.list_cameras()
                 total_cameras = len(cameras)
-                online_cameras = sum(
-                    1 for cam in cameras if cam.get("status") == "online"
-                )
+                online_cameras = sum(1 for cam in cameras if cam.get("status") == "online")
 
                 # If no cameras configured, try to auto-add USB webcam
                 if total_cameras == 0:
                     try:
-                        logger.info(
-                            "No cameras configured, attempting to auto-add USB webcam..."
-                        )
+                        logger.info("No cameras configured, attempting to auto-add USB webcam...")
                         config = {
                             "name": "usb_webcam_0",
                             "type": "webcam",
@@ -475,9 +453,7 @@ class WebServer:
                     # Initialize security integrations if not already done
                     if not hasattr(security_manager, "_initialized"):
                         security_config = (
-                            self.security_config.integrations.dict()
-                            if self.security_config
-                            else {}
+                            self.security_config.integrations.dict() if self.security_config else {}
                         )
                         await security_manager.initialize(security_config)
                         security_manager._initialized = True
@@ -506,9 +482,7 @@ class WebServer:
                     "active_alerts": len(security_alerts),
                     "active_recordings": 0,
                     "cameras": cameras,
-                    "security_devices": [
-                        device.__dict__ for device in security_devices
-                    ],
+                    "security_devices": [device.__dict__ for device in security_devices],
                     "security_alerts": [alert.__dict__ for alert in security_alerts],
                     "security_overview": security_overview,
                 },
@@ -639,8 +613,9 @@ class WebServer:
     async def _generate_webcam_stream(self, camera) -> Generator[bytes, None, None]:
         """Generate MJPEG stream from webcam."""
         try:
-            import cv2
             import asyncio
+
+            import cv2
 
             # Ensure camera is connected
             if not await camera.is_connected():
@@ -663,9 +638,7 @@ class WebServer:
                         # Create MJPEG frame
                         yield (
                             b"--frame\r\n"
-                            b"Content-Type: image/jpeg\r\n\r\n"
-                            + encoded_img.tobytes()
-                            + b"\r\n"
+                            b"Content-Type: image/jpeg\r\n\r\n" + encoded_img.tobytes() + b"\r\n"
                         )
 
                     # Control frame rate

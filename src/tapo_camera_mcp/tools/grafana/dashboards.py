@@ -1,7 +1,8 @@
 """Vienna-specific security dashboard data for Grafana."""
 
 from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
 from ..base_tool import BaseTool, ToolCategory
 
 
@@ -10,7 +11,9 @@ class ViennaDashboardTool(BaseTool):
 
     class Meta:
         name: str = "get_vienna_security_dashboard"
-        description: str = "Get formatted data for Vienna-specific security dashboard with German labels"
+        description: str = (
+            "Get formatted data for Vienna-specific security dashboard with German labels"
+        )
         category: ToolCategory = ToolCategory.UTILITY
 
     async def execute(self, **kwargs) -> Dict[str, Any]:
@@ -48,9 +51,7 @@ class ViennaDashboardTool(BaseTool):
                     ),
                     "alerts_last_24h": sum(motion_events),
                     "avg_response_time_sec": 2.3,
-                    "storage_used_percent": self._calculate_storage_usage(
-                        camera_manager
-                    ),
+                    "storage_used_percent": self._calculate_storage_usage(camera_manager),
                 },
                 "time_series": {
                     "timestamps": timestamps,
@@ -84,9 +85,11 @@ class ViennaDashboardTool(BaseTool):
 
         # More activity during typical business hours (9-17)
         return [
-            random.randint(0, 5)
-            if 9 <= (datetime.now().hour - i) % 24 < 17
-            else random.randint(0, 2)
+            (
+                random.randint(0, 5)
+                if 9 <= (datetime.now().hour - i) % 24 < 17
+                else random.randint(0, 2)
+            )
             for i in range(hours - 1, -1, -1)
         ]
 
@@ -94,9 +97,7 @@ class ViennaDashboardTool(BaseTool):
         """Generate camera activity data."""
         activity = {}
         for cam_id in camera_manager.cameras:
-            activity[cam_id] = [
-                self._simulate_camera_activity(hour) for hour in range(24)
-            ]
+            activity[cam_id] = [self._simulate_camera_activity(hour) for hour in range(24)]
         return activity
 
     def _simulate_camera_activity(self, hour: int) -> int:

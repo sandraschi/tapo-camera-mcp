@@ -3,8 +3,9 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Optional, Union
 from pathlib import Path
+from typing import Dict, Optional, Union
+
 from PIL import Image
 
 
@@ -75,9 +76,7 @@ class BaseCamera(ABC):
         self._is_connected = False
 
     @abstractmethod
-    async def capture_still(
-        self, save_path: Optional[Union[str, Path]] = None
-    ) -> Image.Image:
+    async def capture_still(self, save_path: Optional[Union[str, Path]] = None) -> Image.Image:
         """Capture a still image from the camera.
 
         Args:
@@ -125,8 +124,7 @@ class BaseCamera(ABC):
             "config": {
                 k: v
                 for k, v in self.config.params.items()
-                if k
-                not in ["password", "token", "api_key"]  # Don't expose sensitive data
+                if k not in ["password", "token", "api_key"]  # Don't expose sensitive data
             },
         }
 

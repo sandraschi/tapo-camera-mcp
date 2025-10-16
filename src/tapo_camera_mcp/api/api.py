@@ -1,7 +1,9 @@
 """API routes for the Tapo Camera MCP server."""
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from fastmcp import FastMCP
+
 from ..camera.manager import CameraManager
 
 
@@ -225,9 +227,7 @@ class APIRouter:
                 }
 
                 # Remove None values to avoid overriding defaults
-                camera_config = {
-                    k: v for k, v in camera_config.items() if v is not None
-                }
+                camera_config = {k: v for k, v in camera_config.items() if v is not None}
 
                 success = await self.camera_manager.add_camera(camera_config)
                 if success:
@@ -336,9 +336,7 @@ class APIRouter:
                 }
 
         @self.mcp.tool()
-        async def capture_still(
-            camera: str, save_path: Optional[str] = None
-        ) -> Dict[str, Any]:
+        async def capture_still(camera: str, save_path: Optional[str] = None) -> Dict[str, Any]:
             """Capture a still image from a specified camera.
 
             Takes a snapshot from the specified camera and either returns the image data

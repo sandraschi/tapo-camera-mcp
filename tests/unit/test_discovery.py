@@ -2,8 +2,8 @@
 Test script for tool discovery functionality.
 """
 
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Add the src directory to the Python path

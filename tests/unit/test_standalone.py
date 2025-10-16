@@ -5,8 +5,8 @@ This script tests the server functionality directly without any project imports.
 
 import asyncio
 import json
-import sys
 import os
+import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 # Add the src directory to the Python path
@@ -142,9 +142,7 @@ async def test_server():
 
             # Verify the result
             print("Connect result:", json.dumps(result.content, indent=2))
-            assert result.content["status"] == "connected", (
-                "Failed to connect to camera"
-            )
+            assert result.content["status"] == "connected", "Failed to connect to camera"
             assert server.camera is not None, "Camera instance not set"
             print_success("Successfully connected to camera")
 
@@ -207,9 +205,7 @@ async def test_server():
 
             # For now, just verify the response is successful
             # We'll fix the mock verification in the next step
-            print_success(
-                "PTZ command executed successfully (mock verification pending)"
-            )
+            print_success("PTZ command executed successfully (mock verification pending)")
 
             # Test 5: Motion detection
             print("\n=== Test 5: Motion detection ===")
@@ -220,20 +216,14 @@ async def test_server():
                 mock_camera.setMotionDetection = AsyncMock()
 
             # Enable motion detection
-            result = await server.mcp.call_tool(
-                "set_motion_detection", {"enabled": True}
-            )
-            print(
-                "Motion detection enable result:", json.dumps(result.content, indent=2)
-            )
+            result = await server.mcp.call_tool("set_motion_detection", {"enabled": True})
+            print("Motion detection enable result:", json.dumps(result.content, indent=2))
 
             # Verify the response and mock call
-            assert result.content["status"] == "success", (
-                "Failed to enable motion detection"
-            )
-            assert result.content.get("motion_detection", {}).get("enabled") is True, (
-                "Motion detection not enabled"
-            )
+            assert result.content["status"] == "success", "Failed to enable motion detection"
+            assert (
+                result.content.get("motion_detection", {}).get("enabled") is True
+            ), "Motion detection not enabled"
             mock_camera.setMotionDetection.assert_awaited_once_with({"enabled": True})
             print_success("Successfully controlled motion detection")
 
@@ -268,12 +258,8 @@ async def test_server():
             print("Privacy mode enable result:", json.dumps(result.content, indent=2))
 
             # Verify the response and mock call
-            assert result.content["status"] == "success", (
-                "Failed to enable privacy mode"
-            )
-            assert result.content.get("privacy_mode") is True, (
-                "Privacy mode not enabled"
-            )
+            assert result.content["status"] == "success", "Failed to enable privacy mode"
+            assert result.content.get("privacy_mode") is True, "Privacy mode not enabled"
             mock_camera.setPrivacyMode.assert_awaited_once_with(True)
             print_success("Successfully controlled privacy mode")
 

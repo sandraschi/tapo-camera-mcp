@@ -5,11 +5,12 @@ This module provides the base functionality for all tools in the Tapo Camera MCP
 with FastMCP 2.12 compatibility.
 """
 
-from typing import Any, Dict, List, Optional, Type, Awaitable, Union
-from enum import Enum
-from pydantic import BaseModel, ConfigDict
-import logging
 import inspect
+import logging
+from enum import Enum
+from typing import Any, Awaitable, Dict, List, Optional, Type, Union
+
+from pydantic import BaseModel, ConfigDict
 
 logger = logging.getLogger(__name__)
 
@@ -63,9 +64,7 @@ def register_tool(tool_cls: "Type[BaseTool]") -> "Type[BaseTool]":
         ValueError: If the tool class is missing required attributes
     """
     if not hasattr(tool_cls, "Meta") or not hasattr(tool_cls.Meta, "name"):
-        raise ValueError(
-            f"Tool class {tool_cls.__name__} is missing required Meta.name attribute"
-        )
+        raise ValueError(f"Tool class {tool_cls.__name__} is missing required Meta.name attribute")
 
     tool_name = tool_cls.Meta.name
     _tool_registry[tool_name] = tool_cls
@@ -214,9 +213,7 @@ def tool(
 
         # Ensure the class has an execute method
         if not hasattr(cls, "execute"):
-            raise TypeError(
-                f"Tool class {cls.__name__} must implement an 'execute' method"
-            )
+            raise TypeError(f"Tool class {cls.__name__} must implement an 'execute' method")
 
         # Register the tool
         register_tool(cls)

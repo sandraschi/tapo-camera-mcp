@@ -4,7 +4,8 @@ Configuration models for the Tapo Camera MCP server.
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Literal
+from typing import Any, Dict, List, Literal, Optional
+
 from pydantic import BaseModel, Field
 
 

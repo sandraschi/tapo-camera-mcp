@@ -3,8 +3,8 @@
 Test tools functionality and discovery.
 """
 
-import sys
 import os
+import sys
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
@@ -24,13 +24,9 @@ def test_tools_discovery():
 
         # Check that tools have the expected structure
         for tool_cls in tools[:3]:  # Check first 3 tools
-            assert hasattr(tool_cls, "Meta"), (
-                f"Tool {tool_cls.__name__} missing Meta class"
-            )
+            assert hasattr(tool_cls, "Meta"), f"Tool {tool_cls.__name__} missing Meta class"
             meta = getattr(tool_cls, "Meta")
-            assert hasattr(meta, "name"), (
-                f"Tool {tool_cls.__name__} missing name in Meta"
-            )
+            assert hasattr(meta, "name"), f"Tool {tool_cls.__name__} missing name in Meta"
 
         return True
     except Exception as e:
@@ -44,7 +40,7 @@ def test_tools_discovery():
 def test_base_tool():
     """Test base tool functionality."""
     try:
-        from tapo_camera_mcp.tools.base_tool import ToolResult, ToolCategory
+        from tapo_camera_mcp.tools.base_tool import ToolCategory, ToolResult
 
         # Test ToolCategory enum
         categories = [ToolCategory.CAMERA, ToolCategory.SYSTEM, ToolCategory.PTZ]

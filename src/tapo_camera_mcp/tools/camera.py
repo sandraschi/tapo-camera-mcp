@@ -4,7 +4,8 @@ Camera-related tools for Tapo Camera MCP.
 This module contains tools for managing and interacting with Tapo cameras.
 """
 
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 from pydantic import Field
 
 from .base_tool import BaseTool, ToolCategory, tool
@@ -38,9 +39,7 @@ class GetCameraInfoTool(BaseTool):
         category = ToolCategory.CAMERA
 
         class Parameters:
-            camera_id: str = Field(
-                ..., description="ID of the camera to get information about"
-            )
+            camera_id: str = Field(..., description="ID of the camera to get information about")
 
     camera_id: str
 
@@ -81,9 +80,7 @@ class DisconnectCameraTool(BaseTool):
         category = ToolCategory.CAMERA
 
         class Parameters:
-            camera_id: str = Field(
-                ..., description="ID of the camera to disconnect from"
-            )
+            camera_id: str = Field(..., description="ID of the camera to disconnect from")
 
     camera_id: str
 
@@ -103,9 +100,7 @@ class GetCameraStatusTool(BaseTool):
         category = ToolCategory.CAMERA
 
         class Parameters:
-            camera_id: str = Field(
-                ..., description="ID of the camera to get status for"
-            )
+            camera_id: str = Field(..., description="ID of the camera to get status for")
 
     camera_id: str
 

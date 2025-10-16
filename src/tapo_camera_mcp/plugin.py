@@ -4,7 +4,7 @@ Plugin module for Tapo Camera MCP.
 This module provides the necessary hooks for FastMCP to discover and load the Tapo Camera MCP plugin.
 """
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 from fastmcp import FastMCP, McpMessage
 from pydantic import BaseModel
@@ -75,9 +75,7 @@ class TapoCameraPlugin:
             self.mcp.register_message_handler(msg_type, handler)
 
         # Add a custom handler for plugin-specific messages
-        self.mcp.register_message_handler(
-            "tapo_camera_plugin_status", self._handle_plugin_status
-        )
+        self.mcp.register_message_handler("tapo_camera_plugin_status", self._handle_plugin_status)
 
     async def _handle_plugin_status(self, message: McpMessage) -> Dict[str, Any]:
         """Handle plugin status requests."""
@@ -88,9 +86,7 @@ class TapoCameraPlugin:
         }
 
 
-def register_plugin(
-    mcp: FastMCP, config: Optional[Dict[str, Any]] = None
-) -> TapoCameraPlugin:
+def register_plugin(mcp: FastMCP, config: Optional[Dict[str, Any]] = None) -> TapoCameraPlugin:
     """Register the Tapo Camera MCP plugin with FastMCP.
 
     This is the entry point that FastMCP uses to load the plugin.

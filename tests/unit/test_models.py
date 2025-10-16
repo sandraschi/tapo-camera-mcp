@@ -3,8 +3,8 @@
 Test models and core data structures.
 """
 
-import sys
 import os
+import sys
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
@@ -53,9 +53,7 @@ def test_ptz_models():
 
         # Test PTZ position
         position = PTZPosition(pan=45.0, tilt=30.0, zoom=1.5)
-        print(
-            f"✅ PTZ position: pan={position.pan}, tilt={position.tilt}, zoom={position.zoom}"
-        )
+        print(f"✅ PTZ position: pan={position.pan}, tilt={position.tilt}, zoom={position.zoom}")
 
         return True
     except Exception as e:
@@ -86,9 +84,7 @@ def test_motion_models():
             regions=[[0, 0, 100, 100]],
             confidence=0.85,
         )
-        print(
-            f"✅ Motion event: camera={event.camera_id}, confidence={event.confidence}"
-        )
+        print(f"✅ Motion event: camera={event.camera_id}, confidence={event.confidence}")
 
         return True
     except Exception as e:

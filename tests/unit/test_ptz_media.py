@@ -3,8 +3,8 @@
 Test PTZ (Pan-Tilt-Zoom) functionality and media operations.
 """
 
-import sys
 import os
+import sys
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
@@ -99,9 +99,7 @@ def test_camera_types():
 
         # Test that all types are strings
         for ct in camera_types:
-            assert isinstance(ct.value, str), (
-                f"Camera type {ct.name} should have string value"
-            )
+            assert isinstance(ct.value, str), f"Camera type {ct.name} should have string value"
 
         return True
     except Exception as e:

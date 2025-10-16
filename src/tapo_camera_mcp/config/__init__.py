@@ -4,20 +4,21 @@ Configuration module for Tapo Camera MCP.
 This module provides configuration models and utilities for the Tapo Camera MCP server.
 """
 
+import json
 import os
 import sys
-import json
-import yaml
 from pathlib import Path
-from typing import Dict, Any, Optional, TypeVar, Type, Union
+from typing import Any, Dict, Optional, Type, TypeVar, Union
+
+import yaml
 
 from .models import (
-    ServerConfig,
     CameraConfig,
-    WebUISettings,
-    SecuritySettings,
     LoggingSettings,
+    SecuritySettings,
+    ServerConfig,
     StorageSettings,
+    WebUISettings,
 )
 
 T = TypeVar("T")
@@ -151,9 +152,7 @@ class ConfigManager:
 
         try:
             with open(path, "w") as f:
-                yaml.safe_dump(
-                    default_config, f, default_flow_style=False, sort_keys=False
-                )
+                yaml.safe_dump(default_config, f, default_flow_style=False, sort_keys=False)
         except PermissionError:
             # If we can't write to the specified path, create a warning but don't crash
             print(
@@ -187,9 +186,7 @@ class ConfigManager:
                 elif self.config_path.suffix.lower() == ".json":
                     config = json.load(f)
                 else:
-                    raise ValueError(
-                        f"Unsupported config file format: {self.config_path.suffix}"
-                    )
+                    raise ValueError(f"Unsupported config file format: {self.config_path.suffix}")
 
             # Ensure config is a dictionary
             if not isinstance(config, dict):
@@ -266,15 +263,11 @@ class ConfigManager:
                 port=config.get("port", 8080),
                 debug=config.get("debug", False),
                 web=WebUISettings(**web_config) if web_config else WebUISettings(),
-                security=SecuritySettings(**security_config)
-                if security_config
-                else SecuritySettings(),
-                logging=LoggingSettings(**logging_config)
-                if logging_config
-                else LoggingSettings(),
-                storage=StorageSettings(**storage_config)
-                if storage_config
-                else StorageSettings(),
+                security=(
+                    SecuritySettings(**security_config) if security_config else SecuritySettings()
+                ),
+                logging=LoggingSettings(**logging_config) if logging_config else LoggingSettings(),
+                storage=StorageSettings(**storage_config) if storage_config else StorageSettings(),
                 camera_scan_interval=config.get("camera_scan_interval", 300),
                 max_workers=config.get("max_workers", 4),
                 request_timeout=config.get("request_timeout", 30),

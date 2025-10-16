@@ -5,12 +5,13 @@ This module provides integration clients for various security MCP servers
 to create a unified home security monitoring platform.
 """
 
+import json
 import logging
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
 import aiohttp
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -246,9 +247,7 @@ class SecurityIntegrationManager:
 
         # Ring MCP integration (when ready)
         if config.get("ring_mcp", {}).get("enabled", False):
-            ring_path = config["ring_mcp"].get(
-                "server_path", "D:\\Dev\\repos\\ring-mcp"
-            )
+            ring_path = config["ring_mcp"].get("server_path", "D:\\Dev\\repos\\ring-mcp")
             self.ring_client = RingMCPClient(mcp_server_path=ring_path)
             logger.info(f"Initialized Ring MCP integration: {ring_path}")
 
@@ -332,4 +331,3 @@ class SecurityIntegrationManager:
 
 # Global instance for dashboard use
 security_manager = SecurityIntegrationManager()
-

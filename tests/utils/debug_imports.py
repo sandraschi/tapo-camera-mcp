@@ -1,5 +1,5 @@
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Set up logging

@@ -3,8 +3,8 @@
 Integration tests for the full tapo-camera-mcp system.
 """
 
-import sys
 import os
+import sys
 import unittest.mock as mock
 
 # Add the src path to Python path
@@ -67,11 +67,11 @@ def test_validation_module():
     """Test validation module functionality."""
     try:
         from tapo_camera_mcp.validation import (
-            validate_ip_address,
-            validate_port,
+            ToolValidationError,
             validate_camera_name,
             validate_credentials,
-            ToolValidationError,
+            validate_ip_address,
+            validate_port,
         )
 
         # Test IP address validation
@@ -126,16 +126,16 @@ def test_exception_hierarchy():
     """Test exception hierarchy and error handling."""
     try:
         from tapo_camera_mcp.exceptions import (
-            TapoCameraError,
-            ConnectionError,
             AuthenticationError,
             CameraNotSupportedError,
-            StreamError,
+            ConfigurationError,
+            ConnectionError,
+            FirmwareError,
             PTZError,
             StorageError,
-            ConfigurationError,
+            StreamError,
+            TapoCameraError,
             TimeoutError,
-            FirmwareError,
         )
 
         # Test exception inheritance
@@ -169,7 +169,7 @@ def test_exception_hierarchy():
 def test_camera_base_classes():
     """Test camera base classes and factory pattern."""
     try:
-        from tapo_camera_mcp.camera.base import CameraType, CameraConfig, CameraFactory
+        from tapo_camera_mcp.camera.base import CameraConfig, CameraFactory, CameraType
 
         # Test CameraType enum
         camera_types = [
@@ -212,13 +212,13 @@ def test_core_models():
     try:
         from tapo_camera_mcp.core.models import (
             CameraModel,
-            StreamType,
-            VideoQuality,
-            PTZDirection,
-            MotionDetectionSensitivity,
             CameraStatus,
+            MotionDetectionSensitivity,
+            PTZDirection,
             PTZPosition,
+            StreamType,
             TapoCameraConfig,
+            VideoQuality,
         )
 
         # Test enums
@@ -268,13 +268,12 @@ def test_core_models():
 def test_web_server_routes():
     """Test web server route definitions."""
     try:
-        from tapo_camera_mcp.web.server import WebServer
         from fastapi.testclient import TestClient
 
+        from tapo_camera_mcp.web.server import WebServer
+
         # Mock config for web server
-        with mock.patch(
-            "tapo_camera_mcp.web.server.get_config"
-        ) as mock_get_config, mock.patch(
+        with mock.patch("tapo_camera_mcp.web.server.get_config") as mock_get_config, mock.patch(
             "tapo_camera_mcp.web.server.get_model"
         ) as mock_get_model:
             mock_get_config.return_value = {"debug": False}
@@ -391,11 +390,11 @@ def test_full_system_import():
     """Test that the full system can be imported without circular dependencies."""
     try:
         # Test importing main modules
-        from tapo_camera_mcp.core import server, models
+        from tapo_camera_mcp import exceptions, validation
         from tapo_camera_mcp.camera import base, manager
+        from tapo_camera_mcp.core import models, server
         from tapo_camera_mcp.tools import base_tool, discovery
         from tapo_camera_mcp.web import server as web_server
-        from tapo_camera_mcp import validation, exceptions
 
         # Test that key classes exist
         assert hasattr(server, "TapoCameraServer")

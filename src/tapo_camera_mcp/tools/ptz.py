@@ -4,7 +4,7 @@ PTZ (Pan-Tilt-Zoom) tools for Tapo Camera MCP.
 This module contains tools for controlling PTZ functionality of Tapo cameras.
 """
 
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 from pydantic import Field
 
@@ -21,15 +21,9 @@ class MovePTZTool(BaseTool):
         category = ToolCategory.CAMERA
 
         class Parameters:
-            pan: float = Field(
-                ..., ge=-1.0, le=1.0, description="Pan position (-1.0 to 1.0)"
-            )
-            tilt: float = Field(
-                ..., ge=-1.0, le=1.0, description="Tilt position (-1.0 to 1.0)"
-            )
-            zoom: float = Field(
-                ..., ge=0.0, le=1.0, description="Zoom level (0.0 to 1.0)"
-            )
+            pan: float = Field(..., ge=-1.0, le=1.0, description="Pan position (-1.0 to 1.0)")
+            tilt: float = Field(..., ge=-1.0, le=1.0, description="Tilt position (-1.0 to 1.0)")
+            zoom: float = Field(..., ge=0.0, le=1.0, description="Zoom level (0.0 to 1.0)")
 
     pan: float
     tilt: float

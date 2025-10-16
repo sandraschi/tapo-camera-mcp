@@ -1,7 +1,7 @@
 """Advanced image analysis tools using DINOv3."""
 
-from typing import Dict, List, Union
 from pathlib import Path
+from typing import Dict, List, Union
 
 from .vision.dinov3 import DINOv3Processor
 
