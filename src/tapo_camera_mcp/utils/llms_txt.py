@@ -171,10 +171,10 @@ server.start()
 ## API Reference
 
 ### Base URL
-All API endpoints are relative to: `{self.base_url}/api/v1`
+All API endpoints are relative to: {self.base_url}/api/v1
 
 ### Authentication
-Authentication is required for all API endpoints. Include your API key in the `Authorization` header:
+Authentication is required for all API endpoints. Include your API key in the Authorization header:
 ```
 Authorization: Bearer YOUR_API_KEY
 ```
@@ -186,7 +186,7 @@ Authorization: Bearer YOUR_API_KEY
 #### Camera Status
 **Description**: Get the current status of the camera.
 
-**Endpoint**: `GET /api/v1/camera/status`
+**Endpoint**: GET /api/v1/camera/status
 
 **Parameters**: None
 
@@ -203,11 +203,11 @@ Authorization: Bearer YOUR_API_KEY
 #### Stream Control
 **Description**: Start or stop the video stream.
 
-**Endpoint**: `POST /api/v1/camera/stream`
+**Endpoint**: POST /api/v1/camera/stream
 
 **Parameters**:
-- `action` (string, required): Either "start" or "stop"
-- `quality` (string, optional): Stream quality ("high", "medium", "low")
+- action (string, required): Either "start" or "stop"
+- quality (string, optional): Stream quality ("high", "medium", "low")
 
 **Response**:
 ```json
@@ -222,12 +222,12 @@ Authorization: Bearer YOUR_API_KEY
 #### Pan/Tilt
 **Description**: Control the camera's pan and tilt.
 
-**Endpoint**: `POST /api/v1/ptz/move`
+**Endpoint**: POST /api/v1/ptz/move
 
 **Parameters**:
-- `pan` (number, required): Pan angle in degrees (-180 to 180)
-- `tilt` (number, required): Tilt angle in degrees (-90 to 90)
-- `speed` (number, optional): Movement speed (1-100)
+- pan (number, required): Pan angle in degrees (-180 to 180)
+- tilt (number, required): Tilt angle in degrees (-90 to 90)
+- speed (number, optional): Movement speed (1-100)
 
 **Response**:
 ```json
@@ -245,44 +245,42 @@ Authorization: Bearer YOUR_API_KEY
 ### Obtaining an API Key
 1. Register your application at {self.base_url}/developers
 2. Create a new API key
-3. Include the key in the `Authorization` header
+3. Include the key in the Authorization header
 
 ## Rate Limiting
 - 100 requests per minute per API key
 - Exceeding the limit will result in a 429 status code
 - The following headers are included in rate-limited responses:
-  - `X-RateLimit-Limit`: The maximum number of requests allowed
-  - `X-RateLimit-Remaining`: The number of requests remaining
-  - `X-RateLimit-Reset`: Time when the rate limit resets (UTC timestamp)
+  - X-RateLimit-Limit: The maximum number of requests allowed
+  - X-RateLimit-Remaining: The number of requests remaining
+  - X-RateLimit-Reset: Time when the rate limit resets (UTC timestamp)
 
 ## Error Handling
 
 ### Error Response Format
 ```json
 {{
-  "error": {
-            "code": "error_code",
+  "error": {{
+    "code": "error_code",
     "message": "Human-readable error message",
-    "details": { {} }
-  }
+    "details": {{}}
+  }}
 }}
 ```
 
 ### Common Error Codes
-- `400 Bad Request`: Invalid request parameters
-- `401 Unauthorized`: Missing or invalid API key
-- `403 Forbidden`: Insufficient permissions
-- `404 Not Found`: Resource not found
-- `429 Too Many Requests`: Rate limit exceeded
-- `500 Internal Server Error`: Server error
+- 400 Bad Request: Invalid request parameters
+- 401 Unauthorized: Missing or invalid API key
+- 403 Forbidden: Insufficient permissions
+- 404 Not Found: Resource not found
+- 429 Too Many Requests: Rate limit exceeded
+- 500 Internal Server Error: Server error
 
 ## Support
-For support, please contact support@example.com or visit our [GitHub repository]({
-            self.base_url
-        }).
+For support, please contact support@example.com or visit our GitHub repository: {self.base_url}
 
 ## License
-[Apache 2.0]({self.base_url}/license)
+Apache 2.0 License: {self.base_url}/license
     """
 
     def write_files(self, output_dir: Union[str, Path]) -> None:
