@@ -14,6 +14,7 @@ from .tapo_plug_tools import (
     GetTapoP115DetailedStatsTool,
     SetTapoP115EnergySavingModeTool,
     GetTapoP115PowerScheduleTool,
+    GetTapoP115DataStorageInfoTool,
 )
 
 __all__ = [
@@ -25,4 +26,5 @@ __all__ = [
     "GetTapoP115DetailedStatsTool",
     "SetTapoP115EnergySavingModeTool",
     "GetTapoP115PowerScheduleTool",
+    "GetTapoP115DataStorageInfoTool",
 ]

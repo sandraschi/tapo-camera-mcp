@@ -259,6 +259,14 @@ class SecurityEventCorrelator:
   - Energy saving mode for optimized consumption
   - Remote control capabilities via MCP tools
 
+  **Data Storage Capabilities:**
+  - ✅ **Real-time data**: Continuous power, voltage, current monitoring
+  - ✅ **Daily consumption**: Resets at midnight, tracks daily kWh usage
+  - ✅ **Total consumption**: Cumulative data since device setup
+  - ⚠️ **Historical data**: Limited to current day only (hourly granularity)
+  - ❌ **Long-term storage**: No historical data beyond current day on device
+  - 💡 **Workaround**: Home Assistant integration for long-term data storage
+
 ### **Software Architecture**
 
 #### **MCP Server Enhancement**
@@ -345,7 +353,43 @@ CREATE TABLE energy_usage (
 );
 ```
 
-### **API Endpoints Enhancement**
+### **P115 Data Storage Strategy**
+
+#### **Data Storage Limitations & Solutions**
+```python
+# P115 Data Storage Characteristics
+P115_DATA_STORAGE = {
+    "real_time": {
+        "available": True,
+        "frequency": "Continuous (every few seconds)",
+        "data_types": ["power", "voltage", "current", "power_factor"]
+    },
+    "daily_consumption": {
+        "available": True,
+        "reset_time": "00:00 (midnight)",
+        "data_types": ["daily_kwh", "daily_cost"]
+    },
+    "total_consumption": {
+        "available": True,
+        "reset": "Manual only",
+        "data_types": ["total_kwh", "total_cost"]
+    },
+    "historical_data": {
+        "available": False,
+        "limitation": "Current day only",
+        "granularity": "Hourly for current day"
+    }
+}
+
+# Recommended Data Strategy
+DATA_STRATEGY = {
+    "real_time_monitoring": "P115 API for current consumption",
+    "daily_tracking": "P115 daily consumption data",
+    "long_term_analysis": "Home Assistant integration",
+    "cost_analysis": "Local database + P115 data",
+    "automation": "P115 scheduling + local rules"
+}
+```
 
 #### **New REST API Endpoints**
 ```python
@@ -365,6 +409,10 @@ async def get_energy_devices():
 @router.get("/api/energy/usage")
 async def get_energy_usage(period: str = "day"):
     """Get energy usage data for specified period"""
+
+@router.get("/api/energy/p115/data-storage-info")
+async def get_p115_data_storage_info():
+    """Get P115 data storage capabilities and limitations"""
 
 @router.get("/api/security/correlated-events")
 async def get_correlated_events():
