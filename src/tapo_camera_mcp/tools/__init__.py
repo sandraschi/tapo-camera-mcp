@@ -21,11 +21,13 @@ from tapo_camera_mcp.tools.base_tool import (
     ToolCategory,
     ToolDefinition,
     ToolResult,
-    register_tool,
 )
 from tapo_camera_mcp.tools.base_tool import _tool_registry as tools_registry
 from tapo_camera_mcp.tools.base_tool import get_all_tools as _get_all_tools
 from tapo_camera_mcp.tools.base_tool import get_tool as _get_tool
+from tapo_camera_mcp.tools.base_tool import (
+    register_tool,
+)
 
 # Import discovery functions
 from tapo_camera_mcp.tools.discovery import discover_tools

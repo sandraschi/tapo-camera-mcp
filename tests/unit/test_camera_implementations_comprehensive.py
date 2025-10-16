@@ -261,9 +261,8 @@ def test_ring_camera_implementation():
 def test_furbo_camera_implementation():
     """Test Furbo camera implementation (if available)."""
     try:
-        from tapo_camera_mcp.camera.furbo import FurboCamera
-
         from tapo_camera_mcp.camera.base import CameraConfig, CameraType
+        from tapo_camera_mcp.camera.furbo import FurboCamera
 
         # Create Furbo camera config
         furbo_config = CameraConfig(
