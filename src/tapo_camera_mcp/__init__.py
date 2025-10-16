@@ -28,7 +28,7 @@ from .core import (
 )
 
 # For backward compatibility
-from .core.server import TapoCameraServer as Server  # noqa: F401
+from .core.server import TapoCameraServer as Server
 from .core.server import TapoCameraServer as TapoCameraMCP
 from .exceptions import TapoCameraError
 

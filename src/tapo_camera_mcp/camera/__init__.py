@@ -19,7 +19,7 @@ try:
     except Exception as e:
         logger.warning(f"Failed to apply ring_doorbell patch: {e}")
 
-    from .ring import RingCamera  # noqa: F401
+    from .ring import RingCamera
 
     RING_AVAILABLE = True
 except ImportError as e:

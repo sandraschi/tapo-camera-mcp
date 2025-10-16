@@ -130,7 +130,7 @@ class WebServer:
             return {"status": "success", "data": {"id": camera_id}}
 
         @self.app.get("/api/cameras/{camera_id}/snapshot")
-        async def get_camera_snapshot(camera_id: str):  # noqa: ARG001
+        async def get_camera_snapshot(camera_id: str):
             """Get a snapshot from a camera."""
             # This would fetch a real snapshot
             snapshot_path = Path(__file__).parent / "static" / "img" / "placeholder.jpg"

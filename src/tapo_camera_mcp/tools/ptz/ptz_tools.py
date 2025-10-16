@@ -211,7 +211,7 @@ class SavePTZPresetTool(BaseTool):
     """
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "category": ToolCategory.PTZ,
             "description": "Save the current PTZ position as a preset",
         }
@@ -250,7 +250,7 @@ class RecallPTZPresetTool(BaseTool):
     """
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "category": ToolCategory.PTZ,
             "description": "Recall a saved PTZ preset",
         }
@@ -288,7 +288,7 @@ class GetPTZPresetsTool(BaseTool):
     """
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "category": ToolCategory.PTZ,
             "description": "Get all saved PTZ presets",
         }
@@ -321,7 +321,7 @@ class GoToHomePTZTool(BaseTool):
     """
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "category": ToolCategory.PTZ,
             "description": "Move the PTZ to the home position",
         }
@@ -361,7 +361,7 @@ class StopPTZTool(BaseTool):
     """
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "category": ToolCategory.PTZ,
             "description": "Stop all PTZ movement",
         }
@@ -413,7 +413,7 @@ class GetPTZPositionTool(BaseTool):
     """
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "category": ToolCategory.PTZ,
             "description": "Get the current PTZ position",
         }
