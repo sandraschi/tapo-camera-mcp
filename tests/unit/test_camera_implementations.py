@@ -15,10 +15,7 @@ def test_base_camera():
         from tapo_camera_mcp.camera.base import CameraConfig, CameraType
 
         # Test CameraType enum
-        camera_types = list(CameraType)
-        print(
-            f"✅ RingCamera not available, skipping test. Available camera types: {[ct.value for ct in camera_types]}"
-        )
+        list(CameraType)
 
         # Test CameraConfig creation
         config = CameraConfig(
@@ -30,10 +27,8 @@ def test_base_camera():
         assert config.type == CameraType.TAPO
         assert config.enabled is True
 
-        print("✅ Base camera configuration test passed")
         return True
-    except Exception as e:
-        print(f"❌ Base camera test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -47,21 +42,18 @@ def test_tapo_camera():
         from tapo_camera_mcp.core.models import TapoCameraConfig
 
         # Test TapoCameraConfig creation
-        config = TapoCameraConfig(
+        TapoCameraConfig(
             host="192.168.1.100", username="test_user", password="test_pass", port=443
         )
 
-        print("✅ TapoCameraConfig created successfully")
 
         # Test that TapoCamera class exists and has required methods
         assert hasattr(TapoCamera, "__init__"), "TapoCamera should have __init__"
         assert hasattr(TapoCamera, "connect"), "TapoCamera should have connect method"
         assert hasattr(TapoCamera, "get_status"), "TapoCamera should have get_status method"
 
-        print("✅ TapoCamera class structure test passed")
         return True
-    except Exception as e:
-        print(f"❌ Tapo camera test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -79,10 +71,8 @@ def test_webcam_camera():
         assert hasattr(WebCamera, "start_stream"), "WebCamera should have start_stream method"
         assert hasattr(WebCamera, "get_status"), "WebCamera should have get_status method"
 
-        print("✅ WebCamera class structure test passed")
         return True
-    except Exception as e:
-        print(f"❌ Webcam camera test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -104,15 +94,13 @@ def test_camera_manager():
         assert len(manager.cameras) == 0, "CameraManager should start with no cameras"
 
         # Test adding camera config (without actual connection)
-        config = CameraConfig(
+        CameraConfig(
             name="test_camera", type=CameraType.TAPO, params={"host": "192.168.1.100"}
         )
 
         # Note: We can't actually add cameras without proper setup, but we can test the structure
-        print("✅ CameraManager structure test passed")
         return True
-    except Exception as e:
-        print(f"❌ Camera manager test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -128,10 +116,8 @@ def test_camera_groups():
         group_manager = CameraGroupManager()
         assert hasattr(group_manager, "groups"), "CameraGroupManager should have groups"
 
-        print("✅ Camera groups structure test passed")
         return True
-    except Exception as e:
-        print(f"❌ Camera groups test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -148,10 +134,8 @@ def test_camera_factory():
             "CameraFactory should have create_camera method"
         )
 
-        print("✅ Camera factory structure test passed")
         return True
-    except Exception as e:
-        print(f"❌ Camera factory test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -172,9 +156,9 @@ def test_camera_exceptions():
         # Test exception creation
         error = TapoCameraError("Test error")
         connection_error = ConnectionError("Connection failed")
-        auth_error = AuthenticationError("Auth failed")
-        not_found_error = CameraNotFoundError("Camera not found")
-        stream_error = StreamError("Stream failed")
+        AuthenticationError("Auth failed")
+        CameraNotFoundError("Camera not found")
+        StreamError("Stream failed")
 
         # Test exception hierarchy
         assert isinstance(error, Exception), "TapoCameraError should be Exception"
@@ -182,10 +166,8 @@ def test_camera_exceptions():
             "ConnectionError should inherit from TapoCameraError"
         )
 
-        print("✅ Camera exceptions test passed")
         return True
-    except Exception as e:
-        print(f"❌ Camera exceptions test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -209,13 +191,9 @@ if __name__ == "__main__":
     for test in tests:
         if test():
             passed += 1
-        print()
 
-    print(f"📊 Results: {passed}/{total} tests passed")
 
     if passed == total:
-        print("🎉 All camera implementation tests passed!")
         sys.exit(0)
     else:
-        print("❌ Some camera implementation tests failed")
         sys.exit(1)

@@ -26,13 +26,13 @@ def test_import(module_name):
         logger.info(f"✅ Successfully imported: {module_name}")
         return True
     except ImportError as e:
-        logger.error(f"❌ Failed to import {module_name}: {e}")
+        logger.exception(f"❌ Failed to import {module_name}: {e}")
         import traceback
 
         traceback.print_exc()
         return False
     except Exception as e:
-        logger.error(f"⚠️ Error importing {module_name}: {e}")
+        logger.exception(f"⚠️ Error importing {module_name}: {e}")
         import traceback
 
         traceback.print_exc()
@@ -67,7 +67,7 @@ def main():
         for tool in tools:
             logger.info(f"- {tool.name}: {tool.__module__}.{tool.__name__}")
     except Exception as e:
-        logger.error(f"Failed to get registered tools: {e}")
+        logger.exception(f"Failed to get registered tools: {e}")
         import traceback
 
         traceback.print_exc()

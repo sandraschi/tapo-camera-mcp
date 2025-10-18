@@ -120,8 +120,8 @@ def test_full_system_integration():
         # Test 9: Test server singleton pattern
         logger.info("🔄 Testing server singleton...")
         try:
-            server1 = asyncio.run(TapoCameraServer.get_instance())
-            server2 = asyncio.run(TapoCameraServer.get_instance())
+            asyncio.run(TapoCameraServer.get_instance())
+            asyncio.run(TapoCameraServer.get_instance())
             # Both should be the same instance (singleton)
             logger.info("✅ Server singleton pattern working")
         except Exception as e:
@@ -143,7 +143,7 @@ def test_full_system_integration():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Full system integration test failed: {e}")
+        logger.exception(f"❌ Full system integration test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -188,7 +188,7 @@ def test_webcam_connection_simulation():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Webcam connection simulation test failed: {e}")
+        logger.exception(f"❌ Webcam connection simulation test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -215,7 +215,7 @@ def test_server_camera_integration():
             params={"device_id": 0},
         )
 
-        webcam = WebCamera(webcam_config)
+        WebCamera(webcam_config)
 
         # Test that camera manager can handle the webcam
         assert isinstance(camera_manager.cameras, dict)
@@ -234,7 +234,7 @@ def test_server_camera_integration():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Server-camera integration test failed: {e}")
+        logger.exception(f"❌ Server-camera integration test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -251,7 +251,7 @@ def test_tools_execution_simulation():
         from tapo_camera_mcp.tools.system.status_tool import StatusTool
 
         # Discover tools
-        all_tools = discover_tools("tapo_camera_mcp.tools")
+        discover_tools("tapo_camera_mcp.tools")
 
         # Test StatusTool
         status_tool = StatusTool(section="system")
@@ -266,13 +266,13 @@ def test_tools_execution_simulation():
         # Test that tools can be executed (basic structure test)
         try:
             # These might fail due to missing dependencies, but should not crash
-            result = asyncio.run(status_tool.execute())
+            asyncio.run(status_tool.execute())
             logger.info("✅ StatusTool executed successfully")
         except Exception as e:
             logger.warning(f"StatusTool execution failed (expected): {e}")
 
         try:
-            result = asyncio.run(help_tool.execute())
+            asyncio.run(help_tool.execute())
             logger.info("✅ HelpTool executed successfully")
         except Exception as e:
             logger.warning(f"HelpTool execution failed (expected): {e}")
@@ -281,7 +281,7 @@ def test_tools_execution_simulation():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Tools execution simulation test failed: {e}")
+        logger.exception(f"❌ Tools execution simulation test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -304,7 +304,7 @@ def test_end_to_end_workflow():
         try:
             from tapo_camera_mcp.core.server import TapoCameraServer
 
-            server = asyncio.run(TapoCameraServer.get_instance())
+            asyncio.run(TapoCameraServer.get_instance())
             logger.info("✅ Server startup simulated")
         except Exception:
             pass
@@ -312,7 +312,7 @@ def test_end_to_end_workflow():
         # 2. Camera manager setup
         from tapo_camera_mcp.camera.manager import CameraManager
 
-        camera_manager = CameraManager()
+        CameraManager()
         logger.info("✅ Camera manager setup")
 
         # 3. Webcam creation
@@ -322,7 +322,7 @@ def test_end_to_end_workflow():
         webcam_config = CameraConfig(
             name="e2e_webcam", type=CameraType.WEBCAM, params={"device_id": 0}
         )
-        webcam = WebCamera(webcam_config)
+        WebCamera(webcam_config)
         logger.info("✅ Webcam creation")
 
         # 4. Tools discovery
@@ -335,7 +335,7 @@ def test_end_to_end_workflow():
         try:
             from tapo_camera_mcp.web.server import WebServer
 
-            web_server = WebServer()
+            WebServer()
             logger.info("✅ Web server structure")
         except Exception:
             pass
@@ -344,7 +344,7 @@ def test_end_to_end_workflow():
         return True
 
     except Exception as e:
-        logger.error(f"❌ End-to-end workflow test failed: {e}")
+        logger.exception(f"❌ End-to-end workflow test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -352,8 +352,6 @@ def test_end_to_end_workflow():
 
 
 if __name__ == "__main__":
-    print("🚀 Starting COMPREHENSIVE SYSTEM INTEGRATION TEST")
-    print("=" * 60)
 
     tests = [
         test_full_system_integration,
@@ -367,32 +365,21 @@ if __name__ == "__main__":
     total = len(tests)
     start_time = time.time()
 
-    for i, test in enumerate(tests, 1):
-        print(f"\n🧪 Test {i}/{total}: {test.__name__}")
-        print("-" * 40)
+    for _i, test in enumerate(tests, 1):
 
         try:
             if test():
                 passed += 1
-                print(f"✅ PASSED: {test.__name__}")
             else:
-                print(f"❌ FAILED: {test.__name__}")
-        except Exception as e:
-            print(f"💥 CRASHED: {test.__name__} - {e}")
+                pass
+        except Exception:
+            pass
 
     end_time = time.time()
     duration = end_time - start_time
 
-    print("\n" + "=" * 60)
-    print("📊 FINAL RESULTS:")
-    print(f"   Tests passed: {passed}/{total}")
-    print(f"   Success rate: {(passed / total) * 100:.1f}%")
-    print(f"   Duration: {duration:.2f} seconds")
 
     if passed >= total * 0.8:
-        print("🎉 EXCELLENT! System integration tests mostly passed!")
-        print("💡 The webcam is properly connected to the server structure.")
         sys.exit(0)
     else:
-        print("❌ Some system integration tests failed")
         sys.exit(1)

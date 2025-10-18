@@ -28,7 +28,7 @@ def test_real_server_initialization():
 
         # Test that we can get the server instance (this actually initializes it)
         try:
-            server = asyncio.run(TapoCameraServer.get_instance())
+            asyncio.run(TapoCameraServer.get_instance())
             # If this doesn't crash, server initialization works
             logger.info("✅ Server instance created successfully")
             return True
@@ -38,7 +38,7 @@ def test_real_server_initialization():
             return True
 
     except Exception as e:
-        logger.error(f"❌ Real server initialization test failed: {e}")
+        logger.exception(f"❌ Real server initialization test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -66,7 +66,7 @@ def test_real_camera_manager():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Real camera manager test failed: {e}")
+        logger.exception(f"❌ Real camera manager test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -102,7 +102,7 @@ def test_real_tools_discovery():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Real tools discovery test failed: {e}")
+        logger.exception(f"❌ Real tools discovery test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -140,13 +140,13 @@ def test_real_validation_module():
         # Test validation errors
         try:
             validate_ip_address("invalid.ip", "test_ip")
-            assert False, "Should have raised ValidationError"
+            raise AssertionError("Should have raised ValidationError")
         except ToolValidationError:
             pass
 
         try:
             validate_port(70000, "test_port")
-            assert False, "Should have raised ValidationError"
+            raise AssertionError("Should have raised ValidationError")
         except ToolValidationError:
             pass
 
@@ -154,7 +154,7 @@ def test_real_validation_module():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Real validation module test failed: {e}")
+        logger.exception(f"❌ Real validation module test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -189,7 +189,7 @@ def test_real_webcam_detection():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Real webcam detection test failed: {e}")
+        logger.exception(f"❌ Real webcam detection test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -233,7 +233,7 @@ def test_real_camera_factory():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Real camera factory test failed: {e}")
+        logger.exception(f"❌ Real camera factory test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -279,7 +279,7 @@ def test_real_tool_structure():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Real tool structure test failed: {e}")
+        logger.exception(f"❌ Real tool structure test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -321,7 +321,7 @@ def test_real_system_tools():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Real system tools test failed: {e}")
+        logger.exception(f"❌ Real system tools test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -364,7 +364,7 @@ def test_real_camera_tools():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Real camera tools test failed: {e}")
+        logger.exception(f"❌ Real camera tools test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -396,7 +396,7 @@ def test_real_web_server():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Real web server test failed: {e}")
+        logger.exception(f"❌ Real web server test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -467,7 +467,7 @@ def test_real_core_models():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Real core models test failed: {e}")
+        logger.exception(f"❌ Real core models test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -495,7 +495,7 @@ def test_webcam_server_integration():
         assert webcam._device_id == 0
 
         # Test that camera manager can handle webcam
-        manager = CameraManager()
+        CameraManager()
 
         # Test server integration (basic structure test)
         try:
@@ -510,7 +510,7 @@ def test_webcam_server_integration():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Webcam-server integration test failed: {e}")
+        logger.exception(f"❌ Webcam-server integration test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -536,24 +536,18 @@ if __name__ == "__main__":
     passed = 0
     total = len(tests)
 
-    print("🚀 Starting REAL execution tests - testing actual code paths...")
 
     for test in tests:
         try:
             if test():
                 passed += 1
-                print(f"✅ {test.__name__}")
             else:
-                print(f"❌ {test.__name__}")
-        except Exception as e:
-            print(f"💥 {test.__name__} crashed: {e}")
-        print()
+                pass
+        except Exception:
+            pass
 
-    print(f"📊 Results: {passed}/{total} real execution tests passed")
 
     if passed >= total * 0.8:  # 80% pass rate
-        print("🎉 Excellent! Real execution tests mostly passed!")
         sys.exit(0)
     else:
-        print("❌ Some real execution tests failed")
         sys.exit(1)

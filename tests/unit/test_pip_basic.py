@@ -11,41 +11,30 @@ from pathlib import Path
 
 def test_basic_pip_install():
     """Test basic pip install functionality."""
-    print("🔧 Testing basic pip install functionality...")
 
     # Test 1: Check pip version
-    print("\n1. Checking pip version...")
     result = subprocess.run(
         [sys.executable, "-m", "pip", "--version"], check=False, capture_output=True, text=True
     )
     if result.returncode == 0:
-        print(f"✅ Pip version: {result.stdout.strip()}")
+        pass
     else:
-        print(f"❌ Pip check failed: {result.stderr}")
         return False
 
     # Test 2: Try installing a simple package to temp directory
-    print("\n2. Testing install to temp directory...")
     with tempfile.TemporaryDirectory() as temp_dir:
         cmd = [sys.executable, "-m", "pip", "install", "--target", temp_dir, "requests"]
-        print(f"Command: {' '.join(cmd)}")
 
         result = subprocess.run(cmd, check=False, capture_output=True, text=True)
 
         if result.returncode == 0:
-            print("✅ Basic pip install --target works")
             # Check what was installed
             temp_path = Path(temp_dir)
-            installed = list(temp_path.iterdir())
-            print(f"   Installed {len(installed)} items: {[p.name for p in installed[:5]]}")
+            list(temp_path.iterdir())
         else:
-            print("❌ Basic pip install --target failed")
-            print(f"   stdout: {result.stdout}")
-            print(f"   stderr: {result.stderr}")
             return False
 
     # Test 3: Try installing our specific dependencies one by one
-    print("\n3. Testing our specific dependencies...")
     dependencies = [
         "python-dotenv>=0.19.0",  # Start with simple ones
         "pydantic>=1.9.0",
@@ -55,28 +44,21 @@ def test_basic_pip_install():
     ]
 
     for dep in dependencies:
-        print(f"\n   Testing {dep}...")
         with tempfile.TemporaryDirectory() as temp_dir:
             cmd = [sys.executable, "-m", "pip", "install", "--target", temp_dir, dep]
             result = subprocess.run(cmd, check=False, capture_output=True, text=True)
 
             if result.returncode == 0:
-                print(f"   ✅ {dep} - SUCCESS")
+                pass
             else:
-                print(f"   ❌ {dep} - FAILED")
-                print(f"      stdout: {result.stdout}")
-                print(f"      stderr: {result.stderr}")
                 return False
 
-    print("\n🎯 All tests passed! Pip install should work fine.")
     return True
 
 
 if __name__ == "__main__":
     success = test_basic_pip_install()
     if not success:
-        print("\n💥 Found the issue! Check the error messages above.")
         sys.exit(1)
     else:
-        print("\n✅ All pip tests passed - the issue is elsewhere.")
         sys.exit(0)

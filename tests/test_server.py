@@ -4,12 +4,20 @@ Tests for the Tapo Camera MCP server.
 
 from unittest.mock import AsyncMock, Mock, patch
 
+import aiohttp
 import pytest
 from fastmcp.server import FastMCP
 
 from tapo_camera_mcp.core.server import TapoCameraServer
 from tapo_camera_mcp.exceptions import AuthenticationError, ConnectionError
 from tapo_camera_mcp.tools.camera import CameraInfoTool
+
+
+# Mock McpMessage class for testing
+class McpMessage:
+    def __init__(self, type: str, data: dict):
+        self.type = type
+        self.data = data
 
 # Test data
 TEST_CONFIG = {
@@ -240,7 +248,6 @@ async def test_get_camera_info(tapo_camera, mock_session):
             "lang": "en_US",
             "region": "US",
             "device_on": True,
-            "on_time": 3600,
             "overheated": False,
             "nickname": "My Tapo Camera",
             "location": "Living Room",

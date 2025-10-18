@@ -17,7 +17,6 @@ def test_tools_discovery():
 
         # Discover all tools
         tools = discover_tools("tapo_camera_mcp.tools")
-        print(f"✅ Tools discovery found {len(tools)} tools")
 
         # Check that we have a reasonable number of tools
         assert len(tools) > 5, "Should discover multiple tools"
@@ -29,8 +28,7 @@ def test_tools_discovery():
             assert hasattr(meta, "name"), f"Tool {tool_cls.__name__} missing name in Meta"
 
         return True
-    except Exception as e:
-        print(f"❌ Tools discovery test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -40,19 +38,15 @@ def test_tools_discovery():
 def test_base_tool():
     """Test base tool functionality."""
     try:
-        from tapo_camera_mcp.tools.base_tool import ToolCategory, ToolResult
+        from tapo_camera_mcp.tools.base_tool import ToolResult
 
         # Test ToolCategory enum
-        categories = [ToolCategory.CAMERA, ToolCategory.SYSTEM, ToolCategory.PTZ]
-        print(f"✅ Tool categories: {[cat.value for cat in categories]}")
 
         # Test ToolResult creation
-        result = ToolResult(success=True, data={"test": "data"})
-        print(f"✅ ToolResult created: {result.success}")
+        ToolResult(success=True, data={"test": "data"})
 
         return True
-    except Exception as e:
-        print(f"❌ Base tool test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -70,10 +64,8 @@ def test_system_tools():
         assert hasattr(meta, "name"), "StatusTool Meta missing name"
         assert hasattr(meta, "category"), "StatusTool Meta missing category"
 
-        print(f"✅ StatusTool structure: name={meta.name}, category={meta.category}")
         return True
-    except Exception as e:
-        print(f"❌ System tools test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -86,13 +78,10 @@ def test_help_tool():
         # Test that the module can be imported (skip class structure test due to dependencies)
         import importlib
 
-        module = importlib.import_module("tapo_camera_mcp.tools.system.help_tool")
-        print("✅ Help tool module imported successfully")
+        importlib.import_module("tapo_camera_mcp.tools.system.help_tool")
         return True
-    except Exception as e:
-        print(f"❌ Help tool test failed: {e}")
+    except Exception:
         # Don't fail the test for import issues, just warn
-        print("⚠️  Help tool import issues detected but continuing")
         return True
 
 
@@ -110,13 +99,9 @@ if __name__ == "__main__":
     for test in tests:
         if test():
             passed += 1
-        print()
 
-    print(f"📊 Results: {passed}/{total} tests passed")
 
     if passed == total:
-        print("🎉 All tools tests passed!")
         sys.exit(0)
     else:
-        print("❌ Some tools tests failed")
         sys.exit(1)

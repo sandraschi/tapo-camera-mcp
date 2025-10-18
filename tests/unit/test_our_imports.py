@@ -10,13 +10,10 @@ def test_import(module_name):
     """Test importing a module and print the result."""
     try:
         __import__(module_name)
-        print(f"✅ Successfully imported: {module_name}")
         return True
-    except ImportError as e:
-        print(f"❌ Failed to import {module_name}: {e}")
+    except ImportError:
         return False
-    except Exception as e:
-        print(f"⚠️ Error importing {module_name}: {e}")
+    except Exception:
         return False
 
 
@@ -27,7 +24,6 @@ def main():
     if src_dir not in sys.path:
         sys.path.insert(0, src_dir)
 
-    print(f"Python path: {sys.path}\n")
 
     # List of modules to test
     modules_to_test = [
@@ -44,10 +40,8 @@ def main():
         results[module] = test_import(module)
 
     # Print summary
-    print("\n=== Import Test Summary ===")
-    for module, success in results.items():
-        status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{status}: {module}")
+    for module, _success in results.items():
+        pass
 
     # Return non-zero exit code if any import failed
     if not all(results.values()):

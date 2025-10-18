@@ -6,7 +6,7 @@ This file is automatically discovered and used by pytest.
 import asyncio
 import sys
 from pathlib import Path
-from typing import Any, AsyncGenerator, Dict
+from typing import Any, AsyncGenerator, Dict, Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -118,7 +118,7 @@ class AsyncContextManagerMock:
 class MockResponse:
     """A mock response class for testing HTTP requests."""
 
-    def __init__(self, status: int, json_data: Dict[str, Any] = None, text: str = None):
+    def __init__(self, status: int, json_data: Optional[Dict[str, Any]] = None, text: Optional[str] = None):
         self.status = status
         self._json_data = json_data or {}
         self._text = text or ""

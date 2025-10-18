@@ -50,7 +50,7 @@ def force_execute_server_code():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Server code execution failed: {e}")
+        logger.exception(f"❌ Server code execution failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -67,7 +67,7 @@ def force_execute_camera_code():
         from tapo_camera_mcp.camera.webcam import WebCamera
 
         # Execute camera manager code
-        manager = CameraManager()
+        CameraManager()
         logger.info("✅ Camera manager created")
 
         # Execute camera creation code
@@ -79,7 +79,7 @@ def force_execute_camera_code():
         logger.info("✅ Webcam created")
 
         # Execute camera factory code
-        factory_webcam = CameraFactory.create(webcam_config)
+        CameraFactory.create(webcam_config)
         logger.info("✅ Camera factory executed")
 
         # Execute camera status code
@@ -92,7 +92,7 @@ def force_execute_camera_code():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Camera code execution failed: {e}")
+        logger.exception(f"❌ Camera code execution failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -131,7 +131,7 @@ def force_execute_tools_code():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Tools code execution failed: {e}")
+        logger.exception(f"❌ Tools code execution failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -154,8 +154,8 @@ def force_execute_validation_code():
         # Execute validation functions
         ip_result = validate_ip_address("192.168.1.100", "test")
         port_result = validate_port(8080, "test")
-        name_result = validate_camera_name("test_camera", "test")
-        user, pwd = validate_credentials("user", "pass")
+        validate_camera_name("test_camera", "test")
+        _user, _pwd = validate_credentials("user", "pass")
 
         logger.info(f"✅ Validation executed: IP={ip_result}, Port={port_result}")
 
@@ -168,7 +168,7 @@ def force_execute_validation_code():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Validation code execution failed: {e}")
+        logger.exception(f"❌ Validation code execution failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -183,18 +183,14 @@ def force_execute_models_code():
         from tapo_camera_mcp.core.models import (
             CameraModel,
             CameraStatus,
-            PTZDirection,
             PTZPosition,
             StreamType,
             TapoCameraConfig,
-            VideoQuality,
         )
 
         # Execute enum access (this runs enum code)
         c100 = CameraModel.C100
         rtsp = StreamType.RTSP
-        high = VideoQuality.HIGH
-        up = PTZDirection.UP
         logger.info(f"✅ Enums accessed: {c100.value}, {rtsp.value}")
 
         # Execute model creation (this runs validation code)
@@ -208,14 +204,14 @@ def force_execute_models_code():
         )
 
         position = PTZPosition(pan=0.5, tilt=-0.3, zoom=0.8)
-        config = TapoCameraConfig(host="192.168.1.100", username="testuser", password="testpass")
+        TapoCameraConfig(host="192.168.1.100", username="testuser", password="testpass")
 
         logger.info(f"✅ Models created: status={status.online}, position={position.pan}")
 
         return True
 
     except Exception as e:
-        logger.error(f"❌ Models code execution failed: {e}")
+        logger.exception(f"❌ Models code execution failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -233,7 +229,7 @@ def test_webcam_connected_to_server():
         from tapo_camera_mcp.core.server import TapoCameraServer
 
         # Create camera manager
-        camera_manager = CameraManager()
+        CameraManager()
 
         # Create webcam
         webcam_config = CameraConfig(
@@ -259,7 +255,7 @@ def test_webcam_connected_to_server():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Webcam-server connection test failed: {e}")
+        logger.exception(f"❌ Webcam-server connection test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -267,8 +263,6 @@ def test_webcam_connected_to_server():
 
 
 if __name__ == "__main__":
-    print("🚀 FINAL ATTEMPT - FORCING REAL CODE EXECUTION")
-    print("=" * 60)
 
     tests = [
         force_execute_server_code,
@@ -282,27 +276,18 @@ if __name__ == "__main__":
     passed = 0
     total = len(tests)
 
-    for i, test in enumerate(tests, 1):
-        print(f"\n🧪 Test {i}/{total}: {test.__name__}")
-        print("-" * 40)
+    for _i, test in enumerate(tests, 1):
 
         try:
             if test():
                 passed += 1
-                print(f"✅ PASSED: {test.__name__}")
             else:
-                print(f"❌ FAILED: {test.__name__}")
-        except Exception as e:
-            print(f"💥 CRASHED: {test.__name__} - {e}")
+                pass
+        except Exception:
+            pass
 
-    print("\n" + "=" * 60)
-    print(f"📊 FINAL RESULTS: {passed}/{total} tests passed")
-    print("💡 This executed REAL server, camera, tool, validation, and model code!")
-    print("🔥 The webcam IS connected to the server - all integration points exist!")
 
     if passed >= total * 0.8:
-        print("🎉 SUCCESS! Real code execution completed!")
         sys.exit(0)
     else:
-        print("❌ Some tests failed")
         sys.exit(1)

@@ -4,7 +4,6 @@ This script tests the server functionality directly without any project imports.
 """
 
 import asyncio
-import json
 import os
 import sys
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -15,17 +14,14 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 
 def print_success(message):
     """Print a success message."""
-    print(f"\033[92m✓ {message}\033[0m")
 
 
 def print_error(message):
     """Print an error message."""
-    print(f"\033[91m✗ {message}\033[0m", file=sys.stderr)
 
 
 async def test_server():
     """Test the TapoCameraServer class directly."""
-    print("Testing TapoCameraServer...")
 
     # Mock the FastMCP module
     fastmcp_mock = MagicMock()
@@ -68,11 +64,10 @@ async def test_server():
 
         def run(self, host=None, port=None, stdio=False):
             """Mock run method for the server."""
-            print(f"Mock server running (name={self.name}, version={self.version})")
             if stdio:
-                print("Stdio transport enabled")
+                pass
             if host and port:
-                print(f"HTTP server listening on {host}:{port}")
+                pass
             return self
 
     # Patch the FastMCP import
@@ -91,7 +86,6 @@ async def test_server():
         server = TapoCameraServer(config=config)
 
         # Test 1: Check if tools are registered
-        print("\n=== Test 1: Check tool registration ===")
         expected_tools = [
             "help",
             "connect_camera",
@@ -108,7 +102,6 @@ async def test_server():
         ]
 
         registered_tools = list(server.mcp.tools.keys())
-        print(f"Registered tools: {registered_tools}")
 
         for tool in expected_tools:
             assert tool in registered_tools, f"Missing tool: {tool}"
@@ -116,7 +109,6 @@ async def test_server():
         print_success("All expected tools are registered")
 
         # Test 2: Connect to camera
-        print("\n=== Test 2: Connect to camera ===")
         with patch("tapo_camera_mcp.server_v2.Tapo") as mock_tapo_class:
             # Setup mock
             mock_camera = AsyncMock()
@@ -141,21 +133,17 @@ async def test_server():
             )
 
             # Verify the result
-            print("Connect result:", json.dumps(result.content, indent=2))
             assert result.content["status"] == "connected", "Failed to connect to camera"
             assert server.camera is not None, "Camera instance not set"
             print_success("Successfully connected to camera")
 
             # Test 3: Get camera info
-            print("\n=== Test 3: Get camera info ===")
             result = await server.mcp.call_tool("get_camera_info", {})
-            print("Camera info:", json.dumps(result.content, indent=2))
             assert "model" in result.content, "Camera info missing model"
             assert result.content["model"] == "Tapo C200", "Incorrect camera model"
             print_success("Successfully retrieved camera info")
 
             # Test 4: PTZ control
-            print("\n=== Test 4: PTZ control ===")
             # Reset any previous mock calls
             if hasattr(mock_camera, "moveMotor"):
                 mock_camera.moveMotor.reset_mock()
@@ -167,48 +155,35 @@ async def test_server():
             mock_camera.zoom = AsyncMock()
 
             # Print debug info about the mock setup
-            print("Mock setup:")
-            print(f"  moveMotor: {mock_camera.moveMotor}")
-            print(f"  zoom: {mock_camera.zoom}")
 
             # Call the move_ptz tool with pan, tilt, and zoom parameters
             ptz_params = {"pan": 0.5, "tilt": 0.3, "zoom": 0.7}
-            print("\nCalling move_ptz with params:", ptz_params)
 
             result = await server.mcp.call_tool("move_ptz", ptz_params)
 
-            print("\nPTZ result:", json.dumps(result.content, indent=2))
             assert result.content["status"] == "success", "PTZ move failed"
 
             # Debug: Print all method calls on the mock
-            print("\nMethod calls on mock_camera:")
-            for method_name, method in mock_camera._mock_children.items():
-                print(f"  {method_name}: {method._mock_call_count} calls")
-                for call in method.mock_calls:
-                    print(f"    - {call}")
+            for _method_name, method in mock_camera._mock_children.items():
+                for _call in method.mock_calls:
+                    pass
 
             # Verify the PTZ methods were called with the correct parameters
             if mock_camera.moveMotor.called:
-                print("\nmoveMotor was called with:", mock_camera.moveMotor.call_args)
-                move_motor_args = mock_camera.moveMotor.call_args[0]
-                print(f"  - pan: {move_motor_args[0]}")
-                print(f"  - tilt: {move_motor_args[1]}")
+                mock_camera.moveMotor.call_args[0]
             else:
-                print("\nWARNING: moveMotor was not called!")
+                pass
 
             if mock_camera.zoom.called:
-                print("\nzoom was called with:", mock_camera.zoom.call_args)
-                zoom_args = mock_camera.zoom.call_args[0]
-                print(f"  - zoom: {zoom_args[0]}")
+                mock_camera.zoom.call_args[0]
             else:
-                print("\nWARNING: zoom was not called!")
+                pass
 
             # For now, just verify the response is successful
             # We'll fix the mock verification in the next step
             print_success("PTZ command executed successfully (mock verification pending)")
 
             # Test 5: Motion detection
-            print("\n=== Test 5: Motion detection ===")
             # Reset any previous mock calls
             if hasattr(mock_camera, "setMotionDetection"):
                 mock_camera.setMotionDetection.reset_mock()
@@ -217,7 +192,6 @@ async def test_server():
 
             # Enable motion detection
             result = await server.mcp.call_tool("set_motion_detection", {"enabled": True})
-            print("Motion detection enable result:", json.dumps(result.content, indent=2))
 
             # Verify the response and mock call
             assert result.content["status"] == "success", "Failed to enable motion detection"
@@ -228,7 +202,6 @@ async def test_server():
             print_success("Successfully controlled motion detection")
 
             # Test 6: LED control
-            print("\n=== Test 6: LED control ===")
             # Reset any previous mock calls
             if hasattr(mock_camera, "setLED"):
                 mock_camera.setLED.reset_mock()
@@ -237,7 +210,6 @@ async def test_server():
 
             # Enable LED
             result = await server.mcp.call_tool("set_led_enabled", True)
-            print("LED enable result:", json.dumps(result.content, indent=2))
 
             # Verify the response and mock call
             assert result.content["status"] == "success", "Failed to enable LED"
@@ -246,7 +218,6 @@ async def test_server():
             print_success("Successfully controlled LED")
 
             # Test 7: Privacy mode
-            print("\n=== Test 7: Privacy mode ===")
             # Reset any previous mock calls
             if hasattr(mock_camera, "setPrivacyMode"):
                 mock_camera.setPrivacyMode.reset_mock()
@@ -255,7 +226,6 @@ async def test_server():
 
             # Enable privacy mode
             result = await server.mcp.call_tool("set_privacy_mode", True)
-            print("Privacy mode enable result:", json.dumps(result.content, indent=2))
 
             # Verify the response and mock call
             assert result.content["status"] == "success", "Failed to enable privacy mode"
@@ -264,7 +234,6 @@ async def test_server():
             print_success("Successfully controlled privacy mode")
 
             # Test 8: Reboot camera
-            print("\n=== Test 8: Reboot camera ===")
             # Reset any previous mock calls
             if hasattr(mock_camera, "reboot"):
                 mock_camera.reboot.reset_mock()
@@ -273,7 +242,6 @@ async def test_server():
 
             # Reboot camera - pass None as parameters
             result = await server.mcp.call_tool("reboot_camera", None)
-            print("Reboot result:", json.dumps(result.content, indent=2))
 
             # Verify the response and mock call
             assert result.content["status"] == "success", "Failed to reboot camera"
@@ -281,7 +249,6 @@ async def test_server():
             mock_camera.reboot.assert_awaited_once()
             print_success("Successfully rebooted camera")
 
-            print("\nAll tests completed successfully!")
 
 
 if __name__ == "__main__":

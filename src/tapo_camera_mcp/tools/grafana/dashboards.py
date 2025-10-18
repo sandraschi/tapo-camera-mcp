@@ -1,5 +1,6 @@
 """Vienna-specific security dashboard data for Grafana."""
 
+import secrets
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 

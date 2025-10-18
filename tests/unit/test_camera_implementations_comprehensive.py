@@ -40,10 +40,8 @@ def test_camera_implementations_creation():
         assert not webcam_camera._is_streaming
         assert webcam_camera._device_id == 0
 
-        print("✅ Camera implementation creation tests passed")
         return True
-    except Exception as e:
-        print(f"❌ Camera implementation creation tests failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -81,10 +79,8 @@ def test_camera_factory_registration():
         assert isinstance(tapo_camera, TapoCamera)
         assert isinstance(webcam_camera, WebCamera)
 
-        print("✅ Camera factory registration tests passed")
         return True
-    except Exception as e:
-        print(f"❌ Camera factory registration tests failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -115,7 +111,7 @@ def test_camera_connection_handling():
             # Test connection failure
             try:
                 asyncio.run(tapo_camera.connect())
-                assert False, "Should have raised ConnectionError"
+                raise AssertionError("Should have raised ConnectionError")
             except ConnectionError:
                 pass  # Expected
 
@@ -134,14 +130,12 @@ def test_camera_connection_handling():
 
             try:
                 asyncio.run(webcam_camera.connect())
-                assert False, "Should have raised ConnectionError"
+                raise AssertionError("Should have raised ConnectionError")
             except ConnectionError:
                 pass  # Expected
 
-        print("✅ Camera connection handling tests passed")
         return True
-    except Exception as e:
-        print(f"❌ Camera connection handling tests failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -183,10 +177,8 @@ def test_camera_status_reporting():
         assert not status["enabled"]
         assert "last_error" in status
 
-        print("✅ Camera status reporting tests passed")
         return True
-    except Exception as e:
-        print(f"❌ Camera status reporting tests failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -210,10 +202,8 @@ def test_camera_streaming_functionality():
         stream_url = asyncio.run(tapo_camera.get_stream_url())
         assert stream_url is None  # Should be None when not connected
 
-        print("✅ Camera streaming functionality tests passed")
         return True
-    except Exception as e:
-        print(f"❌ Camera streaming functionality tests failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -245,13 +235,10 @@ def test_ring_camera_implementation():
         assert not ring_camera._is_connected
         assert not ring_camera._is_streaming
 
-        print("✅ Ring camera implementation tests passed")
         return True
     except ImportError:
-        print("⚠️ Ring camera implementation not available, skipping test")
         return True
-    except Exception as e:
-        print(f"❌ Ring camera implementation tests failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -280,13 +267,10 @@ def test_furbo_camera_implementation():
         assert not furbo_camera._is_connected
         assert not furbo_camera._is_streaming
 
-        print("✅ Furbo camera implementation tests passed")
         return True
     except ImportError:
-        print("⚠️ Furbo camera implementation not available, skipping test")
         return True
-    except Exception as e:
-        print(f"❌ Furbo camera implementation tests failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -317,12 +301,10 @@ def test_camera_error_handling():
             assert stream_url is None
 
         except Exception as unexpected_error:
-            assert False, f"Unexpected error: {unexpected_error}"
+            raise AssertionError(f"Unexpected error: {unexpected_error}")
 
-        print("✅ Camera error handling tests passed")
         return True
-    except Exception as e:
-        print(f"❌ Camera error handling tests failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -347,13 +329,9 @@ if __name__ == "__main__":
     for test in tests:
         if test():
             passed += 1
-        print()
 
-    print(f"📊 Results: {passed}/{total} camera implementation tests passed")
 
     if passed == total:
-        print("🎉 All camera implementation tests passed!")
         sys.exit(0)
     else:
-        print("❌ Some camera implementation tests failed")
         sys.exit(1)

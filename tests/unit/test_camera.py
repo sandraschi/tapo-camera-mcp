@@ -17,28 +17,18 @@ def test_camera_models():
         from tapo_camera_mcp.core.models import TapoCameraConfig
 
         # Test CameraType enum
-        camera_types = [
-            CameraType.TAPO,
-            CameraType.WEBCAM,
-            CameraType.RING,
-            CameraType.FURBO,
-        ]
-        print(f"✅ Camera types: {[ct.value for ct in camera_types]}")
 
         # Test CameraConfig creation
-        config = CameraConfig(
+        CameraConfig(
             name="test_camera",
             type=CameraType.TAPO,
             params={"host": "192.168.1.100", "username": "test", "password": "test"},
         )
-        print(f"✅ Camera config created: {config.name}")
 
         # Test TapoCameraConfig
-        tapo_config = TapoCameraConfig(host="192.168.1.100", username="test", password="test")
-        print("✅ TapoCamera config created")
+        TapoCameraConfig(host="192.168.1.100", username="test", password="test")
         return True
-    except Exception as e:
-        print(f"❌ Camera models test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -51,17 +41,14 @@ def test_camera_manager():
         from tapo_camera_mcp.camera.manager import CameraManager
 
         manager = CameraManager()
-        print("✅ Camera manager created")
 
         # Test that manager is properly initialized
         assert hasattr(manager, "cameras")
         assert hasattr(manager, "groups")
         assert isinstance(manager.cameras, dict)
 
-        print("✅ Camera manager structure test passed")
         return True
-    except Exception as e:
-        print(f"❌ Camera manager test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -78,16 +65,13 @@ def test_exceptions():
         )
 
         # Test exception creation
-        error = TapoCameraError("Test error")
-        print(f"✅ Exception created: {error}")
+        TapoCameraError("Test error")
 
-        connection_error = ConnectionError("Connection failed")
-        auth_error = AuthenticationError("Auth failed")
+        ConnectionError("Connection failed")
+        AuthenticationError("Auth failed")
 
-        print("✅ All exception types created successfully")
         return True
-    except Exception as e:
-        print(f"❌ Exception test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -107,13 +91,9 @@ if __name__ == "__main__":
     for test in tests:
         if test():
             passed += 1
-        print()
 
-    print(f"📊 Results: {passed}/{total} tests passed")
 
     if passed == total:
-        print("🎉 All camera tests passed!")
         sys.exit(0)
     else:
-        print("❌ Some camera tests failed")
         sys.exit(1)

@@ -12,16 +12,13 @@ def import_module_safe(module_name: str) -> Optional[Any]:
     """Safely import a module and return it, or None if it fails."""
     try:
         module = importlib.import_module(module_name)
-        print(f"✓ Imported: {module_name}")
         return module
-    except ImportError as e:
-        print(f"✗ Failed to import {module_name}: {e}")
+    except ImportError:
         import traceback
 
         traceback.print_exc()
         return None
-    except Exception as e:
-        print(f"⚠ Unexpected error importing {module_name}: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -30,7 +27,6 @@ def import_module_safe(module_name: str) -> Optional[Any]:
 
 def test_imports():
     """Test importing all main modules and packages."""
-    print("\n=== Testing Tapo Camera MCP Imports ===")
 
     # Add the project root to the Python path
     project_root = str(Path(__file__).parent.absolute())
@@ -38,10 +34,8 @@ def test_imports():
         sys.path.insert(0, project_root)
 
     # Test importing main package
-    print("\nTesting main package import...")
     tapo_pkg = import_module_safe("tapo_camera_mcp")
     if not tapo_pkg:
-        print("❌ Failed to import main package")
         return False
 
     # List of core modules to test
@@ -53,7 +47,6 @@ def test_imports():
         "tapo_camera_mcp.config.models",
     ]
 
-    print("\nTesting core module imports...")
     all_imports_ok = True
 
     for module_name in core_modules:
@@ -61,7 +54,6 @@ def test_imports():
             all_imports_ok = False
 
     # Test tool imports
-    print("\nTesting tool imports...")
     tools_dir = os.path.join(os.path.dirname(__file__), "src", "tapo_camera_mcp", "tools")
     if os.path.exists(tools_dir):
         for filename in os.listdir(tools_dir):
@@ -73,16 +65,15 @@ def test_imports():
                     all_imports_ok = False
 
     if all_imports_ok:
-        print("\n✅ All imports successful!")
+        pass
     else:
-        print("\n❌ Some imports failed. See above for details.")
+        pass
 
     return all_imports_ok
 
 
 def main():
     """Main entry point for the import test."""
-    print("=== Starting import test script ===")
     success = test_imports()
 
     # Test specific modules that might have issues
@@ -93,15 +84,14 @@ def main():
         "tapo_camera_mcp.api.v1.endpoints.cameras",
     ]
 
-    print("\nTesting additional modules...")
     for module_name in test_modules:
         if not import_module_safe(module_name):
             success = False
 
     if success:
-        print("\n✅ All imports completed successfully!")
+        pass
     else:
-        print("\n❌ Some imports failed. Please check the output above for details.")
+        pass
 
     return 0 if success else 1
 

@@ -2,8 +2,11 @@
 
 import asyncio
 import io
+import logging
 from pathlib import Path
 from typing import Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 from PIL import Image
 from pytapo import Tapo

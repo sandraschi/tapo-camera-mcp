@@ -10,6 +10,11 @@ from unittest.mock import AsyncMock, Mock, patch
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
+# Mock get_model function for testing
+def mock_get_model():
+    """Mock function to simulate model retrieval."""
+    return Mock()
+
 
 def test_web_server_initialization():
     """Test web server initialization and setup."""
@@ -51,10 +56,8 @@ def test_web_server_initialization():
             # Test that templates are configured
             assert hasattr(server, "templates")
 
-            print("✅ Web server initialization test passed")
             return True
-    except Exception as e:
-        print(f"❌ Web server initialization test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -87,10 +90,8 @@ def test_api_status_endpoint():
             assert "version" in data
             assert "debug" in data
 
-            print("✅ API status endpoint test passed")
             return True
-    except Exception as e:
-        print(f"❌ API status endpoint test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -126,10 +127,8 @@ def test_api_cameras_endpoint():
             data = response.json()
             assert "cameras" in data
 
-            print("✅ API cameras endpoint test passed")
             return True
-    except Exception as e:
-        print(f"❌ API cameras endpoint test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -171,10 +170,8 @@ def test_api_camera_stream_endpoint():
             assert "stream_url" in data
             assert data["type"] == "rtsp"
 
-            print("✅ API camera stream endpoint test passed")
             return True
-    except Exception as e:
-        print(f"❌ API camera stream endpoint test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -213,10 +210,8 @@ def test_api_camera_snapshot_endpoint():
             assert response.status_code == 200
             assert response.headers["content-type"] == "image/jpeg"
 
-            print("✅ API camera snapshot endpoint test passed")
             return True
-    except Exception as e:
-        print(f"❌ API camera snapshot endpoint test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -257,10 +252,8 @@ def test_dashboard_pages():
             response = client.get("/help")
             assert response.status_code == 200
 
-            print("✅ Dashboard pages test passed")
             return True
-    except Exception as e:
-        print(f"❌ Dashboard pages test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -294,10 +287,8 @@ def test_error_handling():
             response = client.get("/nonexistent")
             assert response.status_code == 404
 
-            print("✅ Error handling test passed")
             return True
-    except Exception as e:
-        print(f"❌ Error handling test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -348,10 +339,8 @@ def test_middleware_functionality():
             assert "X-Frame-Options" in response.headers
             assert "X-XSS-Protection" in response.headers
 
-            print("✅ Middleware functionality test passed")
             return True
-    except Exception as e:
-        print(f"❌ Middleware functionality test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -392,10 +381,8 @@ def test_template_rendering():
             content = response.text.lower()
             assert "test camera mcp" in content or "tapo camera mcp" in content
 
-            print("✅ Template rendering test passed")
             return True
-    except Exception as e:
-        print(f"❌ Template rendering test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -421,13 +408,9 @@ if __name__ == "__main__":
     for test in tests:
         if test():
             passed += 1
-        print()
 
-    print(f"📊 Results: {passed}/{total} web dashboard and API tests passed")
 
     if passed == total:
-        print("🎉 All web dashboard and API tests passed!")
         sys.exit(0)
     else:
-        print("❌ Some web dashboard and API tests failed")
         sys.exit(1)

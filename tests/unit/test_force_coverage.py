@@ -66,7 +66,7 @@ def test_real_tool_execution():
         logger.info("✅ Testing validation functions...")
         ip_result = validate_ip_address("192.168.1.100", "test")
         name_result = validate_camera_name("test_camera", "test")
-        creds_result = validate_credentials("user", "pass")
+        validate_credentials("user", "pass")
         logger.info(f"Validation results: IP={ip_result}, Name={name_result}")
 
         # 5. Execute AddCameraTool with validation - this should exercise camera addition logic
@@ -93,7 +93,7 @@ def test_real_tool_execution():
         from tapo_camera_mcp.core.server import TapoCameraServer
 
         try:
-            server = asyncio.run(TapoCameraServer.get_instance())
+            asyncio.run(TapoCameraServer.get_instance())
             logger.info("Server instance created")
         except Exception as e:
             logger.warning(f"Server initialization failed: {e}")
@@ -128,7 +128,7 @@ def test_real_tool_execution():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Real tool execution test failed: {e}")
+        logger.exception(f"❌ Real tool execution test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -145,7 +145,7 @@ def test_server_functionality():
 
         # Test server singleton
         server1 = asyncio.run(TapoCameraServer.get_instance())
-        server2 = asyncio.run(TapoCameraServer.get_instance())
+        asyncio.run(TapoCameraServer.get_instance())
         logger.info("✅ Server singleton pattern working")
 
         # Test camera manager integration
@@ -161,7 +161,7 @@ def test_server_functionality():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Server functionality test failed: {e}")
+        logger.exception(f"❌ Server functionality test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -200,7 +200,7 @@ def test_camera_creation_and_methods():
         )
 
         try:
-            tapo_camera = TapoCamera(tapo_config)
+            TapoCamera(tapo_config)
             logger.info("✅ Tapo camera created")
         except Exception as e:
             logger.warning(f"Tapo camera creation failed: {e}")
@@ -213,7 +213,7 @@ def test_camera_creation_and_methods():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Camera creation test failed: {e}")
+        logger.exception(f"❌ Camera creation test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -237,7 +237,7 @@ def test_validation_execution():
         ip = validate_ip_address("192.168.1.100", "test_field")
         port = validate_port(8080, "test_port")
         name = validate_camera_name("test_camera_01", "test_name")
-        user, pwd = validate_credentials("testuser", "testpass")
+        _user, _pwd = validate_credentials("testuser", "testpass")
 
         logger.info(f"✅ Validation executed: IP={ip}, Port={port}, Name={name}")
 
@@ -251,7 +251,7 @@ def test_validation_execution():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Validation execution test failed: {e}")
+        logger.exception(f"❌ Validation execution test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -285,7 +285,7 @@ def test_tools_registry_execution():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Tools registry execution test failed: {e}")
+        logger.exception(f"❌ Tools registry execution test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -300,7 +300,6 @@ def test_models_execution():
         from tapo_camera_mcp.core.models import (
             CameraModel,
             CameraStatus,
-            MotionDetectionSensitivity,
             PTZDirection,
             PTZPosition,
             StreamType,
@@ -313,7 +312,6 @@ def test_models_execution():
         rtsp = StreamType.RTSP
         high = VideoQuality.HIGH
         up = PTZDirection.UP
-        high_sens = MotionDetectionSensitivity.HIGH
 
         logger.info(f"✅ Enums accessed: {c100}, {rtsp}, {high}, {up}")
 
@@ -328,14 +326,14 @@ def test_models_execution():
         )
 
         position = PTZPosition(pan=0.5, tilt=-0.3, zoom=0.8)
-        config = TapoCameraConfig(host="192.168.1.100", username="testuser", password="testpass")
+        TapoCameraConfig(host="192.168.1.100", username="testuser", password="testpass")
 
         logger.info(f"✅ Models created: status={status.online}, position={position.pan}")
 
         return True
 
     except Exception as e:
-        logger.error(f"❌ Models execution test failed: {e}")
+        logger.exception(f"❌ Models execution test failed: {e}")
         import traceback
 
         traceback.print_exc()
@@ -343,8 +341,6 @@ def test_models_execution():
 
 
 if __name__ == "__main__":
-    print("🔥 FORCING COVERAGE INCREASE - EXECUTING REAL CODE!")
-    print("=" * 60)
 
     tests = [
         test_real_tool_execution,
@@ -358,26 +354,18 @@ if __name__ == "__main__":
     passed = 0
     total = len(tests)
 
-    for i, test in enumerate(tests, 1):
-        print(f"\n🧪 Test {i}/{total}: {test.__name__}")
-        print("-" * 40)
+    for _i, test in enumerate(tests, 1):
 
         try:
             if test():
                 passed += 1
-                print(f"✅ PASSED: {test.__name__}")
             else:
-                print(f"❌ FAILED: {test.__name__}")
-        except Exception as e:
-            print(f"💥 CRASHED: {test.__name__} - {e}")
+                pass
+        except Exception:
+            pass
 
-    print("\n" + "=" * 60)
-    print(f"📊 FINAL RESULTS: {passed}/{total} tests passed")
-    print("💡 This should have forced real code execution and increased coverage!")
 
     if passed >= total * 0.8:
-        print("🎉 SUCCESS! Real code execution completed!")
         sys.exit(0)
     else:
-        print("❌ Some tests failed")
         sys.exit(1)

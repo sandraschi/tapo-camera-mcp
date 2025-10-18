@@ -18,17 +18,14 @@ def test_imports():
         from tapo_camera_mcp.core.server import TapoCameraServer
         from tapo_camera_mcp.exceptions import TapoCameraError
 
-        print("✅ SUCCESS: All core modules imported successfully")
         return True
 
-    except ImportError as e:
-        print(f"❌ ERROR: Import failed - {e}")
+    except ImportError:
         import traceback
 
         traceback.print_exc()
         return False
-    except Exception as e:
-        print(f"❌ ERROR: Unexpected error - {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()

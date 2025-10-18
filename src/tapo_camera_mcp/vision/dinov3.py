@@ -1,6 +1,9 @@
 """DINOv3 model integration for advanced image analysis."""
 
+import logging
 from typing import Dict, List, Union
+
+logger = logging.getLogger(__name__)
 
 import numpy as np
 import torch

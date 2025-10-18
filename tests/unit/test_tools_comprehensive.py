@@ -11,6 +11,11 @@ from unittest import mock
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
+# Mock get_tool function for testing
+def get_tool(tool_name: str):
+    """Mock function to simulate tool retrieval."""
+    return
+
 
 def test_camera_tools_execution():
     """Test actual execution of camera tools with mocked dependencies."""
@@ -108,10 +113,8 @@ def test_camera_tools_execution():
             result = asyncio.run(status_tool.execute())
             assert isinstance(result, ToolResult)
 
-        print("✅ Camera tools execution test passed")
         return True
-    except Exception as e:
-        print(f"❌ Camera tools execution test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -129,7 +132,6 @@ def test_ptz_tools_execution():
                 SetCameraPresetTool,
             )
         except ImportError:
-            print("⚠️ PTZ tools not available, skipping execution test")
             return True
 
         # Test SetCameraPresetTool execution
@@ -173,10 +175,8 @@ def test_ptz_tools_execution():
             result = asyncio.run(ptz_tool.execute())
             assert isinstance(result, dict) or hasattr(result, "is_error")
 
-        print("✅ PTZ tools execution test passed")
         return True
-    except Exception as e:
-        print(f"❌ PTZ tools execution test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -201,10 +201,8 @@ def test_system_tools_execution():
         result = asyncio.run(help_tool.execute())
         assert isinstance(result, dict) or hasattr(result, "is_error")
 
-        print("✅ System tools execution test passed")
         return True
-    except Exception as e:
-        print(f"❌ System tools execution test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -250,10 +248,8 @@ def test_tool_validation_integration():
         except Exception:
             pass
 
-        print("✅ Tool validation integration test passed")
         return True
-    except Exception as e:
-        print(f"❌ Tool validation integration test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -310,10 +306,8 @@ def test_tool_error_handling():
             # Should handle the error gracefully
             assert hasattr(result, "is_error")
 
-        print("✅ Tool error handling test passed")
         return True
-    except Exception as e:
-        print(f"❌ Tool error handling test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -354,10 +348,8 @@ def test_tool_async_behavior():
         # Run the concurrent test
         asyncio.run(test_concurrent())
 
-        print("✅ Tool async behavior test passed")
         return True
-    except Exception as e:
-        print(f"❌ Tool async behavior test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -387,12 +379,8 @@ def test_tool_registry_integration():
                 retrieved_tool = get_tool(tool_name)
                 assert retrieved_tool is not None, f"Tool {tool_name} should be retrievable"
 
-        print(
-            f"✅ Tool registry integration test passed - {len(registered_tools)} tools registered"
-        )
         return True
-    except Exception as e:
-        print(f"❌ Tool registry integration test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -407,7 +395,6 @@ def test_all_tools_comprehensive():
         # Discover all tools
         all_tools = discover_tools("tapo_camera_mcp.tools")
 
-        print(f"Testing {len(all_tools)} tools comprehensively...")
 
         # Test each tool's basic structure
         for tool_cls in all_tools:
@@ -442,10 +429,8 @@ def test_all_tools_comprehensive():
                 # This is OK for this basic test
                 pass
 
-        print(f"✅ All tools comprehensive test passed - validated {len(all_tools)} tools")
         return True
-    except Exception as e:
-        print(f"❌ All tools comprehensive test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -471,15 +456,11 @@ if __name__ == "__main__":
         try:
             if test():
                 passed += 1
-        except Exception as e:
-            print(f"❌ Test {test.__name__} crashed: {e}")
-        print()
+        except Exception:
+            pass
 
-    print(f"📊 Results: {passed}/{total} comprehensive tool tests passed")
 
     if passed == total:
-        print("🎉 All comprehensive tool tests passed!")
         sys.exit(0)
     else:
-        print("❌ Some comprehensive tool tests failed")
         sys.exit(1)

@@ -17,7 +17,6 @@ def test_server_initialization():
         from tapo_camera_mcp.core.server import TapoCameraServer
 
         # Test server creation (should not fail)
-        server_class = TapoCameraServer
 
         # Test that we can reference the server class
         assert hasattr(TapoCameraServer, "get_instance")
@@ -26,10 +25,8 @@ def test_server_initialization():
         # Test singleton pattern
         # Note: We can't actually instantiate without proper setup, but we can test the structure
 
-        print("✅ Server initialization test passed")
         return True
-    except Exception as e:
-        print(f"❌ Server initialization test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -53,10 +50,8 @@ def test_camera_manager_integration():
         # We can't easily test the full integration without proper setup,
         # but we can test that the structure exists
 
-        print("✅ Camera manager integration test passed")
         return True
-    except Exception as e:
-        print(f"❌ Camera manager integration test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -81,7 +76,7 @@ def test_validation_module():
         # Test invalid IP address
         try:
             validate_ip_address("invalid.ip", "test_ip")
-            assert False, "Should have raised ValidationError"
+            raise AssertionError("Should have raised ValidationError")
         except ToolValidationError:
             pass  # Expected
 
@@ -92,7 +87,7 @@ def test_validation_module():
         # Test invalid port
         try:
             validate_port(70000, "test_port")
-            assert False, "Should have raised ValidationError"
+            raise AssertionError("Should have raised ValidationError")
         except ToolValidationError:
             pass  # Expected
 
@@ -103,7 +98,7 @@ def test_validation_module():
         # Test invalid camera name
         try:
             validate_camera_name("test camera with spaces!", "test_name")
-            assert False, "Should have raised ValidationError"
+            raise AssertionError("Should have raised ValidationError")
         except ToolValidationError:
             pass  # Expected
 
@@ -112,10 +107,8 @@ def test_validation_module():
         assert username == "testuser"
         assert password == "testpass"
 
-        print("✅ Validation module test passed")
         return True
-    except Exception as e:
-        print(f"❌ Validation module test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -153,13 +146,11 @@ def test_exception_hierarchy():
         error = TapoCameraError("Test error")
         assert str(error) == "Test error"
 
-        connection_error = ConnectionError("Connection failed")
-        auth_error = AuthenticationError("Auth failed")
+        ConnectionError("Connection failed")
+        AuthenticationError("Auth failed")
 
-        print("✅ Exception hierarchy test passed")
         return True
-    except Exception as e:
-        print(f"❌ Exception hierarchy test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -197,10 +188,8 @@ def test_camera_base_classes():
         assert CameraType.TAPO in CameraFactory._camera_classes
         assert CameraType.WEBCAM in CameraFactory._camera_classes
 
-        print("✅ Camera base classes test passed")
         return True
-    except Exception as e:
-        print(f"❌ Camera base classes test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -255,10 +244,8 @@ def test_core_models():
         assert config.host == "192.168.1.100"
         assert config.port == 443
 
-        print("✅ Core models test passed")
         return True
-    except Exception as e:
-        print(f"❌ Core models test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -297,10 +284,8 @@ def test_web_server_routes():
                 # Should not be 404 (might be other errors but routes exist)
                 assert response.status_code != 404, f"Route {route} should exist"
 
-            print("✅ Web server routes test passed")
             return True
-    except Exception as e:
-        print(f"❌ Web server routes test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -322,10 +307,8 @@ def test_system_health_check():
         # Test that tool can be executed (basic smoke test)
         # We don't need to test the actual execution result, just that it doesn't crash
 
-        print("✅ System health check test passed")
         return True
-    except Exception as e:
-        print(f"❌ System health check test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -345,16 +328,14 @@ def test_configuration_loading():
         # We can't easily test the actual config loading without proper config files,
         # but we can test that the functions don't crash when called
         try:
-            config = get_config()
+            get_config()
             # If this doesn't crash, config loading works
         except Exception:
             # Config loading might fail without proper config, but the function should exist
             pass
 
-        print("✅ Configuration loading test passed")
         return True
-    except Exception as e:
-        print(f"❌ Configuration loading test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -376,10 +357,8 @@ def test_logging_setup():
             # Logging setup might fail in test environment, but function should exist
             pass
 
-        print("✅ Logging setup test passed")
         return True
-    except Exception as e:
-        print(f"❌ Logging setup test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -409,10 +388,8 @@ def test_full_system_import():
         assert hasattr(validation, "validate_ip_address")
         assert hasattr(exceptions, "TapoCameraError")
 
-        print("✅ Full system import test passed")
         return True
-    except Exception as e:
-        print(f"❌ Full system import test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -441,15 +418,11 @@ if __name__ == "__main__":
         try:
             if test():
                 passed += 1
-        except Exception as e:
-            print(f"❌ Test {test.__name__} crashed: {e}")
-        print()
+        except Exception:
+            pass
 
-    print(f"📊 Results: {passed}/{total} integration tests passed")
 
     if passed == total:
-        print("🎉 All integration tests passed!")
         sys.exit(0)
     else:
-        print("❌ Some integration tests failed")
         sys.exit(1)

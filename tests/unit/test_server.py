@@ -28,10 +28,8 @@ def test_server_initialization():
         assert hasattr(server1, "camera_manager"), "Server should have camera_manager"
         assert server1._initialized is False, "Server should start uninitialized"
 
-        print("✅ Server initialization test passed")
         return True
-    except Exception as e:
-        print(f"❌ Server initialization test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -50,10 +48,8 @@ def test_server_singleton_pattern():
         server2 = asyncio.run(TapoCameraServer.get_instance())
         assert server is server2, "get_instance should return same instance"
 
-        print("✅ Server singleton pattern test passed")
         return True
-    except Exception as e:
-        print(f"❌ Server singleton test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -83,10 +79,8 @@ def test_camera_manager_integration():
         for method in required_methods:
             assert hasattr(server.camera_manager, method), f"CameraManager missing method: {method}"
 
-        print("✅ Camera manager integration test passed")
         return True
-    except Exception as e:
-        print(f"❌ Camera manager integration test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -109,10 +103,8 @@ def test_mcp_server_setup():
         for method in required_methods:
             assert hasattr(server.mcp, method), f"MCP server missing method: {method}"
 
-        print("✅ MCP server setup test passed")
         return True
-    except Exception as e:
-        print(f"❌ MCP server setup test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -146,10 +138,8 @@ def test_tools_registration():
         for tool_name in camera_tools:
             assert tool_name in tool_names, f"Missing camera tool: {tool_name}"
 
-        print(f"✅ Tools registration test passed - {len(registered_tools)} tools registered")
         return True
-    except Exception as e:
-        print(f"❌ Tools registration test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -169,9 +159,7 @@ def test_server_error_handling():
                 # This should handle gracefully when no cameras are configured
                 result = await server.list_cameras()
                 assert "cameras" in result, "Should return cameras list even when empty"
-                print("✅ Server handles empty camera list gracefully")
-            except Exception as e:
-                print(f"❌ Server error handling failed: {e}")
+            except Exception:
                 return False
 
             return True
@@ -180,8 +168,7 @@ def test_server_error_handling():
         result = asyncio.run(test_error_scenarios())
         return result
 
-    except Exception as e:
-        print(f"❌ Server error handling test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -201,10 +188,8 @@ def test_server_configuration():
         # Test server can be configured (basic check)
         assert server._initialized is True, "Server should be initialized after get_instance"
 
-        print("✅ Server configuration test passed")
         return True
-    except Exception as e:
-        print(f"❌ Server configuration test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -228,13 +213,9 @@ if __name__ == "__main__":
     for test in tests:
         if test():
             passed += 1
-        print()
 
-    print(f"📊 Results: {passed}/{total} tests passed")
 
     if passed == total:
-        print("🎉 All server tests passed!")
         sys.exit(0)
     else:
-        print("❌ Some server tests failed")
         sys.exit(1)

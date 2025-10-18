@@ -47,7 +47,7 @@ class RingCamera(BaseCamera):
                 if not all(k in self.config.params for k in ["username", "password"]):
                     raise ValueError(
                         "Ring authentication requires either a token or username/password"
-                    ) from e
+                    )
 
                 await asyncio.get_event_loop().run_in_executor(
                     None,

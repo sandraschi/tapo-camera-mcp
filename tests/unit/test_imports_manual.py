@@ -10,13 +10,10 @@ def test_import(module_name):
     """Test importing a module and print the result."""
     try:
         __import__(module_name)
-        print(f"✅ Successfully imported: {module_name}")
         return True
-    except ImportError as e:
-        print(f"❌ Failed to import {module_name}: {e}")
+    except ImportError:
         return False
-    except Exception as e:
-        print(f"⚠️ Error importing {module_name}: {e}")
+    except Exception:
         return False
 
 
@@ -27,14 +24,11 @@ def main():
     if src_dir not in sys.path:
         sys.path.insert(0, src_dir)
 
-    print(f"Python path: {sys.path}\n")
 
     # Test importing main package
-    print("Testing main package import...")
     test_import("tapo_camera_mcp")
 
     # Test importing core modules
-    print("\nTesting core modules...")
     core_modules = [
         "tapo_camera_mcp.core.server",
         "tapo_camera_mcp.tools.base_tool",

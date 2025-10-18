@@ -37,16 +37,16 @@ def test_import(module_name):
 
         return True
     except ImportError as e:
-        logger.error(f"❌ Failed to import {module_name}: {e}")
+        logger.exception(f"❌ Failed to import {module_name}: {e}")
         import traceback
 
-        logger.error(traceback.format_exc())
+        logger.exception(traceback.format_exc())
         return False
     except Exception as e:
-        logger.error(f"⚠️ Unexpected error importing {module_name}: {e}")
+        logger.exception(f"⚠️ Unexpected error importing {module_name}: {e}")
         import traceback
 
-        logger.error(traceback.format_exc())
+        logger.exception(traceback.format_exc())
         return False
 
 
@@ -57,7 +57,7 @@ def main():
     # List all Python files in the tapo_camera_mcp directory
     tapo_dir = os.path.join(src_dir, "tapo_camera_mcp")
     logger.info(f"\n=== Contents of {tapo_dir} ===")
-    for root, dirs, files in os.walk(tapo_dir):
+    for root, _dirs, files in os.walk(tapo_dir):
         level = root.replace(tapo_dir, "").count(os.sep)
         indent = " " * 4 * level
         logger.info(f"{indent}{os.path.basename(root)}/")
@@ -81,10 +81,10 @@ def main():
 
         logger.info("✅ Successfully imported ConnectCameraTool")
     except ImportError as e:
-        logger.error(f"❌ Failed to import ConnectCameraTool: {e}")
+        logger.exception(f"❌ Failed to import ConnectCameraTool: {e}")
         import traceback
 
-        logger.error(traceback.format_exc())
+        logger.exception(traceback.format_exc())
 
 
 if __name__ == "__main__":

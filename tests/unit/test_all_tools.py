@@ -51,10 +51,8 @@ def test_list_cameras_tool():
             # Should have called the server
             mock_server_class.get_instance.assert_called_once()
 
-            print("✅ ListCamerasTool test passed")
             return True
-    except Exception as e:
-        print(f"❌ ListCamerasTool test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -106,10 +104,8 @@ def test_add_camera_tool():
             assert isinstance(result, ToolResult)
             assert not result.is_error
 
-            print("✅ AddCameraTool test passed")
             return True
-    except Exception as e:
-        print(f"❌ AddCameraTool test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -157,10 +153,8 @@ def test_connect_camera_tool():
             assert isinstance(result, ToolResult)
             assert not result.is_error
 
-            print("✅ ConnectCameraTool test passed")
             return True
-    except Exception as e:
-        print(f"❌ ConnectCameraTool test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -196,10 +190,8 @@ def test_disconnect_camera_tool():
             assert isinstance(result, ToolResult)
             assert not result.is_error
 
-            print("✅ DisconnectCameraTool test passed")
             return True
-    except Exception as e:
-        print(f"❌ DisconnectCameraTool test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -238,10 +230,8 @@ def test_get_camera_status_tool():
             assert isinstance(result, ToolResult)
             assert not result.is_error
 
-            print("✅ GetCameraStatusTool test passed")
             return True
-    except Exception as e:
-        print(f"❌ GetCameraStatusTool test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -281,10 +271,8 @@ def test_capture_snapshot_tool():
             assert isinstance(result, ToolResult)
             assert not result.is_error
 
-            print("✅ CaptureSnapshotTool test passed")
             return True
-    except Exception as e:
-        print(f"❌ CaptureSnapshotTool test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -324,10 +312,8 @@ def test_get_stream_url_tool():
             assert isinstance(result, ToolResult)
             assert not result.is_error
 
-            print("✅ GetStreamUrlTool test passed")
             return True
-    except Exception as e:
-        print(f"❌ GetStreamUrlTool test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -345,7 +331,6 @@ def test_ptz_tools():
                 SetCameraPresetTool,
             )
         except ImportError:
-            print("⚠️ PTZ tools not available, skipping test")
             return True
 
         # Test SetCameraPresetTool
@@ -365,10 +350,8 @@ def test_ptz_tools():
         assert hasattr(tool, "Meta")
         assert tool.Meta.name == "ptz_control"
 
-        print("✅ PTZ tools structure test passed")
         return True
-    except Exception as e:
-        print(f"❌ PTZ tools test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -391,10 +374,8 @@ def test_system_tools():
         assert hasattr(tool, "Meta")
         assert tool.Meta.name == "help"
 
-        print("✅ System tools structure test passed")
         return True
-    except Exception as e:
-        print(f"❌ System tools test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -435,10 +416,8 @@ def test_all_tools_metadata():
                 f"Tool {tool_cls.__name__} execute should be callable"
             )
 
-        print(f"✅ All tools metadata test passed - validated {len(all_tools)} tools")
         return True
-    except Exception as e:
-        print(f"❌ All tools metadata test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -465,13 +444,9 @@ if __name__ == "__main__":
     for test in tests:
         if test():
             passed += 1
-        print()
 
-    print(f"📊 Results: {passed}/{total} tool tests passed")
 
     if passed == total:
-        print("🎉 All tool tests passed!")
         sys.exit(0)
     else:
-        print("❌ Some tool tests failed")
         sys.exit(1)

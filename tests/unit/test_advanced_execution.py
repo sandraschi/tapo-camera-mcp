@@ -24,7 +24,6 @@ def test_server_singleton_pattern():
     assert hasattr(TapoCameraServer, "_instance")
     assert hasattr(TapoCameraServer, "_initialized")
 
-    print("✅ Server singleton pattern test passed")
 
 
 def test_camera_factory_creation():
@@ -56,7 +55,6 @@ def test_camera_factory_creation():
         # but the factory method should exist
         pass
 
-    print("✅ Camera factory creation test passed")
 
 
 def test_tool_execution_with_mocking():
@@ -121,10 +119,8 @@ def test_tool_execution_with_mocking():
         result = asyncio.run(help_tool.execute())
         assert result is not None
 
-        print("✅ Tool execution with mocking test passed")
         return True
-    except Exception as e:
-        print(f"❌ Tool execution with mocking test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -159,10 +155,8 @@ def test_validation_error_scenarios():
             if hasattr(result, "is_error"):
                 assert result.is_error
 
-        print("✅ Validation error scenarios test passed")
         return True
-    except Exception as e:
-        print(f"❌ Validation error scenarios test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -204,10 +198,8 @@ def test_camera_connection_scenarios():
         assert hasattr(webcam_camera, "connect")
         assert hasattr(webcam_camera, "disconnect")
 
-        print("✅ Camera connection scenarios test passed")
         return True
-    except Exception as e:
-        print(f"❌ Camera connection scenarios test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -244,10 +236,8 @@ def test_web_api_error_handling():
             # Should handle missing camera gracefully
             assert response.status_code in [200, 404, 500]
 
-            print("✅ Web API error handling test passed")
         return True
-    except Exception as e:
-        print(f"❌ Web API error handling test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -294,10 +284,8 @@ def test_tool_registry_operations():
         nonexistent = get_tool("nonexistent_tool")
         assert nonexistent is None
 
-        print("✅ Tool registry operations test passed")
         return True
-    except Exception as e:
-        print(f"❌ Tool registry operations test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -341,10 +329,8 @@ def test_async_tool_execution():
         # Run concurrent test
         asyncio.run(test_concurrent_execution())
 
-        print("✅ Async tool execution test passed")
         return True
-    except Exception as e:
-        print(f"❌ Async tool execution test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -370,10 +356,8 @@ def test_system_resource_monitoring():
                 # Some sections might not be implemented yet, but tool should not crash
                 pass
 
-        print("✅ System resource monitoring test passed")
         return True
-    except Exception as e:
-        print(f"❌ System resource monitoring test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -407,10 +391,8 @@ def test_error_recovery_mechanisms():
                 # Should be the specific exception type
                 assert type(e) == type(exc)
 
-        print("✅ Error recovery mechanisms test passed")
         return True
-    except Exception as e:
-        print(f"❌ Error recovery mechanisms test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -439,32 +421,30 @@ def test_configuration_validation():
         # Test configuration with validators
         # Port validation
         try:
-            invalid_config = TapoCameraConfig(
+            TapoCameraConfig(
                 host="192.168.1.100",
                 username="testuser",
                 password="testpass",
                 port=70000,  # Invalid port
             )
-            assert False, "Should have failed validation"
+            raise AssertionError("Should have failed validation")
         except Exception:
             pass  # Expected validation error
 
         # Test timeout validation
         try:
-            invalid_config = TapoCameraConfig(
+            TapoCameraConfig(
                 host="192.168.1.100",
                 username="testuser",
                 password="testpass",
                 timeout=0,  # Invalid timeout
             )
-            assert False, "Should have failed validation"
+            raise AssertionError("Should have failed validation")
         except Exception:
             pass  # Expected validation error
 
-        print("✅ Configuration validation test passed")
         return True
-    except Exception as e:
-        print(f"❌ Configuration validation test failed: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -493,15 +473,11 @@ if __name__ == "__main__":
         try:
             if test():
                 passed += 1
-        except Exception as e:
-            print(f"❌ Test {test.__name__} crashed: {e}")
-        print()
+        except Exception:
+            pass
 
-    print(f"📊 Results: {passed}/{total} advanced tool execution tests passed")
 
     if passed == total:
-        print("🎉 All advanced tool execution tests passed!")
         sys.exit(0)
     else:
-        print("❌ Some advanced tool execution tests failed")
         sys.exit(1)

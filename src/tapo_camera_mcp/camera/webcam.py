@@ -2,8 +2,11 @@
 
 import asyncio
 import contextlib
+import logging
 from pathlib import Path
 from typing import Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 import cv2
 from PIL import Image
