@@ -283,7 +283,7 @@ class SmartAutomationTool(BaseTool):
     async def _analyze_usage_patterns(self) -> Dict[str, Any]:
         """Analyze camera usage patterns."""
         # Simulate usage pattern analysis
-        patterns = {
+        return {
             "peak_usage_hours": [9, 10, 11, 14, 15, 16, 19, 20, 21],
             "low_usage_hours": [0, 1, 2, 3, 4, 5, 6],
             "weekly_patterns": {
@@ -296,7 +296,6 @@ class SmartAutomationTool(BaseTool):
             },
         }
 
-        return patterns
 
     def _initialize_default_rules(self):
         """Initialize default automation rules."""

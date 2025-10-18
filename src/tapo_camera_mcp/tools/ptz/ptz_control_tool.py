@@ -79,7 +79,7 @@ class PTZControlTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"PTZ {operation} operation failed: {e}")
+            logger.exception(f"PTZ {operation} operation failed: {e}")
             return {
                 "success": False,
                 "error": str(e),

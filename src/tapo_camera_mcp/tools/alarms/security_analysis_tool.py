@@ -76,7 +76,7 @@ class SecurityAnalysisTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Security analysis {operation} operation failed: {e}")
+            logger.exception(f"Security analysis {operation} operation failed: {e}")
             return {
                 "success": False,
                 "error": str(e),
@@ -218,7 +218,7 @@ class SecurityAnalysisTool(BaseTool):
         # Find correlations
         correlations = []
         for i, event in enumerate(events):
-            for j, other_event in enumerate(events[i + 1 :], i + 1):
+            for _j, other_event in enumerate(events[i + 1 :], i + 1):
                 time_diff = abs(event["timestamp"] - other_event["timestamp"])
                 if time_diff <= 300:  # Within 5 minutes
                     correlation_score = max(0, 1 - (time_diff / 300))

@@ -71,7 +71,7 @@ class SystemControlTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"System control {operation} operation failed: {e}")
+            logger.exception(f"System control {operation} operation failed: {e}")
             return {
                 "success": False,
                 "error": str(e),

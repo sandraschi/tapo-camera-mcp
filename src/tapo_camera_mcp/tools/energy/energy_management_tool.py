@@ -77,7 +77,7 @@ class EnergyManagementTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Energy {operation} operation failed: {e}")
+            logger.exception(f"Energy {operation} operation failed: {e}")
             return {
                 "success": False,
                 "error": str(e),

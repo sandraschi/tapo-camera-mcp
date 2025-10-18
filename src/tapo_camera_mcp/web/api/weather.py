@@ -103,7 +103,7 @@ async def get_weather_stations(
         return stations
 
     except Exception as e:
-        logger.error(f"Failed to get weather stations: {e}")
+        logger.exception(f"Failed to get weather stations: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -152,7 +152,7 @@ async def get_station_weather_data(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get weather data: {e}")
+        logger.exception(f"Failed to get weather data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -239,7 +239,7 @@ async def get_station_historical_data(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get historical data: {e}")
+        logger.exception(f"Failed to get historical data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -272,7 +272,7 @@ async def get_station_health_report(
         )
 
     except Exception as e:
-        logger.error(f"Failed to generate health report: {e}")
+        logger.exception(f"Failed to generate health report: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -303,7 +303,7 @@ async def configure_station_alerts(station_id: str, alert_config: Dict[str, Any]
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to configure alerts: {e}")
+        logger.exception(f"Failed to configure alerts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -347,7 +347,7 @@ async def get_station_modules(station_id: str) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Failed to get modules: {e}")
+        logger.exception(f"Failed to get modules: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -358,7 +358,7 @@ async def get_weather_overview() -> Dict[str, Any]:
         logger.info("Getting weather overview")
 
         # Simulate overview data
-        overview = {
+        return {
             "total_stations": 1,
             "online_stations": 1,
             "total_modules": 2,
@@ -371,8 +371,7 @@ async def get_weather_overview() -> Dict[str, Any]:
             "last_update": time.time(),
         }
 
-        return overview
 
     except Exception as e:
-        logger.error(f"Failed to get weather overview: {e}")
+        logger.exception(f"Failed to get weather overview: {e}")
         raise HTTPException(status_code=500, detail=str(e))

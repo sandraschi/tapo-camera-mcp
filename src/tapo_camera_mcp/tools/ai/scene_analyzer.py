@@ -228,7 +228,6 @@ class SceneAnalyzerTool(BaseTool):
     async def _detect_scene_type(self, image_data: bytes) -> str:
         """Detect the type of scene."""
         # Simulate AI scene classification
-        scene_types = ["living_room", "kitchen", "garden", "driveway", "office"]
         # In real implementation, this would use a trained model
         return "living_room"  # Default for simulation
 

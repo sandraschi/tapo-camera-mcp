@@ -171,7 +171,7 @@ class PerformanceAnalyzerTool(BaseTool):
         """Analyze network performance for camera operations."""
         try:
             # Simulate network analysis
-            network_metrics = {
+            return {
                 "latency_ms": 45,
                 "bandwidth_mbps": 100,
                 "packet_loss_percent": 0.1,
@@ -183,7 +183,6 @@ class PerformanceAnalyzerTool(BaseTool):
                 ],
             }
 
-            return network_metrics
 
         except Exception as e:
             logger.exception("Network performance analysis failed: %s", e)

@@ -76,7 +76,7 @@ class CameraInfoTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Camera info {operation} operation failed: {e}")
+            logger.exception(f"Camera info {operation} operation failed: {e}")
             return {
                 "success": False,
                 "error": str(e),

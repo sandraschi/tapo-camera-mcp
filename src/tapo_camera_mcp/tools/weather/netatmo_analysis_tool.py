@@ -83,7 +83,7 @@ class NetatmoAnalysisTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Netatmo analysis {operation} operation failed: {e}")
+            logger.exception(f"Netatmo analysis {operation} operation failed: {e}")
             return {
                 "success": False,
                 "error": str(e),

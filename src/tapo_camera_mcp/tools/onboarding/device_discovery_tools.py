@@ -63,7 +63,7 @@ class DeviceDiscoveryManager:
 
             # Flatten all discovered devices
             all_devices = []
-            for device_type, devices in discovery_results.items():
+            for _device_type, devices in discovery_results.items():
                 all_devices.extend(devices)
 
             self.discovered_devices = all_devices

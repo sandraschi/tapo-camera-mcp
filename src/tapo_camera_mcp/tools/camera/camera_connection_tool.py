@@ -73,7 +73,7 @@ class CameraConnectionTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Camera connection {operation} operation failed: {e}")
+            logger.exception(f"Camera connection {operation} operation failed: {e}")
             return {
                 "success": False,
                 "error": str(e),

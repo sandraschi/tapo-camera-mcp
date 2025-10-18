@@ -63,7 +63,7 @@ class NetatmoWeatherTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Netatmo weather {operation} operation failed: {e}")
+            logger.exception(f"Netatmo weather {operation} operation failed: {e}")
             return {
                 "success": False,
                 "error": str(e),

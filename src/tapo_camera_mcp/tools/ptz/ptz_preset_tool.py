@@ -77,7 +77,7 @@ class PTZPresetTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"PTZ preset {operation} operation failed: {e}")
+            logger.exception(f"PTZ preset {operation} operation failed: {e}")
             return {
                 "success": False,
                 "error": str(e),

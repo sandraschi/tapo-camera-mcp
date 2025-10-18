@@ -83,7 +83,7 @@ class CameraManagementTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Camera management {operation} operation failed: {e}")
+            logger.exception(f"Camera management {operation} operation failed: {e}")
             return {
                 "success": False,
                 "error": str(e),

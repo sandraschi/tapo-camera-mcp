@@ -77,7 +77,7 @@ class PrivacySettingsTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Privacy settings {operation} operation failed: {e}")
+            logger.exception(f"Privacy settings {operation} operation failed: {e}")
             return {
                 "success": False,
                 "error": str(e),

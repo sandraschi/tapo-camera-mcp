@@ -73,7 +73,7 @@ class NestProtectTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Nest Protect {operation} operation failed: {e}")
+            logger.exception(f"Nest Protect {operation} operation failed: {e}")
             return {
                 "success": False,
                 "error": str(e),

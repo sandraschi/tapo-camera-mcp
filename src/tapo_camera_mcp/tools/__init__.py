@@ -181,14 +181,14 @@ def import_consolidated_tools():
             try:
                 register_tool(tool_cls)
             except Exception as e:
-                logger.error(f"Failed to register {tool_cls.__name__}: {e}")
+                logger.exception(f"Failed to register {tool_cls.__name__}: {e}")
 
         _tools_registered = True
         logger.info("✅ All 16 consolidated portmanteau tools registered (FastMCP 2.12 compliant)")
         logger.info("🎯 Tool consolidation successful: 64 → 16 tools (75% reduction)")
 
     except ImportError as e:
-        logger.error(f"Failed to import consolidated tools: {e}")
+        logger.exception(f"Failed to import consolidated tools: {e}")
         # Fallback to old discovery method if needed
         logger.warning("Falling back to old discovery method...")
         discover_tools()

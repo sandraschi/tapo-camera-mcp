@@ -114,7 +114,7 @@ class GetNetatmoStationsTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Failed to get Netatmo stations: {e}")
+            logger.exception(f"Failed to get Netatmo stations: {e}")
             return {"success": False, "error": str(e), "stations": [], "timestamp": time.time()}
 
     async def _discover_stations(self) -> List[NetatmoWeatherStation]:
@@ -222,7 +222,7 @@ class GetNetatmoWeatherDataTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Failed to get weather data: {e}")
+            logger.exception(f"Failed to get weather data: {e}")
             return {
                 "success": False,
                 "error": str(e),
@@ -326,7 +326,7 @@ class GetNetatmoHistoricalDataTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Failed to get historical data: {e}")
+            logger.exception(f"Failed to get historical data: {e}")
             return {"success": False, "error": str(e), "data": [], "timestamp": time.time()}
 
     async def _generate_historical_data(
@@ -482,7 +482,7 @@ class ConfigureNetatmoAlertsTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Failed to configure alert: {e}")
+            logger.exception(f"Failed to configure alert: {e}")
             return {"success": False, "error": str(e), "timestamp": time.time()}
 
 
@@ -532,7 +532,7 @@ class GetNetatmoHealthReportTool(BaseTool):
             }
 
         except Exception as e:
-            logger.error(f"Failed to generate health report: {e}")
+            logger.exception(f"Failed to generate health report: {e}")
             return {"success": False, "error": str(e), "timestamp": time.time()}
 
     async def _get_station_data(self, station_id: str, module_type: str) -> Dict[str, Any]:
@@ -557,7 +557,7 @@ class GetNetatmoHealthReportTool(BaseTool):
         humidity = indoor_data.get("humidity", 50)
         co2 = indoor_data.get("co2", 400)
         noise = indoor_data.get("noise", 35)
-        pressure = indoor_data.get("pressure", 1013.0)
+        indoor_data.get("pressure", 1013.0)
 
         # Calculate health scores
         temp_score = self._calculate_temp_score(temp)
