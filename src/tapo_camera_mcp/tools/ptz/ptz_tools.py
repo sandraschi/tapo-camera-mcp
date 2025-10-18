@@ -4,18 +4,17 @@ PTZ (Pan-Tilt-Zoom) tools for Tapo Camera MCP.
 This module contains tools for controlling camera movements and presets.
 """
 
-import warnings
-
-warnings.filterwarnings(
-    "ignore", category=DeprecationWarning, message=".*Support for class-based.*"
-)
-
 import logging
+import warnings
 from typing import Any, Dict, Optional
 
 from pydantic import ConfigDict, Field
 
 from tapo_camera_mcp.tools.base_tool import BaseTool, ToolCategory, ToolResult, tool
+
+warnings.filterwarnings(
+    "ignore", category=DeprecationWarning, message=".*Support for class-based.*"
+)
 
 logger = logging.getLogger(__name__)
 

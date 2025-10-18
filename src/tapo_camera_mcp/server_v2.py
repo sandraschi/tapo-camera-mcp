@@ -4,11 +4,15 @@ Tapo Camera MCP Server v2 - Fixed asyncio handling for Claude Desktop integratio
 Provides camera control capabilities through MCP protocol
 """
 
+import argparse
+import logging
 import os
 import sys
+import warnings
+
+from tapo_camera_mcp.camera.tapo import Tapo
 
 # Suppress warnings before any imports to prevent JSON parsing issues in Claude Desktop
-import warnings
 
 # Set environment variable to suppress warnings globally
 os.environ["PYTHONWARNINGS"] = "ignore"
@@ -35,12 +39,6 @@ except Exception as e:
 
 # Restore stderr after imports are complete
 sys.stderr = original_stderr
-
-import argparse
-import logging
-import sys
-
-from tapo_camera_mcp.camera.tapo import Tapo
 
 # Re-export Tapo for tests
 Tapo = Tapo

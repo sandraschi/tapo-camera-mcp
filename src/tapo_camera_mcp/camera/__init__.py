@@ -2,12 +2,11 @@
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 from .petcube import PetcubeCamera
-
-# Import all camera implementations to ensure they register with the factory
 from .tapo import TapoCamera
+from .webcam import WebCamera
+
+logger = logging.getLogger(__name__)
 
 # Import RingCamera with error handling
 try:
@@ -25,8 +24,6 @@ try:
 except ImportError as e:
     logger.warning(f"Failed to import RingCamera: {e}")
     RING_AVAILABLE = False
-
-from .webcam import WebCamera
 
 __all__ = ["PetcubeCamera", "TapoCamera", "WebCamera"]
 

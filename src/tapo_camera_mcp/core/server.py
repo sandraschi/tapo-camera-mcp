@@ -8,6 +8,7 @@ src_path = Path(__file__).parent.parent
 if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
 
+# Now import after path manipulation
 from fastmcp.server import FastMCP
 
 from tapo_camera_mcp.camera.manager import CameraManager

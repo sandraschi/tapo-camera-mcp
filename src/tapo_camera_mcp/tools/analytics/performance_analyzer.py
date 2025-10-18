@@ -183,7 +183,6 @@ class PerformanceAnalyzerTool(BaseTool):
                 ],
             }
 
-
         except Exception as e:
             logger.exception("Network performance analysis failed: %s", e)
             return {"error": str(e)}

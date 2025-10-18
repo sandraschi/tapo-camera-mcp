@@ -296,7 +296,6 @@ class SmartAutomationTool(BaseTool):
             },
         }
 
-
     def _initialize_default_rules(self):
         """Initialize default automation rules."""
         # Motion detection rule

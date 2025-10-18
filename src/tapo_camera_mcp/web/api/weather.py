@@ -371,7 +371,6 @@ async def get_weather_overview() -> Dict[str, Any]:
             "last_update": time.time(),
         }
 
-
     except Exception as e:
         logger.exception(f"Failed to get weather overview: {e}")
         raise HTTPException(status_code=500, detail=str(e))

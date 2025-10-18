@@ -46,7 +46,7 @@ def test_list_cameras_tool():
 
             # Should return ToolResult
             assert isinstance(result, ToolResult)
-            assert result.is_error == False
+            assert not result.is_error
 
             # Should have called the server
             mock_server_class.get_instance.assert_called_once()
@@ -104,7 +104,7 @@ def test_add_camera_tool():
 
             # Should return ToolResult
             assert isinstance(result, ToolResult)
-            assert result.is_error == False
+            assert not result.is_error
 
             print("✅ AddCameraTool test passed")
             return True
@@ -155,7 +155,7 @@ def test_connect_camera_tool():
 
             # Should return ToolResult
             assert isinstance(result, ToolResult)
-            assert result.is_error == False
+            assert not result.is_error
 
             print("✅ ConnectCameraTool test passed")
             return True
@@ -194,7 +194,7 @@ def test_disconnect_camera_tool():
 
             # Should return ToolResult
             assert isinstance(result, ToolResult)
-            assert result.is_error == False
+            assert not result.is_error
 
             print("✅ DisconnectCameraTool test passed")
             return True
@@ -236,7 +236,7 @@ def test_get_camera_status_tool():
 
             # Should return ToolResult
             assert isinstance(result, ToolResult)
-            assert result.is_error == False
+            assert not result.is_error
 
             print("✅ GetCameraStatusTool test passed")
             return True
@@ -279,7 +279,7 @@ def test_capture_snapshot_tool():
 
             # Should return ToolResult
             assert isinstance(result, ToolResult)
-            assert result.is_error == False
+            assert not result.is_error
 
             print("✅ CaptureSnapshotTool test passed")
             return True
@@ -322,7 +322,7 @@ def test_get_stream_url_tool():
 
             # Should return ToolResult
             assert isinstance(result, ToolResult)
-            assert result.is_error == False
+            assert not result.is_error
 
             print("✅ GetStreamUrlTool test passed")
             return True
