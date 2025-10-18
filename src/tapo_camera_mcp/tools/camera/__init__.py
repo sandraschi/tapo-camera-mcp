@@ -1,48 +1,11 @@
 """
-Camera-related tools for Tapo Camera MCP.
+Camera Management Tools
 
-This module contains tools for managing and controlling Tapo cameras.
+Portmanteau tools for camera management operations.
 """
 
-from .camera_tools import (
-    AddCameraTool,
-    CameraStatus,
-    ConnectCameraTool,
-    DisconnectCameraTool,
-    GetCameraInfoTool,
-    GetCameraStatusTool,
-    ListCamerasTool,
-    ManageCameraGroupsTool,
-    RemoveCameraTool,
-    SetActiveCameraTool,
-)
+from .camera_connection_tool import CameraConnectionTool
+from .camera_info_tool import CameraInfoTool
+from .camera_management_tool import CameraManagementTool
 
-# Export all tools for discovery
-__all__ = [
-    "AddCameraTool",
-    "CameraStatus",
-    "ConnectCameraTool",
-    "DisconnectCameraTool",
-    "GetCameraInfoTool",
-    "GetCameraStatusTool",
-    "ListCamerasTool",
-    "ManageCameraGroupsTool",
-    "RemoveCameraTool",
-    "SetActiveCameraTool",
-]
-
-# This ensures the tools are registered when the module is imported
-from .. import register_tool
-
-for tool in [
-    ListCamerasTool,
-    AddCameraTool,
-    RemoveCameraTool,
-    SetActiveCameraTool,
-    GetCameraStatusTool,
-    ConnectCameraTool,
-    DisconnectCameraTool,
-    GetCameraInfoTool,
-    ManageCameraGroupsTool,
-]:
-    register_tool(tool)
+__all__ = ["CameraConnectionTool", "CameraInfoTool", "CameraManagementTool"]

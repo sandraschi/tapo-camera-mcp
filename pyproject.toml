@@ -78,8 +78,7 @@ dev = [
     "pytest-env>=0.8.0,<1.0.0",    # Environment variables in tests
     
     # Code quality
-    "black>=22.0.0,<24.0.0",
-    "isort>=5.10.1,<6.0.0",
+    "ruff>=0.1.0,<1.0.0",              # Fast Python linter and formatter
     "mypy>=1.0.0,<2.0.0",
     "pylint>=2.12.0,<3.0.0",
     "flake8>=5.0.0,<7.0.0",
@@ -145,16 +144,6 @@ Source = "https://github.com/yourusername/tapo-camera-mcp"
 tapo-camera-mcp = "tapo_camera_mcp.cli_v2:main"
 tapo-llms = "tapo_camera_mcp.cli:main"
 
-[tool.black]
-line-length = 100
-target-version = ['py38']
-include = '\.pyi?$'
-skip-string-normalization = true
-
-[tool.isort]
-profile = "black"
-line_length = 100
-
 [tool.ruff]
 line-length = 100
 target-version = "py38"
@@ -185,7 +174,7 @@ select = [
     "RUF", # ruff-specific rules
 ]
 ignore = [
-    "E501", # line too long, handled by black
+    "E501", # line too long, handled by ruff formatter
     "B008", # do not perform function calls in argument defaults
     "PLR0913", # too many arguments
     "PLR0912", # too many branches

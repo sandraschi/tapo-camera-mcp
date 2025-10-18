@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/pypi/pyversions/tapo-camera-mcp)](https://www.python.org/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![MCP Version](https://img.shields.io/badge/MCP-2.12.0-blue)](https://mcp-standard.org)
 [![Dashboard](https://img.shields.io/badge/Dashboard-Live-green)](http://localhost:7777)
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-success)](https://github.com/sandraschi/tapo-camera-mcp)
@@ -265,7 +265,7 @@ python start.py dashboard
 - **Unit Tests**: Complete test suite with 100% pass rate
 - **CI/CD Pipeline**: GitHub Actions with multi-version testing (Python 3.8-3.13)
 - **Security Scanning**: Automated vulnerability and dependency scanning
-- **Code Quality**: Black formatting, isort imports, mypy type checking, pylint linting
+- **Code Quality**: Ruff linting and formatting, mypy type checking, pylint linting
 
 ## 🚀 Getting Started
 
@@ -557,11 +557,11 @@ python -m pytest --cov=tapo_camera_mcp --cov-report=xml
 
 ### Code Style
 
-This project uses `black` for code formatting and `isort` for import sorting. Before committing, run:
+This project uses `ruff` for code linting and formatting. Before committing, run:
 
 ```bash
-black .
-isort .
+ruff check src/ tests/
+ruff format src/ tests/
 pylint tapo_camera_mcp/
 ```
 

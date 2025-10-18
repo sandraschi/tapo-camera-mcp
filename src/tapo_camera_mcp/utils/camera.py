@@ -79,7 +79,7 @@ class CameraManager:
             return camera
 
         except Exception as e:
-            logger.exception("Failed to add camera %s", camera_config.get('name'))
+            logger.exception("Failed to add camera %s", camera_config.get("name"))
             raise CameraConnectionError(f"Failed to add camera: {e}") from e
 
     async def remove_camera(self, camera_id: str) -> bool:

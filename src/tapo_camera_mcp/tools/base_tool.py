@@ -103,6 +103,12 @@ class ToolCategory(str, Enum):
     UTILITY = "Utility"
     ANALYSIS = "Analysis"
     SECURITY = "Security"
+    ENERGY = "Energy"
+    ALARMS = "Alarms"
+    WEATHER = "Weather"
+    AI_ANALYSIS = "AI Analysis"
+    AUTOMATION = "Automation"
+    ONBOARDING = "Onboarding"
 
 
 class ToolDefinition(BaseModel):

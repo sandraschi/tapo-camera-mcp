@@ -1,27 +1,10 @@
 """
-System tools for Tapo Camera MCP.
+System Tools
 
-This module contains system-level tools for managing the camera.
+Portmanteau tools for system operations.
 """
 
-from tapo_camera_mcp.tools.system.system_tools import (
-    GetHelpTool,
-    GetLogsTool,
-    GetSystemInfoTool,
-    HelpTool,
-    RebootCameraTool,
-    SetLEDEnabledTool,
-    SetMotionDetectionTool,
-    SetPrivacyModeTool,
-)
+from .system_control_tool import SystemControlTool
+from .system_info_tool import SystemInfoTool
 
-__all__ = [
-    "GetHelpTool",
-    "GetLogsTool",
-    "GetSystemInfoTool",
-    "HelpTool",
-    "RebootCameraTool",
-    "SetLEDEnabledTool",
-    "SetMotionDetectionTool",
-    "SetPrivacyModeTool",
-]
+__all__ = ["SystemControlTool", "SystemInfoTool"]

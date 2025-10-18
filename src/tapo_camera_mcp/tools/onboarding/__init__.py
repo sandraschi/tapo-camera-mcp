@@ -7,23 +7,23 @@ diverse device collections.
 """
 
 from .device_discovery_tools import (
-    DiscoverDevicesTool,
-    ConfigureDeviceTool,
-    GetOnboardingProgressTool,
     CompleteOnboardingTool,
-    DiscoveredDevice,
-    OnboardingState,
+    ConfigureDeviceTool,
     DeviceDiscoveryManager,
-    discovery_manager
+    DiscoverDevicesTool,
+    DiscoveredDevice,
+    GetOnboardingProgressTool,
+    OnboardingState,
+    discovery_manager,
 )
 
 __all__ = [
-    "DiscoverDevicesTool",
-    "ConfigureDeviceTool", 
-    "GetOnboardingProgressTool",
     "CompleteOnboardingTool",
-    "DiscoveredDevice",
-    "OnboardingState",
+    "ConfigureDeviceTool",
     "DeviceDiscoveryManager",
-    "discovery_manager"
+    "DiscoverDevicesTool",
+    "DiscoveredDevice",
+    "GetOnboardingProgressTool",
+    "OnboardingState",
+    "discovery_manager",
 ]

@@ -14,65 +14,49 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 def test_server_singleton_pattern():
     """Test server singleton pattern implementation."""
-    try:
-        from tapo_camera_mcp.core.server import TapoCameraServer
+    from tapo_camera_mcp.core.server import TapoCameraServer
 
-        # Test that server is a singleton
-        # We can't easily test the actual singleton without proper setup,
-        # but we can test the class structure
+    # Test that server is a singleton
+    # We can't easily test the actual singleton without proper setup,
+    # but we can test the class structure
 
-        assert hasattr(TapoCameraServer, "__new__")
-        assert hasattr(TapoCameraServer, "_instance")
-        assert hasattr(TapoCameraServer, "_initialized")
+    assert hasattr(TapoCameraServer, "__new__")
+    assert hasattr(TapoCameraServer, "_instance")
+    assert hasattr(TapoCameraServer, "_initialized")
 
-        print("✅ Server singleton pattern test passed")
-        return True
-    except Exception as e:
-        print(f"❌ Server singleton pattern test failed: {e}")
-        import traceback
-
-        traceback.print_exc()
-        return False
+    print("✅ Server singleton pattern test passed")
 
 
 def test_camera_factory_creation():
     """Test camera factory creation with different camera types."""
+    from tapo_camera_mcp.camera.base import CameraConfig, CameraFactory, CameraType
+
+    # Test creating different camera types
+    tapo_config = CameraConfig(
+        name="test_tapo",
+        type=CameraType.TAPO,
+        params={"host": "192.168.1.100", "username": "test", "password": "test"},
+    )
+
+    webcam_config = CameraConfig(
+        name="test_webcam", type=CameraType.WEBCAM, params={"device_id": 0}
+    )
+
+    # Test that factory can create cameras (without actual connection)
     try:
-        from tapo_camera_mcp.camera.base import CameraConfig, CameraFactory, CameraType
+        tapo_camera = CameraFactory.create(tapo_config)
+        webcam_camera = CameraFactory.create(webcam_config)
 
-        # Test creating different camera types
-        tapo_config = CameraConfig(
-            name="test_tapo",
-            type=CameraType.TAPO,
-            params={"host": "192.168.1.100", "username": "test", "password": "test"},
-        )
+        # Should be able to create instances
+        assert tapo_camera is not None
+        assert webcam_camera is not None
 
-        webcam_config = CameraConfig(
-            name="test_webcam", type=CameraType.WEBCAM, params={"device_id": 0}
-        )
+    except Exception:
+        # Camera creation might fail due to missing dependencies,
+        # but the factory method should exist
+        pass
 
-        # Test that factory can create cameras (without actual connection)
-        try:
-            tapo_camera = CameraFactory.create(tapo_config)
-            webcam_camera = CameraFactory.create(webcam_config)
-
-            # Should be able to create instances
-            assert tapo_camera is not None
-            assert webcam_camera is not None
-
-        except Exception:
-            # Camera creation might fail due to missing dependencies,
-            # but the factory method should exist
-            pass
-
-        print("✅ Camera factory creation test passed")
-        return True
-    except Exception as e:
-        print(f"❌ Camera factory creation test failed: {e}")
-        import traceback
-
-        traceback.print_exc()
-        return False
+    print("✅ Camera factory creation test passed")
 
 
 def test_tool_execution_with_mocking():

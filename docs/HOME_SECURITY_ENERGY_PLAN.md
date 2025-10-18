@@ -12,7 +12,8 @@ Transform the existing Tapo Camera MCP into a comprehensive **Home Security & En
 
 1. **🚨 Alarms Dashboard** - Nest Protect smoke/CO detectors + Ring security alarms
 2. **⚡ Energy Dashboard** - Tapo smart plugs with energy monitoring
-3. **📊 Unified Monitoring** - Single interface for cameras, alarms, and energy usage
+3. **🌡️ Weather Dashboard** - Netatmo weather stations with air quality monitoring
+4. **📊 Unified Monitoring** - Single interface for cameras, alarms, energy, and weather
 
 ---
 
@@ -267,6 +268,36 @@ class SecurityEventCorrelator:
   - ❌ **Long-term storage**: No historical data beyond current day on device
   - 💡 **Workaround**: Home Assistant integration for long-term data storage
 
+#### **🌡️ Weather Monitoring Hardware**
+- **Netatmo Weather Station**: Comprehensive indoor air quality and environmental monitoring
+  - Model: Netatmo Indoor Weather Station with connected modules
+  - WiFi connectivity for main module, RF for connected modules
+  - Multi-sensor capability: Temperature, humidity, CO2, noise, pressure
+  - Health index calculation and air quality assessment
+  - Weather trend analysis and forecasting capabilities
+  - Mobile app integration and web dashboard access
+
+  **Main Indoor Module Features:**
+  - **Temperature**: ±0.3°C accuracy, 20-24°C comfort range
+  - **Humidity**: ±3% accuracy, 40-60% optimal range
+  - **CO2 Detection**: ±50ppm accuracy, 350-1000+ ppm range
+  - **Noise Level**: ±1dB accuracy, ambient sound monitoring
+  - **Atmospheric Pressure**: ±1mbar accuracy, weather trend prediction
+  - **Health Index**: 0-100 overall air quality score
+
+  **Connected Modules:**
+  - **Outdoor Module**: Temperature, humidity, battery-powered (6-12 months)
+  - **Rain Gauge**: Precipitation monitoring and alerts
+  - **Wind Gauge**: Wind speed and direction measurement
+  - **Additional Indoor Modules**: Extended room coverage
+
+  **Data Storage Capabilities:**
+  - ✅ **Real-time data**: Live readings every 10 minutes
+  - ✅ **Historical data**: 30 days detailed history on device
+  - ✅ **Cloud storage**: Unlimited historical data via Netatmo cloud
+  - ✅ **API access**: Full data export via Netatmo Weather API
+  - ✅ **Local storage**: Optional local data storage for privacy
+
 ### **Software Architecture**
 
 #### **MCP Server Enhancement**
@@ -278,6 +309,7 @@ class EnhancedTapoCameraMCP:
         self.nest_manager = NestProtectManager()
         self.ring_manager = RingAlarmManager()
         self.energy_manager = TapoPlugManager()
+        self.weather_manager = NetatmoWeatherManager()
         self.event_correlator = SecurityEventCorrelator()
     
     def register_tools(self):
@@ -289,6 +321,9 @@ class EnhancedTapoCameraMCP:
         
         # New energy tools
         self.register_energy_tools()
+        
+        # New weather tools
+        self.register_weather_tools()
         
         # Unified security tools
         self.register_unified_tools()

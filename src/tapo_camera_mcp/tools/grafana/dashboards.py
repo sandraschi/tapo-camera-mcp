@@ -81,7 +81,6 @@ class ViennaDashboardTool(BaseTool):
 
     def _generate_mock_motion_data(self, hours: int) -> List[int]:
         """Generate mock motion event data for the last N hours."""
-        import random
 
         # More activity during typical business hours (9-17)
         return [
@@ -102,7 +101,6 @@ class ViennaDashboardTool(BaseTool):
 
     def _simulate_camera_activity(self, hour: int) -> int:
         """Simulate camera activity based on time of day."""
-        import random
 
         # More activity during typical business hours (9-17)
         if 9 <= hour < 17:

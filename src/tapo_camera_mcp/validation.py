@@ -100,7 +100,9 @@ def validate_enum_value(value: Any, field_name: str, enum_class: Type[Enum]) -> 
             return enum_class(value)
         except (ValueError, TypeError):
             valid_values = [e.value for e in enum_class]
-            raise ToolValidationError(f"Field '{field_name}' must be one of: {valid_values}") from None
+            raise ToolValidationError(
+                f"Field '{field_name}' must be one of: {valid_values}"
+            ) from None
 
     return value
 
@@ -259,5 +261,3 @@ def safe_execute(func: Callable) -> Callable:
         return await safe_func(*args, **kwargs)
 
     return wrapper
-
-

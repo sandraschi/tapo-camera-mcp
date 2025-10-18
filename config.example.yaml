@@ -18,7 +18,7 @@
 # Server configuration
 server:
   host: "0.0.0.0"  # Listen on all interfaces
-  port: 8000       # HTTP server port
+  port: 7777       # HTTP server port
   debug: false     # Enable debug mode
   log_level: "INFO"  # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 

@@ -6,17 +6,17 @@ and Ring alarm systems.
 """
 
 from .nest_protect_tools import (
-    GetNestProtectStatusTool,
-    GetNestProtectAlertsTool,
-    TestNestProtectDeviceTool,
-    GetNestProtectBatteryStatusTool,
     CorrelateNestCameraEventsTool,
+    GetNestProtectAlertsTool,
+    GetNestProtectBatteryStatusTool,
+    GetNestProtectStatusTool,
+    TestNestProtectDeviceTool,
 )
 
 __all__ = [
-    "GetNestProtectStatusTool",
-    "GetNestProtectAlertsTool", 
-    "TestNestProtectDeviceTool",
-    "GetNestProtectBatteryStatusTool",
     "CorrelateNestCameraEventsTool",
+    "GetNestProtectAlertsTool",
+    "GetNestProtectBatteryStatusTool",
+    "GetNestProtectStatusTool",
+    "TestNestProtectDeviceTool",
 ]

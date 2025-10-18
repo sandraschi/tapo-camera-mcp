@@ -393,9 +393,12 @@ class WebServer:
             except Exception as e:
                 return {"error": str(e)}
 
-        # Include onboarding API routes
+        # Include API routes
         from .api.onboarding import router as onboarding_router
+        from .api.weather import router as weather_router
+
         self.app.include_router(onboarding_router)
+        self.app.include_router(weather_router)
 
         # Onboarding route
         @self.app.get("/onboarding", response_class=HTMLResponse, name="onboarding")
@@ -407,6 +410,45 @@ class WebServer:
                     "request": request,
                     "title": "Device Onboarding - Tapo Camera MCP",
                     "description": "Set up your Tapo P115 smart plugs, Nest Protect devices, Ring alarms, and USB webcams",
+                },
+            )
+
+        # Energy Management route
+        @self.app.get("/energy", response_class=HTMLResponse, name="energy")
+        async def energy_page(request: Request):
+            """Serve the energy management dashboard page."""
+            return self.templates.TemplateResponse(
+                "energy.html",
+                {
+                    "request": request,
+                    "title": "Energy Management - Tapo Camera MCP",
+                    "description": "Monitor and control Tapo P115 smart plugs with energy consumption tracking",
+                },
+            )
+
+        # Alarms route
+        @self.app.get("/alarms", response_class=HTMLResponse, name="alarms")
+        async def alarms_page(request: Request):
+            """Serve the alarms dashboard page."""
+            return self.templates.TemplateResponse(
+                "alarms.html",
+                {
+                    "request": request,
+                    "title": "Security Alarms - Tapo Camera MCP",
+                    "description": "Monitor Nest Protect and Ring security devices",
+                },
+            )
+
+        # Weather Monitoring route
+        @self.app.get("/weather", response_class=HTMLResponse, name="weather")
+        async def weather_page(request: Request):
+            """Serve the weather monitoring dashboard page."""
+            return self.templates.TemplateResponse(
+                "weather.html",
+                {
+                    "request": request,
+                    "title": "Weather Monitoring - Tapo Camera MCP",
+                    "description": "Monitor Netatmo weather stations with temperature, humidity, CO2, and environmental data",
                 },
             )
 
@@ -600,7 +642,7 @@ class WebServer:
                 return {
                     "status": "success",
                     "settings": {
-                        "server_port": config.get("server", {}).get("port", 8000),
+                        "server_port": config.get("server", {}).get("port", 7777),
                         "debug": config.get("debug", False),
                         "log_level": config.get("log_level", "INFO"),
                         "web_enabled": config.get("web", {}).get("enabled", True),

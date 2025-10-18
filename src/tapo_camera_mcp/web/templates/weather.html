@@ -1,0 +1,638 @@
+{% extends "base.html" %}
+
+{% block title %}Weather Monitoring - Tapo Camera MCP{% endblock %}
+
+{% block extra_css %}
+<style>
+    .weather-dashboard {
+        padding: 20px;
+    }
+    
+    .weather-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .weather-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .weather-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #3b82f6, #10b981);
+    }
+    
+    .weather-card h3 {
+        margin: 0 0 16px 0;
+        color: #1f2937;
+        font-size: 18px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .weather-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 8px;
+    }
+    
+    .weather-unit {
+        color: #6b7280;
+        font-size: 14px;
+    }
+    
+    .weather-trend {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 12px;
+        font-size: 14px;
+    }
+    
+    .trend-up {
+        color: #dc2626;
+    }
+    
+    .trend-down {
+        color: #059669;
+    }
+    
+    .trend-stable {
+        color: #6b7280;
+    }
+    
+    .health-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    .health-excellent {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .health-good {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .health-fair {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .health-poor {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .stations-section {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        margin-bottom: 20px;
+    }
+    
+    .station-card {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 16px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+    
+    .station-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .station-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    
+    .station-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .station-location {
+        color: #6b7280;
+        font-size: 14px;
+    }
+    
+    .station-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    
+    .status-online {
+        background-color: #10b981;
+    }
+    
+    .status-offline {
+        background-color: #ef4444;
+    }
+    
+    .station-modules {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+    }
+    
+    .module-card {
+        background: white;
+        border-radius: 6px;
+        padding: 16px;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .module-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+    
+    .module-data {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    
+    .data-item {
+        text-align: center;
+    }
+    
+    .data-value {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .data-label {
+        font-size: 11px;
+        color: #6b7280;
+        margin-top: 2px;
+    }
+    
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        margin-top: 20px;
+    }
+    
+    .chart-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .chart-tab {
+        padding: 8px 16px;
+        border: none;
+        background: none;
+        color: #6b7280;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s ease;
+    }
+    
+    .chart-tab.active {
+        color: #3b82f6;
+        border-bottom-color: #3b82f6;
+    }
+    
+    .chart-placeholder {
+        height: 300px;
+        background: #f9fafb;
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        font-size: 16px;
+    }
+    
+    .setup-notice {
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .setup-notice h3 {
+        margin: 0 0 12px 0;
+        color: #92400e;
+        font-size: 18px;
+    }
+    
+    .setup-notice p {
+        margin: 0;
+        color: #92400e;
+    }
+    
+    .setup-notice a {
+        color: #92400e;
+        text-decoration: underline;
+        font-weight: 500;
+    }
+    
+    .setup-notice a:hover {
+        color: #78350f;
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .section-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+    }
+    
+    .section-subtitle {
+        color: #6b7280;
+        margin: 4px 0 0 0;
+        font-size: 14px;
+    }
+    
+    .alert-section {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .alert-item {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .alert-item.info {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+    }
+    
+    .alert-item.warning {
+        background: #fffbeb;
+        border-color: #fed7aa;
+    }
+    
+    .alert-item.success {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+    }
+    
+    .alert-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    
+    .alert-title {
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .alert-time {
+        font-size: 12px;
+        color: #6b7280;
+    }
+    
+    .alert-description {
+        color: #4b5563;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="weather-dashboard">
+    <div class="page-header">
+        <h1>🌡️ Weather Monitoring</h1>
+        <p>Monitor indoor air quality, temperature, humidity, CO2 levels, and environmental conditions with Netatmo weather stations</p>
+    </div>
+    
+    <!-- Setup Notice -->
+    <div class="setup-notice">
+        <h3>🚀 Get Started with Device Setup</h3>
+        <p>Set up your Netatmo weather stations and connected modules using our guided onboarding process.</p>
+        <a href="/onboarding">Start Device Setup →</a>
+    </div>
+    
+    <!-- Weather Overview -->
+    <div class="weather-overview">
+        <div class="weather-card">
+            <h3>🌡️ Temperature</h3>
+            <div class="weather-value">22.3°</div>
+            <div class="weather-unit">Celsius</div>
+            <div class="weather-trend trend-stable">
+                <i class="fas fa-minus"></i>
+                <span>Stable</span>
+            </div>
+        </div>
+        
+        <div class="weather-card">
+            <h3>💧 Humidity</h3>
+            <div class="weather-value">45%</div>
+            <div class="weather-unit">Relative</div>
+            <div class="weather-trend trend-down">
+                <i class="fas fa-arrow-down"></i>
+                <span>-2% from yesterday</span>
+            </div>
+        </div>
+        
+        <div class="weather-card">
+            <h3>💨 CO2 Level</h3>
+            <div class="weather-value">420</div>
+            <div class="weather-unit">ppm</div>
+            <div class="health-indicator health-excellent">
+                <i class="fas fa-check-circle"></i>
+                <span>Excellent</span>
+            </div>
+        </div>
+        
+        <div class="weather-card">
+            <h3>🔇 Noise Level</h3>
+            <div class="weather-value">35</div>
+            <div class="weather-unit">dB</div>
+            <div class="weather-trend trend-stable">
+                <i class="fas fa-volume-down"></i>
+                <span>Quiet</span>
+            </div>
+        </div>
+        
+        <div class="weather-card">
+            <h3>📊 Pressure</h3>
+            <div class="weather-value">1013.2</div>
+            <div class="weather-unit">mbar</div>
+            <div class="weather-trend trend-up">
+                <i class="fas fa-arrow-up"></i>
+                <span>Rising</span>
+            </div>
+        </div>
+        
+        <div class="weather-card">
+            <h3>🏠 Health Score</h3>
+            <div class="weather-value">85</div>
+            <div class="weather-unit">/100</div>
+            <div class="health-indicator health-good">
+                <i class="fas fa-heart"></i>
+                <span>Good</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Weather Stations Section -->
+    <div class="stations-section">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">🏠 Weather Stations</h2>
+                <p class="section-subtitle">Netatmo indoor weather stations and connected modules</p>
+            </div>
+        </div>
+        
+        <!-- Mock Station Card -->
+        <div class="station-card">
+            <div class="station-header">
+                <div>
+                    <div class="station-name">Living Room Weather Station</div>
+                    <div class="station-location">Living Room</div>
+                </div>
+                <div class="station-status">
+                    <div class="status-indicator status-online"></div>
+                    <span>Online</span>
+                </div>
+            </div>
+            
+            <div class="station-modules">
+                <div class="module-card">
+                    <div class="module-name">Main Module (Indoor)</div>
+                    <div class="module-data">
+                        <div class="data-item">
+                            <div class="data-value">22.3°C</div>
+                            <div class="data-label">Temperature</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-value">45%</div>
+                            <div class="data-label">Humidity</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-value">420ppm</div>
+                            <div class="data-label">CO2</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-value">35dB</div>
+                            <div class="data-label">Noise</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="module-card">
+                    <div class="module-name">Outdoor Module</div>
+                    <div class="module-data">
+                        <div class="data-item">
+                            <div class="data-value">18.7°C</div>
+                            <div class="data-label">Temperature</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-value">62%</div>
+                            <div class="data-label">Humidity</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-value">92%</div>
+                            <div class="data-label">Battery</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-value">Good</div>
+                            <div class="data-label">Signal</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Historical Data Charts -->
+    <div class="chart-container">
+        <div class="section-header">
+            <div>
+                <h3 class="section-title">📊 Historical Data</h3>
+                <p class="section-subtitle">Track environmental trends over time</p>
+            </div>
+        </div>
+        
+        <div class="chart-tabs">
+            <button class="chart-tab active" data-chart="temperature">Temperature</button>
+            <button class="chart-tab" data-chart="humidity">Humidity</button>
+            <button class="chart-tab" data-chart="co2">CO2 Levels</button>
+            <button class="chart-tab" data-chart="pressure">Pressure</button>
+        </div>
+        
+        <div class="chart-placeholder">
+            <div>
+                <i class="fas fa-chart-line" style="font-size: 48px; margin-bottom: 16px; color: #d1d5db;"></i>
+                <div>Weather data charts will be displayed here</div>
+                <div style="font-size: 14px; margin-top: 8px;">Configure your Netatmo devices to see historical trends</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Health Recommendations -->
+    <div class="alert-section">
+        <h3>💡 Health Recommendations</h3>
+        <p>Optimize your indoor environment based on current readings</p>
+        
+        <div class="alert-item info">
+            <div class="alert-header">
+                <div class="alert-title">Optimal Temperature Range</div>
+                <div class="alert-time">Current: 22.3°C</div>
+            </div>
+            <div class="alert-description">Temperature is within the ideal range of 20-24°C for comfort and energy efficiency.</div>
+        </div>
+        
+        <div class="alert-item success">
+            <div class="alert-header">
+                <div class="alert-title">Excellent Air Quality</div>
+                <div class="alert-time">CO2: 420ppm</div>
+            </div>
+            <div class="alert-description">CO2 levels are excellent. Your indoor air quality is optimal for health and productivity.</div>
+        </div>
+        
+        <div class="alert-item info">
+            <div class="alert-header">
+                <div class="alert-title">Comfortable Humidity</div>
+                <div class="alert-time">Current: 45%</div>
+            </div>
+            <div class="alert-description">Humidity is within the ideal range of 40-60%. No action needed.</div>
+        </div>
+        
+        <div class="alert-item warning">
+            <div class="alert-header">
+                <div class="alert-title">Monitor Outdoor Module Battery</div>
+                <div class="alert-time">Battery: 92%</div>
+            </div>
+            <div class="alert-description">Outdoor module battery is good but consider replacement when it drops below 20%.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mock data for demonstration
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Weather dashboard loaded');
+    
+    // Chart tab switching
+    document.querySelectorAll('.chart-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Remove active class from all tabs
+            document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            this.classList.add('active');
+            
+            // Update chart content (placeholder for now)
+            const chartType = this.dataset.chart;
+            console.log(`Switched to ${chartType} chart`);
+        });
+    });
+    
+    // Simulate real-time updates
+    setInterval(function() {
+        // Update temperature with small random variations
+        const tempElement = document.querySelector('.weather-card:nth-child(1) .weather-value');
+        if (tempElement) {
+            const currentTemp = parseFloat(tempElement.textContent);
+            const variation = (Math.random() - 0.5) * 0.2; // ±0.1°C variation
+            const newTemp = Math.round((currentTemp + variation) * 10) / 10;
+            tempElement.textContent = newTemp + '°';
+        }
+        
+        // Update humidity
+        const humidityElement = document.querySelector('.weather-card:nth-child(2) .weather-value');
+        if (humidityElement) {
+            const currentHumidity = parseInt(humidityElement.textContent);
+            const variation = Math.round((Math.random() - 0.5) * 4); // ±2% variation
+            const newHumidity = Math.max(20, Math.min(80, currentHumidity + variation));
+            humidityElement.textContent = newHumidity + '%';
+        }
+        
+        // Update CO2
+        const co2Element = document.querySelector('.weather-card:nth-child(3) .weather-value');
+        if (co2Element) {
+            const currentCO2 = parseInt(co2Element.textContent);
+            const variation = Math.round((Math.random() - 0.5) * 20); // ±10 ppm variation
+            const newCO2 = Math.max(300, Math.min(600, currentCO2 + variation));
+            co2Element.textContent = newCO2;
+            
+            // Update health indicator based on CO2 level
+            const healthIndicator = document.querySelector('.weather-card:nth-child(3) .health-indicator');
+            if (healthIndicator) {
+                if (newCO2 <= 400) {
+                    healthIndicator.className = 'health-indicator health-excellent';
+                    healthIndicator.innerHTML = '<i class="fas fa-check-circle"></i><span>Excellent</span>';
+                } else if (newCO2 <= 600) {
+                    healthIndicator.className = 'health-indicator health-good';
+                    healthIndicator.innerHTML = '<i class="fas fa-info-circle"></i><span>Good</span>';
+                } else {
+                    healthIndicator.className = 'health-indicator health-fair';
+                    healthIndicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Fair</span>';
+                }
+            }
+        }
+    }, 10000); // Update every 10 seconds
+});
+</script>
+{% endblock %}

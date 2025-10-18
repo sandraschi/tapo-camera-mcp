@@ -146,6 +146,7 @@ class GrafanaMetricsTool(BaseTool):
 
         except Exception:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.exception("Failed to get motion events for %s", camera_id)
             return 0

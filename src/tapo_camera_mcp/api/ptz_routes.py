@@ -23,6 +23,7 @@ def get_camera_client() -> Any:
     """Dependency to get camera client - placeholder implementation."""
     return None
 
+
 # In-memory storage for demo purposes
 # In production, you'd use a database
 ptz_managers: Dict[str, PTZPresetManager] = {}

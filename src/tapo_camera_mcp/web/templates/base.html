@@ -99,6 +99,30 @@
                         <span>Recordings</span>
                     </a>
                 </li>
+                <li class="nav-item {% if request.url.path == '/onboarding' %}active{% endif %}">
+                    <a href="/onboarding">
+                        <i class="fas fa-magic"></i>
+                        <span>Device Setup</span>
+                    </a>
+                </li>
+                <li class="nav-item {% if request.url.path == '/energy' %}active{% endif %}">
+                    <a href="/energy">
+                        <i class="fas fa-bolt"></i>
+                        <span>Energy</span>
+                    </a>
+                </li>
+                <li class="nav-item {% if request.url.path == '/alarms' %}active{% endif %}">
+                    <a href="/alarms">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Alarms</span>
+                    </a>
+                </li>
+                <li class="nav-item {% if request.url.path == '/weather' %}active{% endif %}">
+                    <a href="/weather">
+                        <i class="fas fa-thermometer-half"></i>
+                        <span>Weather</span>
+                    </a>
+                </li>
                 <li class="nav-item {% if request.url.path == '/settings' %}active{% endif %}">
                     <a href="{{ url_for('settings') }}">
                         <i class="fas fa-cog"></i>

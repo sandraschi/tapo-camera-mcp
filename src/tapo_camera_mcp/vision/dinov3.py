@@ -37,6 +37,7 @@ class DINOv3Processor:
 
             # Initialize transforms
             from torchvision import transforms
+
             self.transform = transforms.Compose(
                 [
                     transforms.Resize(256, interpolation=transforms.InterpolationMode.BICUBIC),

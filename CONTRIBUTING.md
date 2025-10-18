@@ -204,15 +204,14 @@ Closes #123
 ### Code Style
 
 This project uses:
-- [Black](https://github.com/psf/black) for code formatting
-- [isort](https://pycqa.github.io/isort/) for import sorting
+- [Ruff](https://github.com/astral-sh/ruff) for code linting and formatting
 - [mypy](http://mypy-lang.org/) for static type checking
 - [pylint](https://pylint.org/) for code quality
 
 Before committing, please run:
 ```bash
-black .
-isort .
+ruff check src/ tests/
+ruff format src/ tests/
 pylint tapo_camera_mcp/
 mypy tapo_camera_mcp/
 ```

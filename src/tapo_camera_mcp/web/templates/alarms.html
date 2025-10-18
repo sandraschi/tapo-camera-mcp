@@ -1,0 +1,595 @@
+{% extends "base.html" %}
+
+{% block title %}Security Alarms - Tapo Camera MCP{% endblock %}
+
+{% block extra_css %}
+<style>
+    .alarms-dashboard {
+        padding: 20px;
+    }
+    
+    .security-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .security-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .security-card h3 {
+        margin: 0 0 16px 0;
+        color: #1f2937;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .security-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #059669;
+        margin-bottom: 8px;
+    }
+    
+    .security-unit {
+        color: #6b7280;
+        font-size: 14px;
+    }
+    
+    .security-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 12px;
+    }
+    
+    .status-secure {
+        color: #059669;
+    }
+    
+    .status-warning {
+        color: #f59e0b;
+    }
+    
+    .status-alert {
+        color: #dc2626;
+    }
+    
+    .devices-section {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        margin-bottom: 20px;
+    }
+    
+    .device-card {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 16px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+    
+    .device-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .device-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    
+    .device-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .device-location {
+        color: #6b7280;
+        font-size: 14px;
+    }
+    
+    .device-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    
+    .status-online {
+        background-color: #10b981;
+    }
+    
+    .status-offline {
+        background-color: #ef4444;
+    }
+    
+    .status-warning {
+        background-color: #f59e0b;
+    }
+    
+    .device-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+    }
+    
+    .metric {
+        text-align: center;
+    }
+    
+    .metric-value {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .metric-label {
+        font-size: 12px;
+        color: #6b7280;
+        margin-top: 4px;
+    }
+    
+    .device-controls {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+    }
+    
+    .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: none;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #2563eb;
+    }
+    
+    .btn-secondary {
+        background-color: #e5e7eb;
+        color: #374151;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #d1d5db;
+    }
+    
+    .btn-success {
+        background-color: #10b981;
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background-color: #059669;
+    }
+    
+    .btn-warning {
+        background-color: #f59e0b;
+        color: white;
+    }
+    
+    .btn-warning:hover {
+        background-color: #d97706;
+    }
+    
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .alerts-section {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .alert-item {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .alert-item.info {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+    }
+    
+    .alert-item.warning {
+        background: #fffbeb;
+        border-color: #fed7aa;
+    }
+    
+    .alert-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    
+    .alert-title {
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .alert-time {
+        font-size: 12px;
+        color: #6b7280;
+    }
+    
+    .alert-description {
+        color: #4b5563;
+        font-size: 14px;
+    }
+    
+    .setup-notice {
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .setup-notice h3 {
+        margin: 0 0 12px 0;
+        color: #92400e;
+        font-size: 18px;
+    }
+    
+    .setup-notice p {
+        margin: 0;
+        color: #92400e;
+    }
+    
+    .setup-notice a {
+        color: #92400e;
+        text-decoration: underline;
+        font-weight: 500;
+    }
+    
+    .setup-notice a:hover {
+        color: #78350f;
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .section-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+    }
+    
+    .section-subtitle {
+        color: #6b7280;
+        margin: 4px 0 0 0;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="alarms-dashboard">
+    <div class="page-header">
+        <h1>🛡️ Security Alarms</h1>
+        <p>Monitor Nest Protect smoke detectors, Ring doorbells, and other security devices</p>
+    </div>
+    
+    <!-- Setup Notice -->
+    <div class="setup-notice">
+        <h3>🚀 Get Started with Device Setup</h3>
+        <p>Set up your Nest Protect and Ring security devices using our guided onboarding process.</p>
+        <a href="/onboarding">Start Device Setup →</a>
+    </div>
+    
+    <!-- Security Overview -->
+    <div class="security-overview">
+        <div class="security-card">
+            <h3>🛡️ System Status</h3>
+            <div class="security-value">SECURE</div>
+            <div class="security-unit">All Clear</div>
+            <div class="security-status status-secure">
+                <i class="fas fa-check-circle"></i>
+                <span>No active alarms</span>
+            </div>
+        </div>
+        
+        <div class="security-card">
+            <h3>🚨 Active Devices</h3>
+            <div class="security-value">4/4</div>
+            <div class="security-unit">Online</div>
+            <div class="security-status status-secure">
+                <i class="fas fa-check-circle"></i>
+                <span>All devices operational</span>
+            </div>
+        </div>
+        
+        <div class="security-card">
+            <h3>🔋 Battery Status</h3>
+            <div class="security-value">85%</div>
+            <div class="security-unit">Average</div>
+            <div class="security-status status-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>1 device needs attention</span>
+            </div>
+        </div>
+        
+        <div class="security-card">
+            <h3>📱 Last Alert</h3>
+            <div class="security-value">2h</div>
+            <div class="security-unit">Ago</div>
+            <div class="security-status status-secure">
+                <i class="fas fa-bell"></i>
+                <span>Motion detected - Front Door</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Nest Protect Section -->
+    <div class="devices-section">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">🚨 Nest Protect</h2>
+                <p class="section-subtitle">Smoke and CO detectors</p>
+            </div>
+        </div>
+        
+        <!-- Mock Nest Protect Devices -->
+        <div class="device-card">
+            <div class="device-header">
+                <div>
+                    <div class="device-name">Kitchen Smoke Detector</div>
+                    <div class="device-location">Kitchen</div>
+                </div>
+                <div class="device-status">
+                    <div class="status-indicator status-online"></div>
+                    <span>Online</span>
+                </div>
+            </div>
+            
+            <div class="device-metrics">
+                <div class="metric">
+                    <div class="metric-value">Normal</div>
+                    <div class="metric-label">Smoke Level</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">Normal</div>
+                    <div class="metric-label">CO Level</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">85%</div>
+                    <div class="metric-label">Battery</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">WiFi</div>
+                    <div class="metric-label">Connection</div>
+                </div>
+            </div>
+            
+            <div class="device-controls">
+                <button class="btn btn-secondary">Test Alarm</button>
+                <button class="btn btn-secondary">View History</button>
+                <button class="btn btn-primary">Settings</button>
+            </div>
+        </div>
+        
+        <div class="device-card">
+            <div class="device-header">
+                <div>
+                    <div class="device-name">Living Room CO Detector</div>
+                    <div class="device-location">Living Room</div>
+                </div>
+                <div class="device-status">
+                    <div class="status-indicator status-warning"></div>
+                    <span>Low Battery</span>
+                </div>
+            </div>
+            
+            <div class="device-metrics">
+                <div class="metric">
+                    <div class="metric-value">Normal</div>
+                    <div class="metric-label">Smoke Level</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">Normal</div>
+                    <div class="metric-label">CO Level</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">15%</div>
+                    <div class="metric-label">Battery</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">WiFi</div>
+                    <div class="metric-label">Connection</div>
+                </div>
+            </div>
+            
+            <div class="device-controls">
+                <button class="btn btn-warning">Replace Battery</button>
+                <button class="btn btn-secondary">View History</button>
+                <button class="btn btn-primary">Settings</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ring Devices Section -->
+    <div class="devices-section">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">🔔 Ring Devices</h2>
+                <p class="section-subtitle">Doorbells, cameras, and sensors</p>
+            </div>
+        </div>
+        
+        <!-- Mock Ring Devices -->
+        <div class="device-card">
+            <div class="device-header">
+                <div>
+                    <div class="device-name">Front Door Camera</div>
+                    <div class="device-location">Front Door</div>
+                </div>
+                <div class="device-status">
+                    <div class="status-indicator status-online"></div>
+                    <span>Online</span>
+                </div>
+            </div>
+            
+            <div class="device-metrics">
+                <div class="metric">
+                    <div class="metric-value">78%</div>
+                    <div class="metric-label">Battery</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">Enabled</div>
+                    <div class="metric-label">Motion Detection</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">Enabled</div>
+                    <div class="metric-label">Night Vision</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">2h ago</div>
+                    <div class="metric-label">Last Motion</div>
+                </div>
+            </div>
+            
+            <div class="device-controls">
+                <button class="btn btn-primary">Live View</button>
+                <button class="btn btn-secondary">Motion History</button>
+                <button class="btn btn-secondary">Settings</button>
+            </div>
+        </div>
+        
+        <div class="device-card">
+            <div class="device-header">
+                <div>
+                    <div class="device-name">Garage Door Sensor</div>
+                    <div class="device-location">Garage</div>
+                </div>
+                <div class="device-status">
+                    <div class="status-indicator status-online"></div>
+                    <span>Online</span>
+                </div>
+            </div>
+            
+            <div class="device-metrics">
+                <div class="metric">
+                    <div class="metric-value">Closed</div>
+                    <div class="metric-label">Door Status</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">92%</div>
+                    <div class="metric-label">Battery</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">Enabled</div>
+                    <div class="metric-label">Alerts</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">1d ago</div>
+                    <div class="metric-label">Last Alert</div>
+                </div>
+            </div>
+            
+            <div class="device-controls">
+                <button class="btn btn-secondary">History</button>
+                <button class="btn btn-secondary">Test Sensor</button>
+                <button class="btn btn-primary">Settings</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Alerts -->
+    <div class="alerts-section">
+        <h3>📋 Recent Alerts</h3>
+        <p>Latest security events and notifications</p>
+        
+        <div class="alert-item info">
+            <div class="alert-header">
+                <div class="alert-title">Motion Detected</div>
+                <div class="alert-time">2 hours ago</div>
+            </div>
+            <div class="alert-description">Front Door Camera detected motion at the front entrance</div>
+        </div>
+        
+        <div class="alert-item warning">
+            <div class="alert-header">
+                <div class="alert-title">Low Battery Warning</div>
+                <div class="alert-time">4 hours ago</div>
+            </div>
+            <div class="alert-description">Living Room CO Detector battery is at 15%</div>
+        </div>
+        
+        <div class="alert-item info">
+            <div class="alert-header">
+                <div class="alert-title">Garage Door Opened</div>
+                <div class="alert-time">1 day ago</div>
+            </div>
+            <div class="alert-description">Garage Door Sensor detected door opening</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mock data for demonstration
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Alarms dashboard loaded');
+    
+    // Add click handlers for device controls
+    document.querySelectorAll('.device-controls .btn').forEach(button => {
+        if (!button.disabled) {
+            button.addEventListener('click', function() {
+                const action = this.textContent.trim();
+                const deviceName = this.closest('.device-card').querySelector('.device-name').textContent;
+                
+                alert(`${action} ${deviceName}`);
+                
+                // Simulate action
+                if (action === 'Test Alarm') {
+                    alert('🔔 Test alarm triggered!');
+                } else if (action === 'Live View') {
+                    alert('📹 Opening live camera view...');
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

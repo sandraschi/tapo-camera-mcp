@@ -9,7 +9,7 @@ from fastmcp.server import FastMCP
 
 from tapo_camera_mcp.core.server import TapoCameraServer
 from tapo_camera_mcp.exceptions import AuthenticationError, ConnectionError
-from tapo_camera_mcp.tools.camera import GetCameraInfoTool
+from tapo_camera_mcp.tools.camera import CameraInfoTool
 
 # Test data
 TEST_CONFIG = {
@@ -161,7 +161,7 @@ async def test_handle_get_camera_info(tapo_camera, mock_session):
     mock_session.request.return_value.__aenter__.return_value = mock_response
 
     # Call the method that handles get_camera_info
-    tool = GetCameraInfoTool()
+    tool = CameraInfoTool()
     result = await tool.execute({})
 
     # Verify the response
