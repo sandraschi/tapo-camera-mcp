@@ -1,11 +1,16 @@
 """
-Smart Automation Tool for Tapo Camera MCP
+[MOCK/SCAFFOLD] Smart Automation Tool for Tapo Camera MCP
+
+⚠️ WARNING: This is a MOCK implementation that returns simulated data!
 
 This tool provides intelligent automation capabilities including:
 - Smart scheduling based on patterns
 - Conditional automation rules
 - Integration with external systems
 - Predictive maintenance alerts
+
+NOTE: Currently returns fake data and simulated responses.
+Real implementation would require actual camera integration.
 """
 
 import logging
@@ -43,23 +48,28 @@ class AutomationSchedule(BaseModel):
 
 @tool("smart_automation")
 class SmartAutomationTool(BaseTool):
-    """Smart automation and scheduling tool.
+    """[MOCK] Smart automation and scheduling tool.
+
+    ⚠️ WARNING: This is a MOCK implementation that returns simulated data!
 
     Provides intelligent automation capabilities including smart scheduling
     based on patterns, conditional automation rules, integration with external
     systems, and predictive maintenance alerts.
+
+    NOTE: All conditions always return True, all actions return fake success messages.
+    This is a scaffold for future implementation.
 
     Parameters:
         action: Action to perform (create_rule, list_rules, execute_rule, create_schedule, etc.)
         **kwargs: Additional parameters for the action
 
     Returns:
-        Dict with automation operation results
+        Dict with simulated automation operation results
     """
 
     class Meta:
         name = "smart_automation"
-        description = "Intelligent automation system with smart scheduling, conditional rules, and predictive maintenance"
+        description = "[MOCK] Intelligent automation system with smart scheduling, conditional rules, and predictive maintenance"
         category = ToolCategory.UTILITY
 
         class Parameters:
@@ -83,26 +93,23 @@ class SmartAutomationTool(BaseTool):
             **kwargs: Additional parameters for the action
         """
         try:
-            if action == "create_rule":
-                return await self._create_automation_rule(**kwargs)
-            if action == "list_rules":
-                return await self._list_automation_rules()
-            if action == "execute_rule":
-                return await self._execute_automation_rule(**kwargs)
-            if action == "create_schedule":
-                return await self._create_automation_schedule(**kwargs)
-            if action == "list_schedules":
-                return await self._list_automation_schedules()
-            if action == "smart_analysis":
-                return await self._perform_smart_analysis(**kwargs)
-            if action == "predictive_maintenance":
-                return await self._predictive_maintenance_check(**kwargs)
-            if action == "pattern_analysis":
-                return await self._analyze_usage_patterns(**kwargs)
-            return {"error": f"Unknown action: {action}"}
+            action_map = {
+                "create_rule": self._create_automation_rule,
+                "list_rules": self._list_automation_rules,
+                "execute_rule": self._execute_automation_rule,
+                "create_schedule": self._create_automation_schedule,
+                "list_schedules": self._list_automation_schedules,
+                "smart_analysis": self._perform_smart_analysis,
+                "predictive_maintenance": self._predictive_maintenance_check,
+                "pattern_analysis": self._analyze_usage_patterns,
+            }
+
+            if action in action_map:
+                return await action_map[action](**kwargs)
+            return {"error": f"Unknown action: {action}"}  # noqa: TRY300
 
         except Exception as e:
-            logger.exception("Smart automation operation failed: %s", e)
+            logger.exception("Smart automation operation failed")
             return {"error": str(e)}
 
     async def _create_automation_rule(
@@ -244,7 +251,7 @@ class SmartAutomationTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Smart analysis failed: %s", e)
+            logger.exception("Smart analysis failed")
             return {"error": str(e)}
 
     async def _predictive_maintenance_check(self) -> Dict[str, Any]:
@@ -277,12 +284,12 @@ class SmartAutomationTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Predictive maintenance check failed: %s", e)
+            logger.exception("Predictive maintenance check failed")
             return {"error": str(e)}
 
     async def _analyze_usage_patterns(self) -> Dict[str, Any]:
         """Analyze camera usage patterns."""
-        # Simulate usage pattern analysis
+        # ⚠️ MOCK: Simulate usage pattern analysis - returns hardcoded fake data
         return {
             "peak_usage_hours": [9, 10, 11, 14, 15, 16, 19, 20, 21],
             "low_usage_hours": [0, 1, 2, 3, 4, 5, 6],
@@ -328,24 +335,25 @@ class SmartAutomationTool(BaseTool):
         self._rules[motion_rule.rule_id] = motion_rule
         self._rules[cpu_rule.rule_id] = cpu_rule
 
-    async def _check_rule_conditions(self, conditions: Dict[str, Any]) -> bool:
+    async def _check_rule_conditions(self, _conditions: Dict[str, Any]) -> bool:
         """Check if rule conditions are met."""
-        # Simplified condition checking - in real implementation this would
+        # ⚠️ MOCK: Simplified condition checking - in real implementation this would
         # integrate with actual camera and system monitoring
-        return True  # For simulation
+        return True  # ⚠️ MOCK: Always returns True for simulation
 
     async def _execute_action(self, action: Dict[str, Any]) -> Dict[str, Any]:
         """Execute a single automation action."""
+        # ⚠️ MOCK: All actions return fake success messages without actually doing anything
         action_type = action.get("action")
 
         if action_type == "send_notification":
-            return {"status": "success", "message": "Notification sent"}
+            return {"status": "success", "message": "Notification sent"}  # ⚠️ MOCK
         if action_type == "capture_snapshot":
-            return {"status": "success", "message": "Snapshot captured"}
+            return {"status": "success", "message": "Snapshot captured"}  # ⚠️ MOCK
         if action_type == "send_alert":
-            return {"status": "success", "message": "Alert sent"}
+            return {"status": "success", "message": "Alert sent"}  # ⚠️ MOCK
         if action_type == "optimize_camera_streams":
-            return {"status": "success", "message": "Camera streams optimized"}
+            return {"status": "success", "message": "Camera streams optimized"}  # ⚠️ MOCK
         return {"status": "error", "message": f"Unknown action: {action_type}"}
 
     async def _generate_optimization_suggestions(self) -> List[str]:
@@ -398,7 +406,7 @@ class SmartAutomationTool(BaseTool):
         """Check firmware status."""
         return {"status": "current", "message": "All cameras on latest firmware"}
 
-    def _generate_smart_analysis_summary(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_smart_analysis_summary(self, _analysis: Dict[str, Any]) -> Dict[str, Any]:
         """Generate smart analysis summary."""
         return {
             "overall_health": "excellent",

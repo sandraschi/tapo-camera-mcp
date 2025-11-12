@@ -60,7 +60,7 @@ def create_mcp_server() -> FastMCP:
             def create_sync_tool_wrapper(tool_instance, tool_name):
                 """Create a synchronous tool wrapper."""
 
-                def sync_tool_wrapper(*args, **kwargs):
+                def sync_tool_wrapper(*_args, **kwargs):
                     """Synchronous wrapper for tool execution."""
                     try:
                         # Try to call the tool synchronously
@@ -76,7 +76,7 @@ def create_mcp_server() -> FastMCP:
                         return result
 
                     except Exception as e:
-                        logger.exception(f"Error executing tool {tool_name}: {e}")
+                        logger.exception(f"Error executing tool {tool_name}")
                         return {"error": str(e), "success": False}
 
                 return sync_tool_wrapper
@@ -128,7 +128,7 @@ def run_direct_server():
 
     except KeyboardInterrupt:
         logger.info("Server shutdown requested")
-    except Exception as e:
-        logger.exception(f"Direct server error: {e}")
+    except Exception:
+        logger.exception("Direct server error")
         logger.exception("Full traceback:")
         raise

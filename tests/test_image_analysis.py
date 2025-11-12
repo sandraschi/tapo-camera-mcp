@@ -63,7 +63,7 @@ class TestImageAnalysis(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result["analysis_ready"])
         self.assertEqual(result["prompt"], "Describe this image")
 
-    @patch("tapo_camera_mcp.server_v2.TapoCameraServer._analyze_image")
+    @patch("tapo_camera_mcp.core.server.TapoCameraServer._analyze_image")
     async def test_capture_still(self, mock_analyze):
         """Test capturing a still image with analysis."""
         # Mock camera response
@@ -93,7 +93,7 @@ class TestImageAnalysis(unittest.IsolatedAsyncioTestCase):
         self.assertIn("analysis", result)
         self.assertTrue(os.path.exists(result["saved_path"]))
 
-    @patch("tapo_camera_mcp.server_v2.TapoCameraServer.capture_still")
+    @patch("tapo_camera_mcp.core.server.TapoCameraServer.capture_still")
     async def test_security_scan(self, mock_capture):
         """Test security scan functionality."""
         # Mock capture response

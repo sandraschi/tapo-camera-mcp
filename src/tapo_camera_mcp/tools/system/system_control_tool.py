@@ -49,7 +49,7 @@ class SystemControlTool(BaseTool):
                 "overview", description="Status type: 'overview', 'detailed', 'services'"
             )
 
-    async def _run(
+    async def execute(
         self,
         operation: str,
         camera_id: Optional[str] = None,
@@ -71,7 +71,7 @@ class SystemControlTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"System control {operation} operation failed: {e}")
+            logger.exception(f"System control {operation} operation failed")
             return {
                 "success": False,
                 "error": str(e),

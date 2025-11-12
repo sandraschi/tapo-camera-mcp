@@ -6,24 +6,25 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional
 
-logger = logging.getLogger(__name__)
-
 import cv2
 from PIL import Image
 
 from .base import BaseCamera, CameraFactory, CameraType
+
+logger = logging.getLogger(__name__)
 
 
 @CameraFactory.register(CameraType.WEBCAM)
 class WebCamera(BaseCamera):
     """Webcam implementation using OpenCV."""
 
-    def __init__(self, config):
+    def __init__(self, config, mock_webcam=None):
         super().__init__(config)
         self._cap = None
         self._device_id = int(self.config.params.get("device_id", 0))
         self._frame = None
         self._frame_lock = asyncio.Lock()
+        self._mock_webcam = mock_webcam
 
     async def _capture_loop(self):
         """Background task to capture frames."""
@@ -37,20 +38,27 @@ class WebCamera(BaseCamera):
     async def connect(self) -> bool:
         """Initialize connection to the webcam."""
         try:
-            self._cap = cv2.VideoCapture(self._device_id)
-            if not self._cap.isOpened():
-                raise RuntimeError(f"Could not open webcam device {self._device_id}")
-
-            self._is_connected = True
-            self._capture_task = asyncio.create_task(self._capture_loop())
-            return True
+            if self._mock_webcam:
+                # Use mock webcam for testing
+                self._cap = self._mock_webcam
+                await self._cap.connect()
+            else:
+                # Use real webcam for production
+                self._cap = cv2.VideoCapture(self._device_id)
+                if not self._cap.isOpened():
+                    raise RuntimeError(f"Could not open webcam device {self._device_id}")  # noqa: TRY301
 
         except Exception as e:
             self._is_connected = False
-            if self._cap:
+            if self._cap and not self._mock_webcam:
                 self._cap.release()
                 self._cap = None
             raise ConnectionError(f"Failed to connect to webcam: {e}") from e
+        else:
+            self._is_connected = True
+            if not self._mock_webcam:
+                self._capture_task = asyncio.create_task(self._capture_loop())
+            return True
 
     async def disconnect(self) -> None:
         """Close connection to the webcam."""
@@ -72,7 +80,7 @@ class WebCamera(BaseCamera):
         try:
             async with self._frame_lock:
                 if self._frame is None:
-                    raise RuntimeError("No frame available from webcam")
+                    raise RuntimeError("No frame available from webcam")  # noqa: TRY301
 
                 # Convert BGR to RGB
                 frame_rgb = cv2.cvtColor(self._frame, cv2.COLOR_BGR2RGB)
@@ -156,8 +164,6 @@ class WebCamera(BaseCamera):
                 except Exception as e:
                     info["resolution_info_error"] = str(e)
 
-            return info
-
         except Exception as e:
             return {
                 "name": self.config.name,
@@ -165,3 +171,5 @@ class WebCamera(BaseCamera):
                 "device_id": self._device_id,
                 "error": f"Failed to get camera info: {e}",
             }
+        else:
+            return info

@@ -1,20 +1,22 @@
-# 🏠 Home Security Dashboard MCP
+# 🏠 Home Security MCP Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python Version](https://img.shields.io/pypi/pyversions/tapo-camera-mcp)](https://www.python.org/)
+[![Python Version](https://img.shields.io/pypi/pyversions/home-security-mcp-platform)](https://www.python.org/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![MCP Version](https://img.shields.io/badge/MCP-2.12.0-blue)](https://mcp-standard.org)
+[![Security Platform](https://img.shields.io/badge/Platform-Home%20Security-orange)](https://github.com/sandraschi/tapo-camera-mcp)
 [![Dashboard](https://img.shields.io/badge/Dashboard-Live-green)](http://localhost:7777)
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-success)](https://github.com/sandraschi/tapo-camera-mcp)
+[![Multi-Device](https://img.shields.io/badge/Devices-Tapo%20%7C%20Ring%20%7C%20Nest%20%7C%20USB-blue)](https://github.com/sandraschi/tapo-camera-mcp)
+[![Status](https://img.shields.io/badge/Status-Beta-orange)](https://github.com/sandraschi/tapo-camera-mcp)
 
-🚀 **PRODUCTION READY**: Unified home security dashboard with comprehensive device onboarding, dual MCP architecture - serving as both individual camera MCP servers AND a complete security and energy monitoring platform.
+🚀 **BETA STATUS**: Comprehensive home security platform with unified surveillance dashboard, multi-device MCP architecture - serving as both individual device MCP servers AND a complete security monitoring ecosystem.
 
 ## 🏗️ **DUAL ARCHITECTURE OVERVIEW**
 
-**This repository has evolved into a sophisticated dual-role platform:**
+**This repository has evolved into a comprehensive home security platform with dual-role architecture:**
 
-### **🎯 Role 1: Individual MCP Servers**
-**Standalone MCP servers** for specific device types that can run independently:
+### **🎯 Role 1: Individual Security Device MCP Servers**
+**Standalone MCP servers** for specific security device types that can run independently:
 - **Tapo Camera MCP**: TP-Link camera control and monitoring
 - **USB Webcam MCP**: Direct webcam management
 - **Ring MCP**: Doorbell and security camera integration
@@ -27,7 +29,7 @@
 - **Real-time Monitoring**: Live status updates from all integrated devices
 - **Remote Access**: Mobile monitoring via Tailscale VPN
 
-**The dashboard serves as the "conductor" that brings together multiple specialized "instruments" (MCP servers) into a cohesive security symphony.**
+**The platform serves as the "conductor" that brings together multiple specialized security devices (MCP servers) into a cohesive home surveillance ecosystem.**
 
 ## 🏆 **MAJOR ACHIEVEMENT - LIVE DASHBOARD WORKING!**
 

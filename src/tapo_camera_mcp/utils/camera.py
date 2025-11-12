@@ -139,7 +139,7 @@ class CameraManager:
             resolution="1920x1080",  # Example
         )
 
-    async def get_ptz_position(self, camera_id: str) -> PTZPosition:
+    async def get_ptz_position(self, _camera_id: str) -> PTZPosition:
         """
         Get the current PTZ position of a camera.
 
@@ -172,7 +172,7 @@ class CameraManager:
         # This would contain actual PTZ movement logic
         logger.info(f"Moving camera {camera_id} {direction} at speed {speed}")
 
-    async def take_snapshot(self, camera_id: str) -> bytes:
+    async def take_snapshot(self, _camera_id: str) -> bytes:
         """
         Take a snapshot from the camera.
 

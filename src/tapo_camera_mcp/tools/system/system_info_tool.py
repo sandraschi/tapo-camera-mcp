@@ -54,7 +54,7 @@ class SystemInfoTool(BaseTool):
                 "quick", description="Health check type: 'full', 'quick', 'services'"
             )
 
-    async def _run(
+    async def execute(
         self,
         operation: str,
         log_level: str = "info",
@@ -78,7 +78,7 @@ class SystemInfoTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"System {operation} operation failed: {e}")
+            logger.exception(f"System {operation} operation failed")
             return {
                 "success": False,
                 "error": str(e),

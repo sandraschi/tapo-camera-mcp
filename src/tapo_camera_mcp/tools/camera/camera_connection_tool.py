@@ -50,7 +50,7 @@ class CameraConnectionTool(BaseTool):
                 "direct", description="Connection type: 'direct', 'cloud', 'local'"
             )
 
-    async def _run(
+    async def execute(
         self,
         operation: str,
         camera_id: str,
@@ -73,7 +73,7 @@ class CameraConnectionTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Camera connection {operation} operation failed: {e}")
+            logger.exception(f"Camera connection {operation} operation failed")
             return {
                 "success": False,
                 "error": str(e),

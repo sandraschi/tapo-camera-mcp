@@ -75,7 +75,7 @@ class PerformanceAnalyzerTool(BaseTool):
             return {"error": f"Unknown operation: {operation}"}
 
         except Exception as e:
-            logger.exception("Performance analysis failed: %s", e)
+            logger.exception("Performance analysis failed")
             return {"error": str(e)}
 
     async def _full_performance_analysis(self) -> Dict[str, Any]:
@@ -123,7 +123,7 @@ class PerformanceAnalyzerTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Camera operations analysis failed: %s", e)
+            logger.exception("Camera operations analysis failed")
             return {"error": str(e)}
 
     async def _system_resources_analysis(self) -> Dict[str, Any]:
@@ -164,7 +164,7 @@ class PerformanceAnalyzerTool(BaseTool):
         except ImportError:
             return {"error": "psutil not available for system analysis"}
         except Exception as e:
-            logger.exception("System resources analysis failed: %s", e)
+            logger.exception("System resources analysis failed")
             return {"error": str(e)}
 
     async def _network_performance_analysis(self) -> Dict[str, Any]:
@@ -184,7 +184,7 @@ class PerformanceAnalyzerTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Network performance analysis failed: %s", e)
+            logger.exception("Network performance analysis failed")
             return {"error": str(e)}
 
     def _calculate_performance_grade(self, avg_duration: float, success_rate: float) -> str:
@@ -230,7 +230,7 @@ class PerformanceAnalyzerTool(BaseTool):
             "Use local storage for snapshots to reduce network load",
         ]
 
-    def _generate_summary(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_summary(self, _analysis: Dict[str, Any]) -> Dict[str, Any]:
         """Generate performance analysis summary."""
         return {
             "overall_grade": "A",

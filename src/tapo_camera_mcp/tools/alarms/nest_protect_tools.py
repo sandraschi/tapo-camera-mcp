@@ -52,7 +52,7 @@ class NestProtectManager:
         self.alerts: List[NestProtectAlert] = []
         self._initialized = False
 
-    async def initialize(self, google_account: Dict[str, str]) -> bool:
+    async def initialize(self, _google_account: Dict[str, str]) -> bool:
         """Initialize connection to Nest Protect API."""
         try:
             # In real implementation, this would connect to Google Nest API
@@ -66,8 +66,8 @@ class NestProtectManager:
             logger.info("Nest Protect connection initialized successfully")
             return True
 
-        except Exception as e:
-            logger.exception("Failed to initialize Nest Protect: %s", e)
+        except Exception:
+            logger.exception("Failed to initialize Nest Protect")
             return False
 
     async def _discover_devices(self):
@@ -130,7 +130,7 @@ class NestProtectManager:
 
         return self.devices.get(device_id)
 
-    async def get_recent_alerts(self, hours: int = 24) -> List[NestProtectAlert]:
+    async def get_recent_alerts(self, _hours: int = 24) -> List[NestProtectAlert]:
         """Get recent alerts from Nest Protect devices."""
         if not self._initialized:
             await self.initialize({})
@@ -175,8 +175,8 @@ class NestProtectManager:
 
             return True
 
-        except Exception as e:
-            logger.exception("Failed to trigger test on device %s: %s", device_id, e)
+        except Exception:
+            logger.exception("Failed to trigger test on device %s", device_id)
             return False
 
 
@@ -225,7 +225,7 @@ class GetNestProtectStatusTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Failed to get Nest Protect status: %s", e)
+            logger.exception("Failed to get Nest Protect status")
             return {"error": str(e)}
 
 
@@ -284,7 +284,7 @@ class GetNestProtectAlertsTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Failed to get Nest Protect alerts: %s", e)
+            logger.exception("Failed to get Nest Protect alerts")
             return {"error": str(e)}
 
 
@@ -335,7 +335,7 @@ class TestNestProtectDeviceTool(BaseTool):
             return {"error": f"Failed to trigger test on device {device_id}"}
 
         except Exception as e:
-            logger.exception("Failed to test Nest Protect device %s: %s", device_id, e)
+            logger.exception("Failed to test Nest Protect device %s", device_id)
             return {"error": str(e)}
 
 
@@ -398,7 +398,7 @@ class GetNestProtectBatteryStatusTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Failed to get Nest Protect battery status: %s", e)
+            logger.exception("Failed to get Nest Protect battery status")
             return {"error": str(e)}
 
 
@@ -478,5 +478,5 @@ class CorrelateNestCameraEventsTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Failed to correlate Nest Protect events: %s", e)
+            logger.exception("Failed to correlate Nest Protect events")
             return {"error": str(e)}

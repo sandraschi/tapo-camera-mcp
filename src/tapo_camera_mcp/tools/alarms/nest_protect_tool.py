@@ -50,7 +50,7 @@ class NestProtectTool(BaseTool):
                 None, description="Alert type filter: 'smoke', 'co', 'test'"
             )
 
-    async def _run(
+    async def execute(
         self,
         operation: str,
         device_id: Optional[str] = None,
@@ -73,7 +73,7 @@ class NestProtectTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Nest Protect {operation} operation failed: {e}")
+            logger.exception(f"Nest Protect {operation} operation failed")
             return {
                 "success": False,
                 "error": str(e),

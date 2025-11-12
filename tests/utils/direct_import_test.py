@@ -54,7 +54,7 @@ def main():
         results[module] = test_import(module)
 
     # Print summary
-    for module, _success in results.items():
+    for _module, _success in results.items():
         pass
 
     # Return non-zero exit code if any import failed

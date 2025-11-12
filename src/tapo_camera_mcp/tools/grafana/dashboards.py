@@ -17,7 +17,7 @@ class ViennaDashboardTool(BaseTool):
         )
         category: ToolCategory = ToolCategory.UTILITY
 
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    async def execute(self, **_kwargs) -> Dict[str, Any]:
         """Generate dashboard data with Vienna context."""
         try:
             # Get camera manager instance

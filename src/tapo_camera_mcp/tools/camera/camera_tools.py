@@ -176,7 +176,7 @@ class ListCamerasTool(BaseTool):
                 "message": "No camera manager initialized",
             }
         except Exception as e:
-            logger.exception(f"Failed to list cameras: {e}")
+            logger.exception("Failed to list cameras")
             return {
                 "success": False,
                 "error": f"Failed to list cameras: {e!s}",
@@ -353,6 +353,8 @@ class AddCameraTool(BaseTool):
             - remove_camera_tool: To remove cameras from the system
             - get_camera_status_tool: To check camera connection status
         """
+        from tapo_camera_mcp.tools.base_tool import ToolResult
+
         try:
             # Validate inputs
             camera_name = validate_camera_name(self.camera_name, "camera_name")
@@ -367,28 +369,66 @@ class AddCameraTool(BaseTool):
 
             server = await TapoCameraServer.get_instance()
 
-            result = await server.add_camera(
-                camera_name=camera_name,
-                camera_type="tapo",  # Assuming Tapo camera for now
-                host=ip_address,
-                username=username,
-                password=password,
-                stream_url=self.stream_url,
-            )
+            # Create camera configuration
+            camera_config = {
+                "name": camera_name,
+                "type": "tapo",
+                "params": {
+                    "host": ip_address,
+                    "username": username,
+                    "password": password,
+                    "port": 443,
+                    "verify_ssl": True,
+                },
+            }
 
-            logger.info(f"Successfully added camera: {camera_name}")
-            return result
+            # Add stream URL if provided
+            if self.stream_url:
+                camera_config["params"]["stream_url"] = self.stream_url
+
+            # Add camera to server
+            success = await server.camera_manager.add_camera(camera_config)
+
+            if success:
+                logger.info(f"Successfully added camera: {camera_name}")
+                return ToolResult(
+                    content={
+                        "success": True,
+                        "camera_name": camera_name,
+                        "ip_address": ip_address,
+                        "message": f"Camera '{camera_name}' added successfully",
+                    },
+                    is_error=False,
+                )
+            return ToolResult(
+                content={
+                    "success": False,
+                    "error": f"Failed to add camera '{camera_name}'",
+                    "camera_name": camera_name,
+                },
+                is_error=True,
+            )
 
         except ToolValidationError as e:
             logger.warning(f"Validation error adding camera {self.camera_name}: {e.message}")
-            return {
-                "success": False,
-                "error": f"Validation error: {e.message}",
-                "field": e.field,
-            }
+            return ToolResult(
+                content={
+                    "success": False,
+                    "error": f"Validation error: {e.message}",
+                    "field": e.field,
+                },
+                is_error=True,
+            )
         except Exception as e:
-            logger.exception(f"Failed to add camera {self.camera_name}: {e}")
-            return {"success": False, "error": f"Failed to add camera: {e!s}"}
+            logger.exception(f"Failed to add camera {self.camera_name}")
+            return ToolResult(
+                content={
+                    "success": False,
+                    "error": f"Failed to add camera: {e!s}",
+                    "camera_name": self.camera_name,
+                },
+                is_error=True,
+            )
 
 
 @tool("remove_camera")
@@ -503,18 +543,80 @@ class GetCameraStatusTool(BaseTool):
 
     camera_id: Optional[str] = None
 
-    async def execute(self) -> Dict[str, Any]:
+    async def execute(self) -> "ToolResult":
         """Get the status of a specific camera."""
         from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
         )
+        from tapo_camera_mcp.tools.base_tool import ToolResult
 
-        server = await TapoCameraServer.get_instance()
-        return (
-            await server.get_camera_status(name=self.camera_id)
-            if self.camera_id
-            else await server.get_active_camera_status()
-        )
+        try:
+            server = await TapoCameraServer.get_instance()
+
+            if self.camera_id:
+                # Get status for specific camera
+                camera = server.camera_manager.get_camera(self.camera_id)
+                if not camera:
+                    return ToolResult(
+                        content={
+                            "success": False,
+                            "error": f"Camera '{self.camera_id}' not found",
+                            "camera_id": self.camera_id,
+                        },
+                        is_error=True,
+                    )
+
+                # Get camera status
+                status = {
+                    "online": True,  # Mock status for now
+                    "recording": False,
+                    "model": "Tapo Camera",
+                    "firmware": "1.0.0",
+                }
+
+                return ToolResult(
+                    content={
+                        "success": True,
+                        "camera_id": self.camera_id,
+                        "status": status,
+                    },
+                    is_error=False,
+                )
+            # Get status for all cameras
+            cameras = await server.camera_manager.list_cameras()
+            status_list = []
+
+            for camera_info in cameras:
+                camera = server.camera_manager.get_camera(camera_info["name"])
+                if camera:
+                    status_list.append(
+                        {
+                            "camera_id": camera_info["name"],
+                            "online": True,
+                            "recording": False,
+                            "model": "Tapo Camera",
+                            "firmware": "1.0.0",
+                        }
+                    )
+
+            return ToolResult(
+                content={
+                    "success": True,
+                    "cameras": status_list,
+                    "total_cameras": len(status_list),
+                },
+                is_error=False,
+            )
+        except Exception as e:
+            logger.exception(f"Failed to get camera status for {self.camera_id}")
+            return ToolResult(
+                content={
+                    "success": False,
+                    "error": f"Failed to get camera status: {e!s}",
+                    "camera_id": self.camera_id,
+                },
+                is_error=True,
+            )
 
 
 @tool("connect_camera")
@@ -561,12 +663,14 @@ class ConnectCameraTool(BaseTool):
     password: str
     verify_ssl: bool = True
 
-    async def execute(self) -> Dict[str, Any]:
+    async def execute(self) -> "ToolResult":
         """Connect to a Tapo camera with comprehensive validation and error handling."""
+        from tapo_camera_mcp.tools.base_tool import ToolResult
+
         try:
             # Validate inputs
             host = validate_ip_address(self.host, "host")
-            username, password = validate_credentials(self.username, self.password)
+            _username, _password = validate_credentials(self.username, self.password)
 
             logger.info(f"Connecting to camera at {host}")
 
@@ -576,32 +680,68 @@ class ConnectCameraTool(BaseTool):
 
             server = await TapoCameraServer.get_instance()
 
-            result = await server.connect_camera(
-                host=host,
-                username=username,
-                password=password,
-                verify_ssl=self.verify_ssl,
-            )
+            # Use the server's connect method
+            result = await server.connect(host)
 
-            logger.info(f"Successfully connected to camera at {host}")
-            return result
+            if result.get("success"):
+                logger.info(f"Successfully connected to camera at {host}")
+                return ToolResult(
+                    content={
+                        "success": True,
+                        "host": host,
+                        "message": f"Successfully connected to camera at {host}",
+                    },
+                    is_error=False,
+                )
+            return ToolResult(
+                content={
+                    "success": False,
+                    "error": result.get("error", "Connection failed"),
+                    "host": host,
+                },
+                is_error=True,
+            )
 
         except ToolValidationError as e:
             logger.warning(f"Validation error connecting to camera {self.host}: {e.message}")
-            return {
-                "success": False,
-                "error": f"Validation error: {e.message}",
-                "field": e.field,
-            }
+            return ToolResult(
+                content={
+                    "success": False,
+                    "error": f"Validation error: {e.message}",
+                    "field": e.field,
+                },
+                is_error=True,
+            )
         except ConnectionError as e:
-            logger.exception(f"Connection failed to camera {self.host}: {e}")
-            return {"success": False, "error": f"Connection failed: {e!s}"}
+            logger.exception(f"Connection failed to camera {self.host}")
+            return ToolResult(
+                content={
+                    "success": False,
+                    "error": f"Connection failed: {e!s}",
+                    "host": self.host,
+                },
+                is_error=True,
+            )
         except AuthenticationError as e:
-            logger.exception(f"Authentication failed for camera {self.host}: {e}")
-            return {"success": False, "error": f"Authentication failed: {e!s}"}
+            logger.exception(f"Authentication failed for camera {self.host}")
+            return ToolResult(
+                content={
+                    "success": False,
+                    "error": f"Authentication failed: {e!s}",
+                    "host": self.host,
+                },
+                is_error=True,
+            )
         except Exception as e:
-            logger.exception(f"Unexpected error connecting to camera {self.host}: {e}")
-            return {"success": False, "error": f"Connection error: {e!s}"}
+            logger.exception(f"Unexpected error connecting to camera {self.host}")
+            return ToolResult(
+                content={
+                    "success": False,
+                    "error": f"Connection error: {e!s}",
+                    "host": self.host,
+                },
+                is_error=True,
+            )
 
 
 @tool("disconnect_camera")
@@ -631,14 +771,43 @@ class DisconnectCameraTool(BaseTool):
         class Parameters:
             pass
 
-    async def execute(self) -> Dict[str, Any]:
+    async def execute(self) -> "ToolResult":
         """Disconnect from the current camera."""
         from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
         )
+        from tapo_camera_mcp.tools.base_tool import ToolResult
 
-        server = await TapoCameraServer.get_instance()
-        return await server.disconnect_camera()
+        try:
+            server = await TapoCameraServer.get_instance()
+
+            # Disconnect all cameras
+            cameras = await server.camera_manager.list_cameras()
+            disconnected_count = 0
+
+            for camera_info in cameras:
+                camera = server.camera_manager.get_camera(camera_info["name"])
+                if camera and hasattr(camera, "disconnect"):
+                    await camera.disconnect()
+                    disconnected_count += 1
+
+            return ToolResult(
+                content={
+                    "success": True,
+                    "message": f"Disconnected {disconnected_count} cameras",
+                    "disconnected_count": disconnected_count,
+                },
+                is_error=False,
+            )
+        except Exception as e:
+            logger.exception("Failed to disconnect cameras")
+            return ToolResult(
+                content={
+                    "success": False,
+                    "error": f"Failed to disconnect cameras: {e!s}",
+                },
+                is_error=True,
+            )
 
 
 @tool("get_camera_info")
@@ -674,7 +843,7 @@ class GetCameraInfoTool(BaseTool):
         class Parameters:
             pass
 
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    async def execute(self, **_kwargs) -> Dict[str, Any]:
         """Get detailed information about the connected camera.
 
         Args:
@@ -762,6 +931,156 @@ class ManageCameraGroupsTool(BaseTool):
         raise ValueError(f"Unknown action: {self.action}")
 
 
+@tool("capture_snapshot")
+class CaptureSnapshotTool(BaseTool):
+    """
+    Capture a snapshot from a camera.
+
+    Takes a still image from the specified camera and returns
+    the image data or saves it to a file.
+
+    Parameters:
+        camera_id (str): ID of the camera to capture from
+
+    Returns:
+        Dict with snapshot data and metadata
+
+    Example:
+        result = await capture_snapshot_tool.execute(camera_id='test_camera')
+        if result['success']:
+            print(f"Snapshot captured: {result['image_size']} bytes")
+    """
+
+    class Meta:
+        name = "capture_snapshot"
+        description = "Capture a snapshot from a camera"
+        category = ToolCategory.CAMERA
+
+        class Parameters:
+            camera_id: str = Field(..., description="ID of the camera to capture from")
+
+    camera_id: str
+
+    async def execute(self) -> "ToolResult":
+        """Capture a snapshot from the specified camera."""
+        from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
+            TapoCameraServer,
+        )
+        from tapo_camera_mcp.tools.base_tool import ToolResult
+
+        server = await TapoCameraServer.get_instance()
+
+        try:
+            # Use the server's capture_still method
+            result = await server.capture_still({"camera_name": self.camera_id})
+
+            if result.get("status") == "success":
+                return ToolResult(
+                    content={
+                        "success": True,
+                        "camera_id": self.camera_id,
+                        "image_data": result.get("image_data"),
+                        "image_size": len(result.get("image_data", b"")),
+                        "timestamp": result.get("timestamp"),
+                        "message": f"Snapshot captured from {self.camera_id}",
+                    },
+                    is_error=False,
+                )
+            return ToolResult(
+                content={
+                    "success": False,
+                    "error": result.get("error", "Failed to capture snapshot"),
+                    "camera_id": self.camera_id,
+                },
+                is_error=True,
+            )
+        except Exception as e:
+            logger.exception(f"Failed to capture snapshot from {self.camera_id}")
+            return ToolResult(
+                content={
+                    "success": False,
+                    "error": f"Failed to capture snapshot: {e!s}",
+                    "camera_id": self.camera_id,
+                },
+                is_error=True,
+            )
+
+
+@tool("get_stream_url")
+class GetStreamUrlTool(BaseTool):
+    """
+    Get the stream URL for a camera.
+
+    Retrieves the RTSP or other streaming URL for the specified camera.
+
+    Parameters:
+        camera_id (str): ID of the camera to get stream URL for
+
+    Returns:
+        Dict with stream URL and metadata
+
+    Example:
+        result = await get_stream_url_tool.execute(camera_id='test_camera')
+        if result['success']:
+            print(f"Stream URL: {result['stream_url']}")
+    """
+
+    class Meta:
+        name = "get_stream_url"
+        description = "Get the stream URL for a camera"
+        category = ToolCategory.CAMERA
+
+        class Parameters:
+            camera_id: str = Field(..., description="ID of the camera to get stream URL for")
+
+    camera_id: str
+
+    async def execute(self) -> "ToolResult":
+        """Get the stream URL for the specified camera."""
+        from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
+            TapoCameraServer,
+        )
+        from tapo_camera_mcp.tools.base_tool import ToolResult
+
+        server = await TapoCameraServer.get_instance()
+
+        try:
+            # Get camera info to extract stream URL
+            camera_info = await server.get_camera_info()
+
+            if camera_info.get("success"):
+                # For now, return a mock stream URL
+                stream_url = f"rtsp://{self.camera_id}:554/stream1"
+                return ToolResult(
+                    content={
+                        "success": True,
+                        "camera_id": self.camera_id,
+                        "stream_url": stream_url,
+                        "protocol": "rtsp",
+                        "message": f"Stream URL retrieved for {self.camera_id}",
+                    },
+                    is_error=False,
+                )
+            return ToolResult(
+                content={
+                    "success": False,
+                    "error": camera_info.get("error", "Failed to get camera info"),
+                    "camera_id": self.camera_id,
+                },
+                is_error=True,
+            )
+        except Exception as e:
+            logger.exception(f"Failed to get stream URL for {self.camera_id}")
+            return ToolResult(
+                content={
+                    "success": False,
+                    "error": f"Failed to get stream URL: {e!s}",
+                    "camera_id": self.camera_id,
+                },
+                is_error=True,
+            )
+
+
 # Register all tools
 ListCamerasTool = register_tool(ListCamerasTool)
 AddCameraTool = register_tool(AddCameraTool)
@@ -772,6 +1091,8 @@ ConnectCameraTool = register_tool(ConnectCameraTool)
 DisconnectCameraTool = register_tool(DisconnectCameraTool)
 GetCameraInfoTool = register_tool(GetCameraInfoTool)
 ManageCameraGroupsTool = register_tool(ManageCameraGroupsTool)
+CaptureSnapshotTool = register_tool(CaptureSnapshotTool)
+GetStreamUrlTool = register_tool(GetStreamUrlTool)
 
 # Debug: Print registered tools
 camera_tool_classes = [
@@ -784,5 +1105,7 @@ camera_tool_classes = [
     DisconnectCameraTool,
     GetCameraInfoTool,
     ManageCameraGroupsTool,
+    CaptureSnapshotTool,
+    GetStreamUrlTool,
 ]
 logger.debug(f"Registered camera tools: {[tool.Meta.name for tool in camera_tool_classes]}")

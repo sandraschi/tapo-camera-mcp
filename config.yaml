@@ -21,11 +21,12 @@ cameras:
   # Tapo Camera Example
   tapo_camera:
     type: tapo
-    host: 192.168.1.100
-    username: "your_tapo_username"
-    password: "your_tapo_password"
-    port: 443
-    verify_ssl: true
+    params:
+      host: 192.168.1.100
+      username: "your_tapo_username"
+      password: "your_tapo_password"
+      port: 443
+      verify_ssl: true
     
   # Ring Doorbell Camera
   ring_doorbell:

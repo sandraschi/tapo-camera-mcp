@@ -31,8 +31,8 @@
 
 ---
 
-### **3. FastMCP 2.12 Troubleshooting**
-📄 [TROUBLESHOOTING_FASTMCP_2.12.md](TROUBLESHOOTING_FASTMCP_2.12.md)
+### **3. FastMCP Troubleshooting**
+📄 [TROUBLESHOOTING_FASTMCP.md](TROUBLESHOOTING_FASTMCP.md)
 
 **FastMCP-specific issues and solutions**
 - Version compatibility
@@ -72,7 +72,7 @@
 This directory contains **MCP server technical documentation** including:
 
 ✅ **MCP Protocol** - Implementation details  
-✅ **FastMCP Framework** - Version 2.12+ specifics  
+✅ **FastMCP Framework** - Latest version specifics  
 ✅ **Claude Desktop** - Integration and debugging  
 ✅ **Production Deployment** - Checklists and guidelines  
 ✅ **Troubleshooting** - Common issues and fixes  
@@ -100,7 +100,7 @@ This directory contains **MCP server technical documentation** including:
 - Error responses
 
 ### **FastMCP Framework**
-- Version 2.12+ requirements
+- Latest version requirements
 - Tool decorators
 - Async/await patterns
 - Error handling
@@ -128,7 +128,7 @@ This directory contains **MCP server technical documentation** including:
 |------|----------|------|
 | **Debug Claude** | [Claude Desktop Debugging](CLAUDE_DESKTOP_DEBUGGING.md) | 15 min |
 | **Go to production** | [Production Checklist](MCP_PRODUCTION_CHECKLIST.md) | 20 min |
-| **FastMCP issues** | [FastMCP Troubleshooting](TROUBLESHOOTING_FASTMCP_2.12.md) | 10 min |
+| **FastMCP issues** | [FastMCP Troubleshooting](TROUBLESHOOTING_FASTMCP.md) | 10 min |
 | **Containerize** | [Containerization](CONTAINERIZATION_GUIDELINES.md) | 20 min |
 | **Monitor** | [Monitoring Stack](MONITORING_STACK_DEPLOYMENT.md) | 15 min |
 
@@ -136,8 +136,8 @@ This directory contains **MCP server technical documentation** including:
 
 ## 🏆 **Production Readiness**
 
-**Our MCP server achieves**:
-- ✅ FastMCP 2.12+ compliance
+**Your MCP server should achieve**:
+- ✅ FastMCP latest version compliance
 - ✅ Zero print statements (stdio safe)
 - ✅ Structured logging
 - ✅ Comprehensive error handling
@@ -145,7 +145,7 @@ This directory contains **MCP server technical documentation** including:
 - ✅ Production checklist complete
 - ✅ Gold Status (90/100)
 
-**Reference**: These docs guided us to Gold++ status!
+**Reference**: These docs guide you to production-ready status!
 
 ---
 
@@ -154,9 +154,9 @@ This directory contains **MCP server technical documentation** including:
 ### **MCP Server Won't Start**
 
 **Check**:
-1. Log files in `%APPDATA%\Claude\logs\`
+1. Log files in `%APPDATA%\Claude\logs\` (Windows) or `~/.config/claude-desktop/logs/` (Linux/Mac)
 2. Python path configuration
-3. FastMCP version (must be >=2.12.0)
+3. FastMCP version (must be latest stable)
 4. stdio protocol compliance
 
 **Document**: [Claude Desktop Debugging](CLAUDE_DESKTOP_DEBUGGING.md)
@@ -171,7 +171,7 @@ This directory contains **MCP server technical documentation** including:
 3. Configuration file syntax
 4. Tool function signatures
 
-**Document**: [FastMCP Troubleshooting](TROUBLESHOOTING_FASTMCP_2.12.md)
+**Document**: [FastMCP Troubleshooting](TROUBLESHOOTING_FASTMCP.md)
 
 ---
 
@@ -192,7 +192,7 @@ This directory contains **MCP server technical documentation** including:
 ### **Core Technologies**
 
 - **MCP Protocol** - Model Context Protocol
-- **FastMCP** - Python MCP framework (v2.12+)
+- **FastMCP** - Python MCP framework (latest version)
 - **Python** - 3.10+ with async/await
 - **stdio** - Standard input/output transport
 - **JSON-RPC** - Message format
@@ -200,10 +200,9 @@ This directory contains **MCP server technical documentation** including:
 ### **Platform Integration**
 
 - **Claude Desktop** - Primary client
-- **Windows API** - Native integration (pywin32)
-- **Notepad++** - Target application
 - **GitHub Actions** - CI/CD
 - **Docker** - Optional containerization
+- **Platform APIs** - Native integration as needed
 
 ---
 
@@ -241,11 +240,11 @@ This directory contains **MCP server technical documentation** including:
 
 ## 🏅 **Quality Standards**
 
-**Our Gold Status checklist enforces**:
+**Gold Status checklist enforces**:
 
 - ✅ Zero print() statements
 - ✅ Structured logging (stderr)
-- ✅ FastMCP 2.12+
+- ✅ FastMCP latest version
 - ✅ Comprehensive tests
 - ✅ Error handling
 - ✅ Type hints
@@ -258,9 +257,7 @@ This directory contains **MCP server technical documentation** including:
 
 *MCP Technical Documentation*  
 *Location: `docs/mcp-technical/`*  
-*Files: 5*  
 *Focus: MCP server development & deployment*  
 *Target: Technical developers & DevOps*
 
 **Master MCP server development!** 🔧✨
-

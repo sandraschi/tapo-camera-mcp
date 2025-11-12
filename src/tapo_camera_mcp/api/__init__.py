@@ -5,9 +5,8 @@ This package contains all the API endpoints and related functionality
 for the Tapo Camera MCP server.
 """
 
-from typing import List
-
-from fastapi import APIRouter, FastAPI
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from ..config import ServerConfig
 
@@ -29,8 +28,6 @@ def setup_api(app: FastAPI, config: ServerConfig) -> None:
 
     # Add CORS middleware if needed
     if config.cors_origins:
-        from fastapi.middleware.cors import CORSMiddleware
-
         app.add_middleware(
             CORSMiddleware,
             allow_origins=config.cors_origins,

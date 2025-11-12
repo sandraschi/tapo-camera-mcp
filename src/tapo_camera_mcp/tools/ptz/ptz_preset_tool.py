@@ -51,7 +51,7 @@ class PTZPresetTool(BaseTool):
             preset_name: Optional[str] = Field(None, description="Preset name for save operations")
             preset_id: Optional[int] = Field(None, description="Preset ID for recall operations")
 
-    async def _run(
+    async def execute(
         self,
         operation: str,
         camera_id: str,
@@ -77,7 +77,7 @@ class PTZPresetTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"PTZ preset {operation} operation failed: {e}")
+            logger.exception(f"PTZ preset {operation} operation failed")
             return {
                 "success": False,
                 "error": str(e),

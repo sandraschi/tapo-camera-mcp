@@ -53,15 +53,14 @@ class CameraManager:
             # Create and connect to camera
             camera = CameraFactory.create(config)
             connected = await camera.connect()
-
+        except Exception:
+            logger.exception(f"Failed to add camera {config.name}")
+            return False
+        else:
             if connected:
                 self.cameras[config.name] = camera
                 logger.info(f"Added camera: {config.name} ({config.type})")
                 return True
-            return False
-
-        except Exception as e:
-            logger.exception(f"Failed to add camera {config.name}: {e}")
             return False
 
     async def remove_camera(self, name: str) -> bool:
@@ -83,11 +82,12 @@ class CameraManager:
             # Disconnect and remove camera
             await self.cameras[name].disconnect()
             del self.cameras[name]
+        except Exception:
+            logger.exception(f"Error removing camera {name}")
+            return False
+        else:
             logger.info(f"Removed camera: {name}")
             return True
-        except Exception as e:
-            logger.exception(f"Error removing camera {name}: {e}")
-            return False
 
     async def get_camera(self, name: str):
         """Get a camera instance by name."""
@@ -115,13 +115,15 @@ class CameraManager:
                 result.append(
                     {
                         "name": name,
-                        "type": camera.config.type.value,
+                        "type": camera.config.type.value
+                        if hasattr(camera.config.type, "value")
+                        else str(camera.config.type),
                         "status": status,
                         "groups": self.groups.get_camera_groups(name),
                     }
                 )
             except Exception as e:
-                logger.exception(f"Error getting status for {name}: {e}")
+                logger.exception(f"Error getting status for {name}")
                 result.append(
                     {
                         "name": name,

@@ -29,8 +29,8 @@ def check_imports():
         try:
             __import__(module)
             logger.info(f"✅ {module} imports successfully")
-        except Exception as e:
-            logger.exception(f"❌ Failed to import {module}: {e}")
+        except Exception:
+            logger.exception("❌ Failed to import module")
             import traceback
 
             traceback.print_exc()
@@ -47,8 +47,8 @@ def check_tool_registration():
         else:
             for name, tool in tools_registry.items():
                 logger.info(f"- {name}: {tool.__module__}.{tool.__name__}")
-    except Exception as e:
-        logger.exception(f"Failed to check tool registration: {e}")
+    except Exception:
+        logger.exception("Failed to check tool registration")
 
 
 def main():

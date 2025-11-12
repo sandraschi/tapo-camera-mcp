@@ -15,7 +15,7 @@ class GrafanaMetricsTool(BaseTool):
         description: str = "Export comprehensive camera metrics for Grafana HTTP data source"
         category: ToolCategory = ToolCategory.UTILITY
 
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    async def execute(self, **_kwargs) -> Dict[str, Any]:
         """Collect all camera metrics for Grafana consumption."""
         try:
             # Get camera manager instance
@@ -151,7 +151,7 @@ class GrafanaMetricsTool(BaseTool):
             logger.exception("Failed to get motion events for %s", camera_id)
             return 0
 
-    async def _get_last_motion_time(self, camera_id: str) -> str:
+    async def _get_last_motion_time(self, _camera_id: str) -> str:
         """Get timestamp of last motion detection."""
         # TODO: Implement from actual camera logs
         # For now, return recent time - replace with actual implementation

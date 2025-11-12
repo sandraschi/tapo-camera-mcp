@@ -3,11 +3,11 @@
 import logging
 from typing import Dict, List, Union
 
-logger = logging.getLogger(__name__)
-
 import numpy as np
 import torch
 from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 
 class DINOv3Processor:

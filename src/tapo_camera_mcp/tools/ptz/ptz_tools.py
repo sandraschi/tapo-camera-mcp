@@ -333,7 +333,7 @@ class GoToHomePTZTool(BaseTool):
         try:
             return await server.go_to_home_ptz()
         except Exception as e:
-            logger.exception(f"Failed to move PTZ to home position: {e!s}")
+            logger.exception("Failed to move PTZ to home position")
             return {
                 "status": "error",
                 "message": f"Failed to move PTZ to home position: {e!s}",
@@ -365,7 +365,7 @@ class StopPTZTool(BaseTool):
             "description": "Stop all PTZ movement",
         }
 
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    async def execute(self, **_kwargs) -> Dict[str, Any]:
         """Stop all PTZ movement."""
         from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
@@ -379,7 +379,7 @@ class StopPTZTool(BaseTool):
                 return {"status": "success", "message": "PTZ movement stopped"}
             return result
         except Exception as e:
-            logger.exception(f"Failed to stop PTZ movement: {e!s}")
+            logger.exception("Failed to stop PTZ movement")
             return {
                 "status": "error",
                 "message": f"Failed to stop PTZ movement: {e!s}",
@@ -417,7 +417,7 @@ class GetPTZPositionTool(BaseTool):
             "description": "Get the current PTZ position",
         }
 
-    async def execute(self, **kwargs) -> ToolResult:
+    async def execute(self, **_kwargs) -> ToolResult:
         """Get the current PTZ position and movement capabilities of the camera.
 
         Retrieves the camera's current pan, tilt, and zoom values along with information
@@ -554,7 +554,7 @@ class GetPTZPositionTool(BaseTool):
                 "message": "Camera not properly initialized for PTZ operations",
             }
         except Exception as e:
-            logger.exception(f"Failed to get PTZ position: {e!s}")
+            logger.exception("Failed to get PTZ position")
             return {
                 "status": "error",
                 "message": f"Failed to get PTZ position: {e!s}",

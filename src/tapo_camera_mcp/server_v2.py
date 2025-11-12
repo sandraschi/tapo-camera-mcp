@@ -43,6 +43,8 @@ sys.stderr = original_stderr
 # Re-export Tapo for tests
 Tapo = Tapo
 
+# Import and re-export TapoCameraServer for tests
+
 # Configure enhanced logging
 logging.basicConfig(
     level=logging.DEBUG,
@@ -62,7 +64,7 @@ def main():
     logger.info(f"Command line args: {sys.argv}")
 
     parser = argparse.ArgumentParser(description="Tapo Camera MCP Server")
-    parser.add_argument("--host", default="0.0.0.0", help="Host to bind the server to")  # nosec B104
+    parser.add_argument("--host", default="0.0.0.0", help="Host to bind the server to")  # nosec B104  # noqa: S104
     parser.add_argument("--port", type=int, default=8000, help="Port to bind the server to")
     parser.add_argument(
         "--no-stdio", action="store_false", dest="stdio", help="Disable stdio transport"
@@ -139,7 +141,7 @@ def main():
     except Exception as e:
         logger.error("=== SERVER FAILED TO START ===", exc_info=True)
         logger.exception(f"Error type: {type(e).__name__}")
-        logger.exception(f"Error message: {e}")
+        logger.exception("Error message")
         sys.exit(1)
 
     logger.info("=== MAIN FUNCTION COMPLETE ===")

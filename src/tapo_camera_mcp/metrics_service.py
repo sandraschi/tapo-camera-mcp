@@ -117,8 +117,8 @@ class MetricsCollector:
                 await asyncio.sleep(30)  # Collect every 30 seconds
             except asyncio.CancelledError:
                 break
-            except Exception as e:
-                logger.exception(f"Error in metrics collection: {e}")
+            except Exception:
+                logger.exception("Error in metrics collection")
                 await asyncio.sleep(30)  # Wait before retry
 
     async def collect_metrics(self):
@@ -261,7 +261,7 @@ class MetricsServer:
     def __init__(
         self,
         metrics_collector: MetricsCollector,
-        host: str = "0.0.0.0",  # nosec B104
+        host: str = "0.0.0.0",  # nosec B104  # noqa: S104
         port: int = 8080,
     ):
         self.metrics_collector = metrics_collector
@@ -306,8 +306,8 @@ class MetricsServer:
             self._server = uvicorn.Server(config)
             await self._server.serve()
 
-        except ImportError as e:
-            logger.exception(f"Failed to start metrics server: {e}")
+        except ImportError:
+            logger.exception("Failed to start metrics server")
             logger.exception(
                 "Please install the required dependencies with: pip install fastapi uvicorn"
             )

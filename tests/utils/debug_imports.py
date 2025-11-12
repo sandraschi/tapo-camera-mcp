@@ -26,14 +26,14 @@ def test_import(module_name):
         attrs = [attr for attr in dir(module) if not attr.startswith("_")]
         logger.info(f"Available attributes: {', '.join(attrs)}\n")
         return True
-    except ImportError as e:
-        logger.exception(f"❌ Failed to import {module_name}: {e}")
+    except ImportError:
+        logger.exception("❌ Failed to import module")
         import traceback
 
         logger.exception(traceback.format_exc())
         return False
-    except Exception as e:
-        logger.exception(f"⚠️ Unexpected error importing {module_name}: {e}")
+    except Exception:
+        logger.exception("⚠️ Unexpected error importing module")
         import traceback
 
         logger.exception(traceback.format_exc())
@@ -71,8 +71,8 @@ def main():
         for tool in tools:
             logger.info(f"- {tool.name}: {tool.__module__}.{tool.__name__}")
         logger.info(f"Total tools registered: {len(tools)}")
-    except Exception as e:
-        logger.exception(f"\n❌ Error getting registered tools: {e}")
+    except Exception:
+        logger.exception("\n❌ Error getting registered tools")
         import traceback
 
         logger.exception(traceback.format_exc())

@@ -54,7 +54,7 @@ class PrivacySettingsTool(BaseTool):
                 None, description="Privacy schedule configuration"
             )
 
-    async def _run(
+    async def execute(
         self,
         operation: str,
         camera_id: str,
@@ -77,7 +77,7 @@ class PrivacySettingsTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Privacy settings {operation} operation failed: {e}")
+            logger.exception(f"Privacy settings {operation} operation failed")
             return {
                 "success": False,
                 "error": str(e),

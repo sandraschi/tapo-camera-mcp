@@ -54,8 +54,8 @@ class TapoCameraPlugin:
         try:
             await self.tapo_camera.connect()
             self.mcp.logger.info("Connected to Tapo camera")
-        except Exception as e:
-            self.mcp.logger.exception(f"Failed to connect to Tapo camera: {e!s}")
+        except Exception:
+            self.mcp.logger.exception("Failed to connect to Tapo camera")
 
     async def on_shutdown(self):
         """Called when the FastMCP server shuts down."""
@@ -77,7 +77,7 @@ class TapoCameraPlugin:
         # Add a custom handler for plugin-specific messages
         self.mcp.register_message_handler("tapo_camera_plugin_status", self._handle_plugin_status)
 
-    async def _handle_plugin_status(self, message: McpMessage) -> Dict[str, Any]:
+    async def _handle_plugin_status(self, _message: McpMessage) -> Dict[str, Any]:
         """Handle plugin status requests."""
         return {
             "status": "enabled" if self.config.enabled else "disabled",

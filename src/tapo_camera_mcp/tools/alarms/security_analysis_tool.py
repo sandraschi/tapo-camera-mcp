@@ -53,7 +53,7 @@ class SecurityAnalysisTool(BaseTool):
             )
             event_types: Optional[List[str]] = Field(None, description="Event types to correlate")
 
-    async def _run(
+    async def execute(
         self,
         operation: str,
         device_id: Optional[str] = None,
@@ -76,7 +76,7 @@ class SecurityAnalysisTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Security analysis {operation} operation failed: {e}")
+            logger.exception(f"Security analysis {operation} operation failed")
             return {
                 "success": False,
                 "error": str(e),

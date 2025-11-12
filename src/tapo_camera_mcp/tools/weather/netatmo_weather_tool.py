@@ -43,7 +43,7 @@ class NetatmoWeatherTool(BaseTool):
             operation: str = Field(..., description="Weather operation: 'stations', 'data'")
             station_id: Optional[str] = Field(None, description="Station ID for data operation")
 
-    async def _run(
+    async def execute(
         self,
         operation: str,
         station_id: Optional[str] = None,
@@ -63,7 +63,7 @@ class NetatmoWeatherTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Netatmo weather {operation} operation failed: {e}")
+            logger.exception(f"Netatmo weather {operation} operation failed")
             return {
                 "success": False,
                 "error": str(e),

@@ -107,7 +107,7 @@ class HealthCheckTool(BaseTool):
             return result.dict()
 
         except Exception as e:
-            logger.exception(f"Health check failed: {e}")
+            logger.exception("Health check failed")
             response_time_ms = (time.time() - start_time) * 1000
             return HealthCheckResult(
                 status="critical",
@@ -144,7 +144,7 @@ class HealthCheckTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Server health check failed: {e}")
+            logger.exception("Server health check failed")
             return {"status": "critical", "error": str(e), "issues": [str(e)]}
 
     async def _check_system_health(self) -> Dict[str, Any]:
@@ -192,7 +192,7 @@ class HealthCheckTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"System health check failed: {e}")
+            logger.exception("System health check failed")
             return {"status": "critical", "error": str(e), "issues": [str(e)]}
 
     async def _check_camera_health(self) -> Dict[str, Any]:
@@ -243,7 +243,7 @@ class HealthCheckTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Camera health check failed: {e}")
+            logger.exception("Camera health check failed")
             return {"status": "critical", "error": str(e), "issues": [str(e)]}
 
     async def _get_performance_metrics(self) -> Dict[str, Any]:
@@ -276,5 +276,5 @@ class HealthCheckTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Performance metrics failed: {e}")
+            logger.exception("Performance metrics failed")
             return {"status": "warning", "error": str(e)}

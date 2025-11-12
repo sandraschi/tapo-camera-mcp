@@ -26,12 +26,12 @@ class GrafanaSnapshotsTool(BaseTool):
             height = kwargs.get("height")
 
             if not camera_id:
-                raise ValueError("camera_id is required")
+                raise ValueError("camera_id is required")  # noqa: TRY301
 
             # Get camera instance
             camera = self.get_camera_manager().get_camera(camera_id)
             if not camera:
-                raise ValueError(f"Camera {camera_id} not found")
+                raise ValueError(f"Camera {camera_id} not found")  # noqa: TRY301
 
             # Capture snapshot
             image_data = await camera.get_snapshot(quality=quality, width=width, height=height)

@@ -55,7 +55,7 @@ class CameraManagementTool(BaseTool):
                 None, description="Camera password for add operations"
             )
 
-    async def _run(
+    async def execute(
         self,
         operation: str,
         camera_id: Optional[str] = None,
@@ -83,7 +83,7 @@ class CameraManagementTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Camera management {operation} operation failed: {e}")
+            logger.exception(f"Camera management {operation} operation failed")
             return {
                 "success": False,
                 "error": str(e),

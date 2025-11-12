@@ -83,12 +83,13 @@ class APIRouter:
             """
             try:
                 cameras = await self.camera_manager.list_cameras()
-                return {"status": "success", "cameras": cameras}
             except Exception as e:
                 return {
                     "status": "error",
                     "message": f"Failed to list cameras: {e!s}",
                 }
+            else:
+                return {"status": "success", "cameras": cameras}
 
         @self.mcp.tool()
         async def add_camera(
@@ -230,6 +231,9 @@ class APIRouter:
                 camera_config = {k: v for k, v in camera_config.items() if v is not None}
 
                 success = await self.camera_manager.add_camera(camera_config)
+            except Exception as e:
+                return {"status": "error", "message": f"Failed to add camera: {e!s}"}
+            else:
                 if success:
                     return {
                         "status": "success",
@@ -239,8 +243,6 @@ class APIRouter:
                     "status": "error",
                     "message": f"Failed to add camera {name}",
                 }
-            except Exception as e:
-                return {"status": "error", "message": f"Failed to add camera: {e!s}"}
 
         @self.mcp.tool()
         async def remove_camera(name: str) -> Dict[str, Any]:
@@ -318,6 +320,12 @@ class APIRouter:
                     return {"status": "error", "message": "Camera name is required"}
 
                 success = await self.camera_manager.remove_camera(name)
+            except Exception as e:
+                return {
+                    "status": "error",
+                    "message": f"Failed to remove camera: {e!s}",
+                }
+            else:
                 if success:
                     return {
                         "status": "success",
@@ -326,11 +334,6 @@ class APIRouter:
                 return {
                     "status": "error",
                     "message": f"Failed to remove camera {name}",
-                }
-            except Exception as e:
-                return {
-                    "status": "error",
-                    "message": f"Failed to remove camera: {e!s}",
                 }
 
         @self.mcp.tool()
@@ -538,16 +541,16 @@ class APIRouter:
                     return {"status": "error", "message": f"Camera {camera} not found"}
 
                 stream_url = await camera_obj.get_stream_url()
-                if not stream_url:
-                    return {"status": "error", "message": "Stream URL not available"}
-
-                return {"status": "success", "camera": camera, "stream_url": stream_url}
-
             except Exception as e:
                 return {
                     "status": "error",
                     "message": f"Failed to get stream URL: {e!s}",
                 }
+            else:
+                if not stream_url:
+                    return {"status": "error", "message": "Stream URL not available"}
+
+                return {"status": "success", "camera": camera, "stream_url": stream_url}
 
 
 def setup_api_routes(server) -> APIRouter:

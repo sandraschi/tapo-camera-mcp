@@ -22,7 +22,6 @@ def test_dependency_installation():
     failed_deps = []
 
     for dep_name, dep_spec in dependencies:
-
         # First check if it's already installed
         check_cmd = [sys.executable, "-m", "pip", "show", dep_name]
         result = subprocess.run(check_cmd, check=False, capture_output=True, text=True)
@@ -56,13 +55,12 @@ def test_dependency_installation():
                     pass
                 failed_deps.append(dep_spec)
 
-
     if failed_deps:
         for _dep in failed_deps:
             pass
         raise AssertionError(f"Failed to install dependencies: {failed_deps}")
 
-    return True
+    assert True
 
 
 def main():

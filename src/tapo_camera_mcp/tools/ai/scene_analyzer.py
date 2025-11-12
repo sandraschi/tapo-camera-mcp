@@ -125,17 +125,17 @@ class SceneAnalyzerTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Scene analysis failed for camera %s: %s", camera_id, e)
+            logger.exception("Scene analysis failed for camera %s", camera_id)
             return {"error": str(e)}
 
-    async def _get_camera_snapshot(self, camera_id: str) -> Optional[bytes]:
+    async def _get_camera_snapshot(self, _camera_id: str) -> Optional[bytes]:
         """Get snapshot from camera for analysis."""
         try:
             # This would integrate with the actual camera system
             # For now, return simulated data
             return b"simulated_image_data"
-        except Exception as e:
-            logger.exception("Failed to get camera snapshot: %s", e)
+        except Exception:
+            logger.exception("Failed to get camera snapshot")
             return None
 
     async def _comprehensive_analysis(
@@ -210,7 +210,7 @@ class SceneAnalyzerTool(BaseTool):
         )
 
     async def _scene_type_analysis(
-        self, image_data: bytes, confidence_threshold: float
+        self, image_data: bytes, _confidence_threshold: float
     ) -> SceneAnalysisResult:
         """Perform scene type classification."""
         scene_type = await self._detect_scene_type(image_data)
@@ -225,14 +225,14 @@ class SceneAnalyzerTool(BaseTool):
             recommendations=self._generate_scene_type_recommendations(scene_type),
         )
 
-    async def _detect_scene_type(self, image_data: bytes) -> str:
+    async def _detect_scene_type(self, _image_data: bytes) -> str:
         """Detect the type of scene."""
         # Simulate AI scene classification
         # In real implementation, this would use a trained model
         return "living_room"  # Default for simulation
 
     async def _detect_objects(
-        self, image_data: bytes, confidence_threshold: float
+        self, _image_data: bytes, confidence_threshold: float
     ) -> List[Dict[str, Any]]:
         """Detect objects in the scene."""
         # Simulate object detection
@@ -245,7 +245,9 @@ class SceneAnalyzerTool(BaseTool):
         # Filter by confidence threshold
         return [obj for obj in objects if obj["confidence"] >= confidence_threshold]
 
-    async def _detect_activities(self, image_data: bytes, confidence_threshold: float) -> List[str]:
+    async def _detect_activities(
+        self, _image_data: bytes, confidence_threshold: float
+    ) -> List[str]:
         """Detect activities in the scene."""
         # Simulate activity detection
         activities = [

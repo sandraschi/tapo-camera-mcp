@@ -9,7 +9,6 @@ if src_dir not in sys.path:
 try:
     from tapo_camera_mcp.tools import base_tool
 
-
     # Check if register_tool exists
     if hasattr(base_tool, "register_tool"):
         pass

@@ -93,7 +93,7 @@ class GetNetatmoStationsTool(BaseTool):
         class Parameters(BaseModel):
             include_offline: bool = Field(default=False, description="Include offline stations")
 
-    async def _run(self, include_offline: bool = False) -> Dict[str, Any]:
+    async def execute(self, include_offline: bool = False) -> Dict[str, Any]:
         """Get all Netatmo weather stations."""
         try:
             logger.info(f"Getting Netatmo stations (include_offline={include_offline})")
@@ -114,7 +114,7 @@ class GetNetatmoStationsTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Failed to get Netatmo stations: {e}")
+            logger.exception("Failed to get Netatmo stations")
             return {"success": False, "error": str(e), "stations": [], "timestamp": time.time()}
 
     async def _discover_stations(self) -> List[NetatmoWeatherStation]:
@@ -203,7 +203,7 @@ class GetNetatmoWeatherDataTool(BaseTool):
                 default="all", description="Module type to query (indoor, outdoor, all)"
             )
 
-    async def _run(self, station_id: str, module_type: str = "all") -> Dict[str, Any]:
+    async def execute(self, station_id: str, module_type: str = "all") -> Dict[str, Any]:
         """Get current weather data from Netatmo station."""
         try:
             logger.info(
@@ -222,7 +222,7 @@ class GetNetatmoWeatherDataTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Failed to get weather data: {e}")
+            logger.exception("Failed to get weather data")
             return {
                 "success": False,
                 "error": str(e),
@@ -231,7 +231,7 @@ class GetNetatmoWeatherDataTool(BaseTool):
                 "timestamp": time.time(),
             }
 
-    async def _get_station_data(self, station_id: str, module_type: str) -> Dict[str, Any]:
+    async def _get_station_data(self, _station_id: str, _module_type: str) -> Dict[str, Any]:
         """Simulate weather data retrieval."""
         import secrets
 
@@ -262,10 +262,10 @@ class GetNetatmoWeatherDataTool(BaseTool):
             },
         }
 
-        if module_type == "all":
+        if _module_type == "all":
             return data
-        if module_type in data:
-            return {module_type: data[module_type]}
+        if _module_type in data:
+            return {_module_type: data[_module_type]}
         return {}
 
 
@@ -300,7 +300,7 @@ class GetNetatmoHistoricalDataTool(BaseTool):
             )
             time_range: str = Field(default="24h", description="Time range (1h, 6h, 24h, 7d, 30d)")
 
-    async def _run(
+    async def execute(
         self,
         station_id: str,
         module_type: str = "indoor",
@@ -326,7 +326,7 @@ class GetNetatmoHistoricalDataTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Failed to get historical data: {e}")
+            logger.exception("Failed to get historical data")
             return {"success": False, "error": str(e), "data": [], "timestamp": time.time()}
 
     async def _generate_historical_data(
@@ -430,7 +430,7 @@ class ConfigureNetatmoAlertsTool(BaseTool):
             )
             enabled: bool = Field(default=True, description="Whether alert is enabled")
 
-    async def _run(
+    async def execute(
         self,
         station_id: str,
         alert_type: str,
@@ -482,7 +482,7 @@ class ConfigureNetatmoAlertsTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Failed to configure alert: {e}")
+            logger.exception("Failed to configure alert")
             return {"success": False, "error": str(e), "timestamp": time.time()}
 
 
@@ -512,7 +512,9 @@ class GetNetatmoHealthReportTool(BaseTool):
                 default=True, description="Include improvement recommendations"
             )
 
-    async def _run(self, station_id: str, include_recommendations: bool = True) -> Dict[str, Any]:
+    async def execute(
+        self, station_id: str, include_recommendations: bool = True
+    ) -> Dict[str, Any]:
         """Get Netatmo health report."""
         try:
             logger.info(f"Generating health report for {station_id}")
@@ -532,10 +534,10 @@ class GetNetatmoHealthReportTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Failed to generate health report: {e}")
+            logger.exception("Failed to generate health report")
             return {"success": False, "error": str(e), "timestamp": time.time()}
 
-    async def _get_station_data(self, station_id: str, module_type: str) -> Dict[str, Any]:
+    async def _get_station_data(self, _station_id: str, _module_type: str) -> Dict[str, Any]:
         """Get station data (reused from other tools)."""
         # This would normally call the actual Netatmo API
         # For now, return simulated data

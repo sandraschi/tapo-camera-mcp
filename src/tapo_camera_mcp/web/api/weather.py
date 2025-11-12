@@ -104,8 +104,8 @@ async def get_weather_stations(
         return stations
 
     except Exception as e:
-        logger.exception(f"Failed to get weather stations: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to get weather stations")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/stations/{station_id}/data", response_model=WeatherDataResponse)
@@ -153,8 +153,8 @@ async def get_station_weather_data(
         )
 
     except Exception as e:
-        logger.exception(f"Failed to get weather data: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to get weather data")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/stations/{station_id}/historical", response_model=HistoricalDataResponse)
@@ -240,8 +240,8 @@ async def get_station_historical_data(
         )
 
     except Exception as e:
-        logger.exception(f"Failed to get historical data: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to get historical data")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/stations/{station_id}/health", response_model=HealthReportResponse)
@@ -273,8 +273,8 @@ async def get_station_health_report(
         )
 
     except Exception as e:
-        logger.exception(f"Failed to generate health report: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to generate health report")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/stations/{station_id}/alerts")
@@ -287,7 +287,7 @@ async def configure_station_alerts(station_id: str, alert_config: Dict[str, Any]
         required_fields = ["alert_type", "threshold_value", "comparison"]
         for field in required_fields:
             if field not in alert_config:
-                raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
+                raise HTTPException(status_code=400, detail=f"Missing required field: {field}")  # noqa: TRY301
 
         # Simulate alert configuration
         alert_id = f"alert_{station_id}_{alert_config['alert_type']}_{int(time.time())}"
@@ -304,8 +304,8 @@ async def configure_station_alerts(station_id: str, alert_config: Dict[str, Any]
     except HTTPException:
         raise
     except Exception as e:
-        logger.exception(f"Failed to configure alerts: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to configure alerts")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/stations/{station_id}/modules")
@@ -348,8 +348,8 @@ async def get_station_modules(station_id: str) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.exception(f"Failed to get modules: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to get modules")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/overview")
@@ -373,5 +373,5 @@ async def get_weather_overview() -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.exception(f"Failed to get weather overview: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to get weather overview")
+        raise HTTPException(status_code=500, detail=str(e)) from e

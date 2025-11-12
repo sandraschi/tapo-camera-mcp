@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tapo Camera MCP Dashboard External Access Issue - Windows Firewall Blocking</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #7f8c8d;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+        ul, ol {
+            padding-left: 25px;
+        }
+        li {
+            margin: 5px 0;
+        }
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 20px 0;
+        }
+        .tag {
+            background-color: #3498db;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        .metadata {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #6c757d;
+        }
+        .metadata strong {
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tapo Camera MCP Dashboard External Access Issue - Windows Firewall Blocking</h1>
+        
+        <div class="metadata">
+            <strong>Type:</strong> Troubleshooting<br>
+            <strong>Date:</strong> 2025-10-20<br>
+            <strong>Permalink:</strong> troubleshooting/tapo-camera-mcp-dashboard-external-access-issue-windows-firewall-blocking
+        </div>
+
+        <div class="tags">
+            <span class="tag">networking</span>
+            <span class="tag">windows-firewall</span>
+            <span class="tag">tapo-camera-mcp</span>
+            <span class="tag">dashboard</span>
+            <span class="tag">troubleshooting</span>
+            <span class="tag">external-access</span>
+            <span class="tag">tailscale</span>
+            <span class="tag">fastapi</span>
+            <span class="tag">port-7777</span>
+            <span class="tag">system-administration</span>
+        </div>
+
+        <h2>Problem Description</h2>
+        <p>The Tapo Camera MCP dashboard was accessible via Tailscale (<code>goliath:7777</code>) but not via external IP address (<code>213.47.34.131:7777</code>). The server was correctly configured to bind to <code>0.0.0.0:7777</code> but Windows Firewall was blocking incoming connections.</p>
+
+        <h2>Root Cause Analysis</h2>
+        <ul>
+            <li><strong>Server Configuration</strong>: ✅ Correctly configured to bind to <code>0.0.0.0:7777</code></li>
+            <li><strong>Network Binding</strong>: ✅ Server listening on all interfaces (<code>netstat</code> confirmed <code>TCP 0.0.0.0:7777 LISTENING</code>)</li>
+            <li><strong>Tailscale Access</strong>: ✅ Working (bypasses local firewall via virtual network)</li>
+            <li><strong>External IP Access</strong>: ❌ Blocked by Windows Firewall</li>
+        </ul>
+
+        <h2>Technical Details</h2>
+        <ul>
+            <li><strong>Server</strong>: Tapo Camera MCP FastAPI web server</li>
+            <li><strong>Port</strong>: 7777 (configurable)</li>
+            <li><strong>Host Binding</strong>: <code>0.0.0.0</code> (correct for external access)</li>
+            <li><strong>Firewall Issue</strong>: Windows Defender Firewall blocking TCP port 7777</li>
+            <li><strong>Error</strong>: No firewall rule existed for the application</li>
+        </ul>
+
+        <h2>Configuration Files</h2>
+        <ul>
+            <li><strong>Main Config</strong>: <code>config.yaml</code> - <code>web.host: "0.0.0.0"</code> ✅</li>
+            <li><strong>Model Config</strong>: <code>src/tapo_camera_mcp/config/models.py</code> - <code>WebUISettings.host: "0.0.0.0"</code> ✅</li>
+            <li><strong>Server Code</strong>: <code>src/tapo_camera_mcp/web/server.py</code> - Uses config host setting ✅</li>
+        </ul>
+
+        <h2>Solutions Provided</h2>
+
+        <h3>Option 1: Add Windows Firewall Rule (Recommended)</h3>
+        <pre><code># Run as Administrator
+netsh advfirewall firewall add rule name="Tapo Camera MCP Dashboard" dir=in action=allow protocol=TCP localport=7777</code></pre>
+
+        <h3>Option 2: Windows Firewall GUI</h3>
+        <ol>
+            <li>Windows Defender Firewall with Advanced Security</li>
+            <li>Inbound Rules → New Rule → Port → TCP → Specific ports: 7777</li>
+            <li>Allow connection → Apply to all profiles</li>
+            <li>Name: "Tapo Camera MCP Dashboard"</li>
+        </ol>
+
+        <h3>Option 3: Temporarily Disable Firewall</h3>
+        <p>Windows Security → Firewall & network protection → Turn off Windows Defender Firewall</p>
+
+        <h3>Option 4: Alternative Port</h3>
+        <p>Try different ports that might already be open (e.g., 8080, 3000)</p>
+
+        <h2>Network Architecture</h2>
+        <ul>
+            <li><strong>Tailscale</strong>: Virtual network bypasses local firewall ✅</li>
+            <li><strong>External IP</strong>: Direct access through Windows Firewall ❌</li>
+            <li><strong>Local Access</strong>: Works via localhost/127.0.0.1 ✅</li>
+        </ul>
+
+        <h2>Troubleshooting Commands Used</h2>
+        <pre><code># Check if server is listening
+netstat -an | findstr :7777
+
+# Check existing firewall rules
+netsh advfirewall firewall show rule name="Tapo Camera MCP" dir=in
+
+# Add firewall rule (requires admin)
+netsh advfirewall firewall add rule name="Tapo Camera MCP Dashboard" dir=in action=allow protocol=TCP localport=7777</code></pre>
+
+        <h2>Key Learning Points</h2>
+        <ol>
+            <li><strong>Tailscale vs External IP</strong>: Tailscale creates a virtual network that bypasses local firewall rules</li>
+            <li><strong>Windows Firewall</strong>: Blocks incoming connections by default, even when server binds to 0.0.0.0</li>
+            <li><strong>Server Configuration</strong>: Was correct - the issue was purely firewall-related</li>
+            <li><strong>Network Debugging</strong>: Always check both server binding AND firewall rules for external access issues</li>
+        </ol>
+
+        <h2>Status</h2>
+        <div class="status success">
+            ✅ <strong>Root Cause Identified</strong>: Windows Firewall blocking port 7777
+        </div>
+        <div class="status success">
+            ✅ <strong>Solution Provided</strong>: Multiple firewall configuration options
+        </div>
+        <div class="status warning">
+            🔄 <strong>Action Required</strong>: User needs to implement firewall rule (requires admin privileges)
+        </div>
+
+        <h2>Related Files</h2>
+        <ul>
+            <li><code>start.py</code> - Dashboard startup script</li>
+            <li><code>src/tapo_camera_mcp/web/server.py</code> - Web server implementation</li>
+            <li><code>config.yaml</code> - Configuration file</li>
+            <li><code>src/tapo_camera_mcp/config/models.py</code> - Configuration models</li>
+        </ul>
+    </div>
+</body>
+</html>

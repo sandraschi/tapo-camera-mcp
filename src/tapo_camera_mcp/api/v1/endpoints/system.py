@@ -68,7 +68,9 @@ async def restart_system(_: None = Depends(verify_api_key)):
 
 
 @router.get("/logs")
-async def get_system_logs(_: None = Depends(verify_api_key), lines: int = 100, level: str = "INFO"):
+async def get_system_logs(
+    _: None = Depends(verify_api_key), _lines: int = 100, _level: str = "INFO"
+):
     """Get system logs (requires authentication)."""
     # This would return the system logs
     return {

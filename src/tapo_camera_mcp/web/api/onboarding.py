@@ -62,8 +62,8 @@ async def discover_devices(background_tasks: BackgroundTasks):
         }
 
     except Exception as e:
-        logger.exception("Device discovery failed: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Device discovery failed")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/discover/results")
@@ -110,8 +110,8 @@ async def get_discovery_results():
         }
 
     except Exception as e:
-        logger.exception("Failed to get discovery results: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to get discovery results")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/configure")
@@ -126,7 +126,7 @@ async def configure_device(config: DeviceConfigurationRequest):
                 break
 
         if not device:
-            raise HTTPException(
+            raise HTTPException(  # noqa: TRY301
                 status_code=404, detail=f"Device {config.device_id} not found in discovered devices"
             )
 
@@ -155,8 +155,8 @@ async def configure_device(config: DeviceConfigurationRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.exception("Device configuration failed: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Device configuration failed")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/progress")
@@ -223,8 +223,8 @@ async def get_onboarding_progress():
         )
 
     except Exception as e:
-        logger.exception("Failed to get onboarding progress: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to get onboarding progress")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/complete")
@@ -239,7 +239,7 @@ async def complete_onboarding():
         ]
 
         if unconfigured_devices:
-            raise HTTPException(
+            raise HTTPException(  # noqa: TRY301
                 status_code=400,
                 detail=f"Cannot complete onboarding: {len(unconfigured_devices)} devices still need configuration",
                 extra={"unconfigured_devices": [device.dict() for device in unconfigured_devices]},
@@ -278,8 +278,8 @@ async def complete_onboarding():
     except HTTPException:
         raise
     except Exception as e:
-        logger.exception("Onboarding completion failed: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Onboarding completion failed")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/devices")
@@ -293,8 +293,8 @@ async def get_discovered_devices():
         }
 
     except Exception as e:
-        logger.exception("Failed to get discovered devices: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to get discovered devices")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/devices/{device_id}")
@@ -308,7 +308,7 @@ async def get_device_details(device_id: str):
                 break
 
         if not device:
-            raise HTTPException(status_code=404, detail=f"Device {device_id} not found")
+            raise HTTPException(status_code=404, detail=f"Device {device_id} not found")  # noqa: TRY301
 
         # Get configuration if available
         configuration = discovery_manager.onboarding_state.configured_devices.get(device_id)
@@ -323,8 +323,8 @@ async def get_device_details(device_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.exception("Failed to get device details: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to get device details")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.delete("/reset")
@@ -338,8 +338,8 @@ async def reset_onboarding():
         return {"status": "success", "message": "Onboarding process reset successfully"}
 
     except Exception as e:
-        logger.exception("Failed to reset onboarding: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to reset onboarding")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/recommendations")
@@ -398,5 +398,5 @@ async def get_setup_recommendations():
         }
 
     except Exception as e:
-        logger.exception("Failed to get setup recommendations: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to get setup recommendations")
+        raise HTTPException(status_code=500, detail=str(e)) from e

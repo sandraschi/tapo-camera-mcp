@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class WebServer:
     """Web server for Tapo Camera MCP."""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, _config_path: Optional[str] = None):
         """Initialize the web server.
 
         Args:
@@ -592,7 +592,7 @@ class WebServer:
 
         # 404 handler
         @self.app.exception_handler(404)
-        async def not_found(request: Request, exc: StarletteHTTPException):
+        async def not_found(request: Request, _exc: StarletteHTTPException):
             if request.url.path.startswith("/api/"):
                 return JSONResponse(
                     status_code=404,

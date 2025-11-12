@@ -72,7 +72,7 @@ class DeviceDiscoveryManager:
             return discovery_results
 
         except Exception as e:
-            logger.exception("Device discovery failed: %s", e)
+            logger.exception("Device discovery failed")
             return {"error": str(e)}
 
     async def _discover_tapo_p115_devices(self) -> List[DiscoveredDevice]:
@@ -139,8 +139,8 @@ class DeviceDiscoveryManager:
                 )
                 devices.append(device)
 
-        except Exception as e:
-            logger.exception("Tapo P115 discovery failed: %s", e)
+        except Exception:
+            logger.exception("Tapo P115 discovery failed")
 
         return devices
 
@@ -179,8 +179,8 @@ class DeviceDiscoveryManager:
                 )
                 devices.append(device)
 
-        except Exception as e:
-            logger.exception("USB webcam discovery failed: %s", e)
+        except Exception:
+            logger.exception("USB webcam discovery failed")
 
         return devices
 
@@ -229,8 +229,8 @@ class DeviceDiscoveryManager:
                 )
                 devices.append(device)
 
-        except Exception as e:
-            logger.exception("Nest Protect discovery failed: %s", e)
+        except Exception:
+            logger.exception("Nest Protect discovery failed")
 
         return devices
 
@@ -278,8 +278,8 @@ class DeviceDiscoveryManager:
                 )
                 devices.append(device)
 
-        except Exception as e:
-            logger.exception("Ring device discovery failed: %s", e)
+        except Exception:
+            logger.exception("Ring device discovery failed")
 
         return devices
 
@@ -344,7 +344,7 @@ class DiscoverDevicesTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Device discovery tool execution failed: %s", e)
+            logger.exception("Device discovery tool execution failed")
             return {"error": str(e)}
 
 
@@ -418,7 +418,7 @@ class ConfigureDeviceTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Device configuration tool execution failed: %s", e)
+            logger.exception("Device configuration tool execution failed")
             return {"error": str(e)}
 
 
@@ -467,7 +467,7 @@ class GetOnboardingProgressTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Onboarding progress tool execution failed: %s", e)
+            logger.exception("Onboarding progress tool execution failed")
             return {"error": str(e)}
 
     def _calculate_completion_percentage(self) -> float:
@@ -574,5 +574,5 @@ class CompleteOnboardingTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Onboarding completion tool execution failed: %s", e)
+            logger.exception("Onboarding completion tool execution failed")
             return {"error": str(e)}

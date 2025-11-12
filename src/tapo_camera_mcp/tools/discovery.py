@@ -108,16 +108,16 @@ def discover_tools(package: str = "tapo_camera_mcp.tools") -> List[Type[Any]]:
                 except ImportError as e:
                     logger.warning(f"Could not import module {name}: {e}")
                     logger.debug(traceback.format_exc())
-                except Exception as e:
-                    logger.exception(f"Error processing module {name}: {e}")
+                except Exception:
+                    logger.exception(f"Error processing module {name}")
                     logger.debug(traceback.format_exc())
 
-        except ImportError as e:
-            logger.exception(f"Failed to import package {package}: {e}")
+        except ImportError:
+            logger.exception(f"Failed to import package {package}")
             logger.debug(traceback.format_exc())
 
-    except Exception as e:
-        logger.exception(f"Unexpected error in discover_tools: {e}")
+    except Exception:
+        logger.exception("Unexpected error in discover_tools")
         logger.debug(traceback.format_exc())
 
     logger.info(f"Discovered {len(tools)} tools from {package}")

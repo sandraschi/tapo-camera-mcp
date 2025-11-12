@@ -51,7 +51,7 @@ class EnergyManagementTool(BaseTool):
                 "24h", description="Time range for analysis: '1h', '24h', '7d', '30d'"
             )
 
-    async def _run(
+    async def execute(
         self,
         operation: str,
         device_id: Optional[str] = None,
@@ -77,7 +77,7 @@ class EnergyManagementTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Energy {operation} operation failed: {e}")
+            logger.exception(f"Energy {operation} operation failed")
             return {
                 "success": False,
                 "error": str(e),

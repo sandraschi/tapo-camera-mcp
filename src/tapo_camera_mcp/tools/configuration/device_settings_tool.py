@@ -51,7 +51,7 @@ class DeviceSettingsTool(BaseTool):
                 None, description="Motion detection areas"
             )
 
-    async def _run(
+    async def execute(
         self,
         operation: str,
         camera_id: str,
@@ -76,7 +76,7 @@ class DeviceSettingsTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Device settings {operation} operation failed: {e}")
+            logger.exception(f"Device settings {operation} operation failed")
             return {
                 "success": False,
                 "error": str(e),

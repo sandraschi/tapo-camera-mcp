@@ -45,12 +45,9 @@ class PTZPresetManager:
     def _load_presets(self) -> None:
         """Load presets from camera"""
         try:
-            # This would be an API call to the camera
-            # presets_data = self.camera_client.get_ptz_presets()
-            # self.presets = {p['id']: self._create_preset_from_data(p) for p in presets_data}
             pass
-        except Exception as e:
-            logger.exception(f"Failed to load PTZ presets: {e}")
+        except Exception:
+            logger.exception("Failed to load PTZ presets")
             self.presets = {}
 
     def _save_presets(self) -> None:
@@ -89,7 +86,6 @@ class PTZPresetManager:
             )
 
             # Save to camera
-            # await self.camera_client.save_ptz_preset(preset_id, name, position)
 
             # Update local cache
             self.presets[preset_id] = preset
@@ -97,8 +93,8 @@ class PTZPresetManager:
 
             return preset
 
-        except Exception as e:
-            logger.exception(f"Failed to save PTZ preset: {e}")
+        except Exception:
+            logger.exception("Failed to save PTZ preset")
             raise
 
     async def update_preset(
@@ -128,7 +124,6 @@ class PTZPresetManager:
         preset.updated_at = datetime.now()
 
         # Update in camera
-        # await self.camera_client.update_ptz_preset(preset_id, preset.name, preset.position)
 
         self._save_presets()
         return preset
@@ -140,15 +135,14 @@ class PTZPresetManager:
 
         try:
             # Delete from camera
-            # await self.camera_client.delete_ptz_preset(preset_id)
 
             # Remove from local cache
             del self.presets[preset_id]
             self._save_presets()
             return True
 
-        except Exception as e:
-            logger.exception(f"Failed to delete PTZ preset {preset_id}: {e}")
+        except Exception:
+            logger.exception(f"Failed to delete PTZ preset {preset_id}")
             return False
 
     async def recall_preset(self, preset_id: int) -> bool:
@@ -158,11 +152,10 @@ class PTZPresetManager:
 
         try:
             self.presets[preset_id]
-            # await self.camera_client.move_to_preset(preset_id)
             return True
 
-        except Exception as e:
-            logger.exception(f"Failed to recall PTZ preset {preset_id}: {e}")
+        except Exception:
+            logger.exception(f"Failed to recall PTZ preset {preset_id}")
             return False
 
     async def capture_thumbnail(self, preset_id: int) -> Optional[str]:
@@ -172,12 +165,8 @@ class PTZPresetManager:
 
         try:
             # This would capture the current camera frame and save it
-            # thumbnail_url = await self.camera_client.capture_thumbnail()
-            # self.presets[preset_id].thumbnail_url = thumbnail_url
-            # self._save_presets()
-            # return thumbnail_url
             return None
 
-        except Exception as e:
-            logger.exception(f"Failed to capture thumbnail for preset {preset_id}: {e}")
+        except Exception:
+            logger.exception(f"Failed to capture thumbnail for preset {preset_id}")
             return None

@@ -6,40 +6,48 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional
 
-logger = logging.getLogger(__name__)
-
 from PIL import Image
 from pytapo import Tapo
 
 from .base import BaseCamera, CameraFactory, CameraType
+
+logger = logging.getLogger(__name__)
 
 
 @CameraFactory.register(CameraType.TAPO)
 class TapoCamera(BaseCamera):
     """Tapo camera implementation."""
 
-    def __init__(self, config):
+    def __init__(self, config, mock_tapo=None):
         super().__init__(config)
         self._camera = None
+        self._mock_tapo = mock_tapo
         self._stream_url = None
 
     async def connect(self) -> bool:
         """Initialize connection to the Tapo camera."""
         try:
-            self._camera = Tapo(
-                self.config.params["host"],
-                self.config.params["username"],
-                self.config.params["password"],
-            )
-            # Test connection
-            await asyncio.get_event_loop().run_in_executor(
-                None, lambda: self._camera.getBasicInfo()
-            )
-            self._is_connected = True
-            return True
+            if self._mock_tapo:
+                # Use mock camera for testing
+                self._camera = self._mock_tapo
+                await self._camera.login()
+            else:
+                # Use real camera for production
+                self._camera = Tapo(
+                    self.config.params["host"],
+                    self.config.params["username"],
+                    self.config.params["password"],
+                )
+                # Test connection
+                await asyncio.get_event_loop().run_in_executor(
+                    None, lambda: self._camera.getBasicInfo()
+                )
         except Exception as e:
             self._is_connected = False
             raise ConnectionError(f"Failed to connect to Tapo camera: {e}") from e
+        else:
+            self._is_connected = True
+            return True
 
     async def disconnect(self) -> None:
         """Close connection to the camera."""
@@ -53,9 +61,14 @@ class TapoCamera(BaseCamera):
 
         try:
             # Capture image
-            img_data = await asyncio.get_event_loop().run_in_executor(
-                None, lambda: self._camera.get_image()
-            )
+            if self._mock_tapo:
+                # Use mock camera
+                img_data = await self._camera.get_image()
+            else:
+                # Use real camera
+                img_data = await asyncio.get_event_loop().run_in_executor(
+                    None, lambda: self._camera.get_image()
+                )
 
             # Convert to PIL Image
             image = Image.open(io.BytesIO(img_data))
@@ -66,11 +79,11 @@ class TapoCamera(BaseCamera):
                 save_path.parent.mkdir(parents=True, exist_ok=True)
                 image.save(save_path)
 
-            return image
-
         except Exception as e:
             self._is_connected = False
             raise RuntimeError(f"Failed to capture image: {e}") from e
+        else:
+            return image
 
     async def get_stream_url(self) -> Optional[str]:
         """Get the RTSP stream URL for the camera."""
@@ -197,8 +210,6 @@ class TapoCamera(BaseCamera):
                 except Exception as e:
                     info["device_info_error"] = str(e)
 
-            return info
-
         except Exception as e:
             return {
                 "name": self.config.name,
@@ -206,3 +217,5 @@ class TapoCamera(BaseCamera):
                 "host": self.config.params.get("host", ""),
                 "error": f"Failed to get camera info: {e}",
             }
+        else:
+            return info

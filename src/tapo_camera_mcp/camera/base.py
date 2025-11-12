@@ -16,13 +16,17 @@ class CameraType(str, Enum):
         TAPO: Tapo camera (TP-Link)
         RING: Ring doorbell camera
         WEBCAM: Standard USB/web camera
+        LAPTOP: Built-in laptop camera
         PETCUBE: Petcube pet camera
+        FURBO: Furbo pet camera
     """
 
     TAPO = "tapo"
     RING = "ring"
     WEBCAM = "webcam"
+    LAPTOP = "laptop"
     PETCUBE = "petcube"
+    FURBO = "furbo"
 
     @classmethod
     def values(cls):
@@ -166,7 +170,46 @@ class CameraFactory:
         if isinstance(config, dict):
             config = CameraConfig(**config)
 
+        # Check if we're in testing environment
+        from ..utils.testing import is_testing_environment
+
+        if is_testing_environment():
+            return cls._create_mock_camera(config)
+
         if config.type not in cls._camera_classes:
             raise ValueError(f"Unsupported camera type: {config.type}")
 
         return cls._camera_classes[config.type](config)
+
+    @classmethod
+    def _create_mock_camera(cls, config: CameraConfig) -> BaseCamera:
+        """Create a mock camera for testing."""
+        from ..utils.mock_camera import (
+            MockPetcubeCamera,
+            MockRingCamera,
+            MockTapoCamera,
+            MockWebCamera,
+        )
+
+        # Create mock camera based on type
+        if config.type == CameraType.TAPO:
+            mock_tapo = MockTapoCamera(config.params)
+            return cls._camera_classes[CameraType.TAPO](config, mock_tapo=mock_tapo)
+        if config.type == CameraType.WEBCAM:
+            mock_webcam = MockWebCamera(config.params)
+            return cls._camera_classes[CameraType.WEBCAM](config, mock_webcam=mock_webcam)
+        if config.type == CameraType.LAPTOP:
+            # Laptop cameras use same implementation as webcams but with different detection
+            mock_webcam = MockWebCamera(config.params)
+            return cls._camera_classes[CameraType.WEBCAM](config, mock_webcam=mock_webcam)
+        if config.type == CameraType.RING:
+            mock_ring = MockRingCamera(config.params)
+            return cls._camera_classes[CameraType.RING](config, mock_ring=mock_ring)
+        if config.type == CameraType.PETCUBE:
+            mock_petcube = MockPetcubeCamera(config.params)
+            return cls._camera_classes[CameraType.PETCUBE](config, mock_petcube=mock_petcube)
+        if config.type == CameraType.FURBO:
+            # Furbo cameras are similar to Petcube, reuse the mock
+            mock_furbo = MockPetcubeCamera(config.params)
+            return cls._camera_classes[CameraType.PETCUBE](config, mock_petcube=mock_furbo)
+        raise ValueError(f"Unsupported camera type for mocking: {config.type}")

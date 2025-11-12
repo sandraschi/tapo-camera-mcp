@@ -58,7 +58,7 @@ class NetatmoAnalysisTool(BaseTool):
                 None, description="Threshold value for alert configuration"
             )
 
-    async def _run(
+    async def execute(
         self,
         operation: str,
         station_id: Optional[str] = None,
@@ -83,7 +83,7 @@ class NetatmoAnalysisTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Netatmo analysis {operation} operation failed: {e}")
+            logger.exception(f"Netatmo analysis {operation} operation failed")
             return {
                 "success": False,
                 "error": str(e),
@@ -145,7 +145,7 @@ class NetatmoAnalysisTool(BaseTool):
         }
 
     async def _manage_alerts(
-        self, station_id: Optional[str], alert_type: Optional[str], threshold: Optional[float]
+        self, _station_id: Optional[str], alert_type: Optional[str], threshold: Optional[float]
     ) -> Dict[str, Any]:
         """Manage Netatmo alerts."""
         if not alert_type:

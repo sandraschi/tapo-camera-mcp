@@ -9,12 +9,12 @@ from pydantic import ConfigDict, Field
 from tapo_camera_mcp.tools.base_tool import BaseTool, ToolCategory, tool
 
 
-@tool(name="get_help")
+@tool(name="help")
 class HelpTool(BaseTool):
     """Tool to get help about Tapo Camera MCP functionality and Grafana integration."""
 
     class Meta:
-        name = "get_help"
+        name = "help"
         category = ToolCategory.SYSTEM
 
     section: Optional[str] = Field(default="all", description="Section of the help to display")

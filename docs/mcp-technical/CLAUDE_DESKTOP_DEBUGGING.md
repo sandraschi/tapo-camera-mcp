@@ -1,561 +1,478 @@
-# 🔍 Claude Desktop MCP Server Debugging Guide
+# Claude Desktop Debugging Guide
 
-**The Mystery of "Server Starts, Then Dies"**  
-**Real-World Debugging Experience from nest-protect MCP**
+## Overview
 
----
+This guide covers debugging MCP servers when using Claude Desktop as the client. Claude Desktop provides excellent debugging capabilities through its logging system and STDIO protocol.
 
-## 🎭 The Mysterious Behavior
+## Claude Desktop Logs
 
-### **What Users Experience**
+### Finding Log Files
 
-You see this pattern in Claude Desktop logs:
+**Windows**:
 ```
-2025-09-19T19:52:08.612Z [your-server] [info] Server started and connected successfully
-2025-09-19T19:52:08.760Z [your-server] [info] Message from client: {"method":"initialize"...}
-[... normal operation for 5-10 seconds ...]
-2025-09-19 21:52:13,700 - your_server - INFO - Kill argument received - exiting gracefully  
-2025-09-19T19:52:14.266Z [your-server] [info] Server transport closed
-2025-09-19T19:52:14.266Z [your-server] [error] Server disconnected
+%APPDATA%\Claude\logs\
 ```
 
-### **What Users Think**
-- "Claude is randomly killing my server!"
-- "The connection is unstable!"  
-- "Something is wrong with my Claude Desktop installation!"
-
-### **The Reality**
-**Claude Desktop NEVER randomly kills servers.** The `--kill` signal is always a response to the server crashing or becoming unresponsive during normal operation.
-
----
-
-## 🕵️ The Investigation Process
-
-### **Step 1: Understanding the Timeline**
-
+**macOS**:
 ```
-T+0s:    Server process starts
-T+0.1s:  Claude Desktop connects via STDIO
-T+0.2s:  Initial handshake (method: "initialize")
-T+0.3s:  Claude Desktop requests tool list (method: "tools/list")  ← **CRITICAL MOMENT**
-T+0.5s:  Tool discovery and validation happens
-T+?s:    Something crashes during tool loading/validation
-T+5-10s: Claude Desktop detects server is unresponsive
-T+10s:   Claude Desktop sends --kill to cleanup zombie process
+~/Library/Logs/Claude/
 ```
 
-**The crash usually happens at the "CRITICAL MOMENT" - during tool discovery.**
-
-### **Step 2: The Real Culprits**
-
-#### **Culprit #1: Import Errors During Tool Loading**
-
-**The Trap**:
-```python
-# This looks innocent but is a time bomb
-@app.tool()
-async def my_tool():
-    from some_module import missing_function  # ❌ Import happens when tool is called
-    return {"result": "ok"}
+**Linux**:
+```
+~/.config/claude/logs/
 ```
 
-**What happens**:
-1. ✅ Server starts (import not triggered yet)
-2. ✅ Claude connects successfully
-3. ✅ Tool registration appears to work
-4. ❌ Claude tries to validate tools → import error!
-5. ❌ Unhandled ImportError crashes the server
-6. ❌ Claude detects dead server, sends --kill
+### Log File Types
 
-**The Fix**:
-```python
-# Import at module level
-from some_module import missing_function
+- `claude-desktop.log` - Main application log
+- `mcp-server-name.log` - Individual MCP server logs
+- `claude-desktop-error.log` - Error-specific logs
 
-@app.tool()
-async def my_tool():
-    return {"result": missing_function()}  # ✅ Import already validated
+## MCP Server Configuration
+
+### Basic Configuration
+```json
+{
+  "mcpServers": {
+    "your-server": {
+      "command": "python",
+      "args": ["-m", "your_mcp_server"],
+      "env": {
+        "API_KEY": "your-api-key",
+        "DEBUG": "true"
+      }
+    }
+  }
+}
 ```
 
-#### **Culprit #2: Configuration Validation Bombs**
-
-**The Trap**:
-```python
-# Module-level instantiation with validation
-config = MyConfig()  # ❌ Validates immediately on import
-
-@app.tool()
-async def my_tool():
-    value = config.some_field  # ❌ If config validation failed, this crashes
-    return {"result": value}
+### Debug Configuration
+```json
+{
+  "mcpServers": {
+    "your-server": {
+      "command": "python",
+      "args": ["-m", "your_mcp_server", "--debug"],
+      "env": {
+        "LOG_LEVEL": "DEBUG",
+        "VERBOSE": "true"
+      }
+    }
+  }
+}
 ```
 
-**What happens**:
-1. ✅ Server starts (but config validation might fail silently)
-2. ✅ Claude connects
-3. ❌ Tool access triggers Pydantic validation error
-4. ❌ ValidationError crashes the server
-5. ❌ Claude sends --kill
+## Debugging Techniques
 
-**The Fix**:
-```python
-config = None  # ✅ Defer instantiation
+### 1. Enable Verbose Logging
 
-def get_config():
-    global config
-    if config is None:
-        try:
-            config = MyConfig()
-        except ValidationError as e:
-            # Handle gracefully
-            config = MyConfig.default()
-    return config
-
-@app.tool()
-async def my_tool():
-    cfg = get_config()
-    return {"result": cfg.some_field}
-```
-
-#### **Culprit #3: Missing Dependencies in Tool Functions**
-
-**The Trap**:
-```python
-@app.tool()
-async def network_tool():
-    import aiohttp  # ❌ What if aiohttp isn't installed?
-    async with aiohttp.ClientSession() as session:
-        # ...
-```
-
-**The Fix**:
-```python
-# Test imports at startup
-try:
-    import aiohttp
-    import requests
-    # ... other dependencies
-except ImportError as e:
-    print(f"Missing dependency: {e}", file=sys.stderr)
-    sys.exit(1)
-
-@app.tool()
-async def network_tool():
-    # ✅ We know aiohttp is available
-    async with aiohttp.ClientSession() as session:
-        # ...
-```
-
----
-
-## 🔬 Debugging Techniques
-
-### **Technique 1: Comprehensive Logging**
-
+**Python MCP Server**:
 ```python
 import logging
 import sys
 
-# Set up logging that appears in Claude Desktop logs
+# Configure detailed logging
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.StreamHandler(sys.stderr),  # ← This is key!
-        logging.FileHandler('debug.log')    # ← Also save to file
+        logging.StreamHandler(sys.stderr),  # Send to stderr for Claude Desktop
+        logging.FileHandler('mcp_server.log')
     ]
 )
 
 logger = logging.getLogger(__name__)
 
-@app.tool()
-async def my_tool():
-    logger.info("Tool called - starting execution")
+@mcp.tool()
+def debug_tool(param: str) -> str:
+    logger.debug(f"Tool called with param: {param}")
     try:
-        # Your logic here
-        result = await some_operation()
+        result = process_param(param)
         logger.info(f"Tool completed successfully: {result}")
-        return {"success": True, "result": result}
+        return result
     except Exception as e:
-        logger.error(f"Tool failed with exception: {e}", exc_info=True)
-        return {"success": False, "error": str(e)}
+        logger.error(f"Tool failed: {e}", exc_info=True)
+        raise
 ```
 
-### **Technique 2: Startup Validation**
+### 2. STDIO Protocol Debugging
 
+**Enable Protocol Logging**:
 ```python
-def validate_environment():
-    """Validate all dependencies and configuration before starting."""
-    logger.info("Starting environment validation...")
-    
-    # Test imports
-    try:
-        import aiohttp
-        import pydantic
-        import your_custom_module
-        logger.info("✅ All imports successful")
-    except ImportError as e:
-        logger.error(f"❌ Import failed: {e}")
-        raise
-    
-    # Test configuration
-    try:
-        config = MyConfig()
-        logger.info("✅ Configuration validation passed")
-    except Exception as e:
-        logger.error(f"❌ Configuration validation failed: {e}")
-        raise
-    
-    # Test external connections
-    try:
-        # Test API connectivity, file access, etc.
-        logger.info("✅ External dependencies validated")
-    except Exception as e:
-        logger.error(f"❌ External validation failed: {e}")
-        raise
-    
-    logger.info("🎉 Environment validation complete")
-
-if __name__ == "__main__":
-    validate_environment()  # ✅ Fail fast if something is wrong
-    app.run()
-```
-
-### **Technique 3: Tool Function Testing**
-
-```python
-async def test_all_tools():
-    """Test that every tool can be called without import/validation errors."""
-    tools_to_test = [
-        ("tool1", {}),
-        ("tool2", {"param": "test"}),
-        ("tool3", {"device_id": "test-device"}),
-    ]
-    
-    for tool_name, test_params in tools_to_test:
-        try:
-            logger.info(f"Testing tool: {tool_name}")
-            # Get the tool function
-            tool_func = globals().get(tool_name)
-            if tool_func:
-                result = await tool_func(**test_params)
-                logger.info(f"✅ {tool_name}: {result}")
-            else:
-                logger.error(f"❌ {tool_name}: Tool function not found")
-        except Exception as e:
-            logger.error(f"❌ {tool_name}: {e}", exc_info=True)
-            raise  # Fail fast on tool issues
-
-# Call this during development/testing
-# await test_all_tools()
-```
-
-### **Technique 4: Minimal Reproduction**
-
-When debugging, create a minimal version:
-
-```python
-# minimal_server.py
-from fastmcp import FastMCP
-import logging
+import json
 import sys
 
-logging.basicConfig(level=logging.DEBUG, handlers=[logging.StreamHandler(sys.stderr)])
-logger = logging.getLogger(__name__)
+def log_protocol_message(message: dict, direction: str):
+    """Log MCP protocol messages"""
+    print(f"[{direction}] {json.dumps(message)}", file=sys.stderr)
 
-app = FastMCP("minimal-test")
-
-@app.tool()
-async def hello() -> dict:
-    """Simple test tool."""
-    logger.info("Hello tool called")
-    return {"message": "Hello, World!"}
-
-@app.tool()
-async def test_import() -> dict:
-    """Test importing your problematic module."""
-    try:
-        from your_module import your_function  # ← Test your specific import
-        logger.info("Import successful")
-        return {"status": "import_ok"}
-    except Exception as e:
-        logger.error(f"Import failed: {e}")
-        return {"status": "import_failed", "error": str(e)}
-
-if __name__ == "__main__":
-    logger.info("Starting minimal server...")
-    app.run()
+# In your MCP server
+def handle_request(request: dict):
+    log_protocol_message(request, "RECV")
+    response = process_request(request)
+    log_protocol_message(response, "SEND")
+    return response
 ```
 
-If this works but your main server doesn't, you've isolated the problem to your specific implementation.
+### 3. Error Handling and Reporting
 
----
-
-## 🎯 Real Examples from Our Debugging
-
-### **Example 1: The state_manager.py Import Bomb**
-
-**What we had**:
+**Comprehensive Error Handling**:
 ```python
-# state_manager.py
-def get_app_state():
-    import time  # ❌ This import was failing silently
-    import os
-    # ... rest of function
-```
-
-**The problem**: When tools tried to call `get_app_state()`, the import inside the function failed, but the error wasn't properly handled.
-
-**The symptom**: Server started fine, crashed when first tool was called.
-
-**The fix**:
-```python
-# state_manager.py
-import time  # ✅ Move to top of file
-import os
-from typing import Optional
-
-def get_app_state():
-    # Function body without imports
-```
-
-### **Example 2: The Pydantic Validation Time Bomb**
-
-**What we had**:
-```python
-# models.py
-class ProtectConfig(BaseModel):
-    project_id: str  # ❌ Required field, no default
-    client_id: str   # ❌ Required field, no default
-
-# server.py  
-config = ProtectConfig()  # ❌ Instant validation error if fields missing
-```
-
-**The problem**: Server started, but when tools tried to access config, Pydantic validation failed.
-
-**The fix**:
-```python
-# models.py
-class ProtectConfig(BaseModel):
-    project_id: str = Field("", description="Project ID")  # ✅ Default value
-    client_id: str = Field("", description="Client ID")    # ✅ Default value
-
-# server.py
-config = None  # ✅ Defer instantiation
-
-def get_config():
-    global config
-    if config is None:
-        config = ProtectConfig()  # ✅ Instantiate when needed
-    return config
-```
-
-### **Example 3: The Async/Sync Confusion**
-
-**What we had**:
-```python
-# __main__.py
-async def main():
-    app.run()  # ❌ app.run() is blocking, doesn't need async
-
-asyncio.run(main())  # ❌ Creates event loop conflicts
-```
-
-**The symptom**: Server appeared to start but had weird async behavior issues.
-
-**The fix**:
-```python
-# __main__.py
-def main():  # ✅ Keep it simple
-    app.run()
-
-if __name__ == "__main__":
-    main()  # ✅ Direct call
-```
-
----
-
-## 🚨 Warning Signs to Watch For
-
-### **In Your Code**
-
-- ✅ **Module-level imports** - Good
-- ❌ **Function-level imports** - Danger zone
-- ✅ **Deferred instantiation** - Good
-- ❌ **Module-level object creation with validation** - Danger zone
-- ✅ **Comprehensive error handling** - Good
-- ❌ **Naked try/except or no error handling** - Danger zone
-
-### **In Claude Desktop Logs**
-
-- ✅ **Long-running sessions** - Good
-- ❌ **5-10 second pattern** - Something crashes during tool discovery
-- ✅ **Detailed error messages** - Good
-- ❌ **Generic "Server disconnected"** - Hidden crash, needs better logging
-
-### **In Your Testing**
-
-- ✅ **Tools work individually** - Good
-- ❌ **Tools fail when called from Claude** - Integration issue
-- ✅ **Consistent behavior** - Good
-- ❌ **Intermittent failures** - Timing or state issues
-
----
-
-## 🛠️ Emergency Debugging Kit
-
-### **Quick Diagnostic Server**
-
-```python
-# diagnostic_server.py
 from fastmcp import FastMCP
-import logging
-import sys
 import traceback
 
-logging.basicConfig(level=logging.DEBUG, handlers=[logging.StreamHandler(sys.stderr)])
-logger = logging.getLogger(__name__)
+mcp = FastMCP("your-server")
 
-app = FastMCP("diagnostic")
-
-@app.tool()
-async def test_imports() -> dict:
-    """Test all your imports."""
-    results = {}
-    imports_to_test = [
-        "aiohttp",
-        "pydantic", 
-        "your_custom_module",
-        # Add your specific imports here
-    ]
-    
-    for module in imports_to_test:
-        try:
-            __import__(module)
-            results[module] = "✅ OK"
-        except Exception as e:
-            results[module] = f"❌ FAILED: {e}"
-    
-    return {"import_results": results}
-
-@app.tool()
-async def test_config() -> dict:
-    """Test your configuration loading."""
+@mcp.tool()
+def robust_tool(param: str) -> str:
+    """Tool with detailed error reporting"""
     try:
-        # Your config loading logic here
-        from your_module import YourConfig
-        config = YourConfig()
-        return {"config_status": "✅ OK", "config": str(config)}
+        # Validate input
+        if not param:
+            raise ValueError("Parameter cannot be empty")
+        
+        # Process with detailed logging
+        logger.info(f"Processing parameter: {param}")
+        result = complex_processing(param)
+        logger.info(f"Processing completed: {result}")
+        
+        return result
+        
+    except ValueError as e:
+        logger.error(f"Validation error: {e}")
+        return f"Error: {e}"
     except Exception as e:
-        return {"config_status": f"❌ FAILED: {e}", "traceback": traceback.format_exc()}
-
-if __name__ == "__main__":
-    logger.info("Starting diagnostic server...")
-    app.run()
+        logger.error(f"Unexpected error: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return f"Error: {str(e)}"
 ```
 
-### **Logging Configuration Template**
+## Common Debugging Scenarios
 
+### 1. Server Not Starting
+
+**Symptoms**:
+- Claude Desktop shows "Server not responding"
+- No logs appearing
+
+**Debug Steps**:
+```bash
+# Test server manually
+python -m your_mcp_server
+
+# Check for import errors
+python -c "import your_mcp_server"
+
+# Verify dependencies
+pip list | grep fastmcp
+```
+
+**Log Analysis**:
+```
+[ERROR] Failed to start MCP server: ModuleNotFoundError
+[ERROR] Import error in your_mcp_server
+```
+
+### 2. Tools Not Appearing
+
+**Symptoms**:
+- Server starts but no tools visible
+- Empty tool list in Claude Desktop
+
+**Debug Steps**:
+```python
+# Add tool registration logging
+@mcp.tool()
+def test_tool() -> str:
+    """Test tool for debugging"""
+    return "Tool is working"
+
+# Log registered tools
+logger.info(f"Registered tools: {list(mcp.list_tools().keys())}")
+```
+
+**Log Analysis**:
+```
+[INFO] Registering tool: test_tool
+[INFO] Tool registration complete: ['test_tool']
+```
+
+### 3. Tool Execution Failures
+
+**Symptoms**:
+- Tools appear but fail when called
+- Error messages in Claude Desktop
+
+**Debug Steps**:
+```python
+@mcp.tool()
+def debug_tool(param: str) -> str:
+    """Tool with execution debugging"""
+    logger.info(f"Tool execution started with: {param}")
+    
+    try:
+        # Step-by-step logging
+        logger.debug("Step 1: Input validation")
+        validated_param = validate_input(param)
+        
+        logger.debug("Step 2: Processing")
+        result = process_data(validated_param)
+        
+        logger.debug("Step 3: Formatting output")
+        formatted_result = format_output(result)
+        
+        logger.info(f"Tool execution completed: {formatted_result}")
+        return formatted_result
+        
+    except Exception as e:
+        logger.error(f"Tool execution failed at step: {e}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        raise
+```
+
+### 4. Performance Issues
+
+**Symptoms**:
+- Slow tool responses
+- Timeouts
+
+**Debug Steps**:
+```python
+import time
+import asyncio
+
+@mcp.tool()
+async def performance_tool(data: str) -> str:
+    """Tool with performance monitoring"""
+    start_time = time.time()
+    logger.info(f"Tool started at {start_time}")
+    
+    try:
+        # Log each step timing
+        step_start = time.time()
+        processed_data = await process_data(data)
+        step_time = time.time() - step_start
+        logger.info(f"Data processing took {step_time:.2f}s")
+        
+        step_start = time.time()
+        result = await format_result(processed_data)
+        step_time = time.time() - step_start
+        logger.info(f"Result formatting took {step_time:.2f}s")
+        
+        total_time = time.time() - start_time
+        logger.info(f"Total tool execution time: {total_time:.2f}s")
+        
+        return result
+        
+    except asyncio.TimeoutError:
+        logger.error("Tool execution timed out")
+        raise
+    except Exception as e:
+        logger.error(f"Performance issue: {e}")
+        raise
+```
+
+## Advanced Debugging
+
+### 1. Protocol-Level Debugging
+
+**Enable Full Protocol Logging**:
+```python
+import json
+import sys
+from typing import Dict, Any
+
+class ProtocolLogger:
+    def __init__(self):
+        self.request_count = 0
+    
+    def log_request(self, request: Dict[str, Any]):
+        self.request_count += 1
+        print(f"[REQ {self.request_count}] {json.dumps(request, indent=2)}", 
+              file=sys.stderr)
+    
+    def log_response(self, response: Dict[str, Any]):
+        print(f"[RESP {self.request_count}] {json.dumps(response, indent=2)}", 
+              file=sys.stderr)
+
+protocol_logger = ProtocolLogger()
+
+# Use in your MCP server
+def handle_mcp_request(request: Dict[str, Any]) -> Dict[str, Any]:
+    protocol_logger.log_request(request)
+    
+    try:
+        response = process_mcp_request(request)
+        protocol_logger.log_response(response)
+        return response
+    except Exception as e:
+        error_response = {
+            "jsonrpc": "2.0",
+            "id": request.get("id"),
+            "error": {
+                "code": -32603,
+                "message": str(e)
+            }
+        }
+        protocol_logger.log_response(error_response)
+        return error_response
+```
+
+### 2. Memory and Resource Debugging
+
+**Resource Monitoring**:
+```python
+import psutil
+import os
+import gc
+
+@mcp.tool()
+def resource_monitor() -> str:
+    """Monitor server resources"""
+    process = psutil.Process(os.getpid())
+    
+    memory_info = {
+        "rss": process.memory_info().rss / 1024 / 1024,  # MB
+        "vms": process.memory_info().vms / 1024 / 1024,  # MB
+        "percent": process.memory_percent()
+    }
+    
+    cpu_percent = process.cpu_percent()
+    
+    # Force garbage collection
+    gc.collect()
+    
+    logger.info(f"Memory usage: {memory_info}")
+    logger.info(f"CPU usage: {cpu_percent}%")
+    
+    return f"Memory: {memory_info['rss']:.1f}MB, CPU: {cpu_percent:.1f}%"
+```
+
+### 3. Network Debugging
+
+**API Call Debugging**:
+```python
+import aiohttp
+import asyncio
+
+@mcp.tool()
+async def api_debug_tool(url: str) -> str:
+    """Debug API calls"""
+    logger.info(f"Making API call to: {url}")
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                logger.info(f"Response status: {response.status}")
+                logger.info(f"Response headers: {dict(response.headers)}")
+                
+                content = await response.text()
+                logger.info(f"Response content length: {len(content)}")
+                
+                return f"Status: {response.status}, Length: {len(content)}"
+                
+    except aiohttp.ClientError as e:
+        logger.error(f"API call failed: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in API call: {e}")
+        raise
+```
+
+## Log Analysis Tips
+
+### 1. Filtering Logs
+
+**Search for specific patterns**:
+```bash
+# Find all errors
+grep "ERROR" claude-desktop.log
+
+# Find MCP server logs
+grep "your-server" claude-desktop.log
+
+# Find tool execution logs
+grep "Tool execution" mcp-server-name.log
+```
+
+### 2. Log Rotation
+
+**Configure log rotation**:
 ```python
 import logging
-import sys
-from datetime import datetime
+from logging.handlers import RotatingFileHandler
 
-def setup_debug_logging():
-    """Set up comprehensive logging for debugging."""
-    
-    # Create formatter
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
-    )
-    
-    # Console handler (appears in Claude Desktop)
-    console_handler = logging.StreamHandler(sys.stderr)
-    console_handler.setLevel(logging.DEBUG)
-    console_handler.setFormatter(formatter)
-    
-    # File handler (for detailed analysis)
-    file_handler = logging.FileHandler(f'debug_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log')
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(formatter)
-    
-    # Configure root logger
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
-    root_logger.addHandler(console_handler)
-    root_logger.addHandler(file_handler)
-    
-    return logging.getLogger(__name__)
+# Set up rotating file handler
+handler = RotatingFileHandler(
+    'mcp_server.log',
+    maxBytes=10*1024*1024,  # 10MB
+    backupCount=5
+)
 
-# Use in your server
-logger = setup_debug_logging()
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[handler]
+)
 ```
 
----
+### 3. Structured Logging
 
-## 🎯 Action Plan for Troubled Servers
+**Use structured logging for better analysis**:
+```python
+import json
+import logging
 
-### **Phase 1: Isolate the Problem (15 minutes)**
+class StructuredFormatter(logging.Formatter):
+    def format(self, record):
+        log_entry = {
+            "timestamp": self.formatTime(record),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+            "module": record.module,
+            "function": record.funcName,
+            "line": record.lineno
+        }
+        
+        if record.exc_info:
+            log_entry["exception"] = self.formatException(record.exc_info)
+        
+        return json.dumps(log_entry)
 
-1. **Create minimal server** with just one simple tool
-2. **Test minimal server** in Claude Desktop
-3. **If minimal works**: Problem is in your tool implementation
-4. **If minimal fails**: Problem is in your environment/setup
+# Configure structured logging
+handler = logging.StreamHandler()
+handler.setFormatter(StructuredFormatter())
+logger = logging.getLogger()
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
+```
 
-### **Phase 2: Add Complexity Gradually (30 minutes)**
+## Troubleshooting Checklist
 
-1. **Add logging** to your minimal server
-2. **Add one tool at a time** from your main server
-3. **Test after each addition** 
-4. **When it breaks**: You've found the problematic tool
+- [ ] Check Claude Desktop logs for MCP server errors
+- [ ] Verify MCP server configuration in Claude Desktop
+- [ ] Test MCP server manually outside Claude Desktop
+- [ ] Check for import errors and missing dependencies
+- [ ] Verify tool registration and parameter validation
+- [ ] Monitor resource usage (memory, CPU)
+- [ ] Check network connectivity for API calls
+- [ ] Validate input parameters and error handling
+- [ ] Review protocol-level communication logs
+- [ ] Test with minimal tool implementations
 
-### **Phase 3: Fix the Root Cause (Variable)**
+## Best Practices
 
-1. **Import issues**: Move imports to module level
-2. **Validation issues**: Add default values or defer instantiation
-3. **Dependency issues**: Add proper error handling
-4. **State issues**: Centralize state management
+1. **Always log tool entry and exit**
+2. **Use structured logging for better analysis**
+3. **Include request/response IDs in logs**
+4. **Log performance metrics**
+5. **Handle errors gracefully with detailed logging**
+6. **Use debug levels appropriately**
+7. **Monitor resource usage**
+8. **Test tools individually before integration**
+9. **Keep logs readable and searchable**
+10. **Use log rotation to manage disk space**
 
-### **Phase 4: Validate the Fix (10 minutes)**
-
-1. **Test full functionality** in Claude Desktop
-2. **Verify logs show no errors**
-3. **Test edge cases** that previously failed
-4. **Document the fix** for future reference
-
----
-
-## 📚 Resources for Other Projects
-
-### **For avatarmcp Issues**
-- Check image processing library imports
-- Validate model file paths exist
-- Add timeout handling for generation
-- Test with minimal avatar requests first
-
-### **For local llms Issues**  
-- Verify model loading doesn't happen at import time
-- Add memory monitoring for large models
-- Test model inference separately
-- Handle model download/cache issues
-
-### **For tapo Issues**
-- Test device discovery separately 
-- Add network connectivity validation
-- Handle device offline scenarios
-- Test authentication before tool registration
-
----
-
-## 🏆 Success Indicators
-
-**You've fixed the "start and kill" issue when**:
-
-✅ Server runs for minutes/hours without disconnection  
-✅ All tools respond correctly in Claude Desktop  
-✅ Logs show normal operation, not error patterns  
-✅ Tool discovery happens without crashes  
-✅ Error handling gracefully manages edge cases  
-
-**Remember**: Claude Desktop is not the enemy. It's trying to help by cleaning up crashed servers. Fix the crash, and the killing stops! 🔧🎯
+Remember: Good logging is essential for debugging MCP servers in production environments.

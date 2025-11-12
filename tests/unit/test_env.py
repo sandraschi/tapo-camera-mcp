@@ -1,7 +1,10 @@
 import contextlib
 import importlib
+import logging
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def print_section(title):
@@ -24,11 +27,9 @@ def main():
     with contextlib.suppress(ImportError):
         pass
 
-
     # Test importing tools/__init__.py
     with contextlib.suppress(ImportError):
         pass
-
 
     # Test importing a tool module
     print_section("Testing Tool Module Imports")
@@ -53,8 +54,8 @@ def main():
         tools = get_all_tools()
         for _tool in tools:
             pass
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Tool iteration failed: {e}")
 
 
 if __name__ == "__main__":

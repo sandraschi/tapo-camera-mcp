@@ -5,9 +5,12 @@ Command-line interface for Tapo Camera MCP (FastMCP 2.10).
 import argparse
 import asyncio
 import sys
+import traceback
 from typing import Any
 
 from fastmcp import Client
+
+from .core.server import TapoCameraServer
 
 # ANSI color codes
 COLOR_RED = "\033[91m"
@@ -58,7 +61,7 @@ class TapoCameraCLI:
 
         # Server commands
         server_parser = subparsers.add_parser("serve", help="Start the MCP server")
-        server_parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")  # nosec B104
+        server_parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")  # nosec B104  # noqa: S104
         server_parser.add_argument("--port", type=int, default=8000, help="Port to listen on")
         server_parser.add_argument(
             "--no-stdio",
@@ -138,8 +141,6 @@ class TapoCameraCLI:
 
             # Handle serve command (start the server)
             if args.command == "serve":
-                from .core.server import TapoCameraServer
-
                 server = TapoCameraServer()
                 print_info(f"Starting Tapo Camera MCP server on {args.host}:{args.port}")
                 if args.stdio:
@@ -159,16 +160,14 @@ class TapoCameraCLI:
             if args.command == "camera":
                 return await self._handle_camera(args)
 
-            # If we get here, the command is not implemented
-            print_error(f"Command not implemented: {args.command}")
-            return 1
-
         except Exception as e:
             if args.debug:
-                import traceback
-
                 traceback.print_exc()
             print_error(f"An error occurred: {e!s}")
+            return 1
+        else:
+            # If we get here, the command is not implemented
+            print_error(f"Command not implemented: {args.command}")
             return 1
         finally:
             if self.client:

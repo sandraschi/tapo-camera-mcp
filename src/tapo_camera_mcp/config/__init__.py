@@ -5,9 +5,7 @@ This module provides configuration models and utilities for the Tapo Camera MCP 
 """
 
 import json
-
-# import os
-# import sys
+import shutil
 from pathlib import Path
 from typing import Any, Dict, Optional, Type, TypeVar, Union
 
@@ -75,8 +73,6 @@ class ConfigManager:
             # Copy repo config to user directory
             user_config_dir.mkdir(parents=True, exist_ok=True)
             try:
-                import shutil
-
                 shutil.copy2(repo_config, user_config_file)
                 return user_config_file
             except Exception:
@@ -99,12 +95,12 @@ class ConfigManager:
         user_data_dir.mkdir(parents=True, exist_ok=True)
 
         default_config = {
-            "host": "0.0.0.0",  # nosec B104
+            "host": "0.0.0.0",  # nosec B104  # noqa: S104
             "port": 8080,
             "debug": False,
             "web": {
                 "enabled": True,
-                "host": "0.0.0.0",  # nosec B104
+                "host": "0.0.0.0",  # nosec B104  # noqa: S104  # noqa: S104
                 "port": 7777,
                 "title": "Tapo Camera MCP",
                 "theme": "dark",
@@ -170,7 +166,7 @@ class ConfigManager:
         if not self.config_path.exists():
             # Create a minimal in-memory config
             return {
-                "host": "0.0.0.0",  # nosec B104
+                "host": "0.0.0.0",  # nosec B104  # noqa: S104  # noqa: S104
                 "port": 8080,
                 "debug": False,
                 "cameras": [],
@@ -184,7 +180,7 @@ class ConfigManager:
                 elif self.config_path.suffix.lower() == ".json":
                     config = json.load(f)
                 else:
-                    raise ValueError(f"Unsupported config file format: {self.config_path.suffix}")
+                    raise ValueError(f"Unsupported config file format: {self.config_path.suffix}")  # noqa: TRY301
 
             # Ensure config is a dictionary
             if not isinstance(config, dict):
@@ -196,7 +192,7 @@ class ConfigManager:
         except Exception:
             # Return minimal config on error
             return {
-                "host": "0.0.0.0",  # nosec B104
+                "host": "0.0.0.0",  # nosec B104  # noqa: S104  # noqa: S104
                 "port": 8080,
                 "debug": False,
                 "cameras": [],
@@ -253,7 +249,7 @@ class ConfigManager:
             storage_config = config.get("storage", {})
 
             return ServerConfig(
-                host=config.get("host", "0.0.0.0"),
+                host=config.get("host", "0.0.0.0"),  # noqa: S104
                 port=config.get("port", 8080),
                 debug=config.get("debug", False),
                 web=WebUISettings(**web_config) if web_config else WebUISettings(),

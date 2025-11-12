@@ -3,20 +3,20 @@ requires = ["setuptools>=42.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tapo-camera-mcp"
+name = "home-security-mcp-platform"
 version = "1.1.0"  # Live dashboard working - major breakthrough
-description = "🔥 Production-ready FastMCP 2.12 server for TP-Link Tapo cameras with PTZ control, real-time monitoring, and Claude Desktop integration"
+description = "🏠 Production-ready home security MCP platform with unified surveillance dashboard, multi-device support (Tapo, Ring, Nest Protect, USB webcams), and Claude Desktop integration"
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
 authors = [
-    {name = "Tapo Camera MCP Team", email = "tapo-camera-mcp@example.com"},
+    {name = "Home Security MCP Platform Team", email = "home-security-mcp@example.com"},
 ]
 maintainers = [
-    {name = "Tapo Camera MCP Maintainers", email = "tapo-camera-mcp@example.com"}
+    {name = "Home Security MCP Platform Maintainers", email = "home-security-mcp@example.com"}
 ]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.8",
@@ -26,10 +26,11 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Home Automation",
     "Topic :: Multimedia :: Video :: Capture",
+    "Topic :: Security",
     "Typing :: Typed",
     "Framework :: FastMCP"
 ]
-keywords = ["tapo", "tplink", "camera", "mcp", "fastmcp", "home-automation"]
+keywords = ["home-security", "surveillance", "mcp", "fastmcp", "tapo", "ring", "nest-protect", "webcam", "home-automation", "security-dashboard"]
 
 dependencies = [
     # Core dependencies
@@ -235,6 +236,9 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 python_files = "test_*.py"
 addopts = "-v --cov=tapo_camera_mcp --cov-report=term-missing"
+markers = [
+    "broken: marks tests as broken and should be skipped",
+]
 
 [tool.coverage.run]
 source = ["tapo_camera_mcp"]

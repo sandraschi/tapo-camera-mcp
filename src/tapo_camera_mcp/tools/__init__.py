@@ -78,8 +78,8 @@ def discover_tools_wrapper(package: Optional[str] = None) -> List[Type[BaseTool]
                     # Recursively discover tools in subpackages
                     subpackage_path = os.path.join(package_path, module_name)
                     discover_tools_in_path(subpackage_path, full_module_name)
-        except ImportError as e:
-            logger.exception(f"Failed to import tool module {full_module_name}: {e}")
+        except ImportError:
+            logger.exception(f"Failed to import tool module {full_module_name}")
 
     return _get_all_tools()
 
@@ -107,8 +107,8 @@ def discover_tools_in_path(package_path: str, package_name: str) -> None:
                     # Recursively discover tools in deeper subpackages
                     subpackage_path = os.path.join(package_path, module_name)
                     discover_tools_in_path(subpackage_path, full_module_name)
-        except ImportError as e:
-            logger.exception(f"Failed to import tool module {full_module_name}: {e}")
+        except ImportError:
+            logger.exception(f"Failed to import tool module {full_module_name}")
 
 
 # Re-export functions from base_tool
@@ -180,15 +180,15 @@ def import_consolidated_tools():
         for tool_cls in consolidated_tools:
             try:
                 register_tool(tool_cls)
-            except Exception as e:
-                logger.exception(f"Failed to register {tool_cls.__name__}: {e}")
+            except Exception:
+                logger.exception(f"Failed to register {tool_cls.__name__}")
 
         _tools_registered = True
         logger.info("✅ All 16 consolidated portmanteau tools registered (FastMCP 2.12 compliant)")
         logger.info("🎯 Tool consolidation successful: 64 → 16 tools (75% reduction)")
 
-    except ImportError as e:
-        logger.exception(f"Failed to import consolidated tools: {e}")
+    except ImportError:
+        logger.exception("Failed to import consolidated tools")
         # Fallback to old discovery method if needed
         logger.warning("Falling back to old discovery method...")
         discover_tools()

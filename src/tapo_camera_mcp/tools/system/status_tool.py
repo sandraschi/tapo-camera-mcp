@@ -45,24 +45,43 @@ class PerformanceMetrics(BaseModel):
     total_requests: int = Field(..., description="Total requests processed")
 
 
-@tool(name="get_status")
+@tool(name="status")
 class StatusTool(BaseTool):
     """Tool to get system and camera status information."""
 
     class Meta:
-        name = "get_status"
+        name = "status"
         category = ToolCategory.SYSTEM
 
     detail_level: str = Field(default="basic", description="Level of detail in the status report")
+    section: str = Field(default="system", description="Section to get status for")
 
     model_config = ConfigDict(json_schema_extra={"enum": ["basic", "detailed", "cameras"]})
 
     def __init__(self, **data):
         super().__init__(**data)
-        from tapo_camera_mcp.core.server import TapoCameraServer
+        # Store server reference in a way that doesn't conflict with Pydantic
+        self._server = None
+        self._camera_manager = None
 
-        self.server = TapoCameraServer.get_instance()
-        self.camera_manager = self.server.camera_manager
+    def _get_server(self):
+        """Get server instance, initializing if needed."""
+        if self._server is None:
+            try:
+                from tapo_camera_mcp.core.server import TapoCameraServer
+
+                self._server = TapoCameraServer.get_instance()
+            except Exception:
+                self._server = None
+        return self._server
+
+    def _get_camera_manager(self):
+        """Get camera manager instance, initializing if needed."""
+        if self._camera_manager is None:
+            server = self._get_server()
+            if server and hasattr(server, "camera_manager"):
+                self._camera_manager = server.camera_manager
+        return self._camera_manager
 
     async def execute(self) -> Dict[str, Any]:
         """Return comprehensive system and camera status information with health monitoring."""
@@ -82,7 +101,7 @@ class StatusTool(BaseTool):
             }
 
             # Get camera status if requested
-            if self.detail_level in ["detailed", "cameras"] and self.camera_manager:
+            if self.detail_level in ["detailed", "cameras"] and self._get_camera_manager():
                 result["cameras"] = await self._get_camera_statuses()
 
                 if self.detail_level == "detailed":
@@ -94,7 +113,7 @@ class StatusTool(BaseTool):
             return result
 
         except Exception as e:
-            logger.exception(f"Error getting system status: {e}")
+            logger.exception("Error getting system status")
             return {
                 "success": False,
                 "error": f"Failed to get status: {e!s}",
@@ -155,7 +174,7 @@ class StatusTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Error in comprehensive health check: {e}")
+            logger.exception("Error in comprehensive health check")
             return {
                 "overall": "critical",
                 "error": str(e),
@@ -164,11 +183,12 @@ class StatusTool(BaseTool):
 
     async def _assess_camera_health(self) -> Dict[str, Any]:
         """Assess overall camera health."""
-        if not self.camera_manager:
+        camera_manager = self._get_camera_manager()
+        if not camera_manager:
             return {"status": "no_cameras", "warnings": []}
 
         try:
-            cameras = self.camera_manager.get_cameras()
+            cameras = camera_manager.get_cameras()
             total_cameras = len(cameras)
             online_cameras = sum(1 for camera in cameras if camera.is_online())
 
@@ -188,7 +208,7 @@ class StatusTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Error assessing camera health: {e}")
+            logger.exception("Error assessing camera health")
             return {"status": "error", "warnings": [str(e)]}
 
     async def _assess_server_health(self) -> Dict[str, Any]:
@@ -213,33 +233,31 @@ class StatusTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"Error assessing server health: {e}")
+            logger.exception("Error assessing server health")
             return {"status": "error", "warnings": [str(e)]}
 
     async def _get_system_status(self) -> Dict[str, Any]:
         """Get basic system status information."""
+        camera_manager = self._get_camera_manager()
         return {
             "cpu_percent": psutil.cpu_percent(interval=1),
             "memory_percent": psutil.virtual_memory().percent,
             "disk_usage": psutil.disk_usage("/").percent,
             "uptime": self._format_uptime(psutil.boot_time()),
-            "active_cameras": (
-                len(self.camera_manager.get_active_cameras()) if self.camera_manager else 0
-            ),
-            "active_streams": (
-                len(self.camera_manager.get_active_streams()) if self.camera_manager else 0
-            ),
+            "active_cameras": (len(camera_manager.get_active_cameras()) if camera_manager else 0),
+            "active_streams": (len(camera_manager.get_active_streams()) if camera_manager else 0),
             "last_updated": datetime.utcnow().isoformat(),
         }
 
     async def _get_camera_statuses(self) -> List[Dict[str, Any]]:
         """Get status for all cameras."""
-        if not self.camera_manager:
+        camera_manager = self._get_camera_manager()
+        if not camera_manager:
             return []
 
         cameras_status = []
-        for camera in self.camera_manager.get_cameras():
-            stream = self.camera_manager.get_camera_stream(camera.id)
+        for camera in camera_manager.get_cameras():
+            stream = camera_manager.get_camera_stream(camera.id)
             cameras_status.append(
                 {
                     "camera_id": camera.id,

@@ -2,6 +2,7 @@
 
 import logging
 
+from .laptop import LaptopCamera
 from .petcube import PetcubeCamera
 from .tapo import TapoCamera
 from .webcam import WebCamera
@@ -18,14 +19,14 @@ try:
     except Exception as e:
         logger.warning(f"Failed to apply ring_doorbell patch: {e}")
 
-    from .ring import RingCamera
+    from .ring import RingCamera  # noqa: F401
 
     RING_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Failed to import RingCamera: {e}")
     RING_AVAILABLE = False
 
-__all__ = ["PetcubeCamera", "TapoCamera", "WebCamera"]
+__all__ = ["LaptopCamera", "PetcubeCamera", "TapoCamera", "WebCamera"]
 
 # Only add RingCamera to __all__ if it's available
 if RING_AVAILABLE:

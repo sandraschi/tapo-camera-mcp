@@ -73,7 +73,7 @@ class TapoPlugManager:
         self._initialized = False
         self._electricity_rate = 0.12  # USD per kWh (default rate)
 
-    async def initialize(self, tapo_account: Dict[str, str]) -> bool:
+    async def initialize(self, _tapo_account: Dict[str, str]) -> bool:
         """Initialize connection to Tapo smart plugs."""
         try:
             logger.info("Initializing Tapo smart plug connection...")
@@ -88,8 +88,8 @@ class TapoPlugManager:
             logger.info("Tapo smart plug connection initialized successfully")
             return True
 
-        except Exception as e:
-            logger.exception("Failed to initialize Tapo smart plugs: %s", e)
+        except Exception:
+            logger.exception("Failed to initialize Tapo smart plugs")
             return False
 
     async def _discover_devices(self):
@@ -283,8 +283,8 @@ class TapoPlugManager:
             logger.info("Toggled device %s to %s", device_id, "ON" if power_state else "OFF")
             return True
 
-        except Exception as e:
-            logger.exception("Failed to toggle device %s: %s", device_id, e)
+        except Exception:
+            logger.exception("Failed to toggle device %s", device_id)
             return False
 
     async def get_energy_usage_history(
@@ -383,7 +383,7 @@ class GetSmartPlugStatusTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Failed to get smart plug status: %s", e)
+            logger.exception("Failed to get smart plug status")
             return {"error": str(e)}
 
 
@@ -438,7 +438,7 @@ class ControlSmartPlugTool(BaseTool):
             return {"error": f"Failed to control device {device_id}"}
 
         except Exception as e:
-            logger.exception("Failed to control smart plug %s: %s", device_id, e)
+            logger.exception("Failed to control smart plug %s", device_id)
             return {"error": str(e)}
 
 
@@ -514,7 +514,7 @@ class GetEnergyConsumptionTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Failed to get energy consumption data: %s", e)
+            logger.exception("Failed to get energy consumption data")
             return {"error": str(e)}
 
 
@@ -593,7 +593,7 @@ class GetEnergyCostAnalysisTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Failed to get energy cost analysis: %s", e)
+            logger.exception("Failed to get energy cost analysis")
             return {"error": str(e)}
 
 
@@ -666,7 +666,7 @@ class SetEnergyAutomationTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Failed to set energy automation: %s", e)
+            logger.exception("Failed to set energy automation")
             return {"error": str(e)}
 
 
@@ -775,7 +775,7 @@ class GetTapoP115DetailedStatsTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Failed to get P115 detailed stats: %s", e)
+            logger.exception("Failed to get P115 detailed stats")
             return {"error": str(e)}
 
 
@@ -845,7 +845,7 @@ class SetTapoP115EnergySavingModeTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Failed to set energy saving mode for P115 %s: %s", device_id, e)
+            logger.exception("Failed to set energy saving mode for P115 %s", device_id)
             return {"error": str(e)}
 
 
@@ -918,7 +918,7 @@ class GetTapoP115PowerScheduleTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Failed to get P115 power schedules: %s", e)
+            logger.exception("Failed to get P115 power schedules")
             return {"error": str(e)}
 
 
@@ -1036,5 +1036,5 @@ class GetTapoP115DataStorageInfoTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception("Failed to get P115 data storage info: %s", e)
+            logger.exception("Failed to get P115 data storage info")
             return {"error": str(e)}

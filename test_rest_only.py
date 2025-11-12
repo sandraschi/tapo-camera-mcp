@@ -29,5 +29,3 @@ async def test_rest_server():
 
 if __name__ == "__main__":
     asyncio.run(test_rest_server())
-
-

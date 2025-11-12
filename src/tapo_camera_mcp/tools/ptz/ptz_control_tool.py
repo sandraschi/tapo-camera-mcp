@@ -53,7 +53,7 @@ class PTZControlTool(BaseTool):
             zoom: Optional[float] = Field(None, description="Zoom direction (-1 to 1)")
             duration: Optional[float] = Field(None, description="Movement duration in seconds")
 
-    async def _run(
+    async def execute(
         self,
         operation: str,
         camera_id: str,
@@ -79,7 +79,7 @@ class PTZControlTool(BaseTool):
             }
 
         except Exception as e:
-            logger.exception(f"PTZ {operation} operation failed: {e}")
+            logger.exception(f"PTZ {operation} operation failed")
             return {
                 "success": False,
                 "error": str(e),

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 # Test importing base_tool
 try:
-    from tapo_camera_mcp.tools.base_tool import Tool, ToolCategory, register_tool
+    from tapo_camera_mcp.tools.base_tool import register_tool  # noqa: F401
 
 except ImportError:
     import traceback
@@ -23,12 +23,7 @@ except ImportError:
 
 # Test importing tools/__init__.py
 try:
-    from tapo_camera_mcp.tools import (
-        get_all_tools,
-        get_tool,
-        register_tool,
-        tools_registry,
-    )
+    from tapo_camera_mcp.tools import get_all_tools
 
 except ImportError:
     import traceback

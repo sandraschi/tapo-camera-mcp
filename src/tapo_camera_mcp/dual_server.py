@@ -87,7 +87,7 @@ class TapoCameraDualServer:
         """Create the REST API FastAPI application"""
 
         @asynccontextmanager
-        async def lifespan(app: FastAPI):
+        async def lifespan(_app: FastAPI):
             # Startup
             logger.info("Starting Tapo Camera REST API server")
             self.core_server = await TapoCameraServer.get_instance()
@@ -181,7 +181,7 @@ class TapoCameraDualServer:
                 return cameras
 
             except Exception as e:
-                logger.exception(f"Error listing cameras: {e}")
+                logger.exception("Error listing cameras")
                 raise HTTPException(status_code=500, detail="Failed to list cameras") from e
 
         # Get camera details endpoint
@@ -203,12 +203,12 @@ class TapoCameraDualServer:
                             model=cam.get("model"),
                         )
 
-                raise HTTPException(status_code=404, detail="Camera not found")
+                raise HTTPException(status_code=404, detail="Camera not found")  # noqa: TRY301
 
             except HTTPException:
                 raise
             except Exception as e:
-                logger.exception(f"Error getting camera {camera_id}: {e}")
+                logger.exception(f"Error getting camera {camera_id}")
                 raise HTTPException(status_code=500, detail="Failed to get camera") from e
 
         # Get camera stream endpoint
@@ -225,7 +225,7 @@ class TapoCameraDualServer:
                 )
 
             except Exception as e:
-                logger.exception(f"Error getting stream for camera {camera_id}: {e}")
+                logger.exception(f"Error getting stream for camera {camera_id}")
                 raise HTTPException(status_code=500, detail="Failed to get stream") from e
 
         # Capture snapshot endpoint
@@ -244,7 +244,7 @@ class TapoCameraDualServer:
                         break
 
                 if not camera:
-                    raise HTTPException(status_code=404, detail="Camera not found")
+                    raise HTTPException(status_code=404, detail="Camera not found")  # noqa: TRY301
 
                 # For now, return success (full implementation would capture actual image)
                 return {
@@ -257,7 +257,7 @@ class TapoCameraDualServer:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.exception(f"Error capturing snapshot for camera {camera_id}: {e}")
+                logger.exception(f"Error capturing snapshot for camera {camera_id}")
                 raise HTTPException(status_code=500, detail="Failed to capture snapshot") from e
 
         return app
@@ -270,11 +270,11 @@ class TapoCameraDualServer:
             from .mcp_server import start_mcp_server
 
             await start_mcp_server()
-        except Exception as e:
-            logger.exception(f"Failed to start MCP server: {e}")
+        except Exception:
+            logger.exception("Failed to start MCP server")
             raise
 
-    async def start_rest_server(self, host: str = "0.0.0.0", port: int = 8123):  # nosec B104
+    async def start_rest_server(self, host: str = "0.0.0.0", port: int = 8123):  # nosec B104  # noqa: S104
         """Start the REST API server"""
         try:
             logger.info(f"Starting REST API server on {host}:{port}")
@@ -283,11 +283,11 @@ class TapoCameraDualServer:
             server = uvicorn.Server(config)
             await server.serve()
 
-        except Exception as e:
-            logger.exception(f"Failed to start REST API server: {e}")
+        except Exception:
+            logger.exception("Failed to start REST API server")
             raise
 
-    async def start_dual_server(self, rest_host: str = "0.0.0.0", rest_port: int = 8123):  # nosec B104
+    async def start_dual_server(self, rest_host: str = "0.0.0.0", rest_port: int = 8123):  # nosec B104  # noqa: S104
         """Start both MCP and REST servers concurrently"""
         logger.info("Starting dual interface server (MCP + REST API)")
 
@@ -321,7 +321,7 @@ async def start_dual_server():
     await dual_server.start_dual_server()
 
 
-async def start_rest_only_server(host: str = "0.0.0.0", port: int = 8123):  # nosec B104
+async def start_rest_only_server(host: str = "0.0.0.0", port: int = 8123):  # nosec B104  # noqa: S104
     """Convenience function to start REST API only"""
     await dual_server.start_rest_server(host, port)
 

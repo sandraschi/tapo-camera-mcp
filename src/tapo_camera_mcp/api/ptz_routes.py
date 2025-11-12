@@ -79,7 +79,7 @@ class PTZPresetResponse(PTZPresetCreate):
 async def move_ptz(
     camera_id: str,
     move_request: PTZMoveRequest,
-    camera_client: Any = Depends(get_camera_client),
+    _camera_client: Any = Depends(get_camera_client),
 ):
     """
     Move the PTZ camera in the specified direction
@@ -90,25 +90,20 @@ async def move_ptz(
     """
     try:
         # This would be an actual API call to the camera
-        # await camera_client.move_ptz(
-        #     direction=move_request.direction,
-        #     speed=move_request.speed,
-        #     duration_ms=move_request.duration_ms
-        # )
         return {
             "status": "success",
             "message": f"Moving camera {camera_id} {move_request.direction}",
         }
     except Exception as e:
-        logger.exception(f"Failed to move PTZ: {e}")
+        logger.exception("Failed to move PTZ")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/zoom", status_code=status.HTTP_202_ACCEPTED)
 async def zoom_ptz(
-    camera_id: str,
+    _camera_id: str,
     zoom_request: PTZZoomRequest,
-    camera_client: Any = Depends(get_camera_client),
+    _camera_client: Any = Depends(get_camera_client),
 ):
     """
     Zoom the camera in or out
@@ -118,24 +113,19 @@ async def zoom_ptz(
     """
     try:
         # This would be an actual API call to the camera
-        # await camera_client.zoom(
-        #     direction=zoom_request.direction,
-        #     speed=zoom_request.speed
-        # )
         return {"status": "success", "message": f"Zooming {zoom_request.direction}"}
     except Exception as e:
-        logger.exception(f"Failed to zoom: {e}")
+        logger.exception("Failed to zoom")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/stop", status_code=status.HTTP_202_ACCEPTED)
-async def stop_ptz(camera_id: str, camera_client: Any = Depends(get_camera_client)):
+async def stop_ptz(_camera_id: str, _camera_client: Any = Depends(get_camera_client)):
     """Stop all PTZ movement"""
     try:
-        # await camera_client.stop_ptz()
         return {"status": "success", "message": "PTZ movement stopped"}
     except Exception as e:
-        logger.exception(f"Failed to stop PTZ: {e}")
+        logger.exception("Failed to stop PTZ")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -147,7 +137,7 @@ async def list_presets(camera_id: str, camera_client: Any = Depends(get_camera_c
             ptz_managers[camera_id] = PTZPresetManager(camera_client)
         return ptz_managers[camera_id].get_presets()
     except Exception as e:
-        logger.exception(f"Failed to list PTZ presets: {e}")
+        logger.exception("Failed to list PTZ presets")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -165,8 +155,6 @@ async def create_preset(
         # If position is not provided, use current position
         position = preset_data.position
         if position is None:
-            # current_position = await camera_client.get_ptz_position()
-            # position = PTZPosition(**current_position)
             position = PTZPosition(pan=0, tilt=0, zoom=0)  # Default for demo
 
         return await ptz_managers[camera_id].save_preset(
@@ -175,29 +163,30 @@ async def create_preset(
             description=preset_data.description,
         )
     except Exception as e:
-        logger.exception(f"Failed to create PTZ preset: {e}")
+        logger.exception("Failed to create PTZ preset")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/presets/{preset_id}", response_model=PTZPresetResponse)
 async def get_preset(
-    camera_id: str, preset_id: int, camera_client: Any = Depends(get_camera_client)
+    camera_id: str, preset_id: int, _camera_client: Any = Depends(get_camera_client)
 ):
     """Get details of a specific PTZ preset"""
     try:
         if camera_id not in ptz_managers:
-            raise HTTPException(status_code=404, detail="No presets found for this camera")
+            raise HTTPException(status_code=404, detail="No presets found for this camera")  # noqa: TRY301
 
         preset = ptz_managers[camera_id].get_preset(preset_id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to get PTZ preset")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+    else:
         if not preset:
             raise HTTPException(status_code=404, detail=f"Preset {preset_id} not found")
 
         return preset
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception(f"Failed to get PTZ preset: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.put("/presets/{preset_id}", response_model=PTZPresetResponse)
@@ -205,18 +194,16 @@ async def update_preset(
     camera_id: str,
     preset_id: int,
     preset_data: PTZPresetUpdate,
-    camera_client: Any = Depends(get_camera_client),
+    _camera_client: Any = Depends(get_camera_client),
 ):
     """Update an existing PTZ preset"""
     try:
         if camera_id not in ptz_managers:
-            raise HTTPException(status_code=404, detail="No presets found for this camera")
+            raise HTTPException(status_code=404, detail="No presets found for this camera")  # noqa: TRY301
 
         # If position is provided, use it; otherwise, keep existing position
         position = preset_data.position
         if position is None:
-            # current_position = await camera_client.get_ptz_position()
-            # position = PTZPosition(**current_position)
             position = PTZPosition(pan=0, tilt=0, zoom=0)  # Default for demo
 
         updated_preset = await ptz_managers[camera_id].update_preset(
@@ -225,58 +212,60 @@ async def update_preset(
             position=position,
             description=preset_data.description,
         )
-
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to update PTZ preset")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+    else:
         if not updated_preset:
             raise HTTPException(status_code=404, detail=f"Preset {preset_id} not found")
 
         return updated_preset
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception(f"Failed to update PTZ preset: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.delete("/presets/{preset_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_preset(
-    camera_id: str, preset_id: int, camera_client: Any = Depends(get_camera_client)
+    camera_id: str, preset_id: int, _camera_client: Any = Depends(get_camera_client)
 ):
     """Delete a PTZ preset"""
     try:
         if camera_id not in ptz_managers:
-            raise HTTPException(status_code=404, detail="No presets found for this camera")
+            raise HTTPException(status_code=404, detail="No presets found for this camera")  # noqa: TRY301
 
         success = await ptz_managers[camera_id].delete_preset(preset_id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to delete PTZ preset")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+    else:
         if not success:
             raise HTTPException(status_code=404, detail=f"Preset {preset_id} not found")
 
         return
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception(f"Failed to delete PTZ preset: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/presets/{preset_id}/recall", status_code=status.HTTP_202_ACCEPTED)
 async def recall_preset(
-    camera_id: str, preset_id: int, camera_client: Any = Depends(get_camera_client)
+    camera_id: str, preset_id: int, _camera_client: Any = Depends(get_camera_client)
 ):
     """Move the camera to a saved preset position"""
     try:
         if camera_id not in ptz_managers:
-            raise HTTPException(status_code=404, detail="No presets found for this camera")
+            raise HTTPException(status_code=404, detail="No presets found for this camera")  # noqa: TRY301
 
         success = await ptz_managers[camera_id].recall_preset(preset_id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to recall PTZ preset")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+    else:
         if not success:
             raise HTTPException(status_code=404, detail=f"Preset {preset_id} not found")
 
         return {"status": "success", "message": f"Recalling preset {preset_id}"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception(f"Failed to recall PTZ preset: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # Helper function to get camera client (would be implemented in your auth/dependency system)
