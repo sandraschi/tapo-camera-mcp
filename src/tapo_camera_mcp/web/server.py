@@ -227,6 +227,23 @@ class WebServer:
             logger.exception("Error getting cameras data")
             cameras_data = []
 
+        # Sort cameras for UI: USB webcam first, then Tapo, then doorcam/Ring, then Petcube, then others.
+        def _camera_sort_key(cam: dict) -> tuple:
+            cam_type = (cam.get("type") or "").lower()
+            name = (cam.get("name") or cam.get("id") or "").lower()
+            priority = 4
+            if cam_type == "webcam":
+                priority = 0
+            elif cam_type == "tapo":
+                priority = 1
+            elif "door" in name or cam_type == "ring":
+                priority = 2
+            elif cam_type == "petcube":
+                priority = 3
+            return (priority, name)
+
+        cameras_data = sorted(cameras_data, key=_camera_sort_key)
+
         return self.templates.TemplateResponse(
             "cameras.html",
             {

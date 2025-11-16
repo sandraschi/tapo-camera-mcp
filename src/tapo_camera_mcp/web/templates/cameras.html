@@ -282,7 +282,7 @@
                 </span>
             </div>
 
-            <!-- Camera Details -->
+            <!-- Camera Details + Thumbnail -->
             <div class="camera-details">
                 <div class="detail-item">
                     <span class="detail-label">Type</span>
@@ -301,6 +301,21 @@
                     <span class="detail-value">{{ camera.firmware|default('Unknown') }}</span>
                 </div>
             </div>
+
+            <!-- Live Thumbnail (160x160) -->
+            {% if camera.status == 'online' %}
+            <div style="margin-top: 0.75rem; display: flex; gap: 0.75rem; align-items: center;">
+                <div style="width: 160px; height: 160px; border-radius: 0.5rem; overflow: hidden; border: 1px solid #e5e7eb; background:#000;">
+                    <img src="/api/cameras/{{ camera.name or camera.id }}/snapshot"
+                         alt="{{ camera.name }}"
+                         style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div style="font-size: 0.8rem; color: #6b7280;">
+                    <div>Live thumbnail (click stream button below for full view).</div>
+                    <div style="margin-top: 0.25rem;">USB webcam will appear first, followed by Tapo, doorcam, and Petcube.</div>
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Capabilities -->
             <div class="capabilities-grid">
@@ -351,7 +366,7 @@
             <!-- Actions -->
             {% if camera.status == 'online' %}
             <div class="camera-actions">
-                <button onclick="window.open('/api/cameras/{{ camera.name }}/stream', 'stream-{{ camera.name }}', 'width=800,height=600')" class="action-button action-button-primary">
+                <button onclick="window.open('/api/cameras/{{ camera.name or camera.id }}/stream', 'stream-{{ camera.name or camera.id }}', 'width=800,height=600')" class="action-button action-button-primary">
                     <svg class="w-4 h-4 mr-1 inline" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
                     </svg>
@@ -363,7 +378,7 @@
                     </svg>
                     🔊 Audio
                 </button>
-                <button onclick="window.open('/api/cameras/{{ camera.name }}/snapshot', 'snapshot-{{ camera.name }}', 'width=800,height=600')" class="action-button">
+                <button onclick="window.open('/api/cameras/{{ camera.name or camera.id }}/snapshot', 'snapshot-{{ camera.name or camera.id }}', 'width=800,height=600')" class="action-button">
                     <svg class="w-4 h-4 mr-1 inline" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm3 7a1 1 0 011-1h.01a1 1 0 110 2H8a1 1 0 01-1-1zm3-1a1 1 0 100 2h.01a1 1 0 100-2H10zm-2 4a1 1 0 011-1h.01a1 1 0 110 2H9a1 1 0 01-1-1zm6-4a1 1 0 100 2h.01a1 1 0 100-2H14zm-2 4a1 1 0 011-1h.01a1 1 0 110 2H12a1 1 0 01-1-1z" clip-rule="evenodd"></path>
                     </svg>
