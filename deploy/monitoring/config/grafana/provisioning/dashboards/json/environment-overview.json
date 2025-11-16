@@ -1,0 +1,47 @@
+{
+  "id": null,
+  "title": "Environment Overview",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "timeSeries",
+      "title": "Temperature (°C)",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [{ "refId": "A", "expr": "netatmo_temperature_celsius" }]
+    },
+    {
+      "type": "timeSeries",
+      "title": "Humidity (%)",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [{ "refId": "A", "expr": "netatmo_humidity_percent" }]
+    },
+    {
+      "type": "timeSeries",
+      "title": "CO2 (ppm)",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 800 },
+              { "color": "red", "value": 1000 }
+            ]
+          }
+        }
+      },
+      "targets": [{ "refId": "A", "expr": "netatmo_co2_ppm" }]
+    },
+    {
+      "type": "timeSeries",
+      "title": "Pressure (mbar)",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [{ "refId": "A", "expr": "netatmo_pressure_mbar" }]
+    }
+  ]
+}
+
+

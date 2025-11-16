@@ -46,11 +46,11 @@ class PetcubeAPI:
             ) as response:
                 data = await response.json()
                 if response.status != 200:
-                    raise ValueError(f"Login failed: {data.get('message', 'Unknown error')}")  # noqa: TRY301
+                    raise ValueError(f"Login failed: {data.get('message', 'Unknown error')}")
 
                 self._token = data.get("token") or data.get("access_token")
                 if not self._token:
-                    raise ValueError("No token received from login")  # noqa: TRY301
+                    raise ValueError("No token received from login")
 
                 # Update session headers with token
                 session.headers.update({"Authorization": f"Bearer {self._token}"})
@@ -68,7 +68,7 @@ class PetcubeAPI:
         try:
             async with session.get(f"{self.BASE_URL}/devices") as response:
                 if response.status != 200:
-                    raise ValueError(f"Failed to get devices: HTTP {response.status}")  # noqa: TRY301
+                    raise ValueError(f"Failed to get devices: HTTP {response.status}")
 
                 devices = await response.json()
                 return devices.get("devices", devices) if isinstance(devices, dict) else devices
@@ -84,7 +84,7 @@ class PetcubeAPI:
         try:
             async with session.get(f"{self.BASE_URL}/devices/{device_id}") as response:
                 if response.status != 200:
-                    raise ValueError(f"Failed to get device status: HTTP {response.status}")  # noqa: TRY301
+                    raise ValueError(f"Failed to get device status: HTTP {response.status}")
 
                 return await response.json()
 
@@ -99,7 +99,7 @@ class PetcubeAPI:
         try:
             async with session.get(f"{self.BASE_URL}/devices/{device_id}/stream") as response:
                 if response.status != 200:
-                    raise ValueError(f"Failed to get stream URL: HTTP {response.status}")  # noqa: TRY301
+                    raise ValueError(f"Failed to get stream URL: HTTP {response.status}")
 
                 data = await response.json()
                 return data.get("stream_url") or data.get("url")
@@ -117,7 +117,7 @@ class PetcubeAPI:
                 f"{self.BASE_URL}/devices/{device_id}/treat", json={"amount": amount}
             ) as response:
                 if response.status not in [200, 201]:
-                    raise ValueError(f"Failed to dispense treat: HTTP {response.status}")  # noqa: TRY301
+                    raise ValueError(f"Failed to dispense treat: HTTP {response.status}")
 
                 return await response.json()
 
@@ -167,7 +167,7 @@ class PetcubeCamera(BaseCamera):
                         self.device_id = devices[0].get("id") or devices[0].get("device_id")
                         logger.info(f"Auto-selected Petcube device: {self.device_id}")
                     else:
-                        raise ValueError("No Petcube devices found for this account")  # noqa: TRY301
+                        raise ValueError("No Petcube devices found for this account")
 
             # Verify device access
             if self._mock_petcube:

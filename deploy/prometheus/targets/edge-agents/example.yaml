@@ -1,0 +1,7 @@
+---
+- targets:
+    - 192.168.10.21:9400
+  labels:
+    site: backyard
+    role: edge-agent
+

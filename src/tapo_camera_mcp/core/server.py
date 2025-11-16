@@ -11,16 +11,16 @@ if str(src_path) not in sys.path:
 # Now import after path manipulation
 from typing import Optional
 
-from fastmcp.server import FastMCP  # noqa: E402
+from fastmcp.server import FastMCP
 
-from tapo_camera_mcp.camera.manager import CameraManager  # noqa: E402
-from tapo_camera_mcp.tools.base_tool import ToolResult  # noqa: E402
-from tapo_camera_mcp.tools.discovery import discover_tools  # noqa: E402
+from tapo_camera_mcp.camera.manager import CameraManager
+from tapo_camera_mcp.tools.base_tool import ToolResult
+from tapo_camera_mcp.tools.discovery import discover_tools
 
 # Optional camera imports - handle missing dependencies gracefully
 try:
     from tapo_camera_mcp.camera.ring import RingCamera
-except ImportError as e:
+except Exception as e:
     logger = logging.getLogger(__name__)
     logger.warning(f"Ring camera support unavailable: {e}")
     RingCamera = None
@@ -273,15 +273,17 @@ async def tool_wrapper("""
                             if isinstance(result, dict):
                                 return result
                             return {"content": str(result), "is_error": False}
-                        raise ValueError(f"Tool {tool_name} has no execute method")  # noqa: TRY301
+
+                        def _raise_no_execute() -> ValueError:
+                            return ValueError(f"Tool {tool_name} has no execute method")
+
+                        raise _raise_no_execute()
 
                     except Exception as e:
                         error_msg = f"Error executing tool {tool_name}: {e}"
                         logger.exception(error_msg)
                         logger.exception("Full traceback:")
                         return {"content": error_msg, "is_error": True}
-
-                wrapper_func = wrapper_func
 
             # Register the tool
             self.mcp.tool(tool_name, description=tool_description)(wrapper_func)
@@ -354,10 +356,9 @@ async def tool_wrapper("""
                 if save_to_temp:
                     import tempfile
 
-                    temp_file = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
-                    temp_file.write(image_data)
-                    temp_file.close()
-                    result["saved_path"] = temp_file.name
+                    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
+                        temp_file.write(image_data)
+                        result["saved_path"] = temp_file.name
 
                 if analyze:
                     analysis = await self._analyze_image(image_data, prompt)
@@ -383,10 +384,9 @@ async def tool_wrapper("""
                 if save_to_temp:
                     import tempfile
 
-                    temp_file = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
-                    temp_file.write(image_data)
-                    temp_file.close()
-                    result["saved_path"] = temp_file.name
+                    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
+                        temp_file.write(image_data)
+                        result["saved_path"] = temp_file.name
 
                 if analyze:
                     analysis = await self._analyze_image(image_data, prompt)
@@ -412,10 +412,9 @@ async def tool_wrapper("""
                 if save_to_temp:
                     import tempfile
 
-                    temp_file = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
-                    temp_file.write(image_data)
-                    temp_file.close()
-                    result["saved_path"] = temp_file.name
+                    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
+                        temp_file.write(image_data)
+                        result["saved_path"] = temp_file.name
 
                 if analyze:
                     analysis = await self._analyze_image(image_data, prompt)
@@ -520,7 +519,7 @@ async def tool_wrapper("""
 
     async def run(
         self,
-        host: str = "0.0.0.0",  # nosec B104  # noqa: S104
+        host: str = "0.0.0.0",  # nosec B104
         port: int = 8000,
         stdio: bool = False,
         direct: bool = False,

@@ -67,9 +67,9 @@ class CameraMetrics:
         """Convert metrics to dictionary for JSON serialization"""
         data = asdict(self)
         # Convert datetime to ISO format
-        for field in ["last_seen", "motion_last_detected"]:
-            if data[field]:
-                data[field] = data[field].isoformat()
+        for field_name in ["last_seen", "motion_last_detected"]:
+            if data[field_name]:
+                data[field_name] = data[field_name].isoformat()
         # Convert Enum to string
         if data.get("status"):
             data["status"] = data["status"].value
@@ -261,7 +261,7 @@ class MetricsServer:
     def __init__(
         self,
         metrics_collector: MetricsCollector,
-        host: str = "0.0.0.0",  # nosec B104  # noqa: S104
+        host: str = "0.0.0.0",  # nosec B104
         port: int = 8080,
     ):
         self.metrics_collector = metrics_collector

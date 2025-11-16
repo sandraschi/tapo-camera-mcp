@@ -13,7 +13,7 @@ class WebUISettings(BaseModel):
     """Web UI specific settings."""
 
     enabled: bool = True
-    host: str = "0.0.0.0"  # nosec B104  # noqa: S104
+    host: str = "0.0.0.0"  # nosec B104
     port: int = 7777
     title: str = "Tapo Camera MCP"
     theme: Literal["light", "dark", "system"] = "dark"
@@ -23,7 +23,7 @@ class WebUISettings(BaseModel):
     cors_origins: List[str] = Field(
         default_factory=lambda: ["*"], description="List of allowed CORS origins"
     )
-    session_secret: str = "change-this-in-production"  # nosec B105  # noqa: S105
+    session_secret: str = "change-this-in-production"  # nosec B105
     session_lifetime: int = 86400  # 24 hours in seconds
 
 
@@ -51,7 +51,7 @@ class SecurityIntegrations(BaseModel):
 class SecuritySettings(BaseModel):
     """Security related settings."""
 
-    secret_key: str = "change-this-in-production"  # nosec B105  # noqa: S105
+    secret_key: str = "change-this-in-production"  # nosec B105
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 1440  # 24 hours
     password_min_length: int = 8
@@ -91,7 +91,7 @@ class ServerConfig:
     """Server configuration class."""
 
     # Server settings
-    host: str = "0.0.0.0"  # nosec B104  # noqa: S104
+    host: str = "0.0.0.0"  # nosec B104
     port: int = 8080
     debug: bool = False
 

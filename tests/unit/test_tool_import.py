@@ -3,9 +3,10 @@ Test script to verify tool imports and registration.
 """
 
 import logging
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add src to path
 src_dir = str(Path(__file__).parent.absolute() / "src")

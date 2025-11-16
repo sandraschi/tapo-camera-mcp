@@ -287,7 +287,7 @@ async def configure_station_alerts(station_id: str, alert_config: Dict[str, Any]
         required_fields = ["alert_type", "threshold_value", "comparison"]
         for field in required_fields:
             if field not in alert_config:
-                raise HTTPException(status_code=400, detail=f"Missing required field: {field}")  # noqa: TRY301
+                raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
 
         # Simulate alert configuration
         alert_id = f"alert_{station_id}_{alert_config['alert_type']}_{int(time.time())}"

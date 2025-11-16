@@ -503,10 +503,9 @@ class GetOnboardingProgressTool(BaseTool):
         if auth_required_devices:
             steps.append("Set up authentication for protected devices")
 
-        # Check if onboarding is complete
-        if not discovery_manager.onboarding_state.onboarding_complete:
-            if not unconfigured_devices:
-                steps.append("Complete onboarding and start using devices")
+          # Check if onboarding is complete
+        if not discovery_manager.onboarding_state.onboarding_complete and not unconfigured_devices:
+            steps.append("Complete onboarding and start using devices")
 
         return steps
 

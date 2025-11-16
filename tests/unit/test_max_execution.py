@@ -4,12 +4,12 @@ FINAL REAL EXECUTION TEST - Force 80% coverage by executing ALL code paths!
 """
 
 import asyncio
-import pytest
 import logging
 import os
 import sys
 
 import cv2
+import pytest
 from PIL import Image
 
 # Add the src path to Python path

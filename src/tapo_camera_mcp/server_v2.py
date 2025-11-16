@@ -19,7 +19,8 @@ os.environ["PYTHONWARNINGS"] = "ignore"
 
 # Redirect stderr to avoid warnings interfering with JSON parsing
 original_stderr = sys.stderr
-sys.stderr = open(os.devnull, "w")
+# SIM115: Intentionally left open for duration of module to suppress warnings
+sys.stderr = open(os.devnull, "w")  # noqa: SIM115
 
 # Apply warning filters
 warnings.filterwarnings("ignore")
@@ -41,6 +42,7 @@ except Exception as e:
 sys.stderr = original_stderr
 
 # Re-export Tapo for tests
+# PLW0127: Self-assignment is intentional for re-export pattern
 Tapo = Tapo
 
 # Import and re-export TapoCameraServer for tests
@@ -64,7 +66,7 @@ def main():
     logger.info(f"Command line args: {sys.argv}")
 
     parser = argparse.ArgumentParser(description="Tapo Camera MCP Server")
-    parser.add_argument("--host", default="0.0.0.0", help="Host to bind the server to")  # nosec B104  # noqa: S104
+    parser.add_argument("--host", default="0.0.0.0", help="Host to bind the server to")  # nosec B104
     parser.add_argument("--port", type=int, default=8000, help="Port to bind the server to")
     parser.add_argument(
         "--no-stdio", action="store_false", dest="stdio", help="Disable stdio transport"

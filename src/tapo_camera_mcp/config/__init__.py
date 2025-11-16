@@ -95,12 +95,12 @@ class ConfigManager:
         user_data_dir.mkdir(parents=True, exist_ok=True)
 
         default_config = {
-            "host": "0.0.0.0",  # nosec B104  # noqa: S104
+            "host": "0.0.0.0",  # nosec B104
             "port": 8080,
             "debug": False,
             "web": {
                 "enabled": True,
-                "host": "0.0.0.0",  # nosec B104  # noqa: S104  # noqa: S104
+                "host": "0.0.0.0",  # nosec B104
                 "port": 7777,
                 "title": "Tapo Camera MCP",
                 "theme": "dark",
@@ -142,6 +142,27 @@ class ConfigManager:
             "request_timeout": 30,
             "log_level": "INFO",
             "cameras": [],  # Empty cameras list for initial setup
+            "energy": {
+                "tapo_p115": {
+                    "electricity_rate": 0.12,
+                    "account": {
+                        "username": "",
+                        "password": "",
+                    },
+                    "devices": [
+                        {
+                            "host": "192.168.1.120",
+                            "device_id": "tapo_p115_living_room_tv",
+                            "name": "Living Room TV Plug",
+                            "location": "Living Room",
+                        }
+                    ],
+                    "discovery": {
+                        "enabled": False,
+                        "timeout": 4,
+                    },
+                }
+            },
         }
 
         path = Path(path)
@@ -166,7 +187,7 @@ class ConfigManager:
         if not self.config_path.exists():
             # Create a minimal in-memory config
             return {
-                "host": "0.0.0.0",  # nosec B104  # noqa: S104  # noqa: S104
+                "host": "0.0.0.0",  # nosec B104
                 "port": 8080,
                 "debug": False,
                 "cameras": [],
@@ -180,7 +201,7 @@ class ConfigManager:
                 elif self.config_path.suffix.lower() == ".json":
                     config = json.load(f)
                 else:
-                    raise ValueError(f"Unsupported config file format: {self.config_path.suffix}")  # noqa: TRY301
+                    raise ValueError(f"Unsupported config file format: {self.config_path.suffix}")
 
             # Ensure config is a dictionary
             if not isinstance(config, dict):
@@ -192,7 +213,7 @@ class ConfigManager:
         except Exception:
             # Return minimal config on error
             return {
-                "host": "0.0.0.0",  # nosec B104  # noqa: S104  # noqa: S104
+                "host": "0.0.0.0",  # nosec B104
                 "port": 8080,
                 "debug": False,
                 "cameras": [],
@@ -249,7 +270,7 @@ class ConfigManager:
             storage_config = config.get("storage", {})
 
             return ServerConfig(
-                host=config.get("host", "0.0.0.0"),  # noqa: S104
+                host=config.get("host", "0.0.0.0"),
                 port=config.get("port", 8080),
                 debug=config.get("debug", False),
                 web=WebUISettings(**web_config) if web_config else WebUISettings(),

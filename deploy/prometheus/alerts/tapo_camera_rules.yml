@@ -1,0 +1,26 @@
+groups:
+  - name: tapo-camera-mcp
+    interval: 30s
+    rules:
+      - alert: CameraOffline
+        expr: tapo_camera_status{status!="online"} > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Camera offline ({{ $labels.camera_id }})"
+          description: >
+            The camera {{ $labels.camera_id }} on {{ $labels.instance }} has been offline
+            for more than two minutes. Investigate power or network connectivity.
+
+      - alert: EdgeAgentMissedScrape
+        expr: scrape_duration_seconds{job="edge-agent"} > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Edge agent scrape is slow"
+          description: >
+            Edge agent {{ $labels.instance }} scrapes are taking longer than expected.
+            Check node health and bandwidth.
+

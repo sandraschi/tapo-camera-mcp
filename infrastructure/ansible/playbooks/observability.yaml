@@ -1,0 +1,14 @@
+---
+- name: Deploy observability stack
+  hosts: observability
+  become: true
+  vars:
+    prometheus_config: /etc/prometheus/prometheus.yml
+    loki_config: /etc/loki/loki-config.yaml
+    promtail_config: /etc/promtail/promtail-config.yaml
+  roles:
+    - prometheus
+    - loki
+    - promtail
+    - alertmanager
+

@@ -1,0 +1,89 @@
+# Grafana Alert Rules for P115 Power Spike Detection
+# 
+# This file configures alerts for power consumption spikes on Tapo P115 smart plugs.
+# Useful for detecting heating bursts (e.g., Zojirushi hot water dispenser).
+
+apiVersion: 1
+
+groups:
+  - name: tapo_p115_power_alerts
+    folder: Energy Monitoring
+    interval: 30s
+    orgId: 1
+    rules:
+      - uid: p115_power_spike
+        title: P115 Power Spike Detected
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: tapo_p115_power_watts > 500
+              intervalMs: 30000
+              maxDataPoints: 43200
+              refId: A
+        execErrState: Alerting
+        for: 10s  # Trigger after 10 seconds of high power
+        annotations:
+          description: "Power consumption spike detected on {{ $labels.name }} ({{ $labels.device_id }}) at {{ $labels.location }}. Current power: {{ $value }}W"
+          summary: "Power spike: {{ $labels.name }} at {{ $value }}W"
+        labels:
+          severity: warning
+          service: energy
+          device_type: p115
+        noDataState: NoData
+        isPaused: false
+
+      - uid: p115_power_surge
+        title: P115 Power Surge (>800W)
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: tapo_p115_power_watts > 800
+              intervalMs: 30000
+              maxDataPoints: 43200
+              refId: A
+        execErrState: Alerting
+        for: 5s  # Trigger faster for higher power
+        annotations:
+          description: "High power surge detected on {{ $labels.name }} ({{ $labels.device_id }}) at {{ $labels.location }}. Current power: {{ $value }}W - Check device immediately!"
+          summary: "POWER SURGE: {{ $labels.name }} at {{ $value }}W"
+        labels:
+          severity: critical
+          service: energy
+          device_type: p115
+        noDataState: NoData
+        isPaused: false
+
+      - uid: p115_rapid_power_change
+        title: P115 Rapid Power Change
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              # Detect when power goes from <10W to >500W within 30 seconds
+              expr: |
+                (
+                  tapo_p115_power_watts > 500
+                  and
+                  tapo_p115_power_watts - tapo_p115_power_watts offset 30s > 490
+                )
+              intervalMs: 30000
+              maxDataPoints: 43200
+              refId: A
+        execErrState: Alerting
+        for: 30s
+        annotations:
+          description: "Rapid power change detected on {{ $labels.name }} ({{ $labels.device_id }}). Power jumped from low to {{ $value }}W - Heating cycle started?"
+          summary: "Rapid change: {{ $labels.name }} spiked to {{ $value }}W"
+        labels:
+          severity: info
+          service: energy
+          device_type: p115
+          alert_type: heating_cycle
+        noDataState: NoData
+        isPaused: false
+

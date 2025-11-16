@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, Field
 
-from ...tools.base_tool import BaseTool, ToolCategory, ToolResult, tool
+from ...tools.base_tool import BaseTool, ToolCategory, tool
 
 logger = logging.getLogger(__name__)
 
@@ -51,25 +51,6 @@ class CameraInfoTool(BaseTool):
                 None, description="Group action: 'list', 'create', 'add', 'remove'"
             )
             group_name: Optional[str] = Field(None, description="Group name for group operations")
-
-    async def execute(self, **kwargs) -> ToolResult:
-        """Execute the camera info tool."""
-        try:
-            # Extract parameters from kwargs
-            operation = kwargs.get("operation", "info")
-            camera_id = kwargs.get("camera_id")
-            group_action = kwargs.get("group_action")
-            group_name = kwargs.get("group_name")
-
-            # Call the existing _run method
-            result = await self._run(operation, camera_id, group_action, group_name)
-
-            # Return as ToolResult
-            return ToolResult(content=result, is_error=not result.get("success", True))
-
-        except Exception as e:
-            logger.exception("Camera info tool execution failed")
-            return ToolResult(content={"success": False, "error": str(e)}, is_error=True)
 
     async def execute(
         self,

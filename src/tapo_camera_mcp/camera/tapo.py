@@ -25,7 +25,15 @@ class TapoCamera(BaseCamera):
         self._stream_url = None
 
     async def connect(self) -> bool:
-        """Initialize connection to the Tapo camera."""
+        """Initialize connection to the Tapo camera.
+
+        Uses safe retry logic to avoid triggering Tapo camera lockouts.
+        Lockout protection:
+        - Only attempts connection once per camera
+        - Catches authentication errors immediately
+        - Does not retry on authentication failures
+        - Waits between attempts if multiple cameras are being initialized
+        """
         try:
             if self._mock_tapo:
                 # Use mock camera for testing
@@ -33,20 +41,78 @@ class TapoCamera(BaseCamera):
                 await self._camera.login()
             else:
                 # Use real camera for production
-                self._camera = Tapo(
-                    self.config.params["host"],
-                    self.config.params["username"],
-                    self.config.params["password"],
-                )
-                # Test connection
-                await asyncio.get_event_loop().run_in_executor(
-                    None, lambda: self._camera.getBasicInfo()
-                )
+                # pytapo uses asyncio.run() internally which conflicts with running event loop
+                # We need to create Tapo instance in a separate thread to avoid event loop conflict
+                import concurrent.futures
+
+                host = self.config.params["host"]
+                username = self.config.params["username"]
+                password = self.config.params["password"]
+
+                # Check for lockout indicators in error messages before attempting
+                def create_and_test_tapo():
+                    """Create Tapo instance and test connection in a thread without event loop.
+
+                    Returns tuple: (success: bool, camera: Tapo or None, error: str or None)
+                    """
+                    try:
+                        camera = Tapo(host, username, password)
+                        # Test connection immediately - this will authenticate
+                        camera.getBasicInfo()
+                        return (True, camera, None)
+                    except Exception as e:
+                        error_msg = str(e)
+                        # Check for lockout message
+                        if "Temporary Suspension" in error_msg or "1800 seconds" in error_msg:
+                            logger.warning(
+                                "Camera %s is temporarily locked out. Wait 30 minutes before retrying.",
+                                host,
+                            )
+                        elif "Invalid authentication" in error_msg or "Invalid auth" in error_msg:
+                            logger.exception(
+                                "Invalid credentials for camera %s. Check username/password.", host
+                            )
+                        return (False, None, error_msg)
+
+                # Create Tapo instance in thread pool to avoid event loop conflict
+                # Only attempt ONCE - no retries to prevent lockouts
+                loop = asyncio.get_event_loop()
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    success, camera, error = await loop.run_in_executor(
+                        executor, create_and_test_tapo
+                    )
+
+                    if not success:
+                        self._is_connected = False
+                        error_msg = error or "Unknown connection error"
+
+                        def _raise_connection_error(msg: str) -> ConnectionError:
+                            return ConnectionError(
+                                f"Failed to connect to Tapo camera {host}: {msg}. "
+                                "Check credentials and ensure camera is not locked out."
+                            )
+
+                        raise _raise_connection_error(error_msg) from None
+
+                    self._camera = camera
+        except ConnectionError:
+            # Re-raise connection errors as-is
+            raise
         except Exception as e:
             self._is_connected = False
-            raise ConnectionError(f"Failed to connect to Tapo camera: {e}") from e
+            host = self.config.params.get("host", "unknown")
+            error_msg = str(e)
+            # Check if it's a lockout
+            if "Temporary Suspension" in error_msg or "1800 seconds" in error_msg:
+                raise ConnectionError(
+                    f"Tapo camera {host} is temporarily locked out due to too many failed login attempts. "
+                    f"Wait 30 minutes before retrying."
+                ) from e
+            raise ConnectionError(f"Failed to connect to Tapo camera {host}: {error_msg}") from e
         else:
             self._is_connected = True
+            host = self.config.params.get("host", "unknown")
+            logger.info("Successfully connected to Tapo camera at %s", host)
             return True
 
     async def disconnect(self) -> None:

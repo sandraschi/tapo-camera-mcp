@@ -4,10 +4,11 @@ Comprehensive tests for camera implementations (Tapo, Webcam, Ring, Furbo).
 """
 
 import asyncio
-import pytest
 import os
 import sys
 from unittest import mock
+
+import pytest
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))

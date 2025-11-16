@@ -64,7 +64,7 @@ class LaptopCamera(BaseCamera):
                         self._cap.release()
 
                 if not self._cap or not self._cap.isOpened():
-                    raise RuntimeError("Could not find laptop camera")  # noqa: TRY301
+                    raise RuntimeError("Could not find laptop camera")
 
         except Exception as e:
             self._is_connected = False
@@ -106,7 +106,7 @@ class LaptopCamera(BaseCamera):
                 # Use real camera
                 ret, frame = self._cap.read()
                 if not ret:
-                    raise RuntimeError("Failed to capture frame from laptop camera")  # noqa: TRY301
+                    raise RuntimeError("Failed to capture frame from laptop camera")
 
                 # Convert BGR to RGB
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

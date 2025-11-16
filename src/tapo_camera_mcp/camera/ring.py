@@ -70,7 +70,7 @@ class RingCamera(BaseCamera):
                     # Get first available doorbell
                     devices = self._ring.doorbells
                     if not devices:
-                        raise ValueError("No Ring doorbells found")  # noqa: TRY301
+                        raise ValueError("No Ring doorbells found")
                     self._device = devices[0]
 
         except Exception as e:
@@ -99,7 +99,7 @@ class RingCamera(BaseCamera):
             )
 
             if not snapshot:
-                raise RuntimeError("Failed to capture snapshot from Ring")  # noqa: TRY301
+                raise RuntimeError("Failed to capture snapshot from Ring")
 
             # Convert to PIL Image
             image = Image.open(io.BytesIO(snapshot))

@@ -181,13 +181,26 @@ ignore = [
     "PLR0912", # too many branches
     "PLR0915", # too many statements
     "PLR2004", # magic value used in comparison
+    "PLR0911", # too many return statements (often needed for error handling)
     "S101", # use of assert detected
+    "S104", # possible binding to all interfaces (0.0.0.0 is intentional for servers)
+    "S105", # possible hardcoded password (default values, should be changed in production)
     "S311", # standard pseudo-random generators are not suitable for cryptographic purposes
     "S603", # subprocess call - check for execution of untrusted input
     "S607", # starting a process with a partial executable path
+    "S102", # use of exec detected (needed for dynamic tool registration)
+    "S108", # probable insecure usage of temporary file or directory (false positives)
     "TRY003", # avoid specifying long messages outside the exception class
+    "TRY300", # consider moving return to else block (often less readable)
+    "TRY301", # abstract raise to inner function (sometimes overly pedantic)
     "NPY002", # replace legacy numpy.random
     "RUF012", # mutable class attributes should be annotated with `typing.ClassVar`
+    "PLC0415", # import should be at top-level (intentional lazy imports for circular deps)
+    "B023", # function definition does not bind loop variable (intentional closures)
+    "N806", # variable in function should be lowercase (Meta class is conventional)
+    "PLW0603", # using global statement (intentional module-level state)
+    "PLW0127", # self-assignment of variable (intentional re-export pattern)
+    "E402", # module level import not at top of file (intentional after path manipulation)
 ]
 
 [tool.ruff.lint.per-file-ignores]

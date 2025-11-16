@@ -3,8 +3,9 @@ Test script to verify our updated imports.
 """
 
 import sys
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 @pytest.mark.skip(reason="# TODO: Fix test_import - currently has assert False")

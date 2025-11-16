@@ -1,0 +1,35 @@
+{
+  "id": null,
+  "title": "Tapo P115 Overview",
+  "timezone": "",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Total Devices",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(tapo_p115_power_state)"
+        }
+      ]
+    },
+    {
+      "type": "timeSeries",
+      "title": "Power (Watts)",
+      "gridPos": { "x": 0, "y": 4, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "tapo_p115_power_watts"
+        }
+      ]
+    }
+  ]
+}
+
+

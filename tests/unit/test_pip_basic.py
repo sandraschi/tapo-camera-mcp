@@ -4,10 +4,11 @@ Minimal test to identify the exact pip install issue
 """
 
 import subprocess
-import pytest
 import sys
 import tempfile
 from pathlib import Path
+
+import pytest
 
 
 @pytest.mark.skip(reason="# TODO: Fix test_basic_pip_install - currently has assert False")

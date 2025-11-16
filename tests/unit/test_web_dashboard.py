@@ -4,9 +4,10 @@ Comprehensive tests for web dashboard and API endpoints.
 """
 
 import os
-import pytest
 import sys
 from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # Add the src path to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))

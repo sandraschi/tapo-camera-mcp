@@ -1,0 +1,25 @@
+# Grafana Notification Channel for Sound Alerts
+#
+# This channel sends alerts to browser notification API for audible alerts.
+# For local Grafana, configure this to trigger browser notifications with sound.
+
+apiVersion: 1
+
+notifiers:
+  - uid: sound_alert
+    name: Sound Alert (Browser)
+    type: webhook
+    org_id: 1
+    is_default: false
+    send_reminder: false
+    disable_resolve_message: false
+    frequency: 0s
+    secure_settings: {}
+    settings:
+      url: "http://localhost:7777/api/alerts/webhook"
+      httpMethod: "POST"
+      title: "{{ .CommonAnnotations.summary }}"
+      text: "{{ .CommonAnnotations.description }}"
+      # For browser-based sound alerts, use WebSocket or browser notification API
+      # This endpoint should trigger browser notification with sound
+

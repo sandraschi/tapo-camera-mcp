@@ -11,7 +11,7 @@ from typing import Any, Dict, Literal, Optional
 from pydantic import ConfigDict, Field
 
 from tapo_camera_mcp.exceptions import AuthenticationError, ConnectionError
-from tapo_camera_mcp.tools.base_tool import BaseTool, ToolCategory, register_tool, tool
+from tapo_camera_mcp.tools.base_tool import BaseTool, ToolCategory, ToolResult, register_tool, tool
 from tapo_camera_mcp.validation import (
     ToolValidationError,
     validate_camera_name,
@@ -543,12 +543,11 @@ class GetCameraStatusTool(BaseTool):
 
     camera_id: Optional[str] = None
 
-    async def execute(self) -> "ToolResult":
+    async def execute(self) -> ToolResult:
         """Get the status of a specific camera."""
         from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
         )
-        from tapo_camera_mcp.tools.base_tool import ToolResult
 
         try:
             server = await TapoCameraServer.get_instance()
@@ -663,9 +662,8 @@ class ConnectCameraTool(BaseTool):
     password: str
     verify_ssl: bool = True
 
-    async def execute(self) -> "ToolResult":
+    async def execute(self) -> ToolResult:
         """Connect to a Tapo camera with comprehensive validation and error handling."""
-        from tapo_camera_mcp.tools.base_tool import ToolResult
 
         try:
             # Validate inputs
@@ -771,12 +769,11 @@ class DisconnectCameraTool(BaseTool):
         class Parameters:
             pass
 
-    async def execute(self) -> "ToolResult":
+    async def execute(self) -> ToolResult:
         """Disconnect from the current camera."""
         from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
         )
-        from tapo_camera_mcp.tools.base_tool import ToolResult
 
         try:
             server = await TapoCameraServer.get_instance()
@@ -961,12 +958,11 @@ class CaptureSnapshotTool(BaseTool):
 
     camera_id: str
 
-    async def execute(self) -> "ToolResult":
+    async def execute(self) -> ToolResult:
         """Capture a snapshot from the specified camera."""
         from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
         )
-        from tapo_camera_mcp.tools.base_tool import ToolResult
 
         server = await TapoCameraServer.get_instance()
 
@@ -1035,12 +1031,11 @@ class GetStreamUrlTool(BaseTool):
 
     camera_id: str
 
-    async def execute(self) -> "ToolResult":
+    async def execute(self) -> ToolResult:
         """Get the stream URL for the specified camera."""
         from tapo_camera_mcp.core.server import (  # Lazy import to avoid circular imports
             TapoCameraServer,
         )
-        from tapo_camera_mcp.tools.base_tool import ToolResult
 
         server = await TapoCameraServer.get_instance()
 

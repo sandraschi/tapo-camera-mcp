@@ -34,7 +34,7 @@ class MockTapoCamera:
         self._connected = True
         logger.debug(f"Mock Tapo camera login successful for {self.host}")
 
-    async def getBasicInfo(self):
+    async def getBasicInfo(self):  # noqa: N802 - matches pytapo API naming
         """Mock getBasicInfo - returns simulated device info."""
         if not self._connected:
             await self.login()
@@ -203,7 +203,7 @@ class MockPetcubeCamera:
         self._connected = False
         logger.debug(f"Mock Petcube camera disconnected for {self.email}")
 
-    async def get_device_info(self, device_id: str):
+    async def get_device_info(self, _device_id: str):
         """Mock get device info."""
         if not self._connected:
             await self.connect()

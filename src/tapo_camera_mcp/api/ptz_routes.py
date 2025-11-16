@@ -174,7 +174,7 @@ async def get_preset(
     """Get details of a specific PTZ preset"""
     try:
         if camera_id not in ptz_managers:
-            raise HTTPException(status_code=404, detail="No presets found for this camera")  # noqa: TRY301
+            raise HTTPException(status_code=404, detail="No presets found for this camera")
 
         preset = ptz_managers[camera_id].get_preset(preset_id)
     except HTTPException:
@@ -199,7 +199,7 @@ async def update_preset(
     """Update an existing PTZ preset"""
     try:
         if camera_id not in ptz_managers:
-            raise HTTPException(status_code=404, detail="No presets found for this camera")  # noqa: TRY301
+            raise HTTPException(status_code=404, detail="No presets found for this camera")
 
         # If position is provided, use it; otherwise, keep existing position
         position = preset_data.position
@@ -231,7 +231,7 @@ async def delete_preset(
     """Delete a PTZ preset"""
     try:
         if camera_id not in ptz_managers:
-            raise HTTPException(status_code=404, detail="No presets found for this camera")  # noqa: TRY301
+            raise HTTPException(status_code=404, detail="No presets found for this camera")
 
         success = await ptz_managers[camera_id].delete_preset(preset_id)
     except HTTPException:
@@ -253,7 +253,7 @@ async def recall_preset(
     """Move the camera to a saved preset position"""
     try:
         if camera_id not in ptz_managers:
-            raise HTTPException(status_code=404, detail="No presets found for this camera")  # noqa: TRY301
+            raise HTTPException(status_code=404, detail="No presets found for this camera")
 
         success = await ptz_managers[camera_id].recall_preset(preset_id)
     except HTTPException:

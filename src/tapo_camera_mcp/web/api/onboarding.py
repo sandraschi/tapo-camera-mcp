@@ -126,7 +126,7 @@ async def configure_device(config: DeviceConfigurationRequest):
                 break
 
         if not device:
-            raise HTTPException(  # noqa: TRY301
+            raise HTTPException(
                 status_code=404, detail=f"Device {config.device_id} not found in discovered devices"
             )
 
@@ -203,9 +203,8 @@ async def get_onboarding_progress():
         if auth_required_devices:
             next_steps.append("Set up authentication for protected devices")
 
-        if not discovery_manager.onboarding_state.onboarding_complete:
-            if not unconfigured_devices:
-                next_steps.append("Complete onboarding and start using devices")
+        if not discovery_manager.onboarding_state.onboarding_complete and not unconfigured_devices:
+            next_steps.append("Complete onboarding and start using devices")
 
         return OnboardingProgressResponse(
             status="success",
@@ -239,7 +238,7 @@ async def complete_onboarding():
         ]
 
         if unconfigured_devices:
-            raise HTTPException(  # noqa: TRY301
+            raise HTTPException(
                 status_code=400,
                 detail=f"Cannot complete onboarding: {len(unconfigured_devices)} devices still need configuration",
                 extra={"unconfigured_devices": [device.dict() for device in unconfigured_devices]},
@@ -308,7 +307,7 @@ async def get_device_details(device_id: str):
                 break
 
         if not device:
-            raise HTTPException(status_code=404, detail=f"Device {device_id} not found")  # noqa: TRY301
+            raise HTTPException(status_code=404, detail=f"Device {device_id} not found")
 
         # Get configuration if available
         configuration = discovery_manager.onboarding_state.configured_devices.get(device_id)

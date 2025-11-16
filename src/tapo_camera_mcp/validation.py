@@ -172,7 +172,7 @@ def validate_tool_input(func: Callable) -> Callable:
                     and hasattr(param_type, "__origin__")
                     and param_type.__origin__ is list
                 ) and not isinstance(param_value, list):
-                    raise ToolValidationError(f"Field '{param_name}' must be a list")  # noqa: TRY301
+                    raise ToolValidationError(f"Field '{param_name}' must be a list")
 
             # Execute the original function
             return await func(*args, **kwargs)

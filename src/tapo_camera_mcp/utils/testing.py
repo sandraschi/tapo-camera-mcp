@@ -88,7 +88,7 @@ def get_mock_config() -> MockCameraConfig:
     )
 
 
-def create_mock_tapo_camera(config: Dict[str, Any]) -> "MockTapoCamera":
+def create_mock_tapo_camera(config: Dict[str, Any]):
     """
     Create a mock Tapo camera for testing.
 
@@ -103,7 +103,7 @@ def create_mock_tapo_camera(config: Dict[str, Any]) -> "MockTapoCamera":
     return MockTapoCamera(config)
 
 
-def create_mock_webcam(config: Dict[str, Any]) -> "MockWebCamera":
+def create_mock_webcam(config: Dict[str, Any]):
     """
     Create a mock webcam for testing.
 

@@ -64,10 +64,298 @@
             border-color: #4b5563;
             color: var(--text-color);
         }
-
         [data-theme="dark"] .theme-toggle:hover {
             background-color: #4b5563;
             border-color: #6b7280;
+        }
+
+        .icon-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            background: none;
+            border: 1px solid transparent;
+            color: #4b5563;
+            font-size: 1.05rem;
+            cursor: pointer;
+            padding: 0.45rem 0.55rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        .icon-button:hover {
+            background-color: #f3f4f6;
+            border-color: #e5e7eb;
+            color: #111827;
+        }
+
+        .icon-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+
+        [data-theme="dark"] .icon-button {
+            color: var(--text-color);
+            border-color: #4b5563;
+            background-color: #374151;
+        }
+
+        [data-theme="dark"] .icon-button:hover {
+            background-color: #4b5563;
+            border-color: #6b7280;
+        }
+
+        .theme-toggle {
+            position: relative;
+            width: 2.5rem;
+            height: 2.5rem;
+        }
+
+        .theme-toggle .theme-icon {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .theme-icon-sun {
+            opacity: 0;
+            transform: scale(0.85) rotate(-15deg);
+        }
+
+        .theme-icon-moon {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        [data-theme="dark"] .theme-icon-sun {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        [data-theme="dark"] .theme-icon-moon {
+            opacity: 0;
+            transform: scale(0.85) rotate(15deg);
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.65);
+            z-index: 2000;
+            padding: 2rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-dialog {
+            background: #ffffff;
+            color: #111827;
+            border-radius: 1rem;
+            max-width: 960px;
+            width: 100%;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
+        }
+
+        [data-theme="dark"] .modal-dialog {
+            background: #1f2937;
+            color: var(--text-color);
+            border: 1px solid #374151;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        [data-theme="dark"] .modal-header {
+            border-bottom-color: #374151;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .logger-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 1.5rem;
+        }
+
+        .logger-tools {
+            background: rgba(59, 130, 246, 0.06);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        [data-theme="dark"] .logger-tools {
+            background: rgba(59, 130, 246, 0.12);
+            border-color: rgba(96, 165, 250, 0.2);
+        }
+
+        .logger-live-feed {
+            background: #0f172a;
+            color: #f8fafc;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            font-family: "Fira Code", "Consolas", monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            min-height: 340px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+
+        .logger-entry {
+            display: grid;
+            grid-template-columns: 90px 70px 1fr;
+            gap: 0.75rem;
+            align-items: baseline;
+        }
+
+        .logger-entry .level {
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .logger-entry .level.info { color: #60a5fa; }
+        .logger-entry .level.warn { color: #facc15; }
+        .logger-entry .level.error { color: #f87171; }
+
+        .logger-entry .timestamp {
+            color: #94a3b8;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .log-detail {
+            color: #cbd5f5;
+            font-size: 0.82rem;
+        }
+
+        .icon-button.spin i {
+            animation: spin 0.6s linear;
+        }
+
+        .help-layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 1.5rem;
+        }
+
+        .help-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .help-nav button {
+            text-align: left;
+            background: none;
+            border: 1px solid #e5e7eb;
+            padding: 0.75rem 0.9rem;
+            border-radius: 0.65rem;
+            font-weight: 500;
+            color: #1f2937;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .help-nav button:hover,
+        .help-nav button.active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+        }
+
+        [data-theme="dark"] .help-nav button {
+            border-color: #374151;
+            color: var(--text-color);
+        }
+
+        .help-content {
+            overflow-y: auto;
+            max-height: 60vh;
+            padding-right: 0.75rem;
+        }
+
+        .help-section {
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .help-section.active {
+            display: block;
+        }
+
+        .help-section h4 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+
+        .help-section ul {
+            margin: 0 0 1rem 1.1rem;
+            list-style: disc;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 900px) {
+            .logger-layout,
+            .help-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        body.modal-open {
+            overflow: hidden;
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -155,8 +443,15 @@
                         <i class="fas fa-bell"></i>
                         <span class="badge">3</span>
                     </div>
-                    <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
-                        <i class="fas fa-moon"></i>
+                    <button id="logger-button" class="icon-button" title="Open intelligent logger">
+                        <i class="fas fa-terminal"></i>
+                    </button>
+                    <button id="help-button" class="icon-button" title="Open structured help assistant">
+                        <i class="fas fa-life-ring"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle" title="Toggle theme">
+                        <i class="fas fa-sun theme-icon theme-icon-sun"></i>
+                        <i class="fas fa-moon theme-icon theme-icon-moon"></i>
                     </button>
                     <div class="user-profile">
                         <img src="{{ url_for('static', path='/img/placeholder.svg') }}"
@@ -173,32 +468,394 @@
         </main>
     </div>
 
+    <!-- Logger Modal -->
+    <div id="logger-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="logger-modal-title">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title" id="logger-modal-title">Live Logger Control Center</div>
+                    <p class="text-sm text-gray-500">AI-assisted triage, semantic filters, and streaming context for rapid incident response.</p>
+                </div>
+                <button class="modal-close" data-modal-close="logger-modal" aria-label="Close logger dialog">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="logger-layout">
+                    <aside class="logger-tools">
+                        <div>
+                            <h4 class="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">Live Tail Controls</h4>
+                            <div class="flex flex-col gap-2 text-sm">
+                                <label><input type="checkbox" id="logger-ai-summary" checked> AI synopsis every 60s</label>
+                                <label><input type="checkbox" id="logger-semantic-groups" checked> Cluster related events</label>
+                                <label><input type="checkbox" id="logger-anomaly-detector"> Highlight anomaly risk</label>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">Filters</h4>
+                            <select id="logger-level-filter" class="w-full border border-blue-200 rounded px-2 py-1 text-sm">
+                                <option value="all">All levels</option>
+                                <option value="info">Info</option>
+                                <option value="warn">Warning</option>
+                                <option value="error">Error</option>
+                            </select>
+                            <input id="logger-query" type="text" class="w-full mt-2 border border-blue-200 rounded px-2 py-1 text-sm" placeholder="Search (camera:test, stream:usb, etc.)">
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="logger-refresh" class="icon-button" style="width: 100%;">
+                                <i class="fas fa-sync-alt"></i>
+                                <span>Refresh Feed</span>
+                            </button>
+                            <button id="logger-export" class="icon-button" style="width: 100%;">
+                                <i class="fas fa-download"></i>
+                                <span>Export</span>
+                            </button>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">SOTA Insights</h4>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li>• Vision-aware event correlation</li>
+                                <li>• LLM-powered remediation playbooks</li>
+                                <li>• Temporal anomaly heatmaps</li>
+                                <li>• Automatic ticket handoff</li>
+                            </ul>
+                        </div>
+                    </aside>
+                    <section class="logger-panel">
+                        <div class="logger-live-feed" id="logger-live-feed" aria-live="polite">
+                            <!-- Log entries injected via JS -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title" id="help-modal-title">Guided Help & Knowledge Navigator</div>
+                    <p class="text-sm text-gray-500">Structured documentation, quick recipes, and cross-linking into Grafana, MCP, and edge orchestration.</p>
+                </div>
+                <button class="modal-close" data-modal-close="help-modal" aria-label="Close help dialog">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="help-layout">
+                    <aside class="help-nav">
+                        <button class="active" data-help-section="overview">
+                            <i class="fas fa-compass mr-2"></i> Overview
+                        </button>
+                        <button data-help-section="cameras">
+                            <i class="fas fa-video mr-2"></i> Cameras & Streams
+                        </button>
+                        <button data-help-section="sensors">
+                            <i class="fas fa-bolt mr-2"></i> Sensors & Energy
+                        </button>
+                        <button data-help-section="observability">
+                            <i class="fas fa-chart-line mr-2"></i> Observability
+                        </button>
+                        <button data-help-section="automation">
+                            <i class="fas fa-robot mr-2"></i> Automation & AI
+                        </button>
+                    </aside>
+                    <section class="help-content">
+                        <article class="help-section active" data-help-section="overview">
+                            <h4>Platform Overview</h4>
+                            <p>The Home Security MCP unifies camera control, sensor telemetry, and observability in a single orchestration plane.</p>
+                            <ul>
+                                <li>Use <strong>Dashboard</strong> for real-time situational awareness.</li>
+                                <li>Edge agents forward metrics and logs for every node.</li>
+                                <li>Grafana dashboards and Alertmanager fast-track incident triage.</li>
+                            </ul>
+                            <h4>Quick Start</h4>
+                            <ul>
+                                <li>🎥 Add camera via MCP tool <code>add_camera</code>.</li>
+                                <li>🔌 Configure Tapo P115 credentials in <code>config.yaml</code>.</li>
+                                <li>📊 Import Grafana provisioning bundle for dashboards.</li>
+                            </ul>
+                        </article>
+                        <article class="help-section" data-help-section="cameras">
+                            <h4>Camera Operations</h4>
+                            <ul>
+                                <li>Start stream: <em>Dashboard → Start Stream</em> or API <code>/api/cameras/{id}/stream</code>.</li>
+                                <li>Snapshots: <code>/api/cameras/{id}/snapshot</code> (returns JPEG).</li>
+                                <li>PTZ capabilities exposed via MCP tools <code>move_ptz</code>, <code>save_ptz_preset</code>.</li>
+                                <li>Status metrics: Prometheus series <code>tapo_camera_status</code>, <code>tapo_camera_stream_bitrate</code>.</li>
+                            </ul>
+                            <h4>Troubleshooting</h4>
+                            <ul>
+                                <li>Verify credentials in <code>config.yaml</code> and secrets backend.</li>
+                                <li>Check live logs for <em>stream pipeline</em> entries.</li>
+                                <li>Run chaos scenario CT-02 to validate auto-recovery.</li>
+                            </ul>
+                        </article>
+                        <article class="help-section" data-help-section="sensors">
+                            <h4>Sensor & Energy Telemetry</h4>
+                            <ul>
+                                <li>Tapo P115 ingestion via <code>tapo_p115</code> adapter using <code>python-kasa</code>.</li>
+                                <li>REST endpoints: <code>/api/sensors/tapo-p115</code>, history with <code>/history?hours=</code>.</li>
+                                <li>Grafana dashboard: <strong>Sensor Overview</strong> (power, costs, energy).</li>
+                                <li>Add Netatmo / Nest Protect ingestion through edge collectors.</li>
+                            </ul>
+                            <h4>Data Hygiene</h4>
+                            <ul>
+                                <li>Validate metrics in Prometheus: <code>tapo_p115_power_watts</code>, <code>tapo_p115_daily_cost</code>.</li>
+                                <li>Rotate secrets using plan in <code>SECRETS_HARDENING_PLAN.md</code>.</li>
+                            </ul>
+                        </article>
+                        <article class="help-section" data-help-section="observability">
+                            <h4>Observability Stack</h4>
+                            <ul>
+                                <li>Prometheus federation config: <code>deploy/prometheus/prometheus.yaml</code>.</li>
+                                <li>Loki & Promtail shipping structured logs with semantic labels.</li>
+                                <li>CI validates configs via <code>observability</code> workflow job.</li>
+                                <li>Dashboards: Camera Overview, Sensor Overview, Logging Overview.</li>
+                                <li>Alerts: <code>CameraOffline</code>, <code>EdgeAgentMissedScrape</code> routed through Alertmanager.</li>
+                            </ul>
+                            <h4>Runbooks</h4>
+                            <p>Refer to <code>RUNBOOKS.md</code> for restart procedures, scaling guidance, and escalation paths.</p>
+                        </article>
+                        <article class="help-section" data-help-section="automation">
+                            <h4>Automation & AI Assist</h4>
+                            <ul>
+                                <li>LLM summarization of logs and camera events via logger control center.</li>
+                                <li>Pluggable recipe library for device onboarding and energy automation.</li>
+                                <li>Future roadmap: autop-run <em>scene detection</em>, <em>ai-vision</em> alerts, and <em>policy aware</em> automation.</li>
+                                <li>Document templates available under <code>docs/mcp-technical/</code>.</li>
+                            </ul>
+                            <h4>Next Steps</h4>
+                            <ul>
+                                <li>Integrate chaos tests into nightly pipeline.</li>
+                                <li>Complete operational handoff per <code>HANDOFF_CHECKLIST.md</code>.</li>
+                            </ul>
+                        </article>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', path='/js/main.js') }}"></script>
     <script>
         // Theme toggle functionality
         const themeToggle = document.getElementById('theme-toggle');
-        const themeIcon = themeToggle.querySelector('i');
+        const themeIcons = {
+            sun: themeToggle.querySelector('.theme-icon-sun'),
+            moon: themeToggle.querySelector('.theme-icon-moon')
+        };
 
-        // Check for saved theme preference or default to light mode
-        const currentTheme = localStorage.getItem('theme') || 'light';
+        const applyTheme = (theme) => {
+            if (theme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+            }
+        };
 
-        if (currentTheme === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            themeIcon.className = 'fas fa-sun';
+        const storedTheme = localStorage.getItem('theme') || 'light';
+        if (storedTheme === 'dark') {
+            applyTheme('dark');
         }
 
         themeToggle.addEventListener('click', () => {
             const currentTheme = document.documentElement.getAttribute('data-theme');
 
             if (currentTheme === 'dark') {
-                document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'light');
-                themeIcon.className = 'fas fa-moon';
+                applyTheme('light');
             } else {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-                themeIcon.className = 'fas fa-sun';
+                applyTheme('dark');
             }
+        });
+
+        // Modal helpers
+        const body = document.body;
+        const openModal = (modal) => {
+            modal.classList.add('open');
+            body.classList.add('modal-open');
+        };
+
+        const closeModal = (modal) => {
+            modal.classList.remove('open');
+            if (!document.querySelector('.modal.open')) {
+                body.classList.remove('modal-open');
+            }
+        };
+
+        const registerModal = (id, triggerId) => {
+            const modal = document.getElementById(id);
+            const trigger = document.getElementById(triggerId);
+            
+            if (!modal || !trigger) {
+                return null;
+            }
+            
+            const closeButtons = modal.querySelectorAll('[data-modal-close]');
+
+            // Emit custom events
+            const openHandler = () => {
+                openModal(modal);
+                modal.dispatchEvent(new CustomEvent('modal:opened'));
+            };
+            const closeHandler = () => {
+                closeModal(modal);
+                modal.dispatchEvent(new CustomEvent('modal:closed'));
+            };
+
+            trigger.addEventListener('click', openHandler);
+            closeButtons.forEach(btn => btn.addEventListener('click', closeHandler));
+
+            modal.addEventListener('click', (evt) => {
+                if (evt.target === modal) {
+                    closeHandler();
+                }
+            });
+
+            return modal;
+        };
+
+        const loggerModal = registerModal('logger-modal', 'logger-button');
+        const helpModal = registerModal('help-modal', 'help-button');
+
+        window.addEventListener('keydown', (evt) => {
+            if (evt.key === 'Escape') {
+                document.querySelectorAll('.modal.open').forEach(modal => closeModal(modal));
+            }
+        });
+
+        // Logger modal demo data
+        const loggerFeed = document.getElementById('logger-live-feed');
+        const levelFilter = document.getElementById('logger-level-filter');
+        const loggerQuery = document.getElementById('logger-query');
+        const loggerRefresh = document.getElementById('logger-refresh');
+        const loggerExport = document.getElementById('logger-export');
+
+        let currentLogs = [];
+
+        const fetchLogs = async () => {
+            try {
+                const level = levelFilter.value === 'all' ? null : levelFilter.value;
+                const search = loggerQuery.value.trim() || null;
+                const params = new URLSearchParams();
+                if (level) params.append('level', level.toUpperCase());
+                if (search) params.append('search', search);
+                params.append('lines', '200');
+
+                const response = await fetch(`/api/logs?${params.toString()}`);
+                const data = await response.json();
+
+                if (data.logs && Array.isArray(data.logs)) {
+                    currentLogs = data.logs;
+                } else {
+                    currentLogs = [];
+                }
+            } catch (error) {
+                console.error('Error fetching logs:', error);
+                currentLogs = [];
+            }
+        };
+
+        const renderLogs = () => {
+            loggerFeed.innerHTML = '';
+
+            if (currentLogs.length === 0) {
+                const empty = document.createElement('div');
+                empty.style.color = '#cbd5f5';
+                empty.style.fontSize = '0.85rem';
+                empty.textContent = 'No log entries available.';
+                loggerFeed.appendChild(empty);
+                return;
+            }
+
+            currentLogs.forEach(entry => {
+                const row = document.createElement('div');
+                row.className = 'logger-entry';
+                
+                // Extract timestamp components
+                const timestamp = entry.timestamp || '';
+                const level = (entry.level || 'INFO').toLowerCase();
+                const message = entry.message || '';
+                const logger = entry.logger || '';
+
+                row.innerHTML = `
+                    <span class="timestamp">${timestamp}</span>
+                    <span class="level ${level}">${level}</span>
+                    <div>
+                        <div>${message}</div>
+                        <div class="log-detail">logger: ${logger}</div>
+                    </div>
+                `;
+                loggerFeed.appendChild(row);
+            });
+        };
+
+        const loadAndRenderLogs = async () => {
+            loggerRefresh.classList.add('spin');
+            await fetchLogs();
+            renderLogs();
+            setTimeout(() => loggerRefresh.classList.remove('spin'), 300);
+        };
+
+        // Initial load
+        loadAndRenderLogs();
+
+        // Auto-refresh every 5 seconds when modal is open
+        let logRefreshInterval = null;
+        loggerModal.addEventListener('modal:opened', () => {
+            logRefreshInterval = setInterval(loadAndRenderLogs, 5000);
+        });
+        loggerModal.addEventListener('modal:closed', () => {
+            if (logRefreshInterval) {
+                clearInterval(logRefreshInterval);
+                logRefreshInterval = null;
+            }
+        });
+
+
+        levelFilter.addEventListener('change', loadAndRenderLogs);
+        
+        // Debounce search input
+        let searchTimeout = null;
+        loggerQuery.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(loadAndRenderLogs, 500);
+        });
+        
+        loggerRefresh.addEventListener('click', loadAndRenderLogs);
+        
+        loggerExport.addEventListener('click', () => {
+            if (currentLogs.length === 0) {
+                alert('No logs to export');
+                return;
+            }
+            const blob = new Blob([JSON.stringify(currentLogs, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `tapo-logger-export-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Help modal navigation
+        const helpNavButtons = document.querySelectorAll('.help-nav button');
+        const helpSections = document.querySelectorAll('.help-section');
+
+        helpNavButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                helpNavButtons.forEach(btn => btn.classList.remove('active'));
+                helpSections.forEach(section => section.classList.remove('active'));
+
+                const sectionId = button.getAttribute('data-help-section');
+                button.classList.add('active');
+                const section = document.querySelector(`.help-section[data-help-section="${sectionId}"]`);
+                if (section) section.classList.add('active');
+            });
         });
     </script>
     {% block extra_js %}{% endblock %}

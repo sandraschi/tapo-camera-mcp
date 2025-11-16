@@ -204,6 +204,31 @@
         font-size: 16px;
     }
     
+    .alert-item {
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .alert-warning {
+        border-left-color: #f59e0b !important;
+        background: #fef3c7 !important;
+    }
+    
+    .alert-critical {
+        border-left-color: #dc2626 !important;
+        background: #fee2e2 !important;
+    }
+    
     .setup-notice {
         background: #fef3c7;
         border: 1px solid #f59e0b;
@@ -297,122 +322,450 @@
         <h2>🔌 Smart Plugs</h2>
         <p>Monitor and control your Tapo P115 smart plugs</p>
         
-        <!-- Mock Device Cards -->
-        <div class="device-card">
-            <div class="device-header">
-                <div>
-                    <div class="device-name">Living Room TV Plug</div>
-                    <div class="device-location">Living Room</div>
-                </div>
-                <div class="device-status">
-                    <div class="status-indicator status-online"></div>
-                    <span>Online</span>
-                </div>
-            </div>
-            
-            <div class="device-metrics">
-                <div class="metric">
-                    <div class="metric-value">85.5W</div>
-                    <div class="metric-label">Current Power</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-value">120.2V</div>
-                    <div class="metric-label">Voltage</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-value">0.71A</div>
-                    <div class="metric-label">Current</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-value">2.1kWh</div>
-                    <div class="metric-label">Daily Usage</div>
-                </div>
-            </div>
-            
-            <div class="device-controls">
-                <button class="btn btn-danger">Turn Off</button>
-                <button class="btn btn-secondary">Schedule</button>
-                <button class="btn btn-secondary">Energy Saving</button>
-            </div>
-        </div>
-        
-        <div class="device-card">
-            <div class="device-header">
-                <div>
-                    <div class="device-name">Kitchen Coffee Maker</div>
-                    <div class="device-location">Kitchen</div>
-                </div>
-                <div class="device-status">
-                    <div class="status-indicator status-offline"></div>
-                    <span>Offline</span>
-                </div>
-            </div>
-            
-            <div class="device-metrics">
-                <div class="metric">
-                    <div class="metric-value">0W</div>
-                    <div class="metric-label">Current Power</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-value">--</div>
-                    <div class="metric-label">Voltage</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-value">--</div>
-                    <div class="metric-label">Current</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-value">1.8kWh</div>
-                    <div class="metric-label">Daily Usage</div>
-                </div>
-            </div>
-            
-            <div class="device-controls">
-                <button class="btn btn-primary" disabled>Turn On</button>
-                <button class="btn btn-secondary" disabled>Schedule</button>
-                <button class="btn btn-secondary" disabled>Energy Saving</button>
-            </div>
+        <!-- Real Device Cards (populated via JavaScript) -->
+        <div id="devices-container">
+            <p>Loading devices...</p>
         </div>
     </div>
     
     <!-- Energy Chart -->
     <div class="chart-container">
         <h3>📊 Energy Consumption Over Time</h3>
-        <div class="chart-placeholder">
-            <div>
-                <i class="fas fa-chart-line" style="font-size: 48px; margin-bottom: 16px; color: #d1d5db;"></i>
-                <div>Energy consumption chart will be displayed here</div>
-                <div style="font-size: 14px; margin-top: 8px;">Configure your devices to see real data</div>
-            </div>
+        <div style="margin-bottom: 16px;">
+            <button class="btn btn-secondary" onclick="changeTimeRange('24h')" id="btn-24h" style="margin-right: 8px;">24 Hours</button>
+            <button class="btn btn-secondary" onclick="changeTimeRange('7d')" id="btn-7d" style="margin-right: 8px;">7 Days</button>
+            <button class="btn btn-secondary" onclick="changeTimeRange('30d')" id="btn-30d">30 Days</button>
+        </div>
+        <div style="position: relative; height: 400px;">
+            <canvas id="powerChart"></canvas>
+        </div>
+        <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+            <strong>⚠️ Alert Thresholds:</strong>
+            <span style="margin-left: 16px;">Power Spike: <span style="color: #f59e0b;">>500W</span></span>
+            <span style="margin-left: 16px;">Power Surge: <span style="color: #dc2626;">>800W</span></span>
+        </div>
+    </div>
+    
+    <!-- Alerts Section -->
+    <div class="chart-container" id="alerts-section" style="display: none;">
+        <h3>🚨 Active Power Alerts</h3>
+        <div id="alerts-container">
+            <!-- Alerts will be populated here -->
         </div>
     </div>
 </div>
 
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-// Mock data for demonstration
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Energy dashboard loaded');
+// Global variables
+let powerChart = null;
+let currentTimeRange = '24h';
+let chartData = {
+    labels: [],
+    power: [],
+    alerts: []
+};
+
+// Initialize chart
+function initChart() {
+    const ctx = document.getElementById('powerChart');
+    if (!ctx) return;
     
-    // Add click handlers for device controls
-    document.querySelectorAll('.device-controls .btn').forEach(button => {
-        if (!button.disabled) {
-            button.addEventListener('click', function() {
-                const action = this.textContent.trim();
-                const deviceName = this.closest('.device-card').querySelector('.device-name').textContent;
-                
-                alert(`${action} ${deviceName}`);
-                
-                // Simulate action
-                if (action === 'Turn Off') {
-                    this.textContent = 'Turn On';
-                    this.className = 'btn btn-primary';
-                } else if (action === 'Turn On') {
-                    this.textContent = 'Turn Off';
-                    this.className = 'btn btn-danger';
+    powerChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartData.labels,
+            datasets: [
+                {
+                    label: 'Power Consumption (W)',
+                    data: chartData.power,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 2,
+                    pointHoverRadius: 5
+                },
+                {
+                    label: 'Alert Threshold (500W)',
+                    data: chartData.power.map(() => 500),
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Surge Threshold (800W)',
+                    data: chartData.power.map(() => 800),
+                    borderColor: '#dc2626',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
                 }
-            });
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += context.parsed.y.toFixed(1) + 'W';
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Time'
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Power (Watts)'
+                    },
+                    beginAtZero: true
+                }
+            }
         }
     });
+}
+
+// Load chart data
+async function loadChartData() {
+    try {
+        const devices = await fetch('/api/sensors/tapo-p115').then(r => r.json()).then(d => d.devices || []);
+        if (devices.length === 0) {
+            updateChartPlaceholder('No devices configured');
+            return;
+        }
+        
+        // Get history for all devices or selected device
+        const hours = currentTimeRange === '24h' ? 24 : currentTimeRange === '7d' ? 168 : 720;
+        
+        // Aggregate data from all devices
+        const allHistoryData = [];
+        for (const device of devices) {
+            try {
+                const history = await fetch(`/api/sensors/tapo-p115/${device.device_id}/history?hours=${hours}`)
+                    .then(r => r.json())
+                    .then(d => d.data_points || []);
+                allHistoryData.push(...history);
+            } catch (e) {
+                console.error(`Error loading history for ${device.device_id}:`, e);
+            }
+        }
+        
+        if (allHistoryData.length === 0) {
+            updateChartPlaceholder('No history data available');
+            return;
+        }
+        
+        // Group by timestamp and aggregate power
+        const aggregated = {};
+        allHistoryData.forEach(point => {
+            const ts = point.timestamp;
+            if (!aggregated[ts]) {
+                aggregated[ts] = {
+                    timestamp: ts,
+                    power: 0,
+                    count: 0
+                };
+            }
+            aggregated[ts].power += point.power_w || point.power_consumption || 0;
+            aggregated[ts].count += 1;
+        });
+        
+        // Sort by timestamp
+        const sortedData = Object.values(aggregated)
+            .map(d => ({ ...d, power: d.power / d.count })) // Average power
+            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        
+        // Prepare chart data
+        chartData.labels = sortedData.map(d => {
+            const date = new Date(d.timestamp);
+            if (currentTimeRange === '24h') {
+                return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            }
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit' });
+        });
+        chartData.power = sortedData.map(d => d.power);
+        
+        // Detect alerts (power spikes)
+        chartData.alerts = [];
+        sortedData.forEach((d, idx) => {
+            if (d.power > 500) {
+                chartData.alerts.push({
+                    timestamp: d.timestamp,
+                    power: d.power,
+                    severity: d.power > 800 ? 'critical' : 'warning'
+                });
+            }
+        });
+        
+        // Update chart
+        if (powerChart) {
+            powerChart.data.labels = chartData.labels;
+            powerChart.data.datasets[0].data = chartData.power;
+            powerChart.data.datasets[1].data = chartData.power.map(() => 500);
+            powerChart.data.datasets[2].data = chartData.power.map(() => 800);
+            powerChart.update('none');
+        } else {
+            initChart();
+        }
+        
+        // Update alerts display
+        updateAlerts();
+        
+    } catch (error) {
+        console.error('Error loading chart data:', error);
+        updateChartPlaceholder('Error loading data: ' + error.message);
+    }
+}
+
+// Update chart placeholder message
+function updateChartPlaceholder(message) {
+    const canvas = document.getElementById('powerChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = '16px Arial';
+    ctx.fillStyle = '#6b7280';
+    ctx.textAlign = 'center';
+    ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+}
+
+// Update alerts display
+function updateAlerts() {
+    const alertsSection = document.getElementById('alerts-section');
+    const alertsContainer = document.getElementById('alerts-container');
+    
+    if (chartData.alerts.length === 0) {
+        alertsSection.style.display = 'none';
+        return;
+    }
+    
+    alertsSection.style.display = 'block';
+    alertsContainer.innerHTML = chartData.alerts.map(alert => {
+        const date = new Date(alert.timestamp);
+        const severityClass = alert.severity === 'critical' ? 'alert-critical' : 'alert-warning';
+        return `
+            <div class="alert-item ${severityClass}" style="padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid ${alert.severity === 'critical' ? '#dc2626' : '#f59e0b'}; background: ${alert.severity === 'critical' ? '#fee2e2' : '#fef3c7'};">
+                <strong>${alert.severity === 'critical' ? '🔴 Power Surge' : '⚠️ Power Spike'}</strong>
+                <div style="margin-top: 4px;">
+                    <span>Power: <strong>${alert.power.toFixed(1)}W</strong></span>
+                    <span style="margin-left: 16px;">Time: ${date.toLocaleString()}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Change time range
+function changeTimeRange(range) {
+    currentTimeRange = range;
+    
+    // Update button states
+    document.querySelectorAll('[id^="btn-"]').forEach(btn => {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+    });
+    document.getElementById(`btn-${range}`).classList.remove('btn-secondary');
+    document.getElementById(`btn-${range}`).classList.add('btn-primary');
+    
+    loadChartData();
+}
+
+// Real data fetching from API and chart initialization
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Energy dashboard loaded');
+    loadDevices();
+    
+    // Refresh every 30 seconds
+    setInterval(loadDevices, 30000);
+    
+    // Initialize chart after Chart.js loads
+    setTimeout(() => {
+        if (typeof Chart !== 'undefined') {
+            initChart();
+            loadChartData();
+            
+            // Refresh chart every 30 seconds
+            setInterval(loadChartData, 30000);
+        }
+    }, 500);
 });
+
+async function loadDevices() {
+    try {
+        const response = await fetch('/api/sensors/tapo-p115');
+        const data = await response.json();
+        
+        const devices = data.devices || [];
+        const container = document.getElementById('devices-container');
+        
+        if (devices.length === 0) {
+            container.innerHTML = '<p>No devices found. Configure P115 plugs in config.yaml</p>';
+            return;
+        }
+        
+        // Update overview cards with totals
+        updateOverview(devices);
+        
+        // Render device cards
+        container.innerHTML = devices.map(device => createDeviceCard(device)).join('');
+        
+        // Add event listeners
+        document.querySelectorAll('.toggle-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const deviceId = this.dataset.deviceId;
+                const currentState = this.dataset.state === 'true';
+                toggleDevice(deviceId, !currentState);
+            });
+        });
+        
+    } catch (error) {
+        console.error('Error loading devices:', error);
+        document.getElementById('devices-container').innerHTML = 
+            '<p>Error loading devices: ' + error.message + '</p>';
+    }
+}
+
+function updateOverview(devices) {
+    const totalPower = devices.reduce((sum, d) => sum + (d.current_power || 0), 0);
+    const totalDailyEnergy = devices.reduce((sum, d) => sum + (d.daily_energy || 0), 0);
+    const totalMonthlyEnergy = devices.reduce((sum, d) => sum + (d.monthly_energy || 0), 0);
+    const totalDailyCost = devices.reduce((sum, d) => sum + (d.daily_cost || 0), 0);
+    const totalMonthlyCost = devices.reduce((sum, d) => sum + (d.monthly_cost || 0), 0);
+    
+    // Update overview cards if they exist
+    const powerCard = document.querySelector('.energy-card:first-child .energy-value');
+    const dailyCostCard = document.querySelector('.energy-card:nth-child(2) .energy-value');
+    const monthlyUsageCard = document.querySelector('.energy-card:nth-child(3) .energy-value');
+    const monthlyCostCard = document.querySelector('.energy-card:nth-child(4) .energy-value');
+    
+    if (powerCard) powerCard.textContent = totalPower.toFixed(1);
+    if (dailyCostCard) dailyCostCard.textContent = '$' + totalDailyCost.toFixed(2);
+    if (monthlyUsageCard) monthlyUsageCard.textContent = totalMonthlyEnergy.toFixed(1);
+    if (monthlyCostCard) monthlyCostCard.textContent = '$' + totalMonthlyCost.toFixed(2);
+}
+
+function createDeviceCard(device) {
+    const isOnline = device.last_seen && new Date(device.last_seen) > new Date(Date.now() - 5 * 60000);
+    const statusClass = isOnline ? 'status-online' : 'status-offline';
+    const statusText = isOnline ? 'Online' : 'Offline';
+    const powerState = device.power_state ? 'ON' : 'OFF';
+    const toggleBtnClass = device.power_state ? 'btn-danger' : 'btn-primary';
+    const toggleBtnText = device.power_state ? 'Turn Off' : 'Turn On';
+    
+    return `
+        <div class="device-card">
+            <div class="device-header">
+                <div>
+                    <div class="device-name">${device.name || device.device_id}</div>
+                    <div class="device-location">${device.location || 'Unknown'}</div>
+                </div>
+                <div class="device-status">
+                    <div class="status-indicator ${statusClass}"></div>
+                    <span>${statusText} (${powerState})</span>
+                </div>
+            </div>
+            
+            <div class="device-metrics">
+                <div class="metric">
+                    <div class="metric-value">${(device.current_power || 0).toFixed(1)}W</div>
+                    <div class="metric-label">Current Power</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${(device.voltage || 0).toFixed(1)}V</div>
+                    <div class="metric-label">Voltage</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${(device.current || 0).toFixed(2)}A</div>
+                    <div class="metric-label">Current</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${(device.daily_energy || 0).toFixed(2)}kWh</div>
+                    <div class="metric-label">Daily Usage</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">$${(device.daily_cost || 0).toFixed(2)}</div>
+                    <div class="metric-label">Daily Cost</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${(device.monthly_energy || 0).toFixed(1)}kWh</div>
+                    <div class="metric-label">Monthly Usage</div>
+                </div>
+            </div>
+            
+            <div class="device-controls">
+                <button class="btn ${toggleBtnClass} toggle-btn" 
+                        data-device-id="${device.device_id}" 
+                        data-state="${device.power_state}"
+                        ${!isOnline ? 'disabled' : ''}>
+                    ${toggleBtnText}
+                </button>
+                <button class="btn btn-secondary" onclick="viewHistory('${device.device_id}')">History</button>
+            </div>
+        </div>
+    `;
+}
+
+async function toggleDevice(deviceId, turnOn) {
+    try {
+        const response = await fetch(`/api/sensors/tapo-p115/${deviceId}/toggle`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({turn_on: turnOn})
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to toggle device');
+        }
+        
+        // Reload devices after toggle
+        await loadDevices();
+        
+        // Reload chart data to reflect changes
+        if (typeof loadChartData === 'function') {
+            loadChartData();
+        }
+        
+    } catch (error) {
+        console.error('Error toggling device:', error);
+        alert('Error toggling device: ' + error.message);
+    }
+}
+
+function viewHistory(deviceId) {
+    window.location.href = `/energy?device=${deviceId}&view=history`;
+}
 </script>
 {% endblock %}

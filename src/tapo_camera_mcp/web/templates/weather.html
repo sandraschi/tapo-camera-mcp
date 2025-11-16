@@ -514,19 +514,35 @@
             </div>
         </div>
         
-        <div class="chart-tabs">
-            <button class="chart-tab active" data-chart="temperature">Temperature</button>
-            <button class="chart-tab" data-chart="humidity">Humidity</button>
-            <button class="chart-tab" data-chart="co2">CO2 Levels</button>
-            <button class="chart-tab" data-chart="pressure">Pressure</button>
+        <div style="margin-bottom: 16px;">
+            <button class="btn btn-secondary" onclick="changeTimeRange('24h')" id="btn-24h" style="margin-right: 8px;">24 Hours</button>
+            <button class="btn btn-secondary" onclick="changeTimeRange('7d')" id="btn-7d" style="margin-right: 8px;">7 Days</button>
+            <button class="btn btn-secondary" onclick="changeTimeRange('30d')" id="btn-30d">30 Days</button>
         </div>
         
-        <div class="chart-placeholder">
-            <div>
-                <i class="fas fa-chart-line" style="font-size: 48px; margin-bottom: 16px; color: #d1d5db;"></i>
-                <div>Weather data charts will be displayed here</div>
-                <div style="font-size: 14px; margin-top: 8px;">Configure your Netatmo devices to see historical trends</div>
-            </div>
+        <div class="chart-tabs">
+            <button class="chart-tab active" data-chart="temperature" onclick="switchChart('temperature')">🌡️ Temperature</button>
+            <button class="chart-tab" data-chart="humidity" onclick="switchChart('humidity')">💧 Humidity</button>
+            <button class="chart-tab" data-chart="co2" onclick="switchChart('co2')">💨 CO2 Levels</button>
+            <button class="chart-tab" data-chart="pressure" onclick="switchChart('pressure')">📊 Pressure</button>
+        </div>
+        
+        <div style="position: relative; height: 400px; margin-top: 20px;">
+            <canvas id="environmentChart"></canvas>
+        </div>
+        
+        <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+            <strong>⚠️ CO2 Alert Threshold:</strong>
+            <span style="margin-left: 16px;">Headache Danger: <span style="color: #dc2626; font-weight: bold;">≥1000 ppm</span> - Ventilate immediately!</span>
+            <span style="margin-left: 16px;">Warning Level: <span style="color: #f59e0b;">≥800 ppm</span></span>
+        </div>
+    </div>
+    
+    <!-- CO2 Alert Section -->
+    <div class="alert-section" id="co2-alert-section" style="display: none;">
+        <h3>🚨 CO2 Alert - Headache Danger!</h3>
+        <div id="co2-alert-container">
+            <!-- CO2 alerts will be populated here -->
         </div>
     </div>
     
@@ -569,70 +585,415 @@
     </div>
 </div>
 
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-// Mock data for demonstration
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Weather dashboard loaded');
+// Global variables
+let environmentChart = null;
+let currentChartType = 'temperature';
+let currentTimeRange = '24h';
+let chartData = {
+    temperature: { labels: [], values: [] },
+    humidity: { labels: [], values: [] },
+    co2: { labels: [], values: [], alerts: [] },
+    pressure: { labels: [], values: [] }
+};
+
+// Initialize chart
+function initChart() {
+    const ctx = document.getElementById('environmentChart');
+    if (!ctx) return;
     
-    // Chart tab switching
-    document.querySelectorAll('.chart-tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            // Remove active class from all tabs
-            document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
-            
-            // Add active class to clicked tab
-            this.classList.add('active');
-            
-            // Update chart content (placeholder for now)
-            const chartType = this.dataset.chart;
-            console.log(`Switched to ${chartType} chart`);
+    const config = getChartConfig(currentChartType);
+    environmentChart = new Chart(ctx, config);
+}
+
+// Get chart configuration based on type
+function getChartConfig(chartType) {
+    const colors = {
+        temperature: { color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },
+        humidity: { color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
+        co2: { color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
+        pressure: { color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' }
+    };
+    
+    const units = {
+        temperature: '°C',
+        humidity: '%',
+        co2: 'ppm',
+        pressure: 'mbar'
+    };
+    
+    const yAxisLabels = {
+        temperature: 'Temperature (°C)',
+        humidity: 'Humidity (%)',
+        co2: 'CO2 Level (ppm)',
+        pressure: 'Pressure (mbar)'
+    };
+    
+    const color = colors[chartType] || colors.temperature;
+    const unit = units[chartType] || '';
+    const yAxisLabel = yAxisLabels[chartType] || 'Value';
+    
+    const datasets = [{
+        label: yAxisLabel,
+        data: chartData[chartType].values || [],
+        borderColor: color.color,
+        backgroundColor: color.bg,
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 2,
+        pointHoverRadius: 5
+    }];
+    
+    // Add CO2 alert threshold line
+    if (chartType === 'co2') {
+        datasets.push({
+            label: 'Warning Threshold (800 ppm)',
+            data: (chartData.co2.values || []).map(() => 800),
+            borderColor: '#f59e0b',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            fill: false,
+            pointRadius: 0
         });
-    });
+        datasets.push({
+            label: 'Danger Threshold (1000 ppm)',
+            data: (chartData.co2.values || []).map(() => 1000),
+            borderColor: '#dc2626',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            fill: false,
+            pointRadius: 0
+        });
+    }
     
-    // Simulate real-time updates
-    setInterval(function() {
-        // Update temperature with small random variations
-        const tempElement = document.querySelector('.weather-card:nth-child(1) .weather-value');
-        if (tempElement) {
-            const currentTemp = parseFloat(tempElement.textContent);
-            const variation = (Math.random() - 0.5) * 0.2; // ±0.1°C variation
-            const newTemp = Math.round((currentTemp + variation) * 10) / 10;
-            tempElement.textContent = newTemp + '°';
-        }
-        
-        // Update humidity
-        const humidityElement = document.querySelector('.weather-card:nth-child(2) .weather-value');
-        if (humidityElement) {
-            const currentHumidity = parseInt(humidityElement.textContent);
-            const variation = Math.round((Math.random() - 0.5) * 4); // ±2% variation
-            const newHumidity = Math.max(20, Math.min(80, currentHumidity + variation));
-            humidityElement.textContent = newHumidity + '%';
-        }
-        
-        // Update CO2
-        const co2Element = document.querySelector('.weather-card:nth-child(3) .weather-value');
-        if (co2Element) {
-            const currentCO2 = parseInt(co2Element.textContent);
-            const variation = Math.round((Math.random() - 0.5) * 20); // ±10 ppm variation
-            const newCO2 = Math.max(300, Math.min(600, currentCO2 + variation));
-            co2Element.textContent = newCO2;
-            
-            // Update health indicator based on CO2 level
-            const healthIndicator = document.querySelector('.weather-card:nth-child(3) .health-indicator');
-            if (healthIndicator) {
-                if (newCO2 <= 400) {
-                    healthIndicator.className = 'health-indicator health-excellent';
-                    healthIndicator.innerHTML = '<i class="fas fa-check-circle"></i><span>Excellent</span>';
-                } else if (newCO2 <= 600) {
-                    healthIndicator.className = 'health-indicator health-good';
-                    healthIndicator.innerHTML = '<i class="fas fa-info-circle"></i><span>Good</span>';
-                } else {
-                    healthIndicator.className = 'health-indicator health-fair';
-                    healthIndicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Fair</span>';
+    return {
+        type: 'line',
+        data: {
+            labels: chartData[chartType].labels || [],
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += context.parsed.y.toFixed(1) + ' ' + unit;
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Time'
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: yAxisLabel
+                    },
+                    beginAtZero: chartType === 'humidity' || chartType === 'co2'
                 }
             }
         }
-    }, 10000); // Update every 10 seconds
+    };
+}
+
+// Switch chart type
+function switchChart(chartType) {
+    currentChartType = chartType;
+    
+    // Update tab states
+    document.querySelectorAll('.chart-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelector(`[data-chart="${chartType}"]`).classList.add('active');
+    
+    // Update chart
+    if (environmentChart) {
+        const config = getChartConfig(chartType);
+        environmentChart.data.labels = config.data.labels;
+        environmentChart.data.datasets = config.data.datasets;
+        environmentChart.options.scales.y.title.text = config.options.scales.y.title.text;
+        environmentChart.update();
+    }
+}
+
+// Load chart data
+async function loadChartData() {
+    try {
+        // Get station data
+        const stationsResponse = await fetch('/api/weather/stations');
+        const stations = await stationsResponse.json();
+        
+        if (!stations || stations.length === 0) {
+            updateChartPlaceholder('No weather stations configured');
+            return;
+        }
+        
+        const station = stations[0]; // Use first station
+        const stationId = station.station_id;
+        
+        // Get historical data for all metrics
+        const timeRange = currentTimeRange === '24h' ? '24h' : currentTimeRange === '7d' ? '7d' : '30d';
+        
+        const metrics = ['temperature', 'humidity', 'co2', 'pressure'];
+        const dataPromises = metrics.map(metric => 
+            fetch(`/api/weather/stations/${stationId}/historical?data_type=${metric}&time_range=${timeRange}`)
+                .then(r => r.json())
+                .catch(e => {
+                    console.error(`Error loading ${metric} data:`, e);
+                    return { data_points: [] };
+                })
+        );
+        
+        const [tempData, humidityData, co2Data, pressureData] = await Promise.all(dataPromises);
+        
+        // Process data for each metric
+        processMetricData('temperature', tempData.data_points || []);
+        processMetricData('humidity', humidityData.data_points || []);
+        processMetricData('co2', co2Data.data_points || []);
+        processMetricData('pressure', pressureData.data_points || []);
+        
+        // Update current values in overview cards
+        updateOverviewCards(stationId);
+        
+        // Update chart
+        if (environmentChart) {
+            const config = getChartConfig(currentChartType);
+            environmentChart.data.labels = config.data.labels;
+            environmentChart.data.datasets = config.data.datasets;
+            environmentChart.update('none');
+        } else {
+            initChart();
+        }
+        
+        // Check for CO2 alerts
+        checkCO2Alerts();
+        
+    } catch (error) {
+        console.error('Error loading chart data:', error);
+        updateChartPlaceholder('Error loading data: ' + error.message);
+    }
+}
+
+// Process metric data
+function processMetricData(metric, dataPoints) {
+    if (!dataPoints || dataPoints.length === 0) {
+        chartData[metric] = { labels: [], values: [], alerts: [] };
+        return;
+    }
+    
+    const sorted = [...dataPoints].sort((a, b) => a.timestamp - b.timestamp);
+    
+    chartData[metric].labels = sorted.map(point => {
+        const date = new Date(point.timestamp * 1000);
+        if (currentTimeRange === '24h') {
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit' });
+    });
+    
+    chartData[metric].values = sorted.map(point => point.value);
+    
+    // Detect CO2 alerts
+    if (metric === 'co2') {
+        chartData.co2.alerts = sorted.filter(point => point.value >= 1000).map(point => ({
+            timestamp: point.timestamp,
+            value: point.value,
+            severity: point.value >= 1000 ? 'danger' : 'warning'
+        }));
+    }
+}
+
+// Update overview cards
+async function updateOverviewCards(stationId) {
+    try {
+        const dataResponse = await fetch(`/api/weather/stations/${stationId}/data?module_type=indoor`);
+        const data = await dataResponse.json();
+        
+        if (data.data && data.data.indoor) {
+            const indoor = data.data.indoor;
+            
+            // Update temperature
+            const tempCard = document.querySelector('.weather-card:nth-child(1) .weather-value');
+            if (tempCard) tempCard.textContent = indoor.temperature.toFixed(1) + '°';
+            
+            // Update humidity
+            const humidityCard = document.querySelector('.weather-card:nth-child(2) .weather-value');
+            if (humidityCard) humidityCard.textContent = indoor.humidity + '%';
+            
+            // Update CO2
+            const co2Card = document.querySelector('.weather-card:nth-child(3) .weather-value');
+            if (co2Card) {
+                co2Card.textContent = indoor.co2;
+                
+                // Update health indicator
+                const healthIndicator = document.querySelector('.weather-card:nth-child(3) .health-indicator');
+                if (healthIndicator) {
+                    if (indoor.co2 <= 400) {
+                        healthIndicator.className = 'health-indicator health-excellent';
+                        healthIndicator.innerHTML = '<i class="fas fa-check-circle"></i><span>Excellent</span>';
+                    } else if (indoor.co2 <= 800) {
+                        healthIndicator.className = 'health-indicator health-good';
+                        healthIndicator.innerHTML = '<i class="fas fa-info-circle"></i><span>Good</span>';
+                    } else if (indoor.co2 < 1000) {
+                        healthIndicator.className = 'health-indicator health-fair';
+                        healthIndicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Fair - Ventilate</span>';
+                    } else {
+                        healthIndicator.className = 'health-indicator health-poor';
+                        healthIndicator.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>DANGER - Headache Risk!</span>';
+                    }
+                }
+            }
+            
+            // Update pressure
+            const pressureCard = document.querySelector('.weather-card:nth-child(5) .weather-value');
+            if (pressureCard) pressureCard.textContent = indoor.pressure.toFixed(1);
+        }
+    } catch (error) {
+        console.error('Error updating overview cards:', error);
+    }
+}
+
+// Check for CO2 alerts
+function checkCO2Alerts() {
+    const alerts = chartData.co2.alerts || [];
+    const alertSection = document.getElementById('co2-alert-section');
+    const alertContainer = document.getElementById('co2-alert-container');
+    
+    if (alerts.length === 0) {
+        alertSection.style.display = 'none';
+        return;
+    }
+    
+    // Get current CO2 value
+    const currentCO2 = chartData.co2.values[chartData.co2.values.length - 1];
+    
+    if (currentCO2 && currentCO2 >= 1000) {
+        alertSection.style.display = 'block';
+        alertContainer.innerHTML = `
+            <div class="alert-item" style="background: #fee2e2; border-color: #dc2626; border-left: 4px solid #dc2626;">
+                <div class="alert-header">
+                    <div class="alert-title" style="color: #dc2626; font-weight: bold; font-size: 18px;">
+                        🚨 CO2 DANGER - HEADACHE RISK!
+                    </div>
+                    <div class="alert-time">Current: ${currentCO2.toFixed(0)} ppm</div>
+                </div>
+                <div class="alert-description" style="color: #991b1b; font-weight: 500;">
+                    CO2 levels are at ${currentCO2.toFixed(0)} ppm - above the 1000 ppm danger threshold. 
+                    <strong>Ventilate immediately</strong> to prevent headaches and reduce health risks!
+                </div>
+            </div>
+        `;
+        
+        // Play alert sound (if browser notifications allowed)
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('CO2 Alert - Headache Danger!', {
+                body: `CO2 levels at ${currentCO2.toFixed(0)} ppm - Ventilate immediately!`,
+                icon: '/static/img/placeholder.svg',
+                tag: 'co2-alert',
+                requireInteraction: true
+            });
+        }
+    } else if (currentCO2 && currentCO2 >= 800) {
+        alertSection.style.display = 'block';
+        alertContainer.innerHTML = `
+            <div class="alert-item warning">
+                <div class="alert-header">
+                    <div class="alert-title">⚠️ CO2 Warning</div>
+                    <div class="alert-time">Current: ${currentCO2.toFixed(0)} ppm</div>
+                </div>
+                <div class="alert-description">
+                    CO2 levels are elevated (${currentCO2.toFixed(0)} ppm). Consider ventilating to maintain optimal air quality.
+                </div>
+            </div>
+        `;
+    } else {
+        alertSection.style.display = 'none';
+    }
+}
+
+// Change time range
+function changeTimeRange(range) {
+    currentTimeRange = range;
+    
+    // Update button states
+    document.querySelectorAll('[id^="btn-"]').forEach(btn => {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+    });
+    const btn = document.getElementById(`btn-${range}`);
+    if (btn) {
+        btn.classList.remove('btn-secondary');
+        btn.classList.add('btn-primary');
+    }
+    
+    loadChartData();
+}
+
+// Update chart placeholder
+function updateChartPlaceholder(message) {
+    const canvas = document.getElementById('environmentChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = '16px Arial';
+    ctx.fillStyle = '#6b7280';
+    ctx.textAlign = 'center';
+    ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+}
+
+// Request notification permission
+function requestNotificationPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Weather dashboard loaded');
+    
+    // Request notification permission for CO2 alerts
+    requestNotificationPermission();
+    
+    // Initialize chart
+    setTimeout(() => {
+        if (typeof Chart !== 'undefined') {
+            initChart();
+            loadChartData();
+            
+            // Refresh every 30 seconds
+            setInterval(loadChartData, 30000);
+        }
+    }, 500);
 });
 </script>
 {% endblock %}

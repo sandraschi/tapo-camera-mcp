@@ -3,9 +3,10 @@ Test script for tool discovery functionality.
 """
 
 import logging
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add the src directory to the Python path
 sys.path.insert(0, str(Path(__file__).parent / "src"))

@@ -1,0 +1,37 @@
+global:
+  resolve_timeout: 2m
+
+route:
+  receiver: default
+  group_by: ["alertname", "service", "site"]
+  group_wait: 30s
+  group_interval: 2m
+  repeat_interval: 4h
+  routes:
+    - matchers:
+        - severity="critical"
+      receiver: critical-pager
+    - matchers:
+        - severity="warning"
+      receiver: ops-channel
+
+receivers:
+  - name: default
+    email_configs:
+      - to: ops@example.com
+        send_resolved: true
+
+  - name: critical-pager
+    webhook_configs:
+      - url: https://ops.example.com/hooks/pager
+        send_resolved: true
+
+  - name: ops-channel
+    slack_configs:
+      - api_url: https://hooks.slack.com/services/XXX/YYY/ZZZ
+        channel: '#home-security-ops'
+        send_resolved: true
+
+templates:
+  - templates/*.tmpl
+

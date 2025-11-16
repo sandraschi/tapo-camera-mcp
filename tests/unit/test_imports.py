@@ -2,11 +2,12 @@
 """Test script to verify all imports in the project."""
 
 import importlib
-import pytest
 import os
 import sys
 from pathlib import Path
 from typing import Any, Optional
+
+import pytest
 
 
 def import_module_safe(module_name: str) -> Optional[Any]:

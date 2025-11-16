@@ -5,10 +5,11 @@ This module provides the web server implementation using FastAPI.
 """
 
 import logging
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Generator, Optional
 
-from fastapi import FastAPI, Form, Request, status
+from fastapi import FastAPI, Form, Query, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -28,6 +29,9 @@ from ..utils.logging import setup_logging
 
 # Setup logging
 logger = logging.getLogger(__name__)
+
+AUTO_WEBCAM_RETRY_INTERVAL = timedelta(seconds=10)
+_last_webcam_attempt: Optional[datetime] = None
 
 
 class WebServer:
@@ -284,6 +288,25 @@ class WebServer:
             except Exception as e:
                 return {"success": False, "error": str(e), "cameras": []}
 
+        @self.app.get("/api/cameras/status")
+        async def get_cameras_status():
+            """Get camera status summary."""
+            try:
+                from tapo_camera_mcp.core.server import TapoCameraServer
+
+                server = await TapoCameraServer.get_instance()
+                cameras = await server.list_cameras()
+                total = len(cameras)
+                online = sum(1 for cam in cameras if cam.get("status") == "online")
+                return {
+                    "total": total,
+                    "online": online,
+                    "offline": total - online,
+                    "cameras": cameras,
+                }
+            except Exception as e:
+                return {"success": False, "error": str(e), "total": 0, "online": 0, "offline": 0}
+
         @self.app.get("/api/cameras/{camera_id}/stream")
         async def get_camera_stream(camera_id: str):
             """Get camera video stream."""
@@ -393,12 +416,324 @@ class WebServer:
             except Exception as e:
                 return {"error": str(e)}
 
+        @self.app.get("/api/system/status")
+        async def get_system_status():
+            """Get system status."""
+            try:
+                from tapo_camera_mcp.core.server import TapoCameraServer
+
+                server = await TapoCameraServer.get_instance()
+                cameras = await server.list_cameras()
+                total_cameras = len(cameras)
+                online_cameras = sum(1 for cam in cameras if cam.get("status") == "online")
+
+                return {
+                    "status": "ok",
+                    "version": "1.0.0",
+                    "cameras": {
+                        "total": total_cameras,
+                        "online": online_cameras,
+                        "offline": total_cameras - online_cameras,
+                    },
+                    "storage": {
+                        "used_percent": 45,  # Mock data for now
+                    },
+                    "uptime": "N/A",  # Could be calculated from server start time
+                }
+            except Exception as e:
+                return {"status": "error", "error": str(e)}
+
+        @self.app.get("/api/events")
+        async def get_events(
+            limit: int = Query(100, ge=1, le=1000, description="Number of events to retrieve"),
+            event_type: Optional[str] = Query(None, description="Filter by event type"),
+            camera_id: Optional[str] = Query(None, description="Filter by camera ID"),
+            hours: int = Query(24, ge=1, le=168, description="Hours of history to retrieve"),
+        ):
+            """Get events from storage."""
+            try:
+                from tapo_camera_mcp.utils.storage import EventStore
+
+                event_store = EventStore()
+                since = datetime.now() - timedelta(hours=hours) if hours > 0 else None
+                events = event_store.get_events(
+                    limit=limit,
+                    event_type=event_type,
+                    camera_id=camera_id,
+                    since=since,
+                )
+
+                return {
+                    "events": events,
+                    "total": len(events),
+                }
+            except Exception as e:
+                logger.exception("Error fetching events")
+                return {"events": [], "total": 0, "error": str(e)}
+
+        @self.app.get("/api/events/recent")
+        async def get_recent_events():
+            """Get recent events (alias for /api/events with default params)."""
+            try:
+                from tapo_camera_mcp.utils.storage import EventStore
+
+                event_store = EventStore()
+                events = event_store.get_events(limit=50)
+
+                return {
+                    "events": events,
+                    "total": len(events),
+                }
+            except Exception as e:
+                logger.exception("Error fetching recent events")
+                return {"events": [], "total": 0, "error": str(e)}
+
+        @self.app.post("/api/events")
+        async def create_event(event_data: dict):
+            """Create a new event."""
+            try:
+                from tapo_camera_mcp.utils.storage import EventStore
+
+                event_store = EventStore()
+                event = event_store.add_event(
+                    event_type=event_data.get("type", "unknown"),
+                    camera_id=event_data.get("camera_id"),
+                    message=event_data.get("message", ""),
+                    metadata=event_data.get("metadata", {}),
+                )
+
+                return {
+                    "success": True,
+                    "event": event,
+                }
+            except Exception as e:
+                logger.exception("Error creating event")
+                return {"success": False, "error": str(e)}
+
+        @self.app.get("/api/logs")
+        async def get_logs(
+            level: Optional[str] = Query(
+                None, description="Filter by log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)"
+            ),
+            lines: int = Query(100, ge=1, le=1000, description="Number of log lines to retrieve"),
+            search: Optional[str] = Query(None, description="Search term to filter log messages"),
+        ):
+            """Get application logs with filtering."""
+            try:
+                from pathlib import Path
+
+                from tapo_camera_mcp.config import get_config
+
+                config = get_config()
+                log_file = config.get("logging", {}).get("file")
+
+                if not log_file:
+                    # Try to find log file in default location
+                    user_data_dir = Path("~/.local/share/tapo-camera-mcp").expanduser()
+                    log_file = user_data_dir / "tapo-camera-mcp.log"
+
+                log_file = Path(log_file)
+
+                if not log_file.exists():
+                    return {
+                        "logs": [],
+                        "total": 0,
+                        "message": "Log file not found",
+                    }
+
+                # Read log file
+                log_entries = []
+                try:
+                    with open(log_file, encoding="utf-8") as f:
+                        file_lines = f.readlines()
+                        # Get last N lines
+                        recent_lines = (
+                            file_lines[-lines:] if len(file_lines) > lines else file_lines
+                        )
+
+                        for raw_line in recent_lines:
+                            line = raw_line.strip()
+                            if not line:
+                                continue
+
+                            # Parse log line: "2025-01-01 12:00:00 - logger_name - LEVEL - message"
+                            parts = line.split(" - ", 3)
+                            if len(parts) >= 4:
+                                timestamp_str, logger_name, log_level, message = parts
+                                log_level = log_level.upper()
+
+                                # Filter by level if specified
+                                if level and log_level != level.upper():
+                                    continue
+
+                                # Filter by search term if specified
+                                if search and search.lower() not in message.lower():
+                                    continue
+
+                                log_entries.append(
+                                    {
+                                        "timestamp": timestamp_str,
+                                        "level": log_level,
+                                        "logger": logger_name,
+                                        "message": message,
+                                    }
+                                )
+                except Exception as e:
+                    logger.exception("Error reading log file")
+                    return {"logs": [], "total": 0, "error": str(e)}
+
+                # Reverse to show newest first
+                log_entries.reverse()
+
+                return {
+                    "logs": log_entries,
+                    "total": len(log_entries),
+                }
+            except Exception as e:
+                logger.exception("Error fetching logs")
+                return {"logs": [], "total": 0, "error": str(e)}
+
+        @self.app.get("/metrics", summary="Prometheus metrics endpoint")
+        async def get_prometheus_metrics() -> Response:
+            """
+            Expose Prometheus-formatted metrics for Grafana.
+            Includes P115 energy metrics for alerting.
+            """
+            try:
+                from ...tools.energy.tapo_plug_tools import tapo_plug_manager
+                # Lazy import weather API helpers for environment metrics (simulated/real)
+                try:
+                    from .api.weather import get_weather_stations, get_station_weather_data  # type: ignore
+                except Exception:
+                    get_weather_stations = None  # type: ignore[assignment]
+                    get_station_weather_data = None  # type: ignore[assignment]
+
+                metrics_lines = []
+
+                # Collect P115 power metrics
+                devices = await tapo_plug_manager.get_all_devices()
+                for device in devices:
+                    device_id = device.device_id
+                    host = tapo_plug_manager.get_device_host(device_id) or "unknown"
+                    name = device.name or device_id
+                    location = getattr(device, "location", "unknown")
+                    
+                    # Power consumption in watts
+                    power_watts = device.current_power
+                    metrics_lines.append(
+                        f'tapo_p115_power_watts{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {power_watts}'
+                    )
+                    
+                    # Voltage
+                    voltage = getattr(device, "voltage", 0.0)
+                    metrics_lines.append(
+                        f'tapo_p115_voltage_volts{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {voltage}'
+                    )
+                    
+                    # Current
+                    current = getattr(device, "current", 0.0)
+                    metrics_lines.append(
+                        f'tapo_p115_current_amps{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {current}'
+                    )
+                    
+                    # Daily energy in kWh
+                    daily_energy = device.daily_energy
+                    metrics_lines.append(
+                        f'tapo_p115_daily_energy_kwh{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {daily_energy}'
+                    )
+                    
+                    # Monthly energy in kWh
+                    monthly_energy = device.monthly_energy
+                    metrics_lines.append(
+                        f'tapo_p115_monthly_energy_kwh{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {monthly_energy}'
+                    )
+                    
+                    # Daily cost in USD
+                    daily_cost = getattr(device, "daily_cost", 0.0)
+                    metrics_lines.append(
+                        f'tapo_p115_daily_cost_usd{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {daily_cost}'
+                    )
+                    
+                    # Power state (1=ON, 0=OFF)
+                    power_state = 1 if device.power_state else 0
+                    metrics_lines.append(
+                        f'tapo_p115_power_state{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {power_state}'
+                    )
+                
+                # Environment metrics (Netatmo-style). Use weather API if available.
+                try:
+                    if get_weather_stations and get_station_weather_data:
+                        stations = await get_weather_stations(include_offline=False)  # type: ignore[misc]
+                        # stations is a list of WeatherStationResponse Pydantic models or dict-like
+                        if stations:
+                            first = stations[0]
+                            station_id = getattr(first, "station_id", None) or first.get("station_id")  # type: ignore[attr-defined]
+                            if station_id:
+                                data_resp = await get_station_weather_data(station_id=station_id, module_type="indoor")  # type: ignore[misc]
+                                data = getattr(data_resp, "data", None) or data_resp.get("data")  # type: ignore[attr-defined]
+                                if data:
+                                    temperature = float(data.get("temperature", 0.0))
+                                    humidity = float(data.get("humidity", 0.0))
+                                    co2 = float(data.get("co2", 0.0))
+                                    pressure = float(data.get("pressure", 0.0))
+                                    metrics_lines.append(
+                                        f'netatmo_temperature_celsius{{station_id="{station_id}",module="indoor"}} {temperature}'
+                                    )
+                                    metrics_lines.append(
+                                        f'netatmo_humidity_percent{{station_id="{station_id}",module="indoor"}} {humidity}'
+                                    )
+                                    metrics_lines.append(
+                                        f'netatmo_co2_ppm{{station_id="{station_id}",module="indoor"}} {co2}'
+                                    )
+                                    metrics_lines.append(
+                                        f'netatmo_pressure_mbar{{station_id="{station_id}",module="indoor"}} {pressure}'
+                                    )
+                except Exception:
+                    # Best-effort; skip environment metrics if unavailable
+                    pass
+
+                # Ring and Nest Protect basic health metrics (stubs that can be backed by real integrations)
+                try:
+                    from .api.security import _compute_ring_status, _compute_nest_status  # type: ignore
+                    ring_status = _compute_ring_status()
+                    nest_status = _compute_nest_status()
+                    ring_enabled = bool(ring_status.get("enabled", False))
+                    nest_enabled = bool(nest_status.get("enabled", False))
+                    ring_devices_total = int(ring_status.get("devices_total", 0))
+                    nest_devices_total = int(nest_status.get("devices_total", 0))
+                except Exception:
+                    ring_enabled = False
+                    nest_enabled = False
+                    ring_devices_total = 0
+                    nest_devices_total = 0
+
+                # Expose on/off and device counts for Grafana panels
+                metrics_lines.append(f'ring_integration_enabled  {1 if ring_enabled else 0}')
+                metrics_lines.append(f'nest_protect_integration_enabled  {1 if nest_enabled else 0}')
+                metrics_lines.append(f'ring_devices_total {ring_devices_total}')
+                metrics_lines.append(f'nest_protect_devices_total {nest_devices_total}')
+
+                metrics_text = "\n".join(metrics_lines) + "\n"
+                return Response(content=metrics_text, media_type="text/plain; version=0.0.4")
+                
+            except Exception as e:
+                logger.exception("Error generating Prometheus metrics")
+                return Response(
+                    content=f"# Error generating metrics: {e}\n",
+                    media_type="text/plain",
+                    status_code=500
+                )
+
         # Include API routes
         from .api.onboarding import router as onboarding_router
+        from .api.sensors import router as sensors_router
         from .api.weather import router as weather_router
+        from .api.security import router as security_router
 
         self.app.include_router(onboarding_router)
+        self.app.include_router(sensors_router)
         self.app.include_router(weather_router)
+        self.app.include_router(security_router)
 
         # Onboarding route
         @self.app.get("/onboarding", response_class=HTMLResponse, name="onboarding")
@@ -478,25 +813,34 @@ class WebServer:
                 # If no cameras configured, try to auto-add USB webcam
                 if total_cameras == 0:
                     try:
-                        logger.info("No cameras configured, attempting to auto-add USB webcam...")
-                        config = {
-                            "name": "usb_webcam_0",
-                            "type": "webcam",
-                            "params": {"device_id": 0},
-                        }
-                        success = await server.camera_manager.add_camera(config)
-                        if success:
-                            logger.info("Successfully auto-added USB webcam")
-                            # Refresh camera list
-                            cameras = await server.camera_manager.list_cameras()
-                            total_cameras = len(cameras)
-                            online_cameras = sum(
-                                1 for cam in cameras if cam.get("status") == "online"
+                        global _last_webcam_attempt
+                        now = datetime.utcnow()
+                        if (
+                            _last_webcam_attempt is None
+                            or now - _last_webcam_attempt >= AUTO_WEBCAM_RETRY_INTERVAL
+                        ):
+                            _last_webcam_attempt = now
+                            logger.info(
+                                "No cameras configured, attempting to auto-add USB webcam..."
                             )
-                        else:
-                            logger.warning(
-                                "Failed to auto-add webcam: camera manager returned False"
-                            )
+                            config = {
+                                "name": "usb_webcam_0",
+                                "type": "webcam",
+                                "params": {"device_id": 0},
+                            }
+                            success = await server.camera_manager.add_camera(config)
+                            if success:
+                                logger.info("Successfully auto-added USB webcam")
+                                # Refresh camera list
+                                cameras = await server.camera_manager.list_cameras()
+                                total_cameras = len(cameras)
+                                online_cameras = sum(
+                                    1 for cam in cameras if cam.get("status") == "online"
+                                )
+                            else:
+                                logger.warning(
+                                    "Failed to auto-add webcam: camera manager returned False"
+                                )
                     except Exception as e:
                         logger.warning(f"Error auto-adding webcam: {e}")
 
@@ -553,35 +897,139 @@ class WebServer:
                 "dashboard.html", {"request": request, "active_page": "cameras"}
             )
 
+        @self.app.get("/api/recordings")
+        async def get_recordings_api(
+            limit: int = Query(100, ge=1, le=1000, description="Number of recordings to retrieve"),
+            camera_id: Optional[str] = Query(None, description="Filter by camera ID"),
+            hours: int = Query(24, ge=1, le=168, description="Hours of history to retrieve"),
+        ):
+            """Get recordings from storage."""
+            try:
+                from tapo_camera_mcp.utils.storage import RecordingStore
+
+                recording_store = RecordingStore()
+                since = datetime.now() - timedelta(hours=hours) if hours > 0 else None
+                recordings = recording_store.get_recordings(
+                    limit=limit,
+                    camera_id=camera_id,
+                    since=since,
+                )
+
+                return {
+                    "recordings": recordings,
+                    "total": len(recordings),
+                }
+            except Exception as e:
+                logger.exception("Error fetching recordings")
+                return {"recordings": [], "total": 0, "error": str(e)}
+
+        @self.app.delete("/api/recordings/{recording_id}")
+        async def delete_recording(recording_id: str):
+            """Delete a recording."""
+            try:
+                from tapo_camera_mcp.utils.storage import RecordingStore
+
+                recording_store = RecordingStore()
+                success = recording_store.delete_recording(recording_id)
+
+                return {
+                    "success": success,
+                    "message": "Recording deleted" if success else "Recording not found",
+                }
+            except Exception as e:
+                logger.exception("Error deleting recording")
+                return {"success": False, "error": str(e)}
+
         @self.app.get("/recordings", response_class=HTMLResponse, name="recordings")
         async def recordings(request: Request):
             """Serve the recordings page."""
-            # Mock data for demonstration - in a real implementation, this would come from a database
-            recordings = []  # Empty for now since we don't have actual recordings
-            total_recordings = 0
-            today_recordings = 0
-            storage_used = "0GB"
-            storage_free = "50GB"  # Mock data
+            try:
+                from tapo_camera_mcp.utils.storage import RecordingStore
 
-            return self.templates.TemplateResponse(
-                "recordings.html",
-                {
-                    "request": request,
-                    "active_page": "recordings",
-                    "recordings": recordings,
-                    "total_recordings": total_recordings,
-                    "today_recordings": today_recordings,
-                    "storage_used": storage_used,
-                    "storage_free": storage_free,
-                },
-            )
+                recording_store = RecordingStore()
+                stats = recording_store.get_storage_stats()
+                recordings_list = recording_store.get_recordings(limit=50)
+
+                today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+                today_recordings = [
+                    r
+                    for r in recordings_list
+                    if datetime.fromisoformat(r.get("timestamp", "")) >= today
+                ]
+
+                # Format storage sizes
+                total_gb = stats.get("total_size_gb", 0)
+                storage_used = f"{total_gb:.2f}GB"
+                storage_free = f"{max(0, 100 - total_gb):.2f}GB"  # Assume 100GB total
+
+                return self.templates.TemplateResponse(
+                    "recordings.html",
+                    {
+                        "request": request,
+                        "active_page": "recordings",
+                        "recordings": recordings_list,
+                        "total_recordings": stats.get("total_recordings", 0),
+                        "today_recordings": len(today_recordings),
+                        "storage_used": storage_used,
+                        "storage_free": storage_free,
+                    },
+                )
+            except Exception as e:
+                logger.exception("Error loading recordings page")
+                return self.templates.TemplateResponse(
+                    "recordings.html",
+                    {
+                        "request": request,
+                        "active_page": "recordings",
+                        "recordings": [],
+                        "total_recordings": 0,
+                        "today_recordings": 0,
+                        "storage_used": "0GB",
+                        "storage_free": "0GB",
+                        "error": str(e),
+                    },
+                )
 
         @self.app.get("/events", response_class=HTMLResponse, name="events")
         async def events(request: Request):
             """Serve the events page."""
-            return self.templates.TemplateResponse(
-                "dashboard.html", {"request": request, "active_page": "events"}
-            )
+            try:
+                from tapo_camera_mcp.utils.storage import EventStore
+
+                event_store = EventStore()
+                events_list = event_store.get_events(limit=100)
+
+                # Group events by type
+                events_by_type = {}
+                for event in events_list:
+                    event_type = event.get("type", "unknown")
+                    if event_type not in events_by_type:
+                        events_by_type[event_type] = []
+                    events_by_type[event_type].append(event)
+
+                return self.templates.TemplateResponse(
+                    "events.html",
+                    {
+                        "request": request,
+                        "active_page": "events",
+                        "events": events_list,
+                        "events_by_type": events_by_type,
+                        "total_events": len(events_list),
+                    },
+                )
+            except Exception as e:
+                logger.exception("Error loading events page")
+                return self.templates.TemplateResponse(
+                    "events.html",
+                    {
+                        "request": request,
+                        "active_page": "events",
+                        "events": [],
+                        "events_by_type": {},
+                        "total_events": 0,
+                        "error": str(e),
+                    },
+                )
 
         @self.app.get("/help", response_class=HTMLResponse, name="help")
         async def help_page(request: Request):

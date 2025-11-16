@@ -3,9 +3,10 @@ Test script to verify tool registration in Tapo Camera MCP.
 """
 
 import logging
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

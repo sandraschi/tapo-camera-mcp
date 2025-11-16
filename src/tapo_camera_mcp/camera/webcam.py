@@ -46,7 +46,7 @@ class WebCamera(BaseCamera):
                 # Use real webcam for production
                 self._cap = cv2.VideoCapture(self._device_id)
                 if not self._cap.isOpened():
-                    raise RuntimeError(f"Could not open webcam device {self._device_id}")  # noqa: TRY301
+                    raise RuntimeError(f"Could not open webcam device {self._device_id}")
 
         except Exception as e:
             self._is_connected = False
@@ -80,7 +80,7 @@ class WebCamera(BaseCamera):
         try:
             async with self._frame_lock:
                 if self._frame is None:
-                    raise RuntimeError("No frame available from webcam")  # noqa: TRY301
+                    raise RuntimeError("No frame available from webcam")
 
                 # Convert BGR to RGB
                 frame_rgb = cv2.cvtColor(self._frame, cv2.COLOR_BGR2RGB)

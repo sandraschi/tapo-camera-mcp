@@ -203,7 +203,7 @@ class TapoCameraDualServer:
                             model=cam.get("model"),
                         )
 
-                raise HTTPException(status_code=404, detail="Camera not found")  # noqa: TRY301
+                raise HTTPException(status_code=404, detail="Camera not found")
 
             except HTTPException:
                 raise
@@ -244,7 +244,7 @@ class TapoCameraDualServer:
                         break
 
                 if not camera:
-                    raise HTTPException(status_code=404, detail="Camera not found")  # noqa: TRY301
+                    raise HTTPException(status_code=404, detail="Camera not found")
 
                 # For now, return success (full implementation would capture actual image)
                 return {
@@ -274,7 +274,7 @@ class TapoCameraDualServer:
             logger.exception("Failed to start MCP server")
             raise
 
-    async def start_rest_server(self, host: str = "0.0.0.0", port: int = 8123):  # nosec B104  # noqa: S104
+    async def start_rest_server(self, host: str = "0.0.0.0", port: int = 8123):  # nosec B104
         """Start the REST API server"""
         try:
             logger.info(f"Starting REST API server on {host}:{port}")
@@ -287,7 +287,7 @@ class TapoCameraDualServer:
             logger.exception("Failed to start REST API server")
             raise
 
-    async def start_dual_server(self, rest_host: str = "0.0.0.0", rest_port: int = 8123):  # nosec B104  # noqa: S104
+    async def start_dual_server(self, rest_host: str = "0.0.0.0", rest_port: int = 8123):  # nosec B104
         """Start both MCP and REST servers concurrently"""
         logger.info("Starting dual interface server (MCP + REST API)")
 
@@ -321,7 +321,7 @@ async def start_dual_server():
     await dual_server.start_dual_server()
 
 
-async def start_rest_only_server(host: str = "0.0.0.0", port: int = 8123):  # nosec B104  # noqa: S104
+async def start_rest_only_server(host: str = "0.0.0.0", port: int = 8123):  # nosec B104
     """Convenience function to start REST API only"""
     await dual_server.start_rest_server(host, port)
 

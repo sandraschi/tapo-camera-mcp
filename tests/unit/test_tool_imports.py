@@ -3,9 +3,10 @@ Test script to verify tool imports and registration.
 """
 
 import logging
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format="%(message)s")

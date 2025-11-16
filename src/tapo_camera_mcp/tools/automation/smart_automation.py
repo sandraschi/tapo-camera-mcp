@@ -106,7 +106,7 @@ class SmartAutomationTool(BaseTool):
 
             if action in action_map:
                 return await action_map[action](**kwargs)
-            return {"error": f"Unknown action: {action}"}  # noqa: TRY300
+            return {"error": f"Unknown action: {action}"}
 
         except Exception as e:
             logger.exception("Smart automation operation failed")

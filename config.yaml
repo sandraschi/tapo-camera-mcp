@@ -18,15 +18,33 @@ cameras:
       resolution: "1920x1080"
       fps: 30
     
-  # Tapo Camera Example
-  tapo_camera:
+  # Tapo Kitchen Camera (C200) - Device Name: Kitchencam
+  # ✅ Camera Account credentials set
+  # ✅ Third-Party Compatibility enabled
+  # ⚠️ Still troubleshooting authentication
+  tapo_kitchen:
     type: tapo
     params:
-      host: 192.168.1.100
-      username: "your_tapo_username"
-      password: "your_tapo_password"
+      host: 192.168.0.164  # Kitchen camera IP
+      username: "sandraschi"  # Camera Account username from Tapo app
+      password: "Sec1000kitchen"  # Camera Account password from Tapo app
       port: 443
       verify_ssl: true
+      # Device alias: Kitchencam
+    
+  # Tapo Living Room Camera
+  # ✅ Camera Account credentials set
+  # ✅ Static IP enabled (192.168.0.206)
+  # ✅ Third-Party Compatibility enabled (global)
+  tapo_living_room:
+    type: tapo
+    params:
+      host: 192.168.0.206  # Living room camera IP (static)
+      username: "sandraschi"  # Camera Account username from Tapo app
+      password: "Sec1000living"  # Camera Account password from Tapo app
+      port: 443
+      verify_ssl: true
+      # Device name: (will update when provided)
     
   # Ring Doorbell Camera
   ring_doorbell:
@@ -72,3 +90,24 @@ logging:
   file: "tapo_mcp.log"
   max_size: 10
   backup_count: 5
+
+# Energy Management (Tapo P115 Smart Plugs)
+energy:
+  tapo_p115:
+    account:
+      email: "sandraschipal@hotmail.com"
+      password: "Sec0860ta#"
+    devices:
+      - host: "192.168.0.17"  # Aircon plug (verified working)
+        device_id: "tapo_p115_aircon"
+        name: "Aircon"
+        location: "Unknown"
+        readonly: false
+      - host: "192.168.0.137"  # Kitchen Zojirushi plug
+        device_id: "tapo_p115_kitchen"
+        name: "Kitchen Zojirushi"
+        location: "Kitchen"
+        readonly: false
+    discovery:
+      enabled: false
+      timeout: 4

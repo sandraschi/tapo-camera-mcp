@@ -11,6 +11,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from ...ingest import IngestionUnavailableError, TapoP115IngestionService
+from ...config import get_config
 from ...tools.base_tool import BaseTool, ToolCategory, tool
 
 logger = logging.getLogger(__name__)
@@ -72,6 +74,49 @@ class TapoPlugManager:
         self.automation_rules: List[EnergyAutomation] = []
         self._initialized = False
         self._electricity_rate = 0.12  # USD per kWh (default rate)
+        self._device_hosts: Dict[str, str] = {}
+        self._device_readonly: Dict[str, bool] = {}
+        self._ingestion: Optional[TapoP115IngestionService] = None
+        self._ingestion_error: Optional[str] = None
+        # Mock fallback toggle via environment (default: disabled)
+        try:
+            import os
+
+            self._enable_mock_fallback = os.getenv("ENABLE_MOCK_ENERGY", "").strip().lower() in (
+                "1",
+                "true",
+                "yes",
+                "on",
+            )
+        except Exception:
+            self._enable_mock_fallback = False
+
+        # Load per-device readonly settings from configuration (by host or device_id)
+        try:
+            cfg = get_config() or {}
+            energy_cfg = cfg.get("energy", {}).get("tapo_p115", {})
+            devices_cfg = energy_cfg.get("devices", []) or []
+            self._readonly_by_host: Dict[str, bool] = {}
+            self._readonly_by_device_id: Dict[str, bool] = {}
+            for dev in devices_cfg:
+                host = str(dev.get("host") or "").strip()
+                device_id = str(dev.get("device_id") or "").strip()
+                readonly_flag = bool(dev.get("readonly", False))
+                if host:
+                    self._readonly_by_host[host] = readonly_flag
+                if device_id:
+                    self._readonly_by_device_id[device_id] = readonly_flag
+        except Exception:
+            # If config is not readable, default to no readonly
+            self._readonly_by_host = {}
+            self._readonly_by_device_id = {}
+
+        try:
+            self._ingestion = TapoP115IngestionService()
+            logger.debug("Real Tapo P115 ingestion enabled.")
+        except IngestionUnavailableError as exc:
+            self._ingestion_error = str(exc)
+            logger.info("Using simulated Tapo P115 data: %s", exc)
 
     async def initialize(self, _tapo_account: Dict[str, str]) -> bool:
         """Initialize connection to Tapo smart plugs."""
@@ -94,6 +139,40 @@ class TapoPlugManager:
 
     async def _discover_devices(self):
         """Discover Tapo P115 smart plugs on the network."""
+        if self._ingestion:
+            try:
+                real_devices = await self._ingestion.discover_devices()
+                if real_devices:
+                    logger.info("Loaded %s real Tapo P115 devices", len(real_devices))
+                    self.devices.clear()
+                    self._device_hosts.clear()
+                    self._device_readonly.clear()
+                    for payload in real_devices:
+                        device = self._create_device_from_payload(payload)
+                        self.devices[device.device_id] = device
+                        host = payload.get("host")
+                        if isinstance(host, str):
+                            self._device_hosts[device.device_id] = host
+                            # Evaluate readonly based on host or device_id from config
+                            ro = False
+                            if host in getattr(self, "_readonly_by_host", {}):
+                                ro = self._readonly_by_host[host]
+                            elif device.device_id in getattr(self, "_readonly_by_device_id", {}):
+                                ro = self._readonly_by_device_id[device.device_id]
+                            self._device_readonly[device.device_id] = ro
+                    return
+            except IngestionUnavailableError as exc:
+                logger.warning(
+                    "Real Tapo ingestion unavailable, falling back to simulated data: %s", exc
+                )
+            except Exception:
+                logger.exception("Failed to load real Tapo P115 data; falling back to mock data.")
+
+        # If real ingestion isn't available, only show simulated devices when explicitly enabled.
+        if not self._enable_mock_fallback:
+            logger.info("Real Tapo P115 data unavailable and mock fallback disabled; no devices will be shown.")
+            return
+
         # Simulate discovered Tapo P115 devices with energy monitoring
         sample_devices = [
             {
@@ -197,17 +276,78 @@ class TapoPlugManager:
             device = TapoSmartPlug(**device_data)
             self.devices[device.device_id] = device
 
+    def _create_device_from_payload(self, payload: Dict[str, Any]) -> TapoSmartPlug:
+        """Create a TapoSmartPlug instance from ingestion payload."""
+        power_state = bool(payload.get("power_state", False))
+        daily_energy = float(payload.get("daily_energy", 0.0))
+        monthly_energy = float(payload.get("monthly_energy", daily_energy * 30))
+        current_power = float(payload.get("current_power", 0.0))
+        voltage = float(payload.get("voltage", 0.0))
+        current = float(payload.get("current", 0.0))
+
+        if self._electricity_rate and daily_energy:
+            daily_cost = daily_energy * self._electricity_rate
+        else:
+            daily_cost = 0.0
+        monthly_cost = (
+            monthly_energy * self._electricity_rate if monthly_energy else daily_cost * 30
+        )
+
+        return TapoSmartPlug(
+            device_id=str(payload.get("device_id")),
+            name=str(payload.get("name", "Tapo P115")),
+            location=str(payload.get("location", "Unknown")),
+            device_model=str(payload.get("device_model", "Tapo P115")),
+            power_state=power_state,
+            current_power=current_power,
+            voltage=voltage,
+            current=current,
+            daily_energy=daily_energy,
+            monthly_energy=monthly_energy,
+            daily_cost=round(daily_cost, 4),
+            monthly_cost=round(monthly_cost, 4),
+            last_seen=str(payload.get("last_seen", datetime.utcnow().isoformat() + "Z")),
+            automation_enabled=bool(payload.get("automation_enabled", False)),
+            energy_monitoring=True,
+            power_schedule=str(payload.get("power_schedule", "")),
+            energy_saving_mode=bool(payload.get("energy_saving_mode", False)),
+        )
+
     async def _load_historical_data(self):
         """Load historical energy usage data from P115 devices."""
-        # P115 devices store limited historical data:
-        # - Daily consumption resets at midnight
-        # - Total consumption is cumulative
-        # - Real-time data available via API
-        # - Historical data limited to current day
+        self.usage_history.clear()
 
+        if self._ingestion and self._device_hosts:
+            for device_id, host in self._device_hosts.items():
+                try:
+                    series = await self._ingestion.fetch_usage_series(host, hours=24)
+                except IngestionUnavailableError as exc:
+                    logger.warning(
+                        "Unable to fetch usage series for %s (%s): %s",
+                        device_id,
+                        host,
+                        exc,
+                    )
+                    series = []
+                except Exception:
+                    logger.exception("Failed to fetch real usage series for %s", device_id)
+                    series = []
+
+                for point in series:
+                    usage_data = EnergyUsageData(
+                        timestamp=str(point.get("timestamp")),
+                        device_id=device_id,
+                        power_consumption=float(point.get("power_w", 0.0)),
+                        energy_consumption=float(point.get("energy_kwh", 0.0)),
+                        cost=float(point.get("energy_kwh", 0.0)) * self._electricity_rate,
+                    )
+                    self.usage_history.append(usage_data)
+
+        if self.usage_history:
+            return
+
+        # Fall back to simulated hourly series when real data is not available.
         now = datetime.now()
-
-        # P115 provides hourly data for current day only
         current_day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         hours_since_midnight = (now - current_day_start).total_seconds() / 3600
 
@@ -215,26 +355,16 @@ class TapoPlugManager:
             timestamp = current_day_start + timedelta(hours=i)
 
             for device_id, device in self.devices.items():
-                # P115 data characteristics:
-                # - Daily consumption resets at midnight
-                # - Hourly granularity for current day
-                # - Total consumption is cumulative
-
                 if device.power_state:
-                    # Simulate realistic P115 energy patterns
                     if "coffee" in device.name.lower():
-                        # Coffee maker: high usage during morning hours
                         power_multiplier = 2.0 if 6 <= timestamp.hour <= 8 else 0.1
                     elif "charger" in device.name.lower():
-                        # EV charger: off-peak usage
                         power_multiplier = (
                             1.5 if timestamp.hour >= 22 or timestamp.hour <= 6 else 0.1
                         )
                     elif "tv" in device.name.lower():
-                        # TV: evening usage
                         power_multiplier = 1.0 if 18 <= timestamp.hour <= 23 else 0.1
                     elif "computer" in device.name.lower():
-                        # Computer: work hours
                         power_multiplier = 1.0 if 9 <= timestamp.hour <= 17 else 0.1
                     else:
                         power_multiplier = 0.5
@@ -269,6 +399,14 @@ class TapoPlugManager:
 
         return self.devices.get(device_id)
 
+    def get_device_host(self, device_id: str) -> Optional[str]:
+        """Return the network host for a device if known."""
+        return self._device_hosts.get(device_id)
+
+    def is_device_readonly(self, device_id: str) -> bool:
+        """Return True if device is configured as read-only."""
+        return bool(self._device_readonly.get(device_id, False))
+
     async def toggle_device(self, device_id: str, power_state: bool) -> bool:
         """Toggle power state of a smart plug device."""
         try:
@@ -276,6 +414,21 @@ class TapoPlugManager:
                 return False
 
             device = self.devices[device_id]
+            host = self._device_hosts.get(device_id)
+
+            # Enforce read-only devices cannot be toggled
+            if self.is_device_readonly(device_id):
+                logger.warning("Toggle blocked for read-only device %s (%s)", device_id, device.name)
+                return False
+
+            if self._ingestion and host:
+                try:
+                    await self._ingestion.control_device(host, turn_on=power_state)
+                except IngestionUnavailableError as exc:
+                    logger.warning("Unable to control Tapo plug %s: %s", device_id, exc)
+                except Exception:
+                    logger.exception("Failed to control Tapo plug %s via ingestion.", device_id)
+
             device.power_state = power_state
             device.current_power = 0.0 if not power_state else device.current_power
             device.last_seen = datetime.now().isoformat()
@@ -294,12 +447,15 @@ class TapoPlugManager:
         if not self._initialized:
             await self.initialize({})
 
-        cutoff_time = datetime.now() - timedelta(hours=hours)
+        from datetime import timezone
+        
+        # Use UTC-aware datetime to match ingestion service timestamps
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
 
         filtered_data = [
             data
             for data in self.usage_history
-            if datetime.fromisoformat(data.timestamp) >= cutoff_time
+            if datetime.fromisoformat(data.timestamp.replace("Z", "+00:00")) >= cutoff_time
         ]
 
         if device_id:
