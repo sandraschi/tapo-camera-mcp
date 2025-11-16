@@ -15,10 +15,10 @@ jobs:
       with:
         fetch-depth: 0
     
-    - name: Set up Python 3.10
+    - name: Set up Python 3.11
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.11'
         cache: 'pip'
     
     - name: Set up Node.js
@@ -32,29 +32,22 @@ jobs:
         pip install build twine
     
     - name: Build Python package
-      run: |
-        python -m build
+      run: python -m build
     
     - name: Verify built Python package
-      run: |
-        twine check dist/*.whl dist/*.tar.gz
+      run: twine check dist/*.whl dist/*.tar.gz
     
     - name: Install MCPB CLI
+      if: exists('mcpb/manifest.json')
       run: |
         npm install -g @anthropic-ai/mcpb
         mcpb --version
     
-    - name: Validate MCPB manifest
-      run: mcpb validate mcpb/manifest.json
-    
-    - name: Build MCPB package
+    - name: Validate and build MCPB package
+      if: exists('mcpb/manifest.json')
       run: |
+        mcpb validate mcpb/manifest.json
         mcpb pack . dist/tapo-camera-mcp.mcpb
-    
-    - name: Verify MCPB package
-      run: |
-        ls -lh dist/
-        file dist/tapo-camera-mcp.mcpb || echo "MCPB package created"
     
     - name: Create GitHub Release
       id: create_release
