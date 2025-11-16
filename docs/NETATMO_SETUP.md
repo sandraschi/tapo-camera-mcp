@@ -59,10 +59,15 @@ The client wrapper is scaffolded at `src\tapo_camera_mcp\integrations\netatmo_cl
    ```
 
 ## Quick Verification
-- With `enabled: true` and a valid `refresh_token`, hit:
+- With `enabled: true` and a valid `refresh_token`, run:
   ```powershell
-  Invoke-WebRequest http://localhost:7777/metrics -UseBasicParsing | Select-String netatmo_
+  $response = Invoke-WebRequest http://localhost:7777/metrics -UseBasicParsing
+  if ($response.Content -match "netatmo_") {
+      "netatmo metrics present"
+  } else {
+      "no netatmo metrics found"
+  }
   ```
-  You should see: `netatmo_temperature_celsius`, `netatmo_humidity_percent`, `netatmo_co2_ppm`, `netatmo_pressure_mbar` populated from your station.\n
+  You should see: `netatmo_temperature_celsius`, `netatmo_humidity_percent`, `netatmo_co2_ppm`, `netatmo_pressure_mbar` populated from your station.
 
 

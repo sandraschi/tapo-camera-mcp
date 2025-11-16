@@ -11,19 +11,20 @@ This guide covers setting up **GitLab Community Edition (CE)** locally for free,
   - 20–30 GB free disk space for repos and data
 
 ## 2. Create Folders for Persistent Data
-Run in PowerShell:
+If you want to use absolute Windows paths (outside this repo), run in PowerShell:
 
 ```powershell
-New-Item -ItemType Directory -Path "C:\gitlab" -Force | Out-Null
-New-Item -ItemType Directory -Path "C:\gitlab\config" -Force | Out-Null
-New-Item -ItemType Directory -Path "C:\gitlab\logs" -Force | Out-Null
-New-Item -ItemType Directory -Path "C:\gitlab\data" -Force | Out-Null
+if (-not (Test-Path "C:\gitlab")) { New-Item -ItemType Directory -Path "C:\gitlab" }
+if (-not (Test-Path "C:\gitlab\config")) { New-Item -ItemType Directory -Path "C:\gitlab\config" }
+if (-not (Test-Path "C:\gitlab\logs")) { New-Item -ItemType Directory -Path "C:\gitlab\logs" }
+if (-not (Test-Path "C:\gitlab\data")) { New-Item -ItemType Directory -Path "C:\gitlab\data" }
 ```
 
-These hold GitLab configuration, logs, and data so you do not lose everything when the container is recreated.
+Or use the repo-local `deploy\gitlab` folder from the compose file below. In both cases, these hold GitLab configuration, logs, and data so you do not lose everything when the container is recreated.
 
 ## 3. Start GitLab CE (Docker)
-Run in PowerShell:
+### Option A: Direct docker run (no compose)
+Run in PowerShell (absolute paths example):
 
 ```powershell
 docker run `
@@ -60,7 +61,34 @@ Login as:
 - **Username**: `root`
 - **Password**: (from the file/output above)
 
+### Option B: Docker Compose (repo-local)
+From the repository root:
+
+```powershell
+docker compose -f .\deploy\gitlab\docker-compose.yml up -d
+```
+
+This uses `deploy\gitlab\config`, `deploy\gitlab\logs`, and `deploy\gitlab\data` for persisted data.
+
+To stop GitLab:
+
+```powershell
+docker compose -f .\deploy\gitlab\docker-compose.yml down
+```
+
 ## 4. Pros, Cons, and Pricing
+You can mirror GitHub repos into GitLab for private CI, and optionally mirror critical GitLab repos back to GitHub as an extra backup.
+
+## 7. Backups via Helper Script
+From the repository root, you can run:
+
+```powershell
+.\scripts\gitlab_backup.ps1
+```
+
+Backups are created under `deploy\gitlab\data\backups`. Copy these to another disk or cloud storage according to the 3–2–1 rule.
+
+## 8. Integrating Existing Repos
 
 ### Pros
 - **Price**: GitLab CE is free and open source.
@@ -111,8 +139,7 @@ Example: migrate `tapo-camera-mcp` into GitLab:
    ```
 3. Repeat for other repos (`nest-protect-mcp`, `ring-mcp`, `mcp-central-docs`, etc.).
 
-## 8. Next Steps / Tips
-- Add a small `deploy\gitlab\docker-compose.yml` later for one-command startup.
+## 9. Next Steps / Tips
 - Schedule backups via Task Scheduler to run the `gitlab:backup:create` command regularly.
 - Keep GitLab CE updated by pulling newer `gitlab/gitlab-ce` images occasionally.
 
