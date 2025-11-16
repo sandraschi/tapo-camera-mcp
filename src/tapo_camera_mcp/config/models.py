@@ -74,6 +74,10 @@ class WeatherSettings(BaseModel):
                 "enabled": False,
                 "client_id": None,
                 "client_secret": None,
+                # OAuth recommended:
+                "redirect_uri": "https://localhost/callback",
+                "refresh_token": None,
+                # Legacy (optional, discouraged):
                 "username": None,
                 "password": None,
                 "home_id": None,

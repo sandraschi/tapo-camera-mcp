@@ -13,8 +13,11 @@ weather:
       enabled: true
       client_id: "<your_client_id>"
       client_secret: "<your_client_secret>"
-      username: "<your_netatmo_email>"
-      password: "<your_netatmo_password>"
+      redirect_uri: "https://localhost/callback"
+      refresh_token: "<your_refresh_token>"
+      # Legacy fallback (optional; not recommended):
+      # username: "<your_netatmo_email>"
+      # password: "<your_netatmo_password>"
       home_id: "<optional_home_id>"
 ```
 
@@ -30,7 +33,7 @@ Notes:
 ## Metrics
 - `/metrics` already publishes Netatmo-style series. Once enabled, these can be backed by real readings.
 
-## Install Dependency (optional, when wiring real client)
+## Install Dependency
 When you're ready for live queries:
 
 ```powershell
@@ -38,5 +41,21 @@ pip install pyatmo
 ```
 
 The client wrapper is scaffolded at `src\tapo_camera_mcp\integrations\netatmo_client.py` and will switch to real calls when credentials are present and the library is installed.
+
+## OAuth Flow (Recommended)
+1. Build an authorization URL and open it:
+   ```powershell
+   python .\\scripts\\netatmo_oauth_helper.py auth-url <CLIENT_ID> https://localhost/callback
+   ```
+2. After login/consent, copy the `code` from the redirect URL.
+3. Exchange code for tokens:
+   ```powershell
+   python .\\scripts\\netatmo_oauth_helper.py exchange <CLIENT_ID> <CLIENT_SECRET> <CODE> https://localhost/callback
+   ```
+   Save `refresh_token` into `config.yaml` under `weather.integrations.netatmo.refresh_token`.
+4. To periodically refresh access tokens (if needed for direct API calls):
+   ```powershell
+   python .\\scripts\\netatmo_oauth_helper.py refresh <CLIENT_ID> <CLIENT_SECRET> <REFRESH_TOKEN>
+   ```
 
 

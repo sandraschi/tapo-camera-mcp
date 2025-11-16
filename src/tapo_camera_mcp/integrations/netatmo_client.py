@@ -15,6 +15,8 @@ class NetatmoConfig:
     enabled: bool
     client_id: Optional[str]
     client_secret: Optional[str]
+    redirect_uri: Optional[str]
+    refresh_token: Optional[str]
     username: Optional[str]
     password: Optional[str]
     home_id: Optional[str]
@@ -27,6 +29,8 @@ def get_netatmo_config() -> NetatmoConfig:
         enabled=bool(netatmo_dict.get("enabled", False)),
         client_id=netatmo_dict.get("client_id"),
         client_secret=netatmo_dict.get("client_secret"),
+        redirect_uri=netatmo_dict.get("redirect_uri"),
+        refresh_token=netatmo_dict.get("refresh_token"),
         username=netatmo_dict.get("username"),
         password=netatmo_dict.get("password"),
         home_id=netatmo_dict.get("home_id"),
@@ -51,34 +55,36 @@ class NetatmoService:
             logger.info("Netatmo disabled in config; using simulated data")
             return
 
-        missing = [
-            k
-            for k, v in {
-                "client_id": self.config.client_id,
-                "client_secret": self.config.client_secret,
-                "username": self.config.username,
-                "password": self.config.password,
-            }.items()
-            if not v
-        ]
-        if missing:
-            logger.warning(
-                "Netatmo enabled but missing credentials: %s. Falling back to simulated data.",
-                ", ".join(missing),
-            )
-            return
-
         try:
             import asyncio
             import pyatmo  # type: ignore
 
-            # pyatmo has both sync and async helpers; simplest approach is to use sync under to_thread
-            self._client = pyatmo.NetatmoClient(
-                client_id=self.config.client_id,
-                client_secret=self.config.client_secret,
-                username=self.config.username,
-                password=self.config.password,
-            )
+            # Prefer OAuth refresh token if present; fallback to password grant as last resort
+            if self.config.client_id and self.config.client_secret and self.config.refresh_token:
+                # Example: newer pyatmo supports tokens based auth; keep generic to avoid version pin
+                self._client = pyatmo.NetatmoClient(
+                    client_id=self.config.client_id,
+                    client_secret=self.config.client_secret,
+                    refresh_token=self.config.refresh_token,
+                )
+            elif (
+                self.config.client_id
+                and self.config.client_secret
+                and self.config.username
+                and self.config.password
+            ):
+                self._client = pyatmo.NetatmoClient(
+                    client_id=self.config.client_id,
+                    client_secret=self.config.client_secret,
+                    username=self.config.username,
+                    password=self.config.password,
+                )
+            else:
+                logger.warning(
+                    "Netatmo enabled but missing OAuth refresh_token and/or credentials. Using simulated data."
+                )
+                self._client = None
+
             # A no-op call to verify credentials; wrap with to_thread to avoid blocking
             await asyncio.to_thread(lambda: None)
             logger.info("Netatmo client initialized successfully")
