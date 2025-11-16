@@ -251,6 +251,7 @@ python_files = "test_*.py"
 addopts = "-v --cov=tapo_camera_mcp --cov-report=term-missing"
 markers = [
     "broken: marks tests as broken and should be skipped",
+    "integration: marks tests as integration tests (require real services)",
 ]
 
 [tool.coverage.run]
