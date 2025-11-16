@@ -27,6 +27,7 @@ python-jose[cryptography]>=3.3.0,<4.0.0
 passlib[bcrypt]>=1.7.4,<2.0.0
 httpx>=0.24.0,<1.0.0
 starlette>=0.27.0,<1.0.0
+pyatmo>=9.0.0,<10.0.0
 
 # Vision and AI dependencies (optional)
 torch>=2.0.0,<3.0.0

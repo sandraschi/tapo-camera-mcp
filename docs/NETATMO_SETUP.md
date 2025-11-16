@@ -58,4 +58,11 @@ The client wrapper is scaffolded at `src\tapo_camera_mcp\integrations\netatmo_cl
    python .\\scripts\\netatmo_oauth_helper.py refresh <CLIENT_ID> <CLIENT_SECRET> <REFRESH_TOKEN>
    ```
 
+## Quick Verification
+- With `enabled: true` and a valid `refresh_token`, hit:
+  ```powershell
+  Invoke-WebRequest http://localhost:7777/metrics -UseBasicParsing | Select-String netatmo_
+  ```
+  You should see: `netatmo_temperature_celsius`, `netatmo_humidity_percent`, `netatmo_co2_ppm`, `netatmo_pressure_mbar` populated from your station.\n
+
 
