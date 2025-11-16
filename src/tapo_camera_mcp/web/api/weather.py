@@ -60,6 +60,13 @@ class HealthReportResponse(BaseModel):
     timestamp: float = Field(..., description="Report timestamp")
 
 
+from ...integrations.netatmo_client import NetatmoService
+from ...config import get_model
+from ...config.models import WeatherSettings
+
+_netatmo_service = NetatmoService()
+
+
 @router.get("/stations", response_model=List[WeatherStationResponse])
 async def get_weather_stations(
     include_offline: bool = Query(False, description="Include offline stations"),
@@ -68,34 +75,51 @@ async def get_weather_stations(
     try:
         logger.info(f"Getting weather stations (include_offline={include_offline})")
 
-        # Simulate weather stations data
-        stations = [
-            WeatherStationResponse(
-                station_id="netatmo_001",
-                station_name="Living Room Weather Station",
-                location="Living Room",
-                is_online=True,
-                modules=[
-                    {
-                        "module_id": "main_001",
-                        "module_name": "Main Module",
-                        "module_type": "indoor",
-                        "is_online": True,
-                        "battery_percent": None,
-                        "wifi_signal": 85,
-                    },
-                    {
-                        "module_id": "outdoor_001",
-                        "module_name": "Outdoor Module",
-                        "module_type": "outdoor",
-                        "is_online": True,
-                        "battery_percent": 92,
-                        "rf_signal": 78,
-                    },
-                ],
-                last_update=1234567890.0,
-            )
-        ]
+        cfg = get_model(WeatherSettings)
+        use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
+
+        if use_netatmo:
+            raw = await _netatmo_service.list_stations()
+            stations = [
+                WeatherStationResponse(
+                    station_id=s["station_id"],
+                    station_name=s["station_name"],
+                    location=s.get("location", "unknown"),
+                    is_online=bool(s.get("is_online", True)),
+                    modules=s.get("modules", []),
+                    last_update=float(s.get("last_update", 0.0)),
+                )
+                for s in raw
+            ]
+        else:
+            # Simulated fallback
+            stations = [
+                WeatherStationResponse(
+                    station_id="netatmo_001",
+                    station_name="Living Room Weather Station",
+                    location="Living Room",
+                    is_online=True,
+                    modules=[
+                        {
+                            "module_id": "main_001",
+                            "module_name": "Main Module",
+                            "module_type": "indoor",
+                            "is_online": True,
+                            "battery_percent": None,
+                            "wifi_signal": 85,
+                        },
+                        {
+                            "module_id": "outdoor_001",
+                            "module_name": "Outdoor Module",
+                            "module_type": "outdoor",
+                            "is_online": True,
+                            "battery_percent": 92,
+                            "rf_signal": 78,
+                        },
+                    ],
+                    last_update=1234567890.0,
+                )
+            ]
 
         # Filter offline stations if requested
         if not include_offline:
@@ -117,10 +141,32 @@ async def get_station_weather_data(
     try:
         logger.info(f"Getting weather data for station {station_id}, module type: {module_type}")
 
-        # Simulate weather data
-        if module_type == "all":
-            data = {
-                "indoor": {
+        cfg = get_model(WeatherSettings)
+        use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
+
+        if use_netatmo:
+            data, ts = await _netatmo_service.current_data(station_id, module_type)
+            return WeatherDataResponse(
+                station_id=station_id, module_type=module_type, data=data, timestamp=ts
+            )
+        else:
+            # Simulate weather data
+            if module_type == "all":
+                data = {
+                    "indoor": {
+                        "temperature": 22.3,
+                        "humidity": 45,
+                        "co2": 420,
+                        "noise": 35,
+                        "pressure": 1013.2,
+                        "temp_trend": "stable",
+                        "pressure_trend": "up",
+                        "health_index": 85,
+                    },
+                    "outdoor": {"temperature": 18.7, "humidity": 62, "temp_trend": "down"},
+                }
+            elif module_type == "indoor":
+                data = {
                     "temperature": 22.3,
                     "humidity": 45,
                     "co2": 420,
@@ -129,24 +175,11 @@ async def get_station_weather_data(
                     "temp_trend": "stable",
                     "pressure_trend": "up",
                     "health_index": 85,
-                },
-                "outdoor": {"temperature": 18.7, "humidity": 62, "temp_trend": "down"},
-            }
-        elif module_type == "indoor":
-            data = {
-                "temperature": 22.3,
-                "humidity": 45,
-                "co2": 420,
-                "noise": 35,
-                "pressure": 1013.2,
-                "temp_trend": "stable",
-                "pressure_trend": "up",
-                "health_index": 85,
-            }
-        elif module_type == "outdoor":
-            data = {"temperature": 18.7, "humidity": 62, "temp_trend": "down"}
-        else:
-            data = {}
+                }
+            elif module_type == "outdoor":
+                data = {"temperature": 18.7, "humidity": 62, "temp_trend": "down"}
+            else:
+                data = {}
 
         return WeatherDataResponse(
             station_id=station_id, module_type=module_type, data=data, timestamp=1234567890.0

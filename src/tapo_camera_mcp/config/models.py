@@ -65,6 +65,24 @@ class SecuritySettings(BaseModel):
     integrations: SecurityIntegrations = Field(default_factory=SecurityIntegrations)
 
 
+class WeatherSettings(BaseModel):
+    """Weather and environment integrations."""
+
+    integrations: Dict[str, Any] = Field(
+        default_factory=lambda: {
+            "netatmo": {
+                "enabled": False,
+                "client_id": None,
+                "client_secret": None,
+                "username": None,
+                "password": None,
+                "home_id": None,
+            }
+        },
+        description="Weather integrations configuration",
+    )
+
+
 class LoggingSettings(BaseModel):
     """Logging configuration."""
 
