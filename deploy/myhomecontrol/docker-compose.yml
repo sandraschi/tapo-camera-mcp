@@ -1,0 +1,43 @@
+version: '3.8'
+
+name: myhomecontrol
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: myhomecontrol-app
+    environment:
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "7777:7777"
+    volumes:
+      - ../../config.yaml:/app/config.yaml:ro
+      - app_logs:/app/logs
+      - app_snapshots:/app/snapshots
+      - app_recordings:/app/recordings
+      - app_cache:/app/cache
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7777/api/health', timeout=4)"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+    networks:
+      - myhomecontrol
+    # For Linux USB webcam access, uncomment and adjust:
+    # devices:
+    #   - "/dev/video0:/dev/video0"
+
+volumes:
+  app_logs:
+  app_snapshots:
+  app_recordings:
+  app_cache:
+
+networks:
+  myhomecontrol:
+    name: myhomecontrol
+    driver: bridge
+
+

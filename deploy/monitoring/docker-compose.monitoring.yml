@@ -57,6 +57,7 @@ services:
       - prometheus_data:/prometheus
     networks:
       - monitoring
+      - myhomecontrol
 
   alertmanager:
     image: prom/alertmanager:latest
@@ -107,5 +108,7 @@ volumes:
 networks:
   monitoring:
     driver: bridge
+  myhomecontrol:
+    external: true
 
 
