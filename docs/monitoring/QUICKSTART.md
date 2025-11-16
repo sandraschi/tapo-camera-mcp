@@ -22,7 +22,7 @@ docker compose -f .\deploy\monitoring\docker-compose.monitoring.yml up -d
 - Elasticsearch: `http://localhost:9200`
 
 ## Prometheus scraping
-Prometheus is preconfigured to scrape the MCP server metrics at `http://host.docker.internal:7777/metrics`.
+Prometheus is preconfigured to scrape the MCP server metrics at `http://host.docker.internal:7777/metrics` using the consolidated config at `deploy\\prometheus\\prometheus.yaml` (mounted by the compose file).
 
 Ensure the MCP web server is running and exposes `/metrics`. This repo's `src\tapo_camera_mcp\web\server.py` provides the endpoint.
 
