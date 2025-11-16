@@ -154,10 +154,32 @@ class WebServer:
             # Enhance each camera with additional details
             for camera in cameras_list:
                 camera_info = dict(camera)  # Copy base info
+                
+                # Extract status - camera_manager.list_cameras() returns status as a dict
+                status_dict = camera.get("status", {})
+                if isinstance(status_dict, dict):
+                    is_connected = status_dict.get("connected", False)
+                    camera_info["status"] = "online" if is_connected else "offline"
+                    # Copy status fields to camera_info for easier access
+                    camera_info.update({
+                        "model": status_dict.get("model", "Unknown"),
+                        "firmware": status_dict.get("firmware", "Unknown"),
+                        "resolution": status_dict.get("resolution", "Unknown"),
+                        "ptz_capable": status_dict.get("ptz_capable", False),
+                        "audio_capable": status_dict.get("audio_capable", False),
+                        "streaming_capable": status_dict.get("streaming_capable", False),
+                    })
+                else:
+                    # Fallback if status is already a string
+                    camera_info["status"] = str(status_dict) if status_dict else "offline"
+                
+                # Ensure status is always a string, never a dict
+                if not isinstance(camera_info.get("status"), str):
+                    camera_info["status"] = "offline"
 
                 # Try to get detailed camera information
                 try:
-                    if camera.get("status") == "online":
+                    if camera_info.get("status") == "online":
                         # Get detailed camera info if available
                         camera_obj = await server.camera_manager.get_camera(camera["name"])
                         if camera_obj:
@@ -301,8 +323,10 @@ class WebServer:
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
                 server = await TapoCameraServer.get_instance()
-                return await server.list_cameras()
+                cameras = await server.camera_manager.list_cameras()
+                return {"success": True, "cameras": cameras}
             except Exception as e:
+                logger.exception("Error getting cameras list")
                 return {"success": False, "error": str(e), "cameras": []}
 
         @self.app.get("/api/cameras/status")
@@ -312,7 +336,7 @@ class WebServer:
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
                 server = await TapoCameraServer.get_instance()
-                cameras = await server.list_cameras()
+                cameras = await server.camera_manager.list_cameras()
                 total = len(cameras)
                 online = sum(1 for cam in cameras if cam.get("status") == "online")
                 return {
@@ -440,7 +464,7 @@ class WebServer:
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
                 server = await TapoCameraServer.get_instance()
-                cameras = await server.list_cameras()
+                cameras = await server.camera_manager.list_cameras()
                 total_cameras = len(cameras)
                 online_cameras = sum(1 for cam in cameras if cam.get("status") == "online")
 
@@ -751,6 +775,10 @@ class WebServer:
         self.app.include_router(sensors_router)
         self.app.include_router(weather_router)
         self.app.include_router(security_router)
+        
+        # LLM router
+        from .api.llm import router as llm_router
+        self.app.include_router(llm_router)
 
         # Onboarding route
         @self.app.get("/onboarding", response_class=HTMLResponse, name="onboarding")

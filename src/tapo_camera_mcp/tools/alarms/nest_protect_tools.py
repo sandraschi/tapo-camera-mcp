@@ -72,49 +72,41 @@ class NestProtectManager:
 
     async def _discover_devices(self):
         """Discover Nest Protect devices on the network."""
-        # Simulate discovered devices
-        sample_devices = [
-            {
-                "device_id": "nest_protect_kitchen",
-                "name": "Kitchen Smoke Detector",
-                "location": "Kitchen",
-                "battery_level": 85,
-                "status": "online",
-                "smoke_status": "clear",
-                "co_status": "clear",
-                "last_seen": "2025-01-16T10:30:00Z",
-                "last_test": "2025-01-15T08:00:00Z",
-                "wifi_signal": 75,
-            },
-            {
-                "device_id": "nest_protect_living_room",
-                "name": "Living Room CO Detector",
-                "location": "Living Room",
-                "battery_level": 92,
-                "status": "online",
-                "smoke_status": "clear",
-                "co_status": "clear",
-                "last_seen": "2025-01-16T10:30:00Z",
-                "last_test": "2025-01-14T09:00:00Z",
-                "wifi_signal": 80,
-            },
-            {
-                "device_id": "nest_protect_bedroom",
-                "name": "Bedroom Smoke Detector",
-                "location": "Bedroom",
-                "battery_level": 78,
-                "status": "warning",
-                "smoke_status": "clear",
-                "co_status": "clear",
-                "last_seen": "2025-01-16T09:45:00Z",
-                "last_test": "2025-01-13T10:00:00Z",
-                "wifi_signal": 60,
-            },
-        ]
-
-        for device_data in sample_devices:
-            device = NestProtectDevice(**device_data)
-            self.devices[device.device_id] = device
+        # Use real SecurityIntegrationManager instead of mock devices
+        try:
+            from ...security.integrations import SecurityIntegrationManager
+            from ...config import get_model
+            from ...config.models import SecuritySettings
+            
+            cfg = get_model(SecuritySettings)
+            if cfg.integrations.nest_protect.get("enabled", False):
+                manager = SecurityIntegrationManager()
+                await manager.initialize(cfg.integrations.model_dump())
+                nest_devices = await manager.get_all_devices()
+                
+                # Convert SecurityDevice to NestProtectDevice
+                for sec_device in nest_devices:
+                    device = NestProtectDevice(
+                        device_id=sec_device.id,
+                        name=sec_device.name,
+                        location=sec_device.location or "Unknown",
+                        battery_level=sec_device.battery_level or 0,
+                        status=sec_device.status,
+                        smoke_status="clear",  # Would come from real API
+                        co_status="clear",  # Would come from real API
+                        last_seen=sec_device.last_seen.isoformat() if sec_device.last_seen else "",
+                        last_test="",  # Would come from real API
+                        wifi_signal=0,  # Would come from real API
+                    )
+                    self.devices[device.device_id] = device
+                logger.info(f"Loaded {len(self.devices)} real Nest Protect devices")
+                return
+        except Exception as e:
+            logger.warning(f"Failed to load real Nest Protect devices: {e}")
+        
+        # No real devices found - return empty
+        logger.warning("No Nest Protect devices found. Configure Nest Protect integration in config.yaml")
+        self.devices.clear()
 
     async def get_all_devices(self) -> List[NestProtectDevice]:
         """Get all Nest Protect devices."""
@@ -135,33 +127,39 @@ class NestProtectManager:
         if not self._initialized:
             await self.initialize({})
 
-        # Simulate some recent alerts
-        sample_alerts = [
-            {
-                "alert_id": "alert_001",
-                "device_id": "nest_protect_bedroom",
-                "device_name": "Bedroom Smoke Detector",
-                "alert_type": "test",
-                "severity": "low",
-                "message": "Weekly test completed successfully",
-                "timestamp": "2025-01-16T08:00:00Z",
-                "resolved": True,
-            },
-            {
-                "alert_id": "alert_002",
-                "device_id": "nest_protect_kitchen",
-                "device_name": "Kitchen Smoke Detector",
-                "alert_type": "battery",
-                "severity": "medium",
-                "message": "Battery level is getting low (85%)",
-                "timestamp": "2025-01-16T07:30:00Z",
-                "resolved": False,
-            },
-        ]
-
-        alerts = [NestProtectAlert(**alert_data) for alert_data in sample_alerts]
-        self.alerts.extend(alerts)
-        return alerts
+        # Get real alerts from SecurityIntegrationManager
+        try:
+            from ...security.integrations import SecurityIntegrationManager
+            from ...config import get_model
+            from ...config.models import SecuritySettings
+            
+            cfg = get_model(SecuritySettings)
+            if cfg.integrations.nest_protect.get("enabled", False):
+                manager = SecurityIntegrationManager()
+                await manager.initialize(cfg.integrations.model_dump())
+                security_alerts = await manager.get_all_alerts()
+                
+                # Convert SecurityAlert to NestProtectAlert
+                alerts = []
+                for sec_alert in security_alerts:
+                    alert = NestProtectAlert(
+                        alert_id=sec_alert.id,
+                        device_id=sec_alert.device_id,
+                        device_name=sec_alert.device_name,
+                        alert_type=sec_alert.alert_type,
+                        severity=sec_alert.severity,
+                        message=sec_alert.message,
+                        timestamp=sec_alert.timestamp.isoformat() if sec_alert.timestamp else "",
+                        resolved=sec_alert.resolved,
+                    )
+                    alerts.append(alert)
+                self.alerts = alerts
+                return alerts
+        except Exception as e:
+            logger.warning(f"Failed to load real Nest Protect alerts: {e}")
+        
+        # No real alerts - return empty
+        return []
 
     async def trigger_test(self, device_id: str) -> bool:
         """Trigger a test on a Nest Protect device."""

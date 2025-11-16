@@ -168,11 +168,15 @@ class TapoPlugManager:
             except Exception:
                 logger.exception("Failed to load real Tapo P115 data; falling back to mock data.")
 
-        # If real ingestion isn't available, only show simulated devices when explicitly enabled.
-        if not self._enable_mock_fallback:
-            logger.info("Real Tapo P115 data unavailable and mock fallback disabled; no devices will be shown.")
-            return
+        # NEVER use mock data - only real devices from ingestion service
+        logger.warning("Real Tapo P115 data unavailable. No devices will be shown. Check ingestion service configuration.")
+        # Clear any existing devices (including old mock devices)
+        self.devices.clear()
+        self._device_hosts.clear()
+        self._device_readonly.clear()
+        return
 
+        # REMOVED: Mock device fallback - we only want real devices
         # Simulate discovered Tapo P115 devices with energy monitoring
         sample_devices = [
             {
@@ -389,6 +393,9 @@ class TapoPlugManager:
         """Get all Tapo smart plug devices."""
         if not self._initialized:
             await self.initialize({})
+        else:
+            # Re-discover devices to ensure we have the latest real devices (not cached mocks)
+            await self._discover_devices()
 
         return list(self.devices.values())
 

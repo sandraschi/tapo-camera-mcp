@@ -37,7 +37,6 @@ volumes:
 
 networks:
   myhomecontrol:
-    name: myhomecontrol
-    driver: bridge
+    external: true
 
 

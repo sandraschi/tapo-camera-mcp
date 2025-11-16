@@ -92,34 +92,9 @@ async def get_weather_stations(
                 for s in raw
             ]
         else:
-            # Simulated fallback
-            stations = [
-                WeatherStationResponse(
-                    station_id="netatmo_001",
-                    station_name="Living Room Weather Station",
-                    location="Living Room",
-                    is_online=True,
-                    modules=[
-                        {
-                            "module_id": "main_001",
-                            "module_name": "Main Module",
-                            "module_type": "indoor",
-                            "is_online": True,
-                            "battery_percent": None,
-                            "wifi_signal": 85,
-                        },
-                        {
-                            "module_id": "outdoor_001",
-                            "module_name": "Outdoor Module",
-                            "module_type": "outdoor",
-                            "is_online": True,
-                            "battery_percent": 92,
-                            "rf_signal": 78,
-                        },
-                    ],
-                    last_update=1234567890.0,
-                )
-            ]
+            # No Netatmo configured - return empty list instead of mock data
+            logger.warning("Netatmo integration not enabled. No weather stations available.")
+            stations = []
 
         # Filter offline stations if requested
         if not include_offline:
@@ -150,40 +125,12 @@ async def get_station_weather_data(
                 station_id=station_id, module_type=module_type, data=data, timestamp=ts
             )
         else:
-            # Simulate weather data
-            if module_type == "all":
-                data = {
-                    "indoor": {
-                        "temperature": 22.3,
-                        "humidity": 45,
-                        "co2": 420,
-                        "noise": 35,
-                        "pressure": 1013.2,
-                        "temp_trend": "stable",
-                        "pressure_trend": "up",
-                        "health_index": 85,
-                    },
-                    "outdoor": {"temperature": 18.7, "humidity": 62, "temp_trend": "down"},
-                }
-            elif module_type == "indoor":
-                data = {
-                    "temperature": 22.3,
-                    "humidity": 45,
-                    "co2": 420,
-                    "noise": 35,
-                    "pressure": 1013.2,
-                    "temp_trend": "stable",
-                    "pressure_trend": "up",
-                    "health_index": 85,
-                }
-            elif module_type == "outdoor":
-                data = {"temperature": 18.7, "humidity": 62, "temp_trend": "down"}
-            else:
-                data = {}
-
-        return WeatherDataResponse(
-            station_id=station_id, module_type=module_type, data=data, timestamp=1234567890.0
-        )
+            # No Netatmo configured - return error instead of mock data
+            logger.warning(f"Netatmo integration not enabled. Cannot get weather data for station {station_id}.")
+            raise HTTPException(
+                status_code=503,
+                detail="Netatmo integration not enabled. Configure Netatmo in config.yaml to enable weather data."
+            )
 
     except Exception as e:
         logger.exception("Failed to get weather data")
@@ -202,6 +149,27 @@ async def get_station_historical_data(
     try:
         logger.info(f"Getting historical data for {station_id}, {data_type}, {time_range}")
 
+        cfg = get_model(WeatherSettings)
+        use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
+        
+        if not use_netatmo:
+            logger.warning(f"Netatmo integration not enabled. Cannot get historical data for station {station_id}.")
+            raise HTTPException(
+                status_code=503,
+                detail="Netatmo integration not enabled. Configure Netatmo in config.yaml to enable historical weather data."
+            )
+
+        # TODO: Implement real historical data fetching from Netatmo
+        # For now, return empty data instead of mock data
+        return HistoricalDataResponse(
+            station_id=station_id,
+            data_type=data_type,
+            time_range=time_range,
+            data_points=[],
+            count=0,
+        )
+
+        # REMOVED: Mock historical data generation
         # Simulate historical data generation
         import random
         import time

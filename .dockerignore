@@ -23,5 +23,11 @@ cache/
 data/
 .cursor/
 node_modules/
+deploy/gitlab/data/
+deploy/gitlab/logs/
+deploy/gitlab/config/*.json
+deploy/gitlab/config/*.key
+deploy/gitlab/config/*.pub
+deploy/gitlab/config/initial_root_password
 
 

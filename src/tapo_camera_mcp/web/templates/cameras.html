@@ -277,8 +277,12 @@
             <!-- Camera Header -->
             <div class="camera-header">
                 <h3 class="camera-name">{{ camera.name }}</h3>
-                <span class="status-badge status-{{ 'online' if camera.status == 'online' else 'offline' if camera.status == 'offline' else 'error' }}">
-                    {{ camera.status|title if camera.status else 'Unknown' }}
+                <span class="status-badge status-{{ 'online' if (camera.status == 'online' or (camera.status is mapping and camera.status.get('connected'))) else 'offline' if camera.status == 'offline' else 'error' }}">
+                    {% if camera.status is mapping %}
+                        {{ 'Online' if camera.status.get('connected') else 'Offline' }}
+                    {% else %}
+                        {{ (camera.status|string|title) if camera.status else 'Unknown' }}
+                    {% endif %}
                 </span>
             </div>
 
@@ -302,20 +306,23 @@
                 </div>
             </div>
 
-            <!-- Live Thumbnail (160x160) -->
-            {% if camera.status == 'online' %}
+            <!-- Live Thumbnail (160x160) - Always show, try to load snapshot -->
             <div style="margin-top: 0.75rem; display: flex; gap: 0.75rem; align-items: center;">
-                <div style="width: 160px; height: 160px; border-radius: 0.5rem; overflow: hidden; border: 1px solid #e5e7eb; background:#000;">
+                <div style="width: 160px; height: 160px; border-radius: 0.5rem; overflow: hidden; border: 1px solid #e5e7eb; background:#000; position: relative;">
                     <img src="/api/cameras/{{ camera.name or camera.id }}/snapshot"
                          alt="{{ camera.name }}"
-                         style="width: 100%; height: 100%; object-fit: cover;">
+                         style="width: 100%; height: 100%; object-fit: cover;"
+                         onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                         onload="this.nextElementSibling.style.display='none';">
+                    <div style="width: 100%; height: 100%; display: none; align-items: center; justify-content: center; color: #9ca3af; font-size: 0.75rem; position: absolute; top: 0; left: 0;">
+                        Camera Offline
+                    </div>
                 </div>
                 <div style="font-size: 0.8rem; color: #6b7280;">
                     <div>Live thumbnail (click stream button below for full view).</div>
                     <div style="margin-top: 0.25rem;">USB webcam will appear first, followed by Tapo, doorcam, and Petcube.</div>
                 </div>
             </div>
-            {% endif %}
 
             <!-- Capabilities -->
             <div class="capabilities-grid">

@@ -2,21 +2,24 @@ FROM python:3.11-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/app/src
 
 WORKDIR /app
 
-# System deps (add cv/ffmpeg libs later if needed)
+# System deps (OpenCV needs libGL and other graphics libraries)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml poetry.lock* requirements.txt* /app/
+COPY requirements-docker.txt /app/requirements-docker.txt
 
-# Prefer pip with pyproject; fallback to requirements if present
+# Install ONLY minimal requirements (excludes ML deps and dev tools)
+# Skip 'pip install .' to avoid pulling in extra deps from pyproject.toml
 RUN python -m pip install --upgrade pip \
- && ( [ -f requirements.txt ] && pip install -r requirements.txt || true ) \
- && pip install .
+ && pip install -r requirements-docker.txt
 
 COPY . /app
 

@@ -210,15 +210,36 @@ class RingMCPClient:
         # TODO: Implement MCP proxy when Ring server is working
 
     async def get_devices(self) -> List[SecurityDevice]:
-        """Fetch Ring devices through MCP proxy"""
-        # Placeholder - implement when Ring server is fixed
-        logger.warning("Ring MCP integration not yet implemented")
-        return []
+        """Fetch Ring devices from camera manager."""
+        devices = []
+        try:
+            from ...core.server import TapoCameraServer
+            server = await TapoCameraServer.get_instance()
+            if hasattr(server, "camera_manager") and server.camera_manager:
+                cameras = await server.camera_manager.list_cameras()
+                for cam in cameras:
+                    if cam.get("type") == "ring":
+                        status_dict = cam.get("status", {})
+                        if isinstance(status_dict, dict):
+                            device = SecurityDevice(
+                                id=cam.get("name", ""),
+                                name=cam.get("name", ""),
+                                type="doorbell",
+                                status="online" if status_dict.get("connected") else "offline",
+                                battery_level=None,
+                                last_seen=None,
+                                location="Unknown",
+                                alerts=[],
+                            )
+                            devices.append(device)
+        except Exception as e:
+            logger.exception("Failed to get Ring devices from camera manager")
+        return devices
 
     async def get_alerts(self) -> List[SecurityAlert]:
-        """Fetch Ring alerts through MCP proxy"""
-        # Placeholder - implement when Ring server is fixed
-        logger.warning("Ring MCP integration not yet implemented")
+        """Fetch Ring alerts - not yet implemented."""
+        # Ring doorbell alerts would come from Ring API
+        # For now, return empty list
         return []
 
 
