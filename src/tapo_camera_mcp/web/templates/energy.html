@@ -628,13 +628,24 @@ async function loadDevices() {
         const response = await fetch('/api/sensors/tapo-p115');
         const data = await response.json();
         
-        const devices = data.devices || [];
+        let devices = data.devices || [];
         const container = document.getElementById('devices-container');
         
         if (devices.length === 0) {
             container.innerHTML = '<p>No devices found. Configure P115 plugs in config.yaml</p>';
             return;
         }
+
+        // Sort devices: primary real plug(s) first (non-readonly), then the rest.
+        // If you have a known primary device_id (e.g. tapo_p115_aircon), it will float to the top.
+        const PRIMARY_DEVICE_IDS = ['tapo_p115_aircon'];
+        devices = devices.slice().sort((a, b) => {
+            const aPrimary = PRIMARY_DEVICE_IDS.includes(a.device_id) || !a.readonly;
+            const bPrimary = PRIMARY_DEVICE_IDS.includes(b.device_id) || !b.readonly;
+            if (aPrimary && !bPrimary) return -1;
+            if (!aPrimary && bPrimary) return 1;
+            return (a.name || a.device_id).localeCompare(b.name || b.device_id);
+        });
         
         // Update overview cards with totals
         updateOverview(devices);
@@ -682,15 +693,19 @@ function createDeviceCard(device) {
     const statusClass = isOnline ? 'status-online' : 'status-offline';
     const statusText = isOnline ? 'Online' : 'Offline';
     const powerState = device.power_state ? 'ON' : 'OFF';
-    const toggleBtnClass = device.power_state ? 'btn-danger' : 'btn-primary';
-    const toggleBtnText = device.power_state ? 'Turn Off' : 'Turn On';
+    const isReadonly = !!device.readonly;
+    const toggleBtnClass = isReadonly ? 'btn-secondary' : (device.power_state ? 'btn-danger' : 'btn-primary');
+    const toggleBtnText = isReadonly ? 'Read-only' : (device.power_state ? 'Turn Off' : 'Turn On');
     
     return `
         <div class="device-card">
             <div class="device-header">
                 <div>
                     <div class="device-name">${device.name || device.device_id}</div>
-                    <div class="device-location">${device.location || 'Unknown'}</div>
+                    <div class="device-location">
+                        ${device.location || 'Unknown'}
+                        ${isReadonly ? ' • <span style="color:#6b7280;font-size:12px;">Read-only</span>' : ''}
+                    </div>
                 </div>
                 <div class="device-status">
                     <div class="status-indicator ${statusClass}"></div>
@@ -729,7 +744,7 @@ function createDeviceCard(device) {
                 <button class="btn ${toggleBtnClass} toggle-btn" 
                         data-device-id="${device.device_id}" 
                         data-state="${device.power_state}"
-                        ${!isOnline ? 'disabled' : ''}>
+                        ${!isOnline || isReadonly ? 'disabled' : ''}>
                     ${toggleBtnText}
                 </button>
                 <button class="btn btn-secondary" onclick="viewHistory('${device.device_id}')">History</button>
