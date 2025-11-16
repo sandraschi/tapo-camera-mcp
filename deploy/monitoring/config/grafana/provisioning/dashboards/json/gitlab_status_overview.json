@@ -1,0 +1,66 @@
+{
+  "id": null,
+  "title": "GitLab Status Overview",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "GitLab Up",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up{job=\"gitlab\"}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "HTTP Requests (rate)",
+      "gridPos": { "x": 6, "y": 0, "w": 9, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(http_requests_total{job=\"gitlab\"}[5m]))"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "HTTP 5xx (rate)",
+      "gridPos": { "x": 15, "y": 0, "w": 9, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(http_requests_total{job=\"gitlab\",code=~\"5..\"}[5m]))"
+        }
+      ]
+    },
+    {
+      "type": "timeSeries",
+      "title": "GitLab Response Time (summary)",
+      "gridPos": { "x": 0, "y": 4, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(http_request_duration_seconds_sum{job=\"gitlab\"}[5m]) / rate(http_request_duration_seconds_count{job=\"gitlab\"}[5m])"
+        }
+      ]
+    }
+  ]
+}
+
+

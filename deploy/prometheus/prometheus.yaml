@@ -40,6 +40,15 @@ scrape_configs:
       - files:
           - targets/node-exporter/*.yaml
 
+  - job_name: gitlab
+    metrics_path: /-/metrics
+    static_configs:
+      - targets:
+          - host.docker.internal:8093
+        labels:
+          service: gitlab-ce
+          role: scm
+
 federation:
   scrape_interval: 60s
   scrape_timeout: 30s

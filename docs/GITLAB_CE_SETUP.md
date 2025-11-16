@@ -29,7 +29,7 @@ Run in PowerShell (absolute paths example):
 ```powershell
 docker run `
   --hostname localhost `
-  --publish 8080:80 `
+  --publish 8093:80 `
   --publish 2222:22 `
   --name gitlab-ce `
   --restart always `
@@ -39,7 +39,7 @@ docker run `
   gitlab/gitlab-ce:latest
 ```
 
-- Web UI: `http://localhost:8080`
+- Web UI: `http://localhost:8093`
 - SSH (optional): `ssh git@localhost -p 2222`
 
 ### Initial Root Password
@@ -62,13 +62,13 @@ Login as:
 - **Password**: (from the file/output above)
 
 ### Option B: Docker Compose (repo-local)
-From the repository root:
+From the repository root (uses port 8093 on the host):
 
 ```powershell
 docker compose -f .\deploy\gitlab\docker-compose.yml up -d
 ```
 
-This uses `deploy\gitlab\config`, `deploy\gitlab\logs`, and `deploy\gitlab\data` for persisted data.
+This uses `deploy\gitlab\config`, `deploy\gitlab\logs`, and `deploy\gitlab\data` for persisted data and maps the GitLab UI to `http://localhost:8093`.
 
 To stop GitLab:
 
