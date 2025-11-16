@@ -1,46 +1,29 @@
 version: 2
 updates:
-  # GitHub Actions - Monthly updates only
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+  
+  # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
-      day: "monday"
-      time: "09:00"
-    open-pull-requests-limit: 2
-    commit-message:
-      prefix: "chore"
-      include: "scope"
+    open-pull-requests-limit: 3
     labels:
       - "dependencies"
       - "github-actions"
-  
-  # Python dependencies - Bi-weekly updates, grouped
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-      day: "monday"
-      time: "09:00"
-    open-pull-requests-limit: 3
     commit-message:
-      prefix: "chore"
+      prefix: "ci"
       include: "scope"
-    labels:
-      - "dependencies"
-      - "security"
-    ignore:
-      # Ignore major version updates for breaking changes
-      - dependency-name: "fastmcp"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "pydantic"
-        update-types: ["version-update:semver-major"]
-      # Ignore minor updates for noisy packages
-      - dependency-name: "ruff"
-        update-types: ["version-update:semver-minor"]
-      - dependency-name: "mypy"
-        update-types: ["version-update:semver-minor"]
-    groups:
-      python-packages:
-        patterns:
-          - "*"
