@@ -30,7 +30,7 @@ jobs:
         # Install core dependencies first
         pip install -e .
         # Install dev dependencies separately to avoid conflicts
-        pip install ruff mypy pytest pytest-cov pytest-asyncio
+        pip install ruff mypy pytest pytest-cov pytest-asyncio pytest-mock respx
         # Install sphinx and documentation dependencies
         pip install sphinx sphinx-rtd-theme sphinx-autodoc-typehints myst-parser sphinx-copybutton
         # Install sphinxcontrib packages (only the ones that exist)
@@ -48,9 +48,10 @@ jobs:
     
     - name: Run tests with pytest
       env:
-        PYTHONPATH: ${{ github.workspace }}
+        PYTHONPATH: ${{ github.workspace }}/src
       run: |
-        pytest --cov=tapo_camera_mcp --cov-report=xml
+        # Skip integration tests (they require real services)
+        pytest --cov=tapo_camera_mcp --cov-report=xml -m "not integration"
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
