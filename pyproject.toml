@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "home-security-mcp-platform"
-version = "1.1.0"  # Live dashboard working - major breakthrough
+version = "1.3.0"  # LLM integration, Dockerization, Netatmo, CI/CD improvements
 description = "🏠 Production-ready home security MCP platform with unified surveillance dashboard, multi-device support (Tapo, Ring, Nest Protect, USB webcams), and Claude Desktop integration"
 readme = "README.md"
 requires-python = ">=3.8"

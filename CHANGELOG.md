@@ -5,6 +5,101 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-11-17 🚀 **LLM INTEGRATION & DOCKERIZATION**
+
+### 🚀 **MAJOR FEATURES ADDED**
+
+#### **🤖 LLM Integration** (NEW)
+- **Multi-Provider Support**: Ollama, LM Studio, and OpenAI integration
+- **LLM Manager**: Unified interface for managing multiple LLM providers
+- **Model Management**: List, load, and unload models dynamically
+- **Chatbot UI**: Floating chatbot button with chat window
+- **Streaming Support**: Real-time streaming responses from LLM providers
+- **API Endpoints**: Complete REST API for LLM operations (`/api/llm/*`)
+
+#### **🐳 Dockerization** (NEW)
+- **MyHomeControl Stack**: Complete Docker Compose setup
+- **Production Builds**: Minimal `requirements-docker.txt` for faster builds
+- **Network Integration**: Unified `myhomecontrol` Docker network
+- **Health Checks**: Container health monitoring
+- **Optimized Images**: Reduced build time and image size
+
+#### **🌤️ Netatmo Weather Integration** (NEW)
+- **OAuth 2.0 Authentication**: Secure token-based authentication
+- **Live Weather Data**: Real-time temperature, humidity, CO2, pressure
+- **Weather Dashboard**: Visual weather station monitoring
+- **Helper Scripts**: OAuth setup and token refresh automation
+
+#### **📊 Monitoring & Observability** (ENHANCED)
+- **GitLab Integration**: GitLab CE setup with Prometheus scraping
+- **Grafana Dashboards**: GitLab status monitoring
+- **Port Management**: Resolved port conflicts (GitLab: 8093, Prometheus: 9095)
+- **Unified Stack**: Single monitoring stack for all repositories
+
+### 🔧 **TECHNICAL IMPROVEMENTS**
+
+#### **CI/CD Modernization**
+- **Ruff Integration**: Modern linting and formatting (replaced black)
+- **Concurrency Groups**: Cancel redundant CI runs automatically
+- **Dependency Caching**: Ruff and pip caching for faster builds
+- **Test Timeouts**: Prevent hanging test jobs
+- **Dependabot**: Automated dependency updates (weekly, low-spam)
+- **Reduced Python Versions**: Test on 3.10, 3.11, 3.12 (faster CI)
+
+#### **Testing Infrastructure**
+- **Integration Tests**: Real provider connection tests (Ollama, LM Studio, OpenAI)
+- **Test Markers**: `@pytest.mark.integration` for test categorization
+- **Comprehensive Coverage**: Unit tests for LLM providers, manager, and API
+- **Mock-Free**: Removed all mock data from production code
+
+#### **Code Quality**
+- **Ruff Linting**: Fast, comprehensive code quality checks
+- **Type Safety**: Enhanced type hints and validation
+- **Error Handling**: Improved error messages and recovery
+- **Documentation**: Updated docs for new features
+
+### 🎨 **USER EXPERIENCE IMPROVEMENTS**
+
+#### **Camera Dashboard**
+- **Dedicated Cameras Page**: Live view moved to `/cameras` page
+- **Live Thumbnails**: 160x160 video thumbnails for all cameras
+- **Camera Prioritization**: USB webcam → Tapo → Doorcam → Petcube
+- **Status Indicators**: Clear online/offline status display
+
+#### **Energy Dashboard**
+- **Real Device Priority**: Real P115 plugs shown first
+- **Read-Only Support**: Proper handling of read-only devices
+- **Live Data**: Real-time energy monitoring and charts
+- **Device Control**: On/off toggle for controllable devices
+
+### 📦 **DEPENDENCIES**
+
+#### **New Dependencies**
+- `httpx>=0.24.0` - LLM provider HTTP client
+- `pyatmo>=9.0.0` - Netatmo weather station integration
+- `psutil>=5.9.0` - System monitoring
+- `tapo>=0.8.0` - P115 smart plug ingestion
+
+#### **Docker Dependencies**
+- Minimal `requirements-docker.txt` for production builds
+- Excludes heavy ML dependencies for faster builds
+- OpenCV system libraries for camera support
+
+### 🐛 **BUG FIXES**
+- Fixed camera status parsing (dict vs string)
+- Removed all mock data from production endpoints
+- Fixed API endpoint calls (`server.list_cameras()` → `server.camera_manager.list_cameras()`)
+- Resolved port conflicts for GitLab and Prometheus
+- Fixed Docker build context issues (GitLab data exclusion)
+
+### 📚 **DOCUMENTATION**
+- GitLab CE usage guide and repository setup
+- Netatmo OAuth setup documentation
+- Docker deployment guide
+- CI/CD improvements documentation
+
+---
+
 ## [1.2.0] - 2025-01-15 🎯 **COMPREHENSIVE DEVICE ONBOARDING SYSTEM**
 
 ### 🚀 **MAJOR FEATURES ADDED**
