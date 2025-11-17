@@ -77,10 +77,23 @@
 - **Remote Monitoring**: Access anywhere via secure VPN
 
 ### 📷 **SUPPORTED CAMERA TYPES**
-- **✅ USB Webcams**: Auto-detected and monitored (WORKING)
-- **🔄 Tapo Cameras**: TP-Link Tapo series (pending auth resolution)
-- **📋 Ring Cameras**: Experimental support for Ring devices
+- **✅ USB Webcams**: Auto-detected with live thumbnails (WORKING)
+- **✅ Tapo Cameras**: TP-Link Tapo series with full control
+- **✅ Ring Cameras**: Ring doorbell and security cameras
 - **🐱 Petcube Cameras**: Petcube pet cameras with full API access (READY)
+
+### 🤖 **LLM INTEGRATION** (NEW in v1.3.0)
+- **Ollama**: Local LLM support with model management
+- **LM Studio**: Desktop LLM integration
+- **OpenAI**: Cloud-based AI capabilities
+- **Chatbot UI**: Floating chat interface with streaming support
+- **API Access**: Complete REST API for LLM operations
+
+### 🐳 **DOCKER DEPLOYMENT** (NEW in v1.3.0)
+- **MyHomeControl Stack**: Complete Docker Compose setup
+- **Production Builds**: Optimized images with minimal dependencies
+- **Health Monitoring**: Container health checks and monitoring
+- **Network Integration**: Unified Docker network for all services
 
 ### ⚠️ **UNSUPPORTED CAMERAS**
 - **🚫 Furbo Cameras**: **NOT SUPPORTED** - Furbo intentionally blocks third-party API access. Use official Furbo app only.
