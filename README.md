@@ -267,7 +267,7 @@ python start.py dashboard
 - **Mock Camera**: Simulated camera for testing
 - **Comprehensive Logging**: Structured logging throughout codebase
 - **Unit Tests**: Complete test suite with 100% pass rate
-- **CI/CD Pipeline**: GitHub Actions with multi-version testing (Python 3.8-3.13)
+- **CI/CD Pipeline**: GitHub Actions with modern ruff linting, caching, and Python 3.10-3.12 testing
 - **Security Scanning**: Automated vulnerability and dependency scanning
 - **Code Quality**: Ruff linting and formatting, mypy type checking, pylint linting
 
