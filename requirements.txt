@@ -17,6 +17,10 @@ ring-doorbell>=0.7.0,<1.0.0  # For Ring doorbell cameras
 oauthlib>=3.2.0,<4.0.0       # For OAuth authentication
 requests-oauthlib>=1.3.0,<2.0.0  # For OAuth requests
 
+# Smart meter integration (Wien Energie)
+pyserial>=3.5,<4.0.0         # Serial port communication
+pyserial-asyncio>=0.6,<1.0.0  # Async serial communication for smart meters
+
 # Web dashboard dependencies
 fastapi>=0.100.0,<1.0.0
 uvicorn[standard]>=0.20.0,<1.0.0

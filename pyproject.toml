@@ -55,7 +55,9 @@ dependencies = [
     "uvicorn[standard]>=0.24.0,<1.0.0", # ASGI server
     "passlib[bcrypt]>=1.7.4,<2.0.0", # Password hashing
     "email-validator>=2.0.0,<3.0.0", # Email validation
-    "tenacity>=8.0.0,<9.0.0"       # Retry logic
+    "tenacity>=8.0.0,<9.0.0",       # Retry logic
+    "pyserial>=3.5,<4.0.0",         # Serial port communication (Wien Energie smart meters)
+    "pyserial-asyncio>=0.6,<1.0.0"  # Async serial communication (Wien Energie smart meters)
 ]
 
 [project.optional-dependencies]

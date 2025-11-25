@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime, timezone
+from typing import Any
 
 from ..config import get_model
 from ..config.models import WeatherSettings
+from ..db import TimeSeriesDB
 from ..utils import get_logger
 
 logger = get_logger(__name__)
@@ -13,13 +15,13 @@ logger = get_logger(__name__)
 @dataclass
 class NetatmoConfig:
     enabled: bool
-    client_id: Optional[str]
-    client_secret: Optional[str]
-    redirect_uri: Optional[str]
-    refresh_token: Optional[str]
-    username: Optional[str]
-    password: Optional[str]
-    home_id: Optional[str]
+    client_id: str | None
+    client_secret: str | None
+    redirect_uri: str | None
+    refresh_token: str | None
+    username: str | None
+    password: str | None
+    home_id: str | None
 
 
 def get_netatmo_config() -> NetatmoConfig:
@@ -44,6 +46,7 @@ class NetatmoService:
         self.config = get_netatmo_config()
         self._initialized = False
         self._client = None  # late-bound pyatmo client
+        self._db = TimeSeriesDB()  # Initialize database for time series storage
 
     async def initialize(self) -> None:
         """Initialize Netatmo client if enabled and credentials provided."""
@@ -57,7 +60,8 @@ class NetatmoService:
 
         try:
             import asyncio
-            import pyatmo  # type: ignore
+
+            import pyatmo  # type: ignore[import-untyped]
 
             # Prefer OAuth refresh token if present; fallback to password grant as last resort
             if self.config.client_id and self.config.client_secret and self.config.refresh_token:
@@ -92,7 +96,7 @@ class NetatmoService:
             logger.warning("Failed to initialize Netatmo client (%s). Using simulated data.", e)
             self._client = None
 
-    async def list_stations(self) -> List[Dict[str, Any]]:
+    async def list_stations(self) -> list[dict[str, Any]]:
         """Return list of stations with basic info."""
         await self.initialize()
         # Placeholder; return simulated for now. Replace with client calls later.
@@ -126,7 +130,7 @@ class NetatmoService:
 
     async def current_data(
         self, station_id: str, module_type: str
-    ) -> Tuple[Dict[str, Any], float]:
+    ) -> tuple[dict[str, Any], float]:
         """Return current data dict and timestamp."""
         await self.initialize()
         # Placeholder simulated values; replace with real pyatmo readings later
@@ -161,6 +165,37 @@ class NetatmoService:
             data = {"temperature": 18.7, "humidity": 62, "temp_trend": "down"}
         else:
             data = {}
+
+        timestamp = datetime.now(timezone.utc)
+
+        # Store data point in database
+        try:
+            if module_type in {"indoor", "all"}:
+                indoor_data = data.get("indoor") if module_type == "all" else data
+                if indoor_data:
+                    self._db.store_weather_data(
+                        station_id=station_id,
+                        module_type="indoor",
+                        timestamp=timestamp,
+                        temperature_c=indoor_data.get("temperature"),
+                        humidity_percent=indoor_data.get("humidity"),
+                        co2_ppm=indoor_data.get("co2"),
+                        pressure_mbar=indoor_data.get("pressure"),
+                        noise_db=indoor_data.get("noise"),
+                    )
+
+            if module_type in {"outdoor", "all"}:
+                outdoor_data = data.get("outdoor") if module_type == "all" else data
+                if outdoor_data:
+                    self._db.store_weather_data(
+                        station_id=station_id,
+                        module_type="outdoor",
+                        timestamp=timestamp,
+                        temperature_c=outdoor_data.get("temperature"),
+                        humidity_percent=outdoor_data.get("humidity"),
+                    )
+        except Exception as db_exc:
+            logger.warning(f"Failed to store weather data in database: {db_exc}")
 
         return data, _time.time()
 

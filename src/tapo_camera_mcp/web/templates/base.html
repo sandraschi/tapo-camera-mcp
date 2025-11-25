@@ -6,7 +6,7 @@
     <title>{% block title %}Tapo Camera MCP{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='/css/chatbot.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plq7G5tGm0rU+1SPhVotteLpBERwTkw==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>
         [data-theme="dark"] {
             --bg-color: #1f2937;
@@ -60,6 +60,62 @@
             border-color: var(--border-color);
         }
 
+        .search-bar i.fas {
+            color: #6b7280 !important;
+            font-family: "Font Awesome 6 Free" !important;
+            font-weight: 900 !important;
+            display: inline-block !important;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .search-button {
+            background: none !important;
+            border: none !important;
+            color: #6b7280 !important;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-button i.fas {
+            color: #6b7280 !important;
+            font-family: "Font Awesome 6 Free" !important;
+            font-weight: 900 !important;
+            display: inline-block !important;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .search-button:hover {
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+
+        .search-button:hover i {
+            color: var(--primary-color) !important;
+        }
+
+        [data-theme="dark"] .search-bar i {
+            color: #9ca3af !important;
+        }
+
+        [data-theme="dark"] .search-button {
+            color: #9ca3af !important;
+        }
+
+        [data-theme="dark"] .search-button i {
+            color: #9ca3af !important;
+        }
+
+        [data-theme="dark"] .search-button:hover i {
+            color: #f9fafb !important;
+        }
+
         [data-theme="dark"] .theme-toggle {
             background: #374151;
             border-color: #4b5563;
@@ -71,24 +127,35 @@
         }
 
         .icon-button {
+            background: none !important;
+            border: none !important;
+            color: #374151 !important;
+            cursor: pointer;
+            padding: 8px 12px;
+            font-size: 1.2rem;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 0.25rem;
-            background: none;
-            border: 1px solid transparent;
-            color: #4b5563;
-            font-size: 1.05rem;
-            cursor: pointer;
-            padding: 0.45rem 0.55rem;
-            border-radius: 0.5rem;
-            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+            min-width: 40px;
+            min-height: 40px;
+        }
+
+        .icon-button i.fas {
+            color: #374151 !important;
+            font-size: 1.2rem !important;
+            display: inline-block !important;
+            font-family: "Font Awesome 6 Free" !important;
+            font-weight: 900 !important;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .icon-button:hover {
-            background-color: #f3f4f6;
-            border-color: #e5e7eb;
-            color: #111827;
+            color: #111827 !important;
+        }
+
+        .icon-button:hover i {
+            color: #111827 !important;
         }
 
         .icon-button:focus {
@@ -97,14 +164,21 @@
         }
 
         [data-theme="dark"] .icon-button {
-            color: var(--text-color);
-            border-color: #4b5563;
-            background-color: #374151;
+            color: #9ca3af !important;
+        }
+
+        [data-theme="dark"] .icon-button i {
+            color: #9ca3af !important;
+            font-family: "Font Awesome 6 Free" !important;
+            font-weight: 900 !important;
         }
 
         [data-theme="dark"] .icon-button:hover {
-            background-color: #4b5563;
-            border-color: #6b7280;
+            color: #f9fafb !important;
+        }
+
+        [data-theme="dark"] .icon-button:hover i {
+            color: #f9fafb !important;
         }
 
         .theme-toggle {
@@ -121,26 +195,27 @@
             justify-content: center;
             font-size: 1.15rem;
             transition: opacity 0.2s, transform 0.2s;
+            color: inherit;
         }
 
         .theme-icon-sun {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .theme-icon-moon {
+            opacity: 0;
+            transform: scale(0.85) rotate(15deg);
+        }
+
+        [data-theme="dark"] .theme-icon-sun {
             opacity: 0;
             transform: scale(0.85) rotate(-15deg);
         }
 
-        .theme-icon-moon {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        [data-theme="dark"] .theme-icon-sun {
-            opacity: 1;
-            transform: scale(1);
-        }
-
         [data-theme="dark"] .theme-icon-moon {
-            opacity: 0;
-            transform: scale(0.85) rotate(15deg);
+            opacity: 1;
+            transform: scale(1);
         }
 
         .modal {
@@ -269,6 +344,95 @@
         .log-detail {
             color: #cbd5f5;
             font-size: 0.82rem;
+        }
+
+        .logger-synopsis {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #cbd5f5;
+        }
+
+        [data-theme="dark"] .logger-synopsis {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(96, 165, 250, 0.4);
+        }
+
+        .synopsis-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #60a5fa;
+        }
+
+        .synopsis-timestamp {
+            margin-left: auto;
+            font-size: 0.75rem;
+            font-weight: normal;
+            color: #94a3b8;
+        }
+
+        .synopsis-content {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .logger-anomalies {
+            margin-bottom: 1rem;
+        }
+
+        .anomaly-item {
+            background: rgba(248, 113, 113, 0.1);
+            border-left: 3px solid #f87171;
+            border-radius: 0.25rem;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            color: #fca5a5;
+        }
+
+        .anomaly-item.medium {
+            background: rgba(250, 204, 21, 0.1);
+            border-left-color: #facc15;
+            color: #fde047;
+        }
+
+        .anomaly-item.low {
+            background: rgba(96, 165, 250, 0.1);
+            border-left-color: #60a5fa;
+            color: #93c5fd;
+        }
+
+        .anomaly-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .anomaly-message {
+            font-size: 0.85rem;
+        }
+
+        .logger-entry.clustered {
+            background: rgba(59, 130, 246, 0.05);
+            border-left: 2px solid #3b82f6;
+        }
+
+        .cluster-header {
+            font-weight: 600;
+            color: #60a5fa;
+            margin-bottom: 0.25rem;
+        }
+
+        .cluster-count {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-left: 0.5rem;
         }
 
         .icon-button.spin i {
@@ -412,6 +576,12 @@
                         <span>Weather</span>
                     </a>
                 </li>
+                <li class="nav-item {% if request.url.path == '/health' %}active{% endif %}">
+                    <a href="/health">
+                        <i class="fas fa-heartbeat"></i>
+                        <span>Health</span>
+                    </a>
+                </li>
                 <li class="nav-item {% if request.url.path == '/settings' %}active{% endif %}">
                     <a href="{{ url_for('settings') }}">
                         <i class="fas fa-cog"></i>
@@ -440,17 +610,13 @@
                     </button>
                 </div>
                 <div class="user-menu">
-                    <div class="notifications">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge">3</span>
-                    </div>
-                    <button id="logger-button" class="icon-button" title="Open intelligent logger">
-                        <i class="fas fa-terminal"></i>
+                    <button id="logger-button" class="icon-button" title="Open intelligent logger" aria-label="Open logger">
+                        <i class="fas fa-file-alt"></i>
                     </button>
-                    <button id="help-button" class="icon-button" title="Open structured help assistant">
-                        <i class="fas fa-life-ring"></i>
+                    <button id="help-button" class="icon-button" title="Open structured help assistant" aria-label="Open help">
+                        <i class="fas fa-question-circle"></i>
                     </button>
-                    <button id="theme-toggle" class="icon-button theme-toggle" title="Toggle theme">
+                    <button id="theme-toggle" class="icon-button theme-toggle" title="Toggle theme" aria-label="Toggle dark/light theme">
                         <i class="fas fa-sun theme-icon theme-icon-sun"></i>
                         <i class="fas fa-moon theme-icon theme-icon-moon"></i>
                     </button>
@@ -523,6 +689,17 @@
                         </div>
                     </aside>
                     <section class="logger-panel">
+                        <div id="logger-synopsis" class="logger-synopsis" style="display: none;">
+                            <div class="synopsis-header">
+                                <i class="fas fa-brain"></i>
+                                <strong>AI Synopsis</strong>
+                                <span class="synopsis-timestamp"></span>
+                            </div>
+                            <div class="synopsis-content"></div>
+                        </div>
+                        <div id="logger-anomalies" class="logger-anomalies" style="display: none;">
+                            <!-- Anomalies injected via JS -->
+                        </div>
                         <div class="logger-live-feed" id="logger-live-feed" aria-live="polite">
                             <!-- Log entries injected via JS -->
                         </div>
@@ -644,35 +821,55 @@
     <script>
         // Theme toggle functionality
         const themeToggle = document.getElementById('theme-toggle');
-        const themeIcons = {
-            sun: themeToggle.querySelector('.theme-icon-sun'),
-            moon: themeToggle.querySelector('.theme-icon-moon')
-        };
+        if (themeToggle) {
+            const themeIcons = {
+                sun: themeToggle.querySelector('.theme-icon-sun'),
+                moon: themeToggle.querySelector('.theme-icon-moon')
+            };
 
-        const applyTheme = (theme) => {
-            if (theme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'light');
-            }
-        };
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                }
+            };
 
-        const storedTheme = localStorage.getItem('theme') || 'light';
-        if (storedTheme === 'dark') {
-            applyTheme('dark');
-        }
+            // Check for system preference on first load (if no stored preference)
+            const getSystemTheme = () => {
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    return 'dark';
+                }
+                return 'light';
+            };
 
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-
-            if (currentTheme === 'dark') {
-                applyTheme('light');
-            } else {
+            // Load theme: stored preference > system preference > light
+            const storedTheme = localStorage.getItem('theme');
+            const initialTheme = storedTheme || getSystemTheme();
+            if (initialTheme === 'dark') {
                 applyTheme('dark');
             }
-        });
+
+            // Listen for system theme changes (if no stored preference)
+            if (!storedTheme && window.matchMedia) {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                    if (!localStorage.getItem('theme')) {
+                        applyTheme(e.matches ? 'dark' : 'light');
+                    }
+                });
+            }
+
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                if (currentTheme === 'dark') {
+                    applyTheme('light');
+                } else {
+                    applyTheme('dark');
+                }
+            });
+        }
 
         // Modal helpers
         const body = document.body;
@@ -735,8 +932,15 @@
         const loggerQuery = document.getElementById('logger-query');
         const loggerRefresh = document.getElementById('logger-refresh');
         const loggerExport = document.getElementById('logger-export');
+        const loggerAiSummary = document.getElementById('logger-ai-summary');
+        const loggerSemanticGroups = document.getElementById('logger-semantic-groups');
+        const loggerAnomalyDetector = document.getElementById('logger-anomaly-detector');
+        const loggerSynopsis = document.getElementById('logger-synopsis');
+        const loggerAnomalies = document.getElementById('logger-anomalies');
 
         let currentLogs = [];
+        let aiSynopsisInterval = null;
+        let lastSynopsisTime = null;
 
         const fetchLogs = async () => {
             try {
@@ -761,7 +965,7 @@
             }
         };
 
-        const renderLogs = () => {
+        const renderLogs = async () => {
             loggerFeed.innerHTML = '';
 
             if (currentLogs.length === 0) {
@@ -773,33 +977,185 @@
                 return;
             }
 
-            currentLogs.forEach(entry => {
-                const row = document.createElement('div');
-                row.className = 'logger-entry';
-                
-                // Extract timestamp components
-                const timestamp = entry.timestamp || '';
-                const level = (entry.level || 'INFO').toLowerCase();
-                const message = entry.message || '';
-                const logger = entry.logger || '';
+            let logsToRender = currentLogs;
 
-                row.innerHTML = `
-                    <span class="timestamp">${timestamp}</span>
-                    <span class="level ${level}">${level}</span>
-                    <div>
-                        <div>${message}</div>
-                        <div class="log-detail">logger: ${logger}</div>
-                    </div>
-                `;
-                loggerFeed.appendChild(row);
+            // Apply clustering if enabled
+            if (loggerSemanticGroups && loggerSemanticGroups.checked) {
+                try {
+                    const response = await fetch('/api/logs/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            logs: currentLogs,
+                            enable_clustering: true,
+                            enable_anomaly_detection: false,
+                            enable_ai_synopsis: false,
+                        }),
+                    });
+                    const data = await response.json();
+                    if (data.clustered) {
+                        logsToRender = data.clustered;
+                    }
+                } catch (error) {
+                    console.error('Error clustering logs:', error);
+                }
+            }
+
+            // Render logs (clustered or normal)
+            logsToRender.forEach(entry => {
+                const row = document.createElement('div');
+                
+                if (entry.type === 'cluster') {
+                    // Render cluster header
+                    row.className = 'logger-entry clustered';
+                    row.innerHTML = `
+                        <div class="cluster-header">
+                            <i class="fas fa-layer-group"></i>
+                            Pattern: ${entry.pattern.substring(0, 80)}${entry.pattern.length > 80 ? '...' : ''}
+                            <span class="cluster-count">(${entry.count} occurrences)</span>
+                        </div>
+                    `;
+                    loggerFeed.appendChild(row);
+                    
+                    // Render first few entries from cluster
+                    entry.entries.slice(0, 3).forEach(clusterEntry => {
+                        const clusterRow = document.createElement('div');
+                        clusterRow.className = 'logger-entry';
+                        const timestamp = clusterEntry.timestamp || '';
+                        const level = (clusterEntry.level || 'INFO').toLowerCase();
+                        const message = clusterEntry.message || '';
+                        const logger = clusterEntry.logger || '';
+                        clusterRow.innerHTML = `
+                            <span class="timestamp">${timestamp}</span>
+                            <span class="level ${level}">${level}</span>
+                            <div>
+                                <div>${message}</div>
+                                <div class="log-detail">logger: ${logger}</div>
+                            </div>
+                        `;
+                        loggerFeed.appendChild(clusterRow);
+                    });
+                    
+                    if (entry.entries.length > 3) {
+                        const moreRow = document.createElement('div');
+                        moreRow.className = 'logger-entry';
+                        moreRow.style.color = '#94a3b8';
+                        moreRow.style.fontSize = '0.8rem';
+                        moreRow.style.fontStyle = 'italic';
+                        moreRow.textContent = `... and ${entry.entries.length - 3} more similar entries`;
+                        loggerFeed.appendChild(moreRow);
+                    }
+                } else {
+                    // Render normal log entry
+                    row.className = 'logger-entry';
+                    const timestamp = entry.timestamp || '';
+                    const level = (entry.level || 'INFO').toLowerCase();
+                    const message = entry.message || '';
+                    const logger = entry.logger || '';
+                    
+                    // Check for anomaly highlighting
+                    let isAnomaly = false;
+                    if (loggerAnomalyDetector && loggerAnomalyDetector.checked) {
+                        // Highlight errors and warnings
+                        if (level === 'error' || level === 'warning') {
+                            isAnomaly = true;
+                            row.style.borderLeft = '2px solid ' + (level === 'error' ? '#f87171' : '#facc15');
+                            row.style.background = level === 'error' ? 'rgba(248, 113, 113, 0.05)' : 'rgba(250, 204, 21, 0.05)';
+                        }
+                    }
+
+                    row.innerHTML = `
+                        <span class="timestamp">${timestamp}</span>
+                        <span class="level ${level}">${level}</span>
+                        <div>
+                            <div>${message}</div>
+                            <div class="log-detail">logger: ${logger}</div>
+                        </div>
+                    `;
+                    loggerFeed.appendChild(row);
+                }
             });
+
+            // Render anomalies if enabled
+            if (loggerAnomalyDetector && loggerAnomalyDetector.checked) {
+                try {
+                    const response = await fetch('/api/logs/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            logs: currentLogs,
+                            enable_clustering: false,
+                            enable_anomaly_detection: true,
+                            enable_ai_synopsis: false,
+                        }),
+                    });
+                    const data = await response.json();
+                    if (data.anomalies && data.anomalies.length > 0) {
+                        loggerAnomalies.style.display = 'block';
+                        loggerAnomalies.innerHTML = '<div style="font-weight: 600; margin-bottom: 0.5rem; color: #f87171;"><i class="fas fa-exclamation-triangle"></i> Detected Anomalies</div>';
+                        data.anomalies.forEach(anomaly => {
+                            const anomalyDiv = document.createElement('div');
+                            anomalyDiv.className = `anomaly-item ${anomaly.severity || 'high'}`;
+                            anomalyDiv.innerHTML = `
+                                <div class="anomaly-header">
+                                    <i class="fas fa-${anomaly.severity === 'high' ? 'exclamation-circle' : anomaly.severity === 'medium' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                                    ${anomaly.type.replace(/_/g, ' ').toUpperCase()}
+                                    ${anomaly.count ? `(${anomaly.count})` : ''}
+                                </div>
+                                <div class="anomaly-message">${anomaly.message}</div>
+                            `;
+                            loggerAnomalies.appendChild(anomalyDiv);
+                        });
+                    } else {
+                        loggerAnomalies.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error detecting anomalies:', error);
+                    loggerAnomalies.style.display = 'none';
+                }
+            } else {
+                loggerAnomalies.style.display = 'none';
+            }
         };
 
         const loadAndRenderLogs = async () => {
             loggerRefresh.classList.add('spin');
             await fetchLogs();
-            renderLogs();
+            await renderLogs();
             setTimeout(() => loggerRefresh.classList.remove('spin'), 300);
+        };
+
+        const generateAiSynopsis = async () => {
+            if (!loggerAiSummary || !loggerAiSummary.checked) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/logs/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        logs: currentLogs,
+                        enable_clustering: false,
+                        enable_anomaly_detection: false,
+                        enable_ai_synopsis: true,
+                    }),
+                });
+                const data = await response.json();
+                if (data.synopsis) {
+                    loggerSynopsis.style.display = 'block';
+                    loggerSynopsis.querySelector('.synopsis-content').textContent = data.synopsis;
+                    const now = new Date();
+                    loggerSynopsis.querySelector('.synopsis-timestamp').textContent = 
+                        `Updated ${now.toLocaleTimeString()}`;
+                    lastSynopsisTime = now;
+                } else {
+                    loggerSynopsis.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error generating AI synopsis:', error);
+                loggerSynopsis.style.display = 'none';
+            }
         };
 
         // Initial load
@@ -809,13 +1165,55 @@
         let logRefreshInterval = null;
         loggerModal.addEventListener('modal:opened', () => {
             logRefreshInterval = setInterval(loadAndRenderLogs, 5000);
+            
+            // Generate initial AI synopsis if enabled
+            if (loggerAiSummary && loggerAiSummary.checked) {
+                generateAiSynopsis();
+                // Generate synopsis every 60 seconds
+                aiSynopsisInterval = setInterval(generateAiSynopsis, 60000);
+            }
         });
         loggerModal.addEventListener('modal:closed', () => {
             if (logRefreshInterval) {
                 clearInterval(logRefreshInterval);
                 logRefreshInterval = null;
             }
+            if (aiSynopsisInterval) {
+                clearInterval(aiSynopsisInterval);
+                aiSynopsisInterval = null;
+            }
         });
+
+        // Handle checkbox changes
+        if (loggerAiSummary) {
+            loggerAiSummary.addEventListener('change', () => {
+                if (loggerAiSummary.checked) {
+                    generateAiSynopsis();
+                    if (aiSynopsisInterval) {
+                        clearInterval(aiSynopsisInterval);
+                    }
+                    aiSynopsisInterval = setInterval(generateAiSynopsis, 60000);
+                } else {
+                    loggerSynopsis.style.display = 'none';
+                    if (aiSynopsisInterval) {
+                        clearInterval(aiSynopsisInterval);
+                        aiSynopsisInterval = null;
+                    }
+                }
+            });
+        }
+
+        if (loggerSemanticGroups) {
+            loggerSemanticGroups.addEventListener('change', () => {
+                renderLogs();
+            });
+        }
+
+        if (loggerAnomalyDetector) {
+            loggerAnomalyDetector.addEventListener('change', () => {
+                renderLogs();
+            });
+        }
 
 
         levelFilter.addEventListener('change', loadAndRenderLogs);

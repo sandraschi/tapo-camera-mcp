@@ -29,18 +29,24 @@ class LaptopCamera(BaseCamera):
     async def _capture_loop(self):
         """Background task to capture frames."""
         while self._is_connected:
-            if self._mock_webcam:
-                # Use mock camera
-                frame = await self._cap.capture_frame()
-                async with self._frame_lock:
-                    self._frame = frame
-            else:
-                # Use real camera
-                ret, frame = self._cap.read()
-                if ret:
+            try:
+                if self._mock_webcam:
+                    # Use mock camera
+                    frame = await self._cap.capture_frame()
                     async with self._frame_lock:
                         self._frame = frame
-            await asyncio.sleep(0.03)  # ~30 FPS
+                else:
+                    # Use real camera
+                    ret, frame = self._cap.read()
+                    if ret:
+                        async with self._frame_lock:
+                            self._frame = frame
+            except Exception as e:
+                logger.debug(f"Error in capture loop: {e}")
+            finally:
+                # Always sleep to prevent tight polling loops
+                # 0.1 seconds = 10 FPS (reasonable for status monitoring)
+                await asyncio.sleep(0.1)
 
     async def connect(self) -> bool:
         """Initialize connection to the laptop camera."""

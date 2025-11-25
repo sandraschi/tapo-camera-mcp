@@ -1,6 +1,10 @@
 # 📚 Complete Documentation Index
 
-**Central hub for all notepadpp-mcp documentation**
+**Central hub for all tapo-camera-mcp documentation**
+
+**Current Version**: v1.3.0 (LLM Integration & Dockerization)  
+**Last Updated**: November 21, 2025  
+**Status**: 🚀 Production-Ready Platform
 
 ---
 
@@ -11,6 +15,11 @@
 2. See [Device Onboarding System](#device-onboarding) - Set up your devices
 3. Check [Installation Guide](#installation) - Get started
 4. Review [Repository Protection](#repository-protection) - Stay safe
+
+### **Current Project Status**
+1. Check [Status Update](STATUS_UPDATE.md) - Latest project status (November 2025)
+2. See [Setup Status](SETUP_STATUS.md) - Device configuration status
+3. Review [Changelog](../CHANGELOG.md) - Version history and features
 
 ### **Want to Contribute?**
 1. Read [CONTRIBUTING.md](../CONTRIBUTING.md) - Guidelines
@@ -76,6 +85,22 @@ docs/
 │                       → Analytics and AI scene analysis APIs
 │                       → Camera control and streaming APIs
 │                       → WebSocket support and mobile APIs
+│
+├── STATUS_UPDATE.md 📊 **UPDATED**: Current project status (November 2025)
+│                    → Production-ready platform v1.3.0
+│                    → LLM integration, Dockerization, Energy management
+│                    → Working components and remaining issues
+│
+├── SETUP_STATUS.md 🔧 **UPDATED**: Device configuration status
+│                  → Tapo camera setup progress
+│                  → Energy management (P115 plugs) status
+│                  → Troubleshooting steps and next actions
+│
+├── WIEN_ENERGIE_SMART_METER_INTEGRATION.md ⚡ **NEW**: Wien Energie smart meter integration
+│                                                  → Wiener Netze smart meter setup
+│                                                  → IEC 62056-21/DLMS protocol
+│                                                  → Infrared adapter configuration
+│                                                  → Energy monitoring and cost tracking
 │
 ├── notepadpp/                  📝 Complete Notepad++ reference
 │   ├── README.md              → Notepad++ documentation hub

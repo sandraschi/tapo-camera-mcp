@@ -86,7 +86,7 @@ class MetricsCollector:
         self.tapo_client = tapo_client
         self.metrics: Dict[str, CameraMetrics] = {}
         self._running = False
-        self._task = None
+        self._polling_task = None
 
     async def start(self):
         """Start the metrics collection service"""
@@ -94,8 +94,24 @@ class MetricsCollector:
             return
 
         self._running = True
-        self._task = asyncio.create_task(self._collect_loop())
-        logger.info("Metrics collection service started")
+
+        # Use centralized polling manager instead of manual loop
+        from .polling_manager import get_polling_manager, PollingPriority
+
+        manager = get_polling_manager()
+        self._polling_task = manager.register_task(
+            name="metrics_collection",
+            callback=self.collect_metrics,
+            interval_seconds=30.0,  # Collect every 30 seconds
+            priority=PollingPriority.NORMAL,
+            enabled=True,
+        )
+
+        # Start manager if not already running
+        if not manager._running:
+            await manager.start()
+
+        logger.info("Metrics collection service started (using polling manager)")
 
     async def stop(self):
         """Stop the metrics collection service"""
@@ -103,23 +119,16 @@ class MetricsCollector:
             return
 
         self._running = False
-        if self._task:
-            self._task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._task
-        logger.info("Metrics collection service stopped")
 
-    async def _collect_loop(self):
-        """Background task to collect metrics at regular intervals"""
-        while self._running:
-            try:
-                await self.collect_metrics()
-                await asyncio.sleep(30)  # Collect every 30 seconds
-            except asyncio.CancelledError:
-                break
-            except Exception:
-                logger.exception("Error in metrics collection")
-                await asyncio.sleep(30)  # Wait before retry
+        # Unregister from polling manager
+        if self._polling_task:
+            from .polling_manager import get_polling_manager
+
+            manager = get_polling_manager()
+            manager.unregister_task("metrics_collection")
+            self._polling_task = None
+
+        logger.info("Metrics collection service stopped")
 
     async def collect_metrics(self):
         """Collect metrics from all cameras"""

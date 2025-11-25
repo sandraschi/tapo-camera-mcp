@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING
 
 from ..config import get_config
+from ..db import TimeSeriesDB
 
 if TYPE_CHECKING:
     from tapo import ApiClient
@@ -47,6 +48,7 @@ class TapoP115IngestionService:
         self._account = self._config.get("account", {})
         self._devices_cfg = self._config.get("devices", [])
         self._discovery_cfg = self._config.get("discovery", {})
+        self._db = TimeSeriesDB()  # Initialize database for time series storage
         self._hosts: list[str] = [
             device.get("host") for device in self._devices_cfg if device.get("host")
         ]
@@ -151,32 +153,67 @@ class TapoP115IngestionService:
             except Exception:
                 power_state = False
 
-            # Get energy usage
+            # Get real-time current power (watts)
+            current_power = 0.0
+            voltage = 220.0  # Default to 220V for European mains (user specified)
+            current = 0.0
+            try:
+                # Use get_current_power() method for real-time power reading
+                power_data = await plug.get_current_power()
+                # Try multiple attribute names for current power
+                for attr in ["current_power", "power", "power_mw", "power_w"]:
+                    val = getattr(power_data, attr, None)
+                    if val is not None:
+                        current_power = float(val)
+                        # If power_mw, convert to watts
+                        if attr == "power_mw":
+                            current_power = current_power / 1000.0
+                        break
+
+                # Try to get voltage and current from power_data
+                for attr in ["voltage", "voltage_v", "voltage_mv"]:
+                    val = getattr(power_data, attr, None)
+                    if val is not None:
+                        voltage = float(val)
+                        if attr == "voltage_mv":
+                            voltage = voltage / 1000.0
+                        break
+
+                for attr in ["current", "current_a", "current_ma"]:
+                    val = getattr(power_data, attr, None)
+                    if val is not None:
+                        current = float(val)
+                        if attr == "current_ma":
+                            current = current / 1000.0
+                        break
+
+                # Calculate current from power and voltage if not available
+                if current == 0.0 and current_power > 0 and voltage > 0:
+                    current = current_power / voltage
+
+            except Exception as e:
+                logger.debug(f"Real-time power not available for {host}: {e}")
+                # Keep defaults (0W, 220V, 0A)
+
+            # Get energy usage (daily/monthly totals)
+            today_energy = 0.0
+            month_energy = 0.0
             try:
                 energy = await plug.get_energy_usage()
-                current_power = float(
-                    getattr(energy, "current_power", getattr(energy, "power", 0.0))
-                )
-                today_energy = float(getattr(energy, "today_energy", getattr(energy, "today", 0.0)))
-                month_energy = float(
-                    getattr(energy, "month_energy", getattr(energy, "month", today_energy * 30))
-                )
-                voltage = float(getattr(energy, "voltage", 0.0))
-                current = float(getattr(energy, "current", 0.0))
+                # Energy values are in Wh (watt-hours), convert to kWh
+                today_energy = float(getattr(energy, "today_energy", 0)) / 1000.0
+                month_energy = float(getattr(energy, "month_energy", 0)) / 1000.0
+
+                logger.debug(f"Energy data for {host}: power={current_power}W, voltage={voltage}V, current={current}A, today={today_energy}kWh")
             except Exception as e:
-                logger.debug(f"Energy usage not available for {host}: {e}")
-                current_power = 0.0
-                today_energy = 0.0
-                month_energy = 0.0
-                voltage = 0.0
-                current = 0.0
+                logger.warning(f"Energy usage not available for {host}: {e}")
 
             metadata = self._metadata_by_host.get(host, {})
             device_id = metadata.get("device_id") or device_id_attr
             if not device_id:
                 device_id = f"tapo_p115_{host.replace('.', '_')}"
 
-            return {
+            snapshot_data = {
                 "host": host,
                 "device_id": device_id,
                 "name": metadata.get("name") or device_name,
@@ -190,6 +227,24 @@ class TapoP115IngestionService:
                 "monthly_energy": month_energy,
                 "last_seen": datetime.now(tz=timezone.utc).isoformat(),
             }
+
+            # Store data point in database
+            try:
+                timestamp = datetime.now(tz=timezone.utc)
+                self._db.store_energy_data(
+                    device_id=device_id,
+                    timestamp=timestamp,
+                    power_w=current_power,
+                    voltage_v=voltage,
+                    current_a=current,
+                    daily_energy_kwh=today_energy,
+                    monthly_energy_kwh=month_energy,
+                    power_state=power_state,
+                )
+            except Exception as db_exc:
+                logger.warning(f"Failed to store energy data in database: {db_exc}")
+
+            return snapshot_data
         except Exception as exc:
             logger.warning(f"Unable to query Tapo P115 at {host}: {exc}")
             return None

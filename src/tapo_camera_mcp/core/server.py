@@ -14,8 +14,6 @@ from typing import Optional
 from fastmcp.server import FastMCP
 
 from tapo_camera_mcp.camera.manager import CameraManager
-from tapo_camera_mcp.tools.base_tool import ToolResult
-from tapo_camera_mcp.tools.discovery import discover_tools
 
 # Optional camera imports - handle missing dependencies gracefully
 try:
@@ -51,8 +49,19 @@ class TapoCameraServer:
 
     async def initialize(self):
         """Initialize the server."""
-        if self._initialized:
+        if TapoCameraServer._initialized:  # Use class variable, not instance
             return
+
+        # Suppress FastMCP internal logging to prevent INFO logs from appearing as errors in Cursor
+        # FastMCP writes to stderr, and Cursor interprets stderr as errors
+        for logger_name in [
+            "mcp",
+            "mcp.server",
+            "mcp.server.lowlevel",
+            "mcp.server.lowlevel.server",
+            "fastmcp",
+        ]:
+            logging.getLogger(logger_name).setLevel(logging.WARNING)
 
         logger.info("Initializing Tapo Camera MCP Server...")
 
@@ -88,206 +97,21 @@ class TapoCameraServer:
         # Register all tools
         await self._register_tools()
 
-        self._initialized = True
+        TapoCameraServer._initialized = True  # Set class variable, not instance
         logger.info("Tapo Camera MCP Server initialized successfully")
 
     async def _register_tools(self):
         """Register all tools with the MCP server using FastMCP 2.12 patterns."""
-        # Discover and register all tools from the tools package
-        tools = discover_tools("tapo_camera_mcp.tools")
+        # Use portmanteau tools registration (cleaner, more maintainable)
+        from tapo_camera_mcp.tools.register_tools import register_all_tools
 
-        # Deduplicate tools by name to avoid registering the same tool twice
-        seen_tools = set()
-        unique_tools = []
-        for tool_cls in tools:
-            tool_meta = getattr(tool_cls, "Meta", None)
-            if tool_meta:
-                tool_name = getattr(
-                    tool_meta, "name", tool_cls.__name__.replace("Tool", "").lower()
-                )
-                if tool_name not in seen_tools:
-                    seen_tools.add(tool_name)
-                    unique_tools.append(tool_cls)
+        # Get tool mode from environment or config (default: production)
+        import os
+        tool_mode = os.getenv("TAPO_MCP_TOOL_MODE", "production")
 
-        logger.info(f"Discovered {len(tools)} tools, registering {len(unique_tools)} unique tools")
-
-        for tool_cls in unique_tools:
-            # Get tool metadata from the class
-            tool_meta = getattr(tool_cls, "Meta", None)
-            if not tool_meta:
-                logger.warning(f"Tool {tool_cls.__name__} is missing Meta class, skipping")
-                continue
-
-            tool_name = getattr(tool_meta, "name", tool_cls.__name__.replace("Tool", "").lower())
-            tool_description = getattr(tool_meta, "description", "")
-
-            logger.debug(f"Registering tool: {tool_name}")
-
-            # Create a simple wrapper function using closures
-
-            # Extract parameter names from the tool class
-            param_names = []
-            if hasattr(tool_meta, "Parameters"):
-                # Extract parameter names from the Parameters class
-                params_class = tool_meta.Parameters
-                for attr_name in dir(params_class):
-                    if not attr_name.startswith("_") and not callable(
-                        getattr(params_class, attr_name)
-                    ):
-                        param_names.append(attr_name)
-            elif hasattr(tool_cls, "model_fields"):
-                # Extract from Pydantic V2 model_fields
-                param_names = list(tool_cls.model_fields.keys())
-            elif hasattr(tool_cls, "__fields__"):
-                # Fallback for Pydantic V1 __fields__
-                param_names = list(tool_cls.__fields__.keys())
-
-            # Create wrapper function with explicit parameters
-            if param_names:
-                # Create parameter signature
-                param_list = [f"{name}" for name in param_names]
-                param_signature = ", ".join(param_list)
-
-                # Get the docstring
-                docstring = (
-                    tool_cls.execute.__doc__
-                    if hasattr(tool_cls, "execute") and tool_cls.execute.__doc__
-                    else "Tool execution"
-                )
-
-                # Create kwargs assignments
-                kwargs_lines = "\n".join(
-                    [f"        kwargs['{name}'] = {name}" for name in param_names]
-                )
-
-                # Create the function code using string formatting
-                func_code = (
-                    """
-async def tool_wrapper("""
-                    + param_signature
-                    + '''):
-    """'''
-                    + docstring
-                    + '''"""
-    try:
-        # Create kwargs dict from parameters
-        kwargs = {}
-'''
-                    + kwargs_lines
-                    + """
-
-        # Create tool instance with parameters
-        tool_instance = tool_cls(**kwargs)
-
-        # If the tool has an async initialize method, call it
-        if hasattr(tool_instance, 'initialize') and callable(tool_instance.initialize):
-            if asyncio.iscoroutinefunction(tool_instance.initialize):
-                await tool_instance.initialize()
-            else:
-                tool_instance.initialize()
-
-        # Call the tool's execute method
-        if hasattr(tool_instance, 'execute'):
-            execute_method = tool_instance.execute
-
-            # Handle both sync and async execute methods
-            if asyncio.iscoroutinefunction(execute_method):
-                result = await execute_method()
-            else:
-                result = execute_method()
-
-            # Handle the result
-            if isinstance(result, ToolResult):
-                return {
-                    "content": result.content,
-                    "is_error": result.is_error
-                }
-            elif isinstance(result, dict):
-                return result
-            else:
-                return {
-                    "content": str(result),
-                    "is_error": False
-                }
-        else:
-            raise ValueError("Tool """
-                    + tool_name
-                    + """ has no execute method")
-
-    except Exception as e:
-        error_msg = "Error executing tool """
-                    + tool_name
-                    + """: {}".format(e)
-        logger.error(error_msg)
-        logger.exception("Full traceback:")
-        return {
-            "content": error_msg,
-            "is_error": True
-        }
-"""
-                )
-
-                # Execute the function code
-                local_vars = {
-                    "tool_cls": tool_cls,
-                    "tool_name": tool_name,
-                    "asyncio": asyncio,
-                    "ToolResult": ToolResult,
-                    "logger": logger,
-                }
-                exec(func_code, local_vars)
-                wrapper_func = local_vars["tool_wrapper"]
-            else:
-                # No parameters - simple wrapper
-                async def wrapper_func():
-                    """{tool_cls.execute.__doc__ if hasattr(tool_cls, 'execute') and tool_cls.execute.__doc__ else 'Tool execution'}"""
-                    try:
-                        # Create tool instance
-                        tool_instance = tool_cls()
-
-                        # If the tool has an async initialize method, call it
-                        if hasattr(tool_instance, "initialize") and callable(
-                            tool_instance.initialize
-                        ):
-                            if asyncio.iscoroutinefunction(tool_instance.initialize):
-                                await tool_instance.initialize()
-                            else:
-                                tool_instance.initialize()
-
-                        # Call the tool's execute method
-                        if hasattr(tool_instance, "execute"):
-                            execute_method = tool_instance.execute
-
-                            # Handle both sync and async execute methods
-                            if asyncio.iscoroutinefunction(execute_method):
-                                result = await execute_method()
-                            else:
-                                result = execute_method()
-
-                            # Handle the result
-                            if isinstance(result, ToolResult):
-                                return {
-                                    "content": result.content,
-                                    "is_error": result.is_error,
-                                }
-                            if isinstance(result, dict):
-                                return result
-                            return {"content": str(result), "is_error": False}
-
-                        def _raise_no_execute() -> ValueError:
-                            return ValueError(f"Tool {tool_name} has no execute method")
-
-                        raise _raise_no_execute()
-
-                    except Exception as e:
-                        error_msg = f"Error executing tool {tool_name}: {e}"
-                        logger.exception(error_msg)
-                        logger.exception("Full traceback:")
-                        return {"content": error_msg, "is_error": True}
-
-            # Register the tool
-            self.mcp.tool(tool_name, description=tool_description)(wrapper_func)
-            logger.debug(f"Successfully registered tool: {tool_name}")
+        # Register all tools (portmanteau tools by default)
+        register_all_tools(self.mcp, tool_mode=tool_mode)
+        logger.info(f"Tools registered successfully (mode: {tool_mode})")
 
     async def _analyze_image(self, image_data, prompt: Optional[str] = None) -> dict:
         """Analyze image data for security and object detection."""
@@ -546,3 +370,9 @@ async def tool_wrapper("""
 async def get_server():
     """Get the TapoCameraServer instance."""
     return await TapoCameraServer.get_instance()
+
+
+async def main():
+    """Main entry point for the MCP server."""
+    server = await TapoCameraServer.get_instance()
+    await server.run(stdio=True, direct=True)

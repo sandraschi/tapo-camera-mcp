@@ -810,10 +810,17 @@ function processMetricData(metric, dataPoints) {
         return;
     }
     
-    const sorted = [...dataPoints].sort((a, b) => a.timestamp - b.timestamp);
+    // Normalize timestamps (database returns Unix timestamps in seconds)
+    const normalized = dataPoints.map(point => ({
+        ...point,
+        timestamp: typeof point.timestamp === 'number' ? point.timestamp : new Date(point.timestamp).getTime() / 1000
+    }));
+    const sorted = normalized.sort((a, b) => a.timestamp - b.timestamp);
     
     chartData[metric].labels = sorted.map(point => {
-        const date = new Date(point.timestamp * 1000);
+        // Handle both Unix timestamp (seconds) and ISO string
+        const timestamp = typeof point.timestamp === 'number' ? point.timestamp * 1000 : new Date(point.timestamp).getTime();
+        const date = new Date(timestamp);
         if (currentTimeRange === '24h') {
             return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         }

@@ -7,6 +7,17 @@ import asyncio
 import logging
 import sys
 
+# Suppress FastMCP internal logging to prevent INFO logs from appearing as errors in Cursor
+# FastMCP writes to stderr, and Cursor interprets stderr as errors
+for logger_name in [
+    "mcp",
+    "mcp.server",
+    "mcp.server.lowlevel",
+    "mcp.server.lowlevel.server",
+    "fastmcp",
+]:
+    logging.getLogger(logger_name).setLevel(logging.WARNING)
+
 from .core.server import main as server_main
 
 

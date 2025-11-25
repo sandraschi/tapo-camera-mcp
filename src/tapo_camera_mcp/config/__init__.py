@@ -135,7 +135,12 @@ class ConfigManager:
                 "snapshots_dir": str(user_data_dir / "snapshots"),
                 "temp_dir": str(user_data_dir / "temp"),
                 "max_storage_gb": 100,
-                "retention_days": 30,
+                "retention_days": 30,  # Legacy: kept for backward compatibility
+                "retention_policies": {
+                    "video_recordings": 30,  # Days to keep video recordings
+                    "snapshots": 90,  # Days to keep snapshots
+                    "environment_data": 365,  # Days to keep weather/energy time series data
+                },
             },
             "camera_scan_interval": 300,
             "max_workers": 4,

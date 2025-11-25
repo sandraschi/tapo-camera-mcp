@@ -105,7 +105,14 @@ class StorageSettings(BaseModel):
     snapshots_dir: Path = Path("snapshots")
     temp_dir: Path = Path("temp")
     max_storage_gb: int = 100
-    retention_days: int = 30
+    retention_days: int = 30  # Legacy: kept for backward compatibility
+    
+    # Separate retention policies
+    retention_policies: dict[str, int] = {
+        "video_recordings": 30,  # Days to keep video recordings
+        "snapshots": 90,  # Days to keep snapshots
+        "environment_data": 365,  # Days to keep weather/energy time series data
+    }
 
 
 @dataclass

@@ -17,54 +17,45 @@ cameras:
       device_id: 0
       resolution: "1920x1080"
       fps: 30
+
+  # NOTE: Other cameras commented out temporarily to speed up startup
+  # Tapo cameras are currently locked out (too many auth attempts)
+  # Uncomment when credentials are verified and lockout period has passed
     
-  # Tapo Kitchen Camera (C200) - Device Name: Kitchencam
-  # ✅ Camera Account credentials set
-  # ✅ Third-Party Compatibility enabled
-  # ⚠️ Still troubleshooting authentication
-  tapo_kitchen:
-    type: tapo
-    params:
-      host: 192.168.0.164  # Kitchen camera IP
-      username: "sandraschi"  # Camera Account username from Tapo app
-      password: "Sec1000kitchen"  # Camera Account password from Tapo app
-      port: 443
-      verify_ssl: true
-      # Device alias: Kitchencam
+  # # Tapo Kitchen Camera (C200) - Device Name: Kitchencam
+  # tapo_kitchen:
+  #   type: tapo
+  #   params:
+  #     host: 192.168.0.164
+  #     username: "sandraschi"
+  #     password: "Sec1000kitchen"
+  #     port: 443
+  #     verify_ssl: true
     
-  # Tapo Living Room Camera
-  # ✅ Camera Account credentials set
-  # ✅ Static IP enabled (192.168.0.206)
-  # ✅ Third-Party Compatibility enabled (global)
-  tapo_living_room:
-    type: tapo
-    params:
-      host: 192.168.0.206  # Living room camera IP (static)
-      username: "sandraschi"  # Camera Account username from Tapo app
-      password: "Sec1000living"  # Camera Account password from Tapo app
-      port: 443
-      verify_ssl: true
-      # Device name: (will update when provided)
+  # # Tapo Living Room Camera
+  # tapo_living_room:
+  #   type: tapo
+  #   params:
+  #     host: 192.168.0.206
+  #     username: "sandraschi"
+  #     password: "Sec1000living"
+  #     port: 443
+  #     verify_ssl: true
     
-  # Ring Doorbell Camera
-  ring_doorbell:
-    type: ring
-    params:
-      username: "your_ring_email@example.com"
-      password: "your_ring_password"
-      # Alternative: use token
-      # token: "your_ring_token"
+  # # Ring Doorbell Camera
+  # ring_doorbell:
+  #   type: ring
+  #   params:
+  #     username: "your_ring_email@example.com"
+  #     password: "your_ring_password"
       
-  # Furbo Pet Camera
-  furbo_camera:
-    type: furbo
-    params:
-      email: "your_furbo_email@example.com"
-      password: "your_furbo_password"
-      # For RTSP streaming:
-      host: "192.168.1.xxx"
-      username: "furbo_username"
-      password: "furbo_password"
+  # # Furbo Pet Camera
+  # furbo_camera:
+  #   type: furbo
+  #   params:
+  #     email: "your_furbo_email@example.com"
+  #     password: "your_furbo_password"
+  #     host: "192.168.1.xxx"
 
 # Web Dashboard
 web:
@@ -91,7 +82,7 @@ logging:
   max_size: 10
   backup_count: 5
 
-# Energy Management (Tapo P115 Smart Plugs)
+# Energy Management (Tapo P115 Smart Plugs + Wien Energie Smart Meter)
 energy:
   tapo_p115:
     account:
@@ -101,13 +92,44 @@ energy:
       - host: "192.168.0.17"  # Aircon plug (verified working)
         device_id: "tapo_p115_aircon"
         name: "Aircon"
-        location: "Unknown"
+        location: "Living Room"
         readonly: false
       - host: "192.168.0.137"  # Kitchen Zojirushi plug
         device_id: "tapo_p115_kitchen"
         name: "Kitchen Zojirushi"
         location: "Kitchen"
         readonly: false
+      - host: "192.168.0.38"  # Server plug
+        device_id: "tapo_p115_server"
+        name: "Server"
+        location: "Server Room"
+        readonly: true
     discovery:
       enabled: false
       timeout: 4
+  
+  # Wien Energie Smart Meter Integration (Wiener Netze)
+  wien_energie:
+    enabled: false  # Set to true when adapter is connected
+    adapter:
+      type: "ir"  # Infrared adapter (IEC 62056-21)
+      port: "/dev/ttyUSB0"  # Linux: /dev/ttyUSB0, Windows: COM3, macOS: /dev/tty.usbserial
+      baudrate: 9600
+      timeout: 5
+    security:
+      key: ""  # Get from Wiener Netze Smart Meter Portal (Anlagendaten)
+      encryption: "AES-128"
+    meter:
+      serial_number: "auto-detect"  # Auto-detect or manual entry
+      obis_codes:
+        total_energy: "1.0.0.0.0.255"
+        active_power: "1.0.1.7.0.255"
+        voltage: "1.0.32.7.0.255"
+        current: "1.0.31.7.0.255"
+    polling:
+      enabled: true
+      interval_seconds: 60  # Poll every minute
+    tariffs:
+      base_rate: 0.12  # EUR per kWh (update with actual Wien Energie rate)
+      peak_rate: 0.15  # Peak hours (8:00-20:00)
+      off_peak_rate: 0.10  # Off-peak hours (20:00-8:00)

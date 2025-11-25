@@ -56,8 +56,25 @@ class EdgeCollector:
         """
         Default loop: collect metrics and ignore logs.
         Subclasses can override for more sophisticated behavior.
+        
+        NOTE: This method now uses the centralized polling manager to prevent
+        aggressive polling and coordinate with other monitoring tasks.
         """
-        while True:
+        # Use centralized polling manager instead of manual loop
+        from ..polling_manager import get_polling_manager, PollingPriority
+
+        manager = get_polling_manager()
+        
+        # Determine priority based on scrape interval
+        if self.config.scrape_interval < 10:
+            priority = PollingPriority.HIGH
+        elif self.config.scrape_interval < 60:
+            priority = PollingPriority.NORMAL
+        else:
+            priority = PollingPriority.LOW
+
+        async def collect_wrapper():
+            """Wrapper to collect metrics and handle errors."""
             try:
                 metrics = await self.collect_metrics()
                 if metrics:
@@ -68,8 +85,35 @@ class EdgeCollector:
                     )
             except Exception:  # pragma: no cover - defensive
                 logger.exception("Collector %s failed to collect metrics", self.config.host)
+                raise  # Re-raise so polling manager can track errors
 
-            await asyncio.sleep(self.config.scrape_interval)
+        task_name = f"edge_collector_{self.config.host}"
+        manager.register_task(
+            name=task_name,
+            callback=collect_wrapper,
+            interval_seconds=self.config.scrape_interval,
+            priority=priority,
+            enabled=True,
+        )
+
+        # Start manager if not already running
+        if not manager._running:
+            await manager.start()
+
+        logger.info(
+            f"Edge collector {self.config.host} registered with polling manager "
+            f"(interval: {self.config.scrape_interval}s, priority: {priority.value})"
+        )
+        
+        # Keep the task running (polling manager handles the actual polling)
+        # This allows the method to be awaited and cancelled properly
+        try:
+            while True:
+                await asyncio.sleep(3600)  # Sleep for 1 hour, check periodically
+        except asyncio.CancelledError:
+            # Unregister when cancelled
+            manager.unregister_task(task_name)
+            raise
 
 
 class EdgeAgentManager:

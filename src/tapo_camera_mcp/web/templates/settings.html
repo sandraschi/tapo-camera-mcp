@@ -137,6 +137,43 @@
         background-color: #e5e7eb;
     }
 
+    .btn-danger {
+        background-color: #dc2626;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .btn-danger:hover {
+        background-color: #b91c1c;
+    }
+
+    .btn-danger:disabled {
+        background-color: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    .battery-status-good {
+        color: #10b981;
+    }
+
+    .battery-status-low {
+        color: #f59e0b;
+    }
+
+    .battery-status-critical {
+        color: #dc2626;
+    }
+
+    .battery-status-unknown {
+        color: #6b7280;
+    }
+
     .form-input {
         padding: 0.5rem;
         border: 1px solid #d1d5db;
@@ -408,6 +445,112 @@
         </div>
     </div>
 
+    <!-- Ring Battery Monitoring -->
+    <div class="settings-section">
+        <h3>
+            <i class="fas fa-battery-half text-yellow-500"></i>
+            Ring Doorbell Battery Status
+        </h3>
+        <div id="ring-battery-status" class="settings-grid">
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Loading...</div>
+                    <div class="setting-description">Checking Ring device battery status</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nest Protect Battery Monitoring -->
+    <div class="settings-section">
+        <h3>
+            <i class="fas fa-fire-extinguisher text-red-500"></i>
+            Nest Protect Battery Status
+        </h3>
+        <div id="nest-battery-status" class="settings-grid">
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Loading...</div>
+                    <div class="setting-description">Checking Nest Protect device battery status</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Retention Policies -->
+    <div class="settings-section">
+        <h3>
+            <i class="fas fa-clock text-purple-500"></i>
+            Data Retention Policies
+        </h3>
+        <div class="settings-grid">
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Video Recordings</div>
+                    <div class="setting-description">Days to keep video recordings</div>
+                </div>
+                <div class="setting-control">
+                    <input type="number" id="retention-video" class="form-input" min="1" max="3650" value="30" style="width: 100px;">
+                    <span class="text-sm text-gray-500 ml-2">days</span>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Snapshots</div>
+                    <div class="setting-description">Days to keep snapshot images</div>
+                </div>
+                <div class="setting-control">
+                    <input type="number" id="retention-snapshots" class="form-input" min="1" max="3650" value="90" style="width: 100px;">
+                    <span class="text-sm text-gray-500 ml-2">days</span>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Environment Data</div>
+                    <div class="setting-description">Days to keep weather/energy time series</div>
+                </div>
+                <div class="setting-control">
+                    <input type="number" id="retention-environment" class="form-input" min="1" max="3650" value="365" style="width: 100px;">
+                    <span class="text-sm text-gray-500 ml-2">days</span>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 flex gap-4">
+            <button id="save-retention" class="btn-primary">
+                <i class="fas fa-save mr-2"></i>
+                Save Retention Policies
+            </button>
+        </div>
+    </div>
+
+    <!-- Data Management -->
+    <div class="settings-section" style="border: 2px solid #dc2626;">
+        <h3 style="color: #dc2626;">
+            <i class="fas fa-exclamation-triangle"></i>
+            Data Management (Danger Zone)
+        </h3>
+        <div class="setting-item">
+            <div class="setting-info">
+                <div class="setting-label">Scrub Old Data</div>
+                <div class="setting-description">
+                    Permanently delete data older than retention policies. This action cannot be undone!
+                    Use "Preview" first to see what would be deleted.
+                </div>
+            </div>
+            <div class="setting-control">
+                <button id="scrub-preview" class="btn-secondary" style="margin-right: 0.5rem;">
+                    <i class="fas fa-eye mr-2"></i>
+                    Preview
+                </button>
+                <button id="scrub-execute" class="btn-danger" style="background-color: #dc2626; color: white;">
+                    <i class="fas fa-trash-alt mr-2"></i>
+                    Scrub Now
+                </button>
+            </div>
+        </div>
+        <div id="scrub-results" style="margin-top: 1rem; display: none;"></div>
+    </div>
+
     <!-- Actions -->
     <div class="settings-section">
         <h3>
@@ -431,12 +574,45 @@
     </div>
 
     <script>
-        // Simple settings page functionality to avoid errors
+        // Settings page functionality
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Settings page loaded successfully');
 
-            // Add basic button functionality
-            const saveBtn = document.querySelector('.btn-primary');
+            // Load retention policies
+            loadRetentionPolicies();
+
+            // Load Ring battery status
+            loadRingBatteryStatus();
+            setInterval(loadRingBatteryStatus, 60000); // Refresh every minute
+
+            // Load Nest Protect battery status
+            loadNestBatteryStatus();
+            setInterval(loadNestBatteryStatus, 60000); // Refresh every minute
+
+            // Save retention policies
+            const saveRetentionBtn = document.getElementById('save-retention');
+            if (saveRetentionBtn) {
+                saveRetentionBtn.addEventListener('click', saveRetentionPolicies);
+            }
+
+            // Scrub buttons
+            const scrubPreviewBtn = document.getElementById('scrub-preview');
+            const scrubExecuteBtn = document.getElementById('scrub-execute');
+            if (scrubPreviewBtn) {
+                scrubPreviewBtn.addEventListener('click', () => scrubData(true));
+            }
+            if (scrubExecuteBtn) {
+                scrubExecuteBtn.addEventListener('click', () => {
+                    if (confirm('⚠️ WARNING: This will permanently delete old data based on retention policies!\n\nThis action CANNOT be undone. Are you absolutely sure?')) {
+                        if (confirm('Final confirmation: Delete old data now?')) {
+                            scrubData(false);
+                        }
+                    }
+                });
+            }
+
+            // Basic button functionality
+            const saveBtn = document.querySelector('.btn-primary:not(#save-retention)');
             const resetBtn = document.querySelectorAll('.btn-secondary')[0];
             const exportBtn = document.querySelectorAll('.btn-secondary')[1];
 
@@ -459,29 +635,235 @@
                     alert('Configuration export not implemented yet');
                 });
             }
-
-            // Update camera count from API
-            fetch('/api/settings')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        const cameraElements = document.querySelectorAll('.setting-description');
-                        cameraElements.forEach(el => {
-                            if (el.textContent.includes('Total number of cameras')) {
-                                // Find the parent and update the value display
-                                const parent = el.closest('.setting-item');
-                                if (parent) {
-                                    const valueElement = parent.querySelector('.text-sm.font-medium');
-                                    if (valueElement) {
-                                        valueElement.textContent = data.settings.total_cameras || 0;
-                                    }
-                                }
-                            }
-                        });
-                    }
-                })
-                .catch(error => console.error('Error loading settings:', error));
         });
+
+        async function loadRetentionPolicies() {
+            try {
+                const response = await fetch('/api/settings/retention');
+                const data = await response.json();
+                if (data.success && data.policies) {
+                    document.getElementById('retention-video').value = data.policies.video_recordings || 30;
+                    document.getElementById('retention-snapshots').value = data.policies.snapshots || 90;
+                    document.getElementById('retention-environment').value = data.policies.environment_data || 365;
+                }
+            } catch (error) {
+                console.error('Error loading retention policies:', error);
+            }
+        }
+
+        async function saveRetentionPolicies() {
+            const video = parseInt(document.getElementById('retention-video').value);
+            const snapshots = parseInt(document.getElementById('retention-snapshots').value);
+            const environment = parseInt(document.getElementById('retention-environment').value);
+
+            try {
+                const response = await fetch('/api/settings/retention', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        video_recordings: video,
+                        snapshots: snapshots,
+                        environment_data: environment,
+                    }),
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert('Retention policies saved successfully!');
+                } else {
+                    alert('Error saving retention policies: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error saving retention policies:', error);
+                alert('Error saving retention policies: ' + error.message);
+            }
+        }
+
+        async function loadRingBatteryStatus() {
+            const container = document.getElementById('ring-battery-status');
+            if (!container) return;
+
+            try {
+                const response = await fetch('/api/security/ring/status');
+                const data = await response.json();
+                
+                if (data.devices && data.devices.length > 0) {
+                    container.innerHTML = data.devices.map(device => {
+                        const batteryLevel = device.battery_level;
+                        const batteryStatus = device.battery_status || 'unknown';
+                        const isCharging = device.is_charging;
+                        const statusClass = `battery-status-${batteryStatus}`;
+                        const statusIcon = batteryStatus === 'critical' ? 'fa-battery-empty' :
+                                          batteryStatus === 'low' ? 'fa-battery-quarter' :
+                                          batteryStatus === 'good' ? 'fa-battery-full' : 'fa-battery-half';
+                        const chargingIcon = isCharging ? '<i class="fas fa-plug text-green-500 ml-2"></i>' : '';
+
+                        return `
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">${device.name || device.device_id}</div>
+                                    <div class="setting-description">
+                                        ${device.model || 'Ring Doorbell'} - ${device.location || 'Unknown Location'}
+                                    </div>
+                                </div>
+                                <div class="setting-control">
+                                    <span class="${statusClass}" style="font-weight: 600;">
+                                        <i class="fas ${statusIcon}"></i>
+                                        ${batteryLevel !== null ? batteryLevel + '%' : batteryStatus}
+                                        ${chargingIcon}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    container.innerHTML = `
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">No Ring Devices</div>
+                                <div class="setting-description">No Ring doorbells configured or detected</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading Ring battery status:', error);
+                container.innerHTML = `
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">Error</div>
+                            <div class="setting-description">Failed to load Ring battery status</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadNestBatteryStatus() {
+            const container = document.getElementById('nest-battery-status');
+            if (!container) return;
+
+            try {
+                const response = await fetch('/api/security/nest/status');
+                const data = await response.json();
+                
+                if (data.devices && data.devices.length > 0) {
+                    container.innerHTML = data.devices.map(device => {
+                        const batteryLevel = device.battery_level;
+                        const batteryStatus = device.battery_status || 'unknown';
+                        const statusClass = `battery-status-${batteryStatus}`;
+                        const statusIcon = batteryStatus === 'critical' ? 'fa-battery-empty' :
+                                          batteryStatus === 'low' ? 'fa-battery-quarter' :
+                                          batteryStatus === 'good' ? 'fa-battery-full' : 'fa-battery-half';
+                        const deviceType = device.type === 'smoke_detector' ? 'Smoke/CO Detector' : 
+                                          device.type === 'co_detector' ? 'CO Detector' : 'Protect';
+                        const statusBadge = device.status === 'online' ? 
+                            '<span class="status-indicator status-online" style="margin-left: 0.5rem;">Online</span>' :
+                            device.status === 'offline' ?
+                            '<span class="status-indicator status-offline" style="margin-left: 0.5rem;">Offline</span>' :
+                            '<span class="status-indicator" style="background-color: #fef3c7; color: #92400e; margin-left: 0.5rem;">Warning</span>';
+
+                        return `
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-label">${device.name || device.device_id} ${statusBadge}</div>
+                                    <div class="setting-description">
+                                        ${deviceType} - ${device.location || 'Unknown Location'}
+                                    </div>
+                                </div>
+                                <div class="setting-control">
+                                    <span class="${statusClass}" style="font-weight: 600;">
+                                        <i class="fas ${statusIcon}"></i>
+                                        ${batteryLevel !== null ? batteryLevel + '%' : batteryStatus}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    container.innerHTML = `
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">No Nest Protect Devices</div>
+                                <div class="setting-description">No Nest Protect devices configured or detected</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading Nest Protect battery status:', error);
+                container.innerHTML = `
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">Error</div>
+                            <div class="setting-description">Failed to load Nest Protect battery status</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function scrubData(dryRun) {
+            const resultsDiv = document.getElementById('scrub-results');
+            const scrubExecuteBtn = document.getElementById('scrub-execute');
+            
+            if (resultsDiv) {
+                resultsDiv.style.display = 'block';
+                resultsDiv.innerHTML = '<p>Processing...</p>';
+            }
+
+            if (scrubExecuteBtn) {
+                scrubExecuteBtn.disabled = true;
+            }
+
+            try {
+                const response = await fetch('/api/storage/scrub', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        confirm: true,
+                        dry_run: dryRun,
+                    }),
+                });
+                const data = await response.json();
+                
+                if (resultsDiv) {
+                    if (data.success) {
+                        const results = data.results || {};
+                        resultsDiv.innerHTML = `
+                            <div style="background: ${dryRun ? '#fef3c7' : '#dcfce7'}; border: 1px solid ${dryRun ? '#f59e0b' : '#10b981'}; border-radius: 0.5rem; padding: 1rem;">
+                                <strong>${dryRun ? 'Preview Results:' : 'Scrub Completed:'}</strong>
+                                <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                                    <li>Videos: ${results.videos_deleted || 0}</li>
+                                    <li>Snapshots: ${results.snapshots_deleted || 0}</li>
+                                    <li>Environment records: ${results.environment_records_deleted || 0}</li>
+                                    <li>Files deleted: ${results.files_deleted || 0}</li>
+                                    <li>Space freed: ${(results.space_freed_mb || 0).toFixed(2)} MB</li>
+                                </ul>
+                            </div>
+                        `;
+                    } else {
+                        resultsDiv.innerHTML = `
+                            <div style="background: #fee2e2; border: 1px solid #dc2626; border-radius: 0.5rem; padding: 1rem; color: #991b1b;">
+                                <strong>Error:</strong> ${data.error || 'Unknown error'}
+                            </div>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Error scrubbing data:', error);
+                if (resultsDiv) {
+                    resultsDiv.innerHTML = `
+                        <div style="background: #fee2e2; border: 1px solid #dc2626; border-radius: 0.5rem; padding: 1rem; color: #991b1b;">
+                            <strong>Error:</strong> ${error.message}
+                        </div>
+                    `;
+                }
+            } finally {
+                if (scrubExecuteBtn) {
+                    scrubExecuteBtn.disabled = false;
+                }
+            }
+        }
     </script>
 </div>
 {% endblock %}

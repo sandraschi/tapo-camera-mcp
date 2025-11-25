@@ -29,11 +29,17 @@ class WebCamera(BaseCamera):
     async def _capture_loop(self):
         """Background task to capture frames."""
         while self._is_connected:
-            ret, frame = self._cap.read()
-            if ret:
-                async with self._frame_lock:
-                    self._frame = frame
-            await asyncio.sleep(0.03)  # ~30 FPS
+            try:
+                ret, frame = self._cap.read()
+                if ret:
+                    async with self._frame_lock:
+                        self._frame = frame
+            except Exception as e:
+                logger.debug(f"Error in capture loop: {e}")
+            finally:
+                # Always sleep to prevent tight polling loops
+                # 0.1 seconds = 10 FPS (reasonable for status monitoring)
+                await asyncio.sleep(0.1)
 
     async def connect(self) -> bool:
         """Initialize connection to the webcam."""

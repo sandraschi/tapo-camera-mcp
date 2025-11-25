@@ -1,5 +1,3 @@
-version: '3.8'
-
 name: myhomecontrol
 
 services:
@@ -10,6 +8,11 @@ services:
     container_name: myhomecontrol-app
     environment:
       - PYTHONUNBUFFERED=1
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=myhomecontrol
+      - POSTGRES_USER=myhomecontrol
+      - POSTGRES_PASSWORD=myhomecontrol
     ports:
       - "7777:7777"
     volumes:
@@ -18,6 +21,9 @@ services:
       - app_snapshots:/app/snapshots
       - app_recordings:/app/recordings
       - app_cache:/app/cache
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7777/api/health', timeout=4)"]
       interval: 30s
@@ -29,11 +35,29 @@ services:
     # devices:
     #   - "/dev/video0:/dev/video0"
 
+  postgres:
+    image: postgres:16-alpine
+    container_name: myhomecontrol-postgres
+    environment:
+      - POSTGRES_DB=myhomecontrol
+      - POSTGRES_USER=myhomecontrol
+      - POSTGRES_PASSWORD=myhomecontrol
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myhomecontrol"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - myhomecontrol
+
 volumes:
   app_logs:
   app_snapshots:
   app_recordings:
   app_cache:
+  postgres_data:
 
 networks:
   myhomecontrol:

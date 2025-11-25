@@ -1,274 +1,63 @@
-# MCP Central Documentation Repository Cursor Rules
+# Central Documentation Rules
 
-## 🎯 Repository Purpose
+## Rule #1: Read Central Docs First
 
-**This is the central documentation repository for all MCP projects.**
+**BEFORE making any changes or starting work, ALWAYS:**
 
-This repository serves as:
-- 📚 **Documentation Standards** - Central source of truth for doc quality
-- 📊 **Quality Tracking** - Assessment scores and improvement progress
-- 📝 **Templates** - Reusable documentation templates
-- 🎯 **Pattern Library** - Best practices extracted from successful projects
-- 🚀 **Doc Bash Coordination** - Systematic improvement planning and tracking
-- 📱 **Monitoring Standards** - Unified monitoring documentation and MaaS strategies
+1. **Read the Central Documentation README:**
+   - Location: `D:\Dev\repos\mcp-central-docs\README.md`
+   - This shows all important documentation "branches" (folder trees)
+   - Navigate from there to find specific information
 
-### 🚨 **CRITICAL: All Repository .cursorrules Must Include**
-**REQUIRED**: All repository .cursorrules files MUST include the following statement:
+2. **Follow Documentation Branches:**
+   - Central docs are organized by topic (Anthropic ecosystem, Google ecosystem, patterns, projects, etc.)
+   - Each branch has its own README explaining what's inside
+   - Use the branch structure to find relevant docs
 
-> **📚 CONSULT CENTRAL DOCS FIRST**: Before creating new documentation, standards, or patterns, consult the central docs repository (`D:\Dev\repos\mcp-central-docs\`) for existing documentation and standards. This ensures consistency and avoids duplication across all MCP repositories.
+3. **Check for Existing Patterns:**
+   - Look in `docs/patterns/` for design patterns
+   - Check `templates/` for reusable templates
+   - Review `docs/projects/` for similar project examples
 
-### 🎯 **Project-Specific Rules**
-**RECOMMENDED**: Each repository should include project-specific guidelines:
-
-> **🔧 PROJECT-SPECIFIC RULES**: Each MCP repository should maintain a `.cursorrules-{mcpservername}.md` file containing repository-specific development guidelines, domain-specific requirements, and specialized patterns. For example: `.cursorrules-tapo-camera-mcp.md` for hardware integration, `.cursorrules-notepadpp-mcp.md` for text editing, etc.
-
-**Current Project**: See [`.cursorrules-tapo-camera-mcp.md`](.cursorrules-tapo-camera-mcp.md) for hardware-specific development guidelines, security requirements, and camera integration patterns.
-
-### 📋 **Creating Project-Specific Rules**
-
-When creating a new `.cursorrules-{mcpservername}.md` file, include:
-
-1. **Project Overview** - Purpose and domain-specific focus
-2. **Domain-Specific Guidelines** - Specialized requirements (hardware, APIs, etc.)
-3. **Tool Naming Conventions** - MCP tool naming patterns
-4. **Error Handling Patterns** - Standardized error responses
-5. **Security Requirements** - Domain-specific security needs
-6. **Documentation Standards** - Specialized documentation requirements
-7. **Integration Patterns** - Common integration patterns
-8. **Quality Checklist** - Domain-specific quality criteria
-
-**Template**: Use `.cursorrules-tapo-camera-mcp.md` as a reference template for hardware integration projects.
-
-## Code Standards
-
-### 🚨 CRITICAL: Chat Output & PowerShell Syntax
-
-**REQUIRED**: ALL chat output MUST begin with "hi!" as a test.
-
-**🚫 FORBIDDEN in PowerShell:**
-- `&&` (command chaining) - Use `;` or separate commands
-- `||` (logical OR) - Use PowerShell syntax
-- `mkdir`, `rmdir`, `ls` - Use `New-Item`, `Remove-Item`, `Get-ChildItem`
-- `head`, `tail` - Use PowerShell cmdlets
-- Linux path separators - Use backslash `\` on Windows
+4. **Avoid Duplication:**
+   - Search existing docs before creating new ones
+   - Update existing docs rather than creating duplicates
+   - Reference central docs instead of copying content
 
 ---
 
-### Documentation Standards
+## Documentation Branches (from Central README)
 
-#### **Markdown Quality**
-- **Structure**: Use clear headings and hierarchical organization
-- **Links**: All links must be working and properly formatted
-- **Images**: Include alt text and proper sizing
-- **Code Blocks**: Use proper syntax highlighting
-- **Tables**: Use proper markdown table formatting
+### Core Standards
+- `STANDARDS.md` - Documentation quality standards
+- `STRUCTURE.md` - Directory layout guide
+- `CONTRIBUTING.md` - How to contribute
 
-#### **Content Quality**
-- **Completeness**: Cover all aspects of the topic
-- **Accuracy**: Ensure all information is up-to-date and correct
-- **Clarity**: Write for the target audience
-- **Examples**: Include practical examples and use cases
-- **Cross-References**: Link to related documentation
+### Anthropic Ecosystem (`docs/anthropic-ecosystem/`)
+- MCP Protocol, FastMCP, MCPB, Claude Desktop, Glama
 
-#### **File Organization**
-- **Naming**: Use descriptive, consistent file names
-- **Structure**: Follow established directory patterns
-- **Versioning**: Keep track of document versions and changes
-- **Templates**: Use established templates for consistency
+### Google Ecosystem (`docs/google-ecosystem/`)
+- Gemini 3, Antigravity IDE, Nano Banana Pro, DeepMind, TPU infrastructure
 
-### Naming Conventions
-- **Files**: UPPER_CASE_WITH_UNDERSCORES.md for main documents
-- **Directories**: lowercase-with-hyphens for directory names
-- **Images**: descriptive-names-with-hyphens.png
-- **Templates**: TEMPLATE_NAME.md for reusable templates
+### Patterns (`docs/patterns/`)
+- Design patterns for MCP servers and development
 
-### Import Organization
-```markdown
-# Document Title
+### Projects (`docs/projects/`)
+- myai, veogen, mywienerlinien, autohotkey
 
-## Overview
-Brief description of the document's purpose and scope.
+### Monitoring (`monitoring/`)
+- Prometheus/Grafana/Loki stack
 
-## Table of Contents
-- [Section 1](#section-1)
-- [Section 2](#section-2)
-
-## Section 1
-Content with proper formatting and examples.
-
-## References
-- [Related Document](link)
-- [External Resource](link)
-```
-
-## Repository Structure
-
-### **Core Directories**
-```
-mcp-central-docs/
-├── README.md (this file)
-├── STANDARDS.md (documentation standards)
-├── repos/ (repository-specific documentation)
-├── patterns/ (best practices and patterns)
-├── monitoring/ (monitoring standards and MaaS)
-├── templates/ (reusable templates)
-├── audits/ (quality assessments)
-└── great-doc-bash/ (improvement planning)
-```
-
-### **Documentation Types**
-- **Standards**: Documentation quality standards and guidelines
-- **Patterns**: Best practices extracted from successful projects
-- **Templates**: Reusable documentation templates
-- **Monitoring**: Unified monitoring documentation and MaaS strategies
-- **Audits**: Quality assessments and improvement tracking
-
-## Quality Standards
-
-### **Scoring System (0-10)**
-
-**0-3: Critical** - Barely usable, major gaps  
-**4-6: Needs Work** - Functional but incomplete  
-**7-8: Good** - Solid, few gaps  
-**9-10: Excellent** - World-class, reference quality
-
-### **Quality Criteria**
-
-**Complete (0-3 points)**
-- [ ] All aspects documented
-- [ ] No TODOs or placeholders
-- [ ] Complete coverage from basics to advanced
-- [ ] All examples work and are tested
-
-**Clear (0-2 points)**
-- [ ] Written for target audience
-- [ ] Concrete examples provided
-- [ ] Progressive disclosure used
-- [ ] Clear structure and navigation
-
-**Correct (0-2 points)**
-- [ ] Up-to-date with current practices
-- [ ] Examples work as described
-- [ ] Version appropriate information
-- [ ] Accurate technical details
-
-**Professional (0-2 points)**
-- [ ] Polished writing and grammar
-- [ ] Good formatting and presentation
-- [ ] Consistent style and tone
-- [ ] Professional appearance
-
-**Discoverable (0-1 point)**
-- [ ] Easy navigation and search
-- [ ] Good cross-references and links
-- [ ] Proper categorization and tagging
-- [ ] Accessible from multiple entry points
-
-## Monitoring Documentation
-
-### **MaaS - Monitoring as a Service**
-- **Documentation**: Comprehensive MaaS concept and implementation
-- **Alternatives**: Analysis of existing MaaS providers
-- **Implementation**: Step-by-step implementation strategy
-- **Business Model**: Revenue streams and cost structure
-- **Market Analysis**: Target market and competitive advantages
-
-### **Unified Monitoring Stack**
-- **Architecture**: Single monitoring stack for all repositories
-- **Configuration**: Unified configuration files and scripts
-- **Deployment**: Step-by-step deployment guide
-- **Integration**: Tailnet and RebootX integration
-- **Scaling**: Horizontal scaling strategies
-
-### **RebootX Integration**
-- **Mobile Monitoring**: iPad app for infrastructure monitoring
-- **On-Premises**: Self-hosted RebootX solution
-- **Grafana Integration**: Direct connection to Grafana dashboards
-- **Setup Guide**: Installation and configuration instructions
-- **Use Cases**: Home infrastructure and small business monitoring
-
-## File Organization
-
-### **Documentation Structure**
-- **Main Documents**: UPPER_CASE_WITH_UNDERSCORES.md
-- **Sub-documents**: lowercase-with-hyphens.md
-- **Templates**: TEMPLATE_NAME.md
-- **Configuration**: config-name.yml or config-name.json
-
-### **Cross-References**
-- **Internal Links**: Use relative paths for internal documents
-- **External Links**: Use full URLs for external resources
-- **Version Links**: Link to specific versions when appropriate
-- **Backlinks**: Include backlinks for related documents
-
-## AI Assistant Guidelines
-
-### **Documentation Creation**
-- **Be Comprehensive**: Cover all aspects of the topic
-- **Use Examples**: Include practical examples and use cases
-- **Maintain Quality**: Follow established quality standards
-- **Update Cross-References**: Keep all links current and working
-- **Follow Templates**: Use established templates for consistency
-
-### **Quality Assurance**
-- **Review Content**: Ensure accuracy and completeness
-- **Check Links**: Verify all links are working
-- **Test Examples**: Ensure all examples work as described
-- **Maintain Standards**: Follow established quality criteria
-- **Update Metadata**: Keep document metadata current
-
-### **Collaboration**
-- **Share Knowledge**: Document best practices and patterns
-- **Maintain Consistency**: Follow established conventions
-- **Support Others**: Help with documentation questions
-- **Contribute Improvements**: Suggest and implement improvements
-- **Track Changes**: Maintain change logs and version history
-
-## Integration Guidelines
-
-### **Repository Integration**
-- **Copy Documentation**: Copy relevant docs to central repo
-- **Maintain Sync**: Keep central and local docs synchronized
-- **Version Control**: Track versions and changes
-- **Quality Gates**: Ensure quality before centralization
-
-### **Monitoring Integration**
-- **Unified Standards**: Use unified monitoring standards
-- **MaaS Strategy**: Implement MaaS for cost-effective monitoring
-- **RebootX Integration**: Include mobile monitoring capabilities
-- **Tailnet Integration**: Use Tailscale for secure communication
-
-## Version Management
-
-### **Document Versioning**
-- **Version Numbers**: Use semantic versioning (1.0.0, 1.1.0, 2.0.0)
-- **Change Logs**: Maintain detailed change logs
-- **Deprecation**: Mark deprecated documents clearly
-- **Migration Guides**: Provide migration guides for major changes
-
-### **Template Updates**
-- **Backward Compatibility**: Maintain backward compatibility
-- **Migration Paths**: Provide clear migration paths
-- **Documentation**: Document all template changes
-- **Testing**: Test all template changes thoroughly
-
-## Security and Compliance
-
-### **Document Security**
-- **Access Control**: Control access to sensitive documentation
-- **Data Protection**: Protect sensitive information in docs
-- **Audit Trails**: Maintain audit trails for document changes
-- **Compliance**: Ensure compliance with relevant standards
-
-### **Monitoring Security**
-- **Tailnet Security**: Use Tailscale for secure communication
-- **Data Encryption**: Encrypt sensitive monitoring data
-- **Access Control**: Implement proper access controls
-- **Audit Logging**: Maintain comprehensive audit logs
+### Templates (`templates/`)
+- Reusable templates and scripts
 
 ---
 
-**Status**: ✅ Active  
-**Last Updated**: October 23, 2025  
-**Version**: 1.0.0  
-**Purpose**: Central documentation standards and guidelines for all MCP projects
+## Quick Reference
+
+**Central Docs Location:** `D:\Dev\repos\mcp-central-docs\`
+
+**Start Here:** `D:\Dev\repos\mcp-central-docs\README.md`
+
+**When in doubt:** Read the central README and navigate from there.
+

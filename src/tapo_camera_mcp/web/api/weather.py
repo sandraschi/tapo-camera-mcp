@@ -60,9 +60,9 @@ class HealthReportResponse(BaseModel):
     timestamp: float = Field(..., description="Report timestamp")
 
 
-from ...integrations.netatmo_client import NetatmoService
 from ...config import get_model
 from ...config.models import WeatherSettings
+from ...integrations.netatmo_client import NetatmoService
 
 _netatmo_service = NetatmoService()
 
@@ -124,13 +124,12 @@ async def get_station_weather_data(
             return WeatherDataResponse(
                 station_id=station_id, module_type=module_type, data=data, timestamp=ts
             )
-        else:
-            # No Netatmo configured - return error instead of mock data
-            logger.warning(f"Netatmo integration not enabled. Cannot get weather data for station {station_id}.")
-            raise HTTPException(
-                status_code=503,
-                detail="Netatmo integration not enabled. Configure Netatmo in config.yaml to enable weather data."
-            )
+        # No Netatmo configured - return error instead of mock data
+        logger.warning(f"Netatmo integration not enabled. Cannot get weather data for station {station_id}.")
+        raise HTTPException(
+            status_code=503,
+            detail="Netatmo integration not enabled. Configure Netatmo in config.yaml to enable weather data."
+        )
 
     except Exception as e:
         logger.exception("Failed to get weather data")
@@ -151,7 +150,7 @@ async def get_station_historical_data(
 
         cfg = get_model(WeatherSettings)
         use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
-        
+
         if not use_netatmo:
             logger.warning(f"Netatmo integration not enabled. Cannot get historical data for station {station_id}.")
             raise HTTPException(
@@ -159,14 +158,45 @@ async def get_station_historical_data(
                 detail="Netatmo integration not enabled. Configure Netatmo in config.yaml to enable historical weather data."
             )
 
-        # TODO: Implement real historical data fetching from Netatmo
-        # For now, return empty data instead of mock data
+        # Get historical data from database
+
+        from ...db import TimeSeriesDB
+
+        db = TimeSeriesDB()
+
+        # Convert time_range to hours
+        time_range_hours = {
+            "1h": 1,
+            "6h": 6,
+            "24h": 24,
+            "7d": 168,  # 7 days
+            "30d": 720,  # 30 days
+        }
+        hours = time_range_hours.get(time_range, 24)
+
+        # Get data from database (use indoor module by default)
+        history = db.get_weather_history(
+            station_id=station_id,
+            module_type="indoor",  # Default to indoor module
+            data_type=data_type,
+            hours=hours,
+        )
+
+        # Format data points for frontend
+        data_points = [
+            {
+                "timestamp": point["timestamp"],
+                "value": point["value"],
+            }
+            for point in history
+        ]
+
         return HistoricalDataResponse(
             station_id=station_id,
             data_type=data_type,
             time_range=time_range,
-            data_points=[],
-            count=0,
+            data_points=data_points,
+            count=len(data_points),
         )
 
         # REMOVED: Mock historical data generation
