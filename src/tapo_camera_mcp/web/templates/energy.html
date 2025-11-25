@@ -369,6 +369,12 @@ let chartData = {
 
 // Initialize chart
 function initChart() {
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not loaded. Cannot initialize chart.');
+        updateChartPlaceholder('Chart.js library is loading...');
+        return;
+    }
+    
     const ctx = document.getElementById('powerChart');
     if (!ctx) return;
     
@@ -461,6 +467,14 @@ function initChart() {
 // Load chart data
 async function loadChartData() {
     try {
+        // Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            updateChartPlaceholder('Chart.js library is loading...');
+            // Retry after a delay
+            setTimeout(loadChartData, 1000);
+            return;
+        }
+        
         const devices = await fetch('/api/sensors/tapo-p115').then(r => r.json()).then(d => d.devices || []);
         if (devices.length === 0) {
             updateChartPlaceholder('No devices configured');
@@ -491,7 +505,8 @@ async function loadChartData() {
         // Group by timestamp and aggregate power
         const aggregated = {};
         allHistoryData.forEach(point => {
-            const ts = point.timestamp;
+            // Normalize timestamp (database returns Unix timestamp in seconds)
+            const ts = typeof point.timestamp === 'number' ? point.timestamp : new Date(point.timestamp).getTime() / 1000;
             if (!aggregated[ts]) {
                 aggregated[ts] = {
                     timestamp: ts,
@@ -503,14 +518,16 @@ async function loadChartData() {
             aggregated[ts].count += 1;
         });
         
-        // Sort by timestamp
+        // Sort by timestamp (already normalized to Unix seconds)
         const sortedData = Object.values(aggregated)
             .map(d => ({ ...d, power: d.power / d.count })) // Average power
-            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            .sort((a, b) => a.timestamp - b.timestamp);
         
         // Prepare chart data
         chartData.labels = sortedData.map(d => {
-            const date = new Date(d.timestamp);
+            // Handle both Unix timestamp (seconds) and ISO string
+            const timestamp = typeof d.timestamp === 'number' ? d.timestamp * 1000 : d.timestamp;
+            const date = new Date(timestamp);
             if (currentTimeRange === '24h') {
                 return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             }
@@ -531,6 +548,11 @@ async function loadChartData() {
         });
         
         // Update chart
+        if (typeof Chart === 'undefined') {
+            updateChartPlaceholder('Chart.js library is loading...');
+            return;
+        }
+        
         if (powerChart) {
             powerChart.data.labels = chartData.labels;
             powerChart.data.datasets[0].data = chartData.power;
@@ -619,20 +641,41 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Refresh chart every 30 seconds
             setInterval(loadChartData, 30000);
+        } else {
+            console.error('Chart.js failed to load. Check Content Security Policy settings.');
+            const chartContainer = document.getElementById('powerChart');
+            if (chartContainer && chartContainer.parentElement) {
+                chartContainer.parentElement.innerHTML = '<p style="color: red; padding: 20px;">Error: Chart.js library failed to load. Please check your browser console and Content Security Policy settings.</p>';
+            }
         }
-    }, 500);
+    }, 1000);
 });
 
 async function loadDevices() {
     try {
+        console.log('Loading Tapo P115 devices...');
         const response = await fetch('/api/sensors/tapo-p115');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log('API response:', data);
         
         let devices = data.devices || [];
         const container = document.getElementById('devices-container');
         
+        if (!container) {
+            console.error('devices-container element not found!');
+            return;
+        }
+        
+        console.log(`Found ${devices.length} devices`);
+        
         if (devices.length === 0) {
             container.innerHTML = '<p>No devices found. Configure P115 plugs in config.yaml</p>';
+            console.warn('No devices found in API response');
             return;
         }
 
@@ -651,7 +694,14 @@ async function loadDevices() {
         updateOverview(devices);
         
         // Render device cards
-        container.innerHTML = devices.map(device => createDeviceCard(device)).join('');
+        console.log('Rendering device cards...');
+        const deviceCardsHtml = devices.map(device => {
+            console.log(`  Rendering device: ${device.name} (${device.device_id})`);
+            return createDeviceCard(device);
+        }).join('');
+        
+        container.innerHTML = deviceCardsHtml;
+        console.log(`Rendered ${devices.length} device cards`);
         
         // Add event listeners
         document.querySelectorAll('.toggle-btn').forEach(button => {
@@ -664,8 +714,11 @@ async function loadDevices() {
         
     } catch (error) {
         console.error('Error loading devices:', error);
-        document.getElementById('devices-container').innerHTML = 
-            '<p>Error loading devices: ' + error.message + '</p>';
+        const container = document.getElementById('devices-container');
+        if (container) {
+            container.innerHTML = 
+                '<p style="color: red;">Error loading devices: ' + error.message + '</p>';
+        }
     }
 }
 
@@ -755,17 +808,62 @@ function createDeviceCard(device) {
 
 async function toggleDevice(deviceId, turnOn) {
     try {
+        console.log(`Toggling device ${deviceId} to ${turnOn ? 'ON' : 'OFF'}`);
+        const requestBody = {turn_on: turnOn};
+        console.log('Request body:', JSON.stringify(requestBody));
+        
         const response = await fetch(`/api/sensors/tapo-p115/${deviceId}/toggle`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({turn_on: turnOn})
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
         });
         
+        console.log('Response status:', response.status, response.statusText);
+        
         if (!response.ok) {
-            throw new Error('Failed to toggle device');
+            let errorMessage = `HTTP error! status: ${response.status} ${response.statusText}`;
+            try {
+                const errorData = await response.json();
+                console.error('Error response JSON:', JSON.stringify(errorData, null, 2));
+                // Handle FastAPI validation errors
+                if (errorData.detail) {
+                    if (Array.isArray(errorData.detail)) {
+                        // Validation errors are arrays
+                        errorMessage = errorData.detail.map(err => {
+                            if (typeof err === 'string') return err;
+                            return `${err.loc?.join('.') || 'field'}: ${err.msg || err.type || 'validation error'}`;
+                        }).join('; ');
+                    } else if (typeof errorData.detail === 'string') {
+                        errorMessage = errorData.detail;
+                    } else {
+                        errorMessage = JSON.stringify(errorData.detail);
+                    }
+                } else {
+                    errorMessage = errorData.message || errorData.error || JSON.stringify(errorData);
+                }
+            } catch (e) {
+                try {
+                    const text = await response.text();
+                    console.error('Error response text:', text);
+                    errorMessage = text || errorMessage;
+                } catch (e2) {
+                    console.error('Could not read error response:', e2);
+                }
+            }
+            throw new Error(errorMessage);
         }
         
-        // Reload devices after toggle
+        const result = await response.json();
+        console.log('Toggle response:', result);
+        
+        if (result.success) {
+            console.log(`Device ${deviceId} toggled successfully to ${result.power_state ? 'ON' : 'OFF'}`);
+        }
+        
+        // Reload devices after toggle to get updated state
         await loadDevices();
         
         // Reload chart data to reflect changes
@@ -775,7 +873,9 @@ async function toggleDevice(deviceId, turnOn) {
         
     } catch (error) {
         console.error('Error toggling device:', error);
-        alert('Error toggling device: ' + error.message);
+        console.error('Error stack:', error.stack);
+        const errorMessage = error.message || String(error) || 'Unknown error occurred';
+        alert('Error toggling device: ' + errorMessage);
     }
 }
 

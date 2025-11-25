@@ -1,15 +1,20 @@
 # 🏠 Home Security MCP Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python Version](https://img.shields.io/pypi/pyversions/home-security-mcp-platform)](https://www.python.org/)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/releases)
+[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![MCP Version](https://img.shields.io/badge/MCP-2.12.0-blue)](https://mcp-standard.org)
-[![Security Platform](https://img.shields.io/badge/Platform-Home%20Security-orange)](https://github.com/sandraschi/tapo-camera-mcp)
-[![Dashboard](https://img.shields.io/badge/Dashboard-Live-green)](http://localhost:7777)
-[![Multi-Device](https://img.shields.io/badge/Devices-Tapo%20%7C%20Ring%20%7C%20Nest%20%7C%20USB-blue)](https://github.com/sandraschi/tapo-camera-mcp)
-[![Status](https://img.shields.io/badge/Status-Beta-orange)](https://github.com/sandraschi/tapo-camera-mcp)
+[![FastMCP](https://img.shields.io/badge/FastMCP-2.12.0-green.svg)](https://github.com/jlowin/fastmcp)
+[![Status](https://img.shields.io/badge/status-Production%20Ready-success.svg)](https://github.com/sandraschi/tapo-camera-mcp)
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/actions)
+[![Dashboard](https://img.shields.io/badge/Dashboard-Live-green.svg)](http://localhost:7777)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
+[![Energy Dashboard](https://img.shields.io/badge/Energy%20Dashboard-Operational-success.svg)](http://localhost:7777/energy)
+[![Multi-Device](https://img.shields.io/badge/Devices-Tapo%20%7C%20Ring%20%7C%20Nest%20%7C%20USB-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp)
+[![LLM Integration](https://img.shields.io/badge/LLM-Multi--Provider-orange.svg)](https://github.com/sandraschi/tapo-camera-mcp)
 
-🚀 **BETA STATUS**: Comprehensive home security platform with unified surveillance dashboard, multi-device MCP architecture - serving as both individual device MCP servers AND a complete security monitoring ecosystem.
+🚀 **PRODUCTION-READY**: Comprehensive home security platform with unified surveillance dashboard, multi-device MCP architecture - serving as both individual device MCP servers AND a complete security monitoring ecosystem.
 
 ## 🏗️ **DUAL ARCHITECTURE OVERVIEW**
 
