@@ -75,3 +75,16 @@ Thumbs.db
 *.bak
 *.swp
 *~
+
+# GitLab runtime data and sockets
+deploy/gitlab/data/
+deploy/gitlab/logs/
+deploy/gitlab/config/*.json
+deploy/gitlab/config/*.key
+deploy/gitlab/config/*.pub
+deploy/gitlab/config/initial_root_password
+*.socket
+
+# Docker runtime files
+*.pid
+*.sock
