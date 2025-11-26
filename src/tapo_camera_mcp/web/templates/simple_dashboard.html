@@ -12,30 +12,30 @@
         border: 1px solid #e5e7eb;
     }
 
-    /* Camera thumbnail responsive styles */
+    /* Camera thumbnail styles - compact for dashboard */
     .camera-thumb-link {
         display: block;
-        width: 320px;
-        height: 240px;
+        width: 200px;
+        height: 150px;
     }
     .camera-thumb-container {
-        width: 320px;
-        height: 240px;
+        width: 200px;
+        height: 150px;
     }
     .camera-thumb-img {
-        width: 320px;
-        height: 240px;
+        width: 200px;
+        height: 150px;
         object-fit: cover;
     }
     .camera-thumb-fallback {
-        width: 320px;
-        height: 240px;
+        width: 200px;
+        height: 150px;
         display: none;
         align-items: center;
         justify-content: center;
         background: #374151;
         color: #9CA3AF;
-        font-size: 48px;
+        font-size: 36px;
     }
 
     @media (max-width: 768px) {
@@ -43,14 +43,11 @@
         .camera-thumb-container,
         .camera-thumb-img,
         .camera-thumb-fallback {
-            width: 100%;
-            max-width: 320px;
-            height: auto;
-            aspect-ratio: 4/3;
+            width: 160px;
+            height: 120px;
         }
-        #camera-row {
-            flex-direction: column;
-            align-items: center;
+        .camera-thumb-fallback {
+            font-size: 28px;
         }
     }
 
