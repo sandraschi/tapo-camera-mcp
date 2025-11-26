@@ -50,6 +50,23 @@
         </div>
     </div>
     
+    <!-- Vienna Public Alerts -->
+    <div class="section" id="vienna-alerts-section">
+        <div class="section-header">
+            <h2>🚨 Vienna Public Alerts</h2>
+            <button onclick="refreshAlerts()" class="btn btn-sm btn-secondary" title="Refresh alerts">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+        
+        <div id="alerts-container">
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading alerts...</p>
+            </div>
+        </div>
+    </div>
+    
     <!-- Recent Events -->
     <div class="section">
         <div class="section-header">
@@ -149,6 +166,155 @@
                 progress.style.width = `${value}%`;
             }
         });
+        
+        // Load Vienna alerts
+        loadAlerts();
+        
+        // Refresh alerts every 5 minutes
+        setInterval(loadAlerts, 5 * 60 * 1000);
     });
+    
+    async function loadAlerts() {
+        const container = document.getElementById('alerts-container');
+        
+        try {
+            const response = await fetch('/alerts/summary');
+            if (!response.ok) throw new Error('Failed to fetch alerts');
+            
+            const data = await response.json();
+            renderAlerts(data);
+        } catch (error) {
+            console.error('Error loading alerts:', error);
+            container.innerHTML = `
+                <div class="alert-item" style="background: #374151; padding: 16px; border-radius: 8px; text-align: center;">
+                    <p style="color: #9CA3AF; margin: 0;">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Unable to load alerts. <a href="#" onclick="loadAlerts(); return false;" style="color: #60A5FA;">Retry</a>
+                    </p>
+                </div>
+            `;
+        }
+    }
+    
+    async function refreshAlerts() {
+        const container = document.getElementById('alerts-container');
+        container.innerHTML = `
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Refreshing alerts...</p>
+            </div>
+        `;
+        
+        try {
+            const response = await fetch('/alerts/refresh');
+            if (!response.ok) throw new Error('Failed to refresh alerts');
+            
+            const data = await response.json();
+            // Convert to summary format
+            const summary = {
+                total_alerts: data.total,
+                highest_severity: data.alerts.length > 0 ? data.alerts[0].severity : 'unknown',
+                highest_severity_color: data.alerts.length > 0 ? data.alerts[0].severity_color : '#9CA3AF',
+                highest_severity_icon: data.alerts.length > 0 ? data.alerts[0].severity_icon : '✓',
+                alerts: data.alerts.slice(0, 5),
+                status: data.total === 0 ? 'ok' : 'warning'
+            };
+            renderAlerts(summary);
+        } catch (error) {
+            console.error('Error refreshing alerts:', error);
+            loadAlerts(); // Fallback to cached
+        }
+    }
+    
+    function renderAlerts(data) {
+        const container = document.getElementById('alerts-container');
+        
+        if (data.total_alerts === 0) {
+            container.innerHTML = `
+                <div class="alert-status-ok" style="background: linear-gradient(135deg, #065F46, #047857); padding: 20px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 8px;">✅</div>
+                    <h3 style="color: #A7F3D0; margin: 0 0 8px 0; font-size: 18px;">All Clear</h3>
+                    <p style="color: #6EE7B7; margin: 0; font-size: 14px;">
+                        No active weather or emergency alerts for Vienna
+                    </p>
+                    <p style="color: #34D399; margin: 8px 0 0 0; font-size: 12px;">
+                        Sources: GeoSphere Austria, Meteoalarm
+                    </p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Build alerts HTML
+        let alertsHtml = `
+            <div class="alerts-summary" style="display: grid; grid-template-columns: auto 1fr; gap: 16px; margin-bottom: 16px;">
+                <div class="alert-badge" style="background: ${data.highest_severity_color}; padding: 16px 24px; border-radius: 12px; text-align: center; min-width: 120px;">
+                    <div style="font-size: 32px;">${data.highest_severity_icon}</div>
+                    <div style="font-size: 24px; font-weight: bold; color: white;">${data.total_alerts}</div>
+                    <div style="font-size: 12px; color: rgba(255,255,255,0.8); text-transform: uppercase;">Alert${data.total_alerts !== 1 ? 's' : ''}</div>
+                </div>
+                <div class="alerts-list" style="display: flex; flex-direction: column; gap: 8px;">
+        `;
+        
+        // Add each alert
+        for (const alert of data.alerts) {
+            const typeIcon = getAlertTypeIcon(alert.alert_type);
+            alertsHtml += `
+                <div class="alert-item" style="background: #374151; padding: 12px 16px; border-radius: 8px; border-left: 4px solid ${alert.severity_color};">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 20px;">${typeIcon}</span>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #F3F4F6; font-size: 14px;">${escapeHtml(alert.title)}</div>
+                            <div style="color: #9CA3AF; font-size: 12px; margin-top: 2px;">
+                                ${alert.region} • ${alert.source === 'geosphere' ? 'GeoSphere' : 'Meteoalarm'}
+                            </div>
+                        </div>
+                        <span style="font-size: 16px;" title="${alert.severity}">${alert.severity_icon}</span>
+                    </div>
+                    ${alert.description ? `<p style="color: #D1D5DB; font-size: 13px; margin: 8px 0 0 32px; line-height: 1.4;">${escapeHtml(truncate(alert.description, 150))}</p>` : ''}
+                </div>
+            `;
+        }
+        
+        alertsHtml += `
+                </div>
+            </div>
+            <div style="text-align: center; color: #6B7280; font-size: 11px;">
+                Last updated: ${new Date().toLocaleTimeString('de-AT')} • Sources: GeoSphere Austria, Meteoalarm
+            </div>
+        `;
+        
+        container.innerHTML = alertsHtml;
+    }
+    
+    function getAlertTypeIcon(type) {
+        const icons = {
+            'weather': '🌤️',
+            'storm': '🌪️',
+            'wind': '💨',
+            'rain': '🌧️',
+            'snow': '❄️',
+            'ice': '🧊',
+            'fog': '🌫️',
+            'heat': '🌡️',
+            'cold': '🥶',
+            'thunderstorm': '⛈️',
+            'flood': '🌊',
+            'fire': '🔥',
+            'avalanche': '🏔️',
+        };
+        return icons[type] || '⚠️';
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function truncate(text, maxLength) {
+        if (!text || text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
+    }
 </script>
 {% endblock %}

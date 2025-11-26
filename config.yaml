@@ -93,3 +93,18 @@ weather:
       username: ''
       password: ''
       home_id: ''
+
+# Vienna Public Emergency Alerts
+# Sources: GeoSphere Austria (ZAMG), Meteoalarm
+alerts:
+  enabled: true
+  regions:
+    - Wien
+  cache_ttl: 300  # 5 minutes
+  sources:
+    geosphere:
+      enabled: true
+      # Weather warnings from Austrian met service
+    meteoalarm:
+      enabled: true
+      # European weather alert system

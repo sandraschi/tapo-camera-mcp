@@ -127,6 +127,22 @@
                 <i class="fas fa-circle text-purple-500 mt-2"></i>
             </div>
         </div>
+
+        <!-- Vienna Public Alerts -->
+        <div class="camera-card mb-6" id="vienna-alerts-section">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">🚨 Vienna Public Alerts</h3>
+                <button onclick="refreshAlerts()" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <div id="alerts-container">
+                <div class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin text-gray-400 text-2xl"></i>
+                    <p class="text-gray-500 mt-2">Loading alerts...</p>
+                </div>
+            </div>
+        </div>
         
         <!-- Camera Feeds -->
         <div class="camera-card">
@@ -357,10 +373,139 @@
 
 {% block extra_js %}
 <script>
-    // Auto-refresh status every 30 seconds
-    setInterval(function() {
-        location.reload();
-    }, 30000);
+    // Load alerts on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadAlerts();
+    });
+    
+    // Refresh alerts every 5 minutes (don't reload full page for alerts)
+    setInterval(loadAlerts, 5 * 60 * 1000);
+    
+    async function loadAlerts() {
+        const container = document.getElementById('alerts-container');
+        
+        try {
+            const response = await fetch('/alerts/summary');
+            if (!response.ok) throw new Error('Failed to fetch alerts');
+            
+            const data = await response.json();
+            renderAlerts(data);
+        } catch (error) {
+            console.error('Error loading alerts:', error);
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <p class="text-gray-500">
+                        <i class="fas fa-exclamation-triangle text-yellow-500"></i> 
+                        Unable to load alerts. <a href="#" onclick="loadAlerts(); return false;" class="text-blue-600 hover:underline">Retry</a>
+                    </p>
+                </div>
+            `;
+        }
+    }
+    
+    async function refreshAlerts() {
+        const container = document.getElementById('alerts-container');
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-spinner fa-spin text-gray-400 text-2xl"></i>
+                <p class="text-gray-500 mt-2">Refreshing alerts...</p>
+            </div>
+        `;
+        
+        try {
+            const response = await fetch('/alerts/refresh');
+            if (!response.ok) throw new Error('Failed to refresh');
+            
+            const data = await response.json();
+            // Convert to summary format
+            const summary = {
+                total_alerts: data.total,
+                highest_severity: data.alerts.length > 0 ? data.alerts[0].severity : 'unknown',
+                highest_severity_color: data.alerts.length > 0 ? data.alerts[0].severity_color : '#9CA3AF',
+                highest_severity_icon: data.alerts.length > 0 ? data.alerts[0].severity_icon : '✓',
+                alerts: data.alerts.slice(0, 5),
+                status: data.total === 0 ? 'ok' : 'warning'
+            };
+            renderAlerts(summary);
+        } catch (error) {
+            console.error('Error refreshing alerts:', error);
+            loadAlerts(); // Fallback to cached
+        }
+    }
+    
+    function renderAlerts(data) {
+        const container = document.getElementById('alerts-container');
+        
+        if (data.total_alerts === 0) {
+            container.innerHTML = `
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                    <div class="text-4xl mb-2">✅</div>
+                    <h4 class="font-semibold text-green-800">All Clear</h4>
+                    <p class="text-green-600 text-sm">No active weather or emergency alerts for Vienna</p>
+                    <p class="text-green-500 text-xs mt-2">Sources: GeoSphere Austria, Meteoalarm</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Build alerts HTML
+        let alertsHtml = `
+            <div class="flex gap-4">
+                <div class="flex-shrink-0 text-center px-4 py-3 rounded-lg" style="background: ${data.highest_severity_color};">
+                    <div class="text-2xl">${data.highest_severity_icon}</div>
+                    <div class="text-2xl font-bold text-white">${data.total_alerts}</div>
+                    <div class="text-xs text-white opacity-80">Alert${data.total_alerts !== 1 ? 's' : ''}</div>
+                </div>
+                <div class="flex-1 space-y-2">
+        `;
+        
+        for (const alert of data.alerts) {
+            const typeIcon = getAlertTypeIcon(alert.alert_type);
+            alertsHtml += `
+                <div class="bg-gray-50 p-3 rounded border-l-4" style="border-left-color: ${alert.severity_color};">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">${typeIcon}</span>
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-800 text-sm">${escapeHtml(alert.title)}</div>
+                            <div class="text-xs text-gray-500">${alert.region} • ${alert.source === 'geosphere' ? 'GeoSphere' : 'Meteoalarm'}</div>
+                        </div>
+                        <span class="text-sm" title="${alert.severity}">${alert.severity_icon}</span>
+                    </div>
+                    ${alert.description ? `<p class="text-gray-600 text-xs mt-1 ml-7">${escapeHtml(truncate(alert.description, 120))}</p>` : ''}
+                </div>
+            `;
+        }
+        
+        alertsHtml += `
+                </div>
+            </div>
+            <div class="text-center text-gray-400 text-xs mt-3">
+                Last updated: ${new Date().toLocaleTimeString('de-AT')} • Sources: GeoSphere Austria, Meteoalarm
+            </div>
+        `;
+        
+        container.innerHTML = alertsHtml;
+    }
+    
+    function getAlertTypeIcon(type) {
+        const icons = {
+            'weather': '🌤️', 'storm': '🌪️', 'wind': '💨', 'rain': '🌧️',
+            'snow': '❄️', 'ice': '🧊', 'fog': '🌫️', 'heat': '🌡️',
+            'cold': '🥶', 'thunderstorm': '⛈️', 'flood': '🌊', 'fire': '🔥'
+        };
+        return icons[type] || '⚠️';
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function truncate(text, maxLength) {
+        if (!text || text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
+    }
 </script>
 {% endblock %}
 

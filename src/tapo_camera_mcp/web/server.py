@@ -1090,6 +1090,7 @@ Provide a concise summary:"""
                 )
 
         # Include API routes
+        from .api.alerts import router as alerts_router
         from .api.energy import router as energy_router
         from .api.lighting import router as lighting_router
         from .api.onboarding import router as onboarding_router
@@ -1103,6 +1104,7 @@ Provide a concise summary:"""
         self.app.include_router(weather_router)
         self.app.include_router(security_router)
         self.app.include_router(lighting_router)
+        self.app.include_router(alerts_router)
 
         # LLM router
         from .api.llm import router as llm_router
