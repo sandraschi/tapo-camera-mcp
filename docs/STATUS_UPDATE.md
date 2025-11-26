@@ -1,7 +1,7 @@
 # 🎯 Tapo Camera MCP - Status Update
 
 **Date**: November 26, 2025
-**Status**: 🚀 **PRODUCTION-READY PLATFORM v1.3.0**
+**Status**: 🚀 **PRODUCTION-READY PLATFORM v1.4.0**
 
 ---
 
@@ -27,7 +27,9 @@
 - ✅ **Auto-Discovery**: Automatically adds USB webcams on startup
 - ✅ **Status Cards**: Visual indicators for system health
 - ✅ **Energy Dashboard**: Real-time P115 smart plug monitoring with charts
-- ✅ **Weather Dashboard**: Netatmo weather station integration (OAuth setup needed)
+- ✅ **Weather Dashboard**: Netatmo indoor + Vienna external weather side-by-side
+- ✅ **Kitchen Dashboard**: Appliance monitoring (Tefal Optigrill, Zojirushi)
+- ✅ **Robots Dashboard**: Planned integrations (Roomba, Unitree Go2)
 
 ### **🔋 Energy Management**
 - ✅ **Tapo P115 Integration**: Full support for smart plug monitoring
@@ -37,7 +39,7 @@
 - ✅ **Energy Charts**: Chart.js-based consumption visualization (FIXED: CSP updated to allow CDN)
 - ✅ **Device Display**: All configured devices show on energy page (FIXED: Server startup initialization)
 
-### **💡 Lighting Control** (90% Complete - v1.3.0)
+### **💡 Lighting Control** (90% Complete - v1.4.0)
 - ✅ **Philips Hue Integration**: Full support for Hue Bridge and lights
 - ✅ **Light Discovery**: Automatic discovery of all Hue lights (18 lights detected)
 - ✅ **Light Control**: On/off toggle and brightness control (instant response)
@@ -48,6 +50,15 @@
 - ✅ **Performance Caching**: Device lists cached on startup, manual rescan button added
 - ✅ **Rescan Button**: Manual refresh of lights/groups/scenes with last scan time display
 - ℹ️ **Note**: Scenes only affect lights within their configured room (Hue limitation, configure in Hue app)
+
+### **🌤️ Weather Integration** (100% Complete - v1.4.0)
+- ✅ **Netatmo Indoor Weather**: Real data via pyatmo 8.x OAuth (temperature, humidity, CO2, noise, pressure)
+- ✅ **Vienna External Weather**: Open-Meteo API (free, no API key required)
+- ✅ **Combined Dashboard**: Indoor vs outdoor side-by-side comparison
+- ✅ **Temperature Difference**: Shows how much warmer inside (+19°C typical)
+- ✅ **5-Day Forecast**: Daily forecast with weather icons
+- ✅ **Historical Charts**: Chart.js temperature/humidity/CO2/pressure over time
+- ✅ **Auto Token Refresh**: OAuth tokens refresh automatically
 
 ### **🤖 LLM Integration** (NEW in v1.3.0)
 - ✅ **Multi-Provider**: Ollama, LM Studio, OpenAI support

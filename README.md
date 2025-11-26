@@ -1,7 +1,7 @@
 # 🏠 Home Security MCP Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/releases)
+[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/releases)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![MCP Version](https://img.shields.io/badge/MCP-2.12.0-blue)](https://mcp-standard.org)
@@ -37,19 +37,19 @@
 
 **The platform serves as the "conductor" that brings together multiple specialized security devices (MCP servers) into a cohesive home surveillance ecosystem.**
 
-## 🏆 **v1.3.0 RELEASE - LLM INTEGRATION & DOCKERIZATION**
+## 🏆 **v1.4.0 RELEASE - SMART HOME INTEGRATION**
 
 **✅ LATEST ACHIEVEMENTS:**
-- **🤖 LLM Integration**: Multi-provider support (Ollama, LM Studio, OpenAI) with chatbot UI
-- **🐳 Dockerization**: Complete MyHomeControl stack with optimized production builds
-- **🌤️ Netatmo Weather**: OAuth-based weather station integration
-- **💡 Philips Hue Lighting**: Complete smart lighting control (16 lights, 52 scenes)
-- **📊 Monitoring**: GitLab CE setup with unified monitoring stack
-- **⚡ CI/CD Modernization**: Ruff linting, caching, concurrency, Dependabot
-- **🧪 Testing**: Comprehensive unit + integration test suite
-- **🎨 UX Improvements**: Camera thumbnails, energy dashboard, lighting dashboard, real device prioritization
+- **💡 Philips Hue Lighting**: 18 lights, 6 groups, 11 predefined scenes, cached device lists
+- **🌤️ Netatmo Weather**: Live indoor weather from your station (pyatmo 8.x OAuth)
+- **🌍 Vienna External Weather**: Open-Meteo API (free, no key) with 5-day forecast
+- **🍳 Kitchen Dashboard**: Tefal Optigrill, Zojirushi water boiler integration
+- **🤖 Robots Dashboard**: Roomba, Unitree Go2 planned integrations
+- **💬 Enhanced Chatbot**: 10 personalities, auto model loading, prompt enhancement
+- **⚡ Performance**: Hue caching for instant response, rescan button for manual refresh
+- **🎨 UX**: Indoor/outdoor weather comparison, temperature difference indicator
 
-**🎯 Current Status**: Production-ready Docker deployment, AI-powered interactions, comprehensive monitoring, and modern development workflow.
+**🎯 Current Status**: Full smart home platform with lighting, weather, kitchen, and robots dashboards.
 
 ## 🚀 **DUAL ARCHITECTURE CAPABILITIES** (November 2025)
 
@@ -223,14 +223,33 @@ cameras:
 - **Energy Saving Mode**: Intelligent power optimization
 - **Historical Data**: Limited to current day (P115 limitation) with Home Assistant integration recommended
 
-#### 💡 **Lighting Control Dashboard** (NEW in v1.3.0)
+#### 💡 **Lighting Control Dashboard** (ENHANCED in v1.4.0)
 - **Philips Hue Integration**: Full support for Hue Bridge and lights
-- **Light Discovery**: Automatic discovery of all Hue lights (16 lights detected)
-- **Light Control**: On/off toggle and brightness adjustment
-- **Group Management**: Support for Hue groups/rooms
-- **Scene Activation**: Hue scene support (52 scenes available)
-- **Real-time Status**: Live light state monitoring and updates
+- **Light Discovery**: Automatic discovery (18 lights, 6 groups detected)
+- **Light Control**: On/off toggle and brightness adjustment (instant response)
+- **Group Management**: Support for Hue groups/rooms with bulk control
+- **Scene Activation**: 11 predefined scenes (Sunset, Aurora, Energize, etc.)
+- **Performance Caching**: Device lists cached on startup for instant page loads
+- **Rescan Button**: Manual refresh of lights/groups/scenes with last scan timestamp
 - **Settings Integration**: Bridge IP and username configuration via settings page
+
+#### 🌤️ **Weather Dashboard** (NEW in v1.4.0)
+- **Netatmo Indoor Weather**: Real data via pyatmo 8.x OAuth
+- **Vienna External Weather**: Open-Meteo API (free, no API key)
+- **Combined View**: Indoor vs outdoor side-by-side comparison
+- **Temperature Difference**: Shows how much warmer inside
+- **5-Day Forecast**: Daily forecast with weather icons
+- **Historical Charts**: Temperature, humidity, CO2, pressure over time
+
+#### 🍳 **Kitchen Dashboard** (NEW in v1.4.0)
+- **Tefal Optigrill**: Smart grill status and control
+- **Zojirushi Water Boiler**: On/off via Tapo P115 smart plug
+- **Smarter iKettle**: Alternative smart kettle research
+
+#### 🤖 **Robots Dashboard** (NEW in v1.4.0)
+- **Roomba**: Coming soon integration
+- **Unitree Go2**: Planned purchase with specs
+- **Mini Robot Tank**: Research status for apartment patrol
 
 #### 🚨 **Alarm System Integration**
 - **Nest Protect**: Smoke and CO detector monitoring
@@ -275,7 +294,8 @@ python start.py dashboard
 - ✅ **MCP Tools**: 30+ tools available in Claude Desktop (FastMCP 2.12 compliant)
   - **Device Onboarding**: Progressive discovery and configuration tools
   - **Energy Management**: Tapo P115 smart plug control and monitoring
-  - **Lighting Control**: Philips Hue Bridge integration (16 lights, 52 scenes)
+  - **Lighting Control**: Philips Hue Bridge integration (18 lights, 11 scenes)
+  - **Weather Integration**: Netatmo indoor + Vienna external weather
   - **Security Integration**: Nest Protect and Ring device management
   - **AI Analytics**: Performance monitoring and intelligent automation
 

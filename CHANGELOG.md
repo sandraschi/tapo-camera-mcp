@@ -5,6 +5,79 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-11-26 🏠 **SMART HOME INTEGRATION**
+
+### 🚀 **MAJOR FEATURES ADDED**
+
+#### **💡 Philips Hue Integration** (NEW)
+- **Full Bridge Support**: Connect to Hue Bridge via phue library
+- **18 Lights Discovered**: Automatic discovery of all connected bulbs
+- **Group Control**: Control rooms/zones as groups
+- **Scene Activation**: 11 predefined scenes (Sunset, Aurora, etc.)
+- **Performance Caching**: Device lists cached on startup for instant response
+- **Rescan Button**: Manual refresh of lights/groups/scenes
+- **Lighting Dashboard**: New `/lighting` page with real-time controls
+- **ZigBee Reliability**: 10-year-old bulbs still running perfectly
+
+#### **🌤️ Netatmo Weather** (ENHANCED)
+- **Real API Integration**: pyatmo 8.x with OAuth token refresh
+- **Live Indoor Data**: Temperature, humidity, CO2, noise, pressure from your station
+- **Stroheckgasse Station**: Your actual station detected and working
+- **Database Storage**: Weather data persisted for historical charts
+
+#### **🌍 Vienna External Weather** (NEW)
+- **Open-Meteo API**: Free weather data, no API key required
+- **Real-Time Vienna Weather**: Temperature, humidity, wind, clouds
+- **5-Day Forecast**: Daily forecast with weather icons
+- **Indoor/Outdoor Comparison**: +19°C warmer inside indicator
+- **Day/Night Indicator**: Visual feedback for time of day
+
+#### **🍳 Kitchen Dashboard** (NEW)
+- **Appliance Overview**: Tefal Optigrill, Zojirushi water boiler
+- **Tapo Plug Integration**: On/off control via smart plug
+- **Smarter iKettle Info**: Alternative smart kettle research
+
+#### **🤖 Robots Dashboard** (NEW)
+- **Roomba Status**: Coming soon integration
+- **Unitree Go2**: Planned purchase card with specs
+- **Mini Robot Tank**: Research status for perimeter patrol
+- **Petbot Loona**: No API available (documented)
+
+### 🔧 **TECHNICAL IMPROVEMENTS**
+
+#### **Chatbot Enhancements**
+- **Draggable/Resizable**: Move and resize chat window
+- **Settings Persistence**: Provider, model, personality saved to localStorage
+- **10 Personalities**: Helpful Assistant, Home Automation Expert, Pirate Captain, etc.
+- **Auto Model Loading**: Models load automatically when selected
+- **Prompt Enhancement**: 🪄 button to elaborate prompts in personality style
+- **Response Refinement**: ✨ button to improve AI responses
+
+#### **API Additions**
+- `POST /api/lighting/hue/rescan` - Force refresh device cache
+- `GET /api/weather/external/current` - Vienna current weather
+- `GET /api/weather/external/forecast` - 7-day forecast
+- `GET /api/weather/combined` - Internal + external weather combined
+
+#### **Configuration**
+- **Config Model Mapping**: WeatherSettings → "weather" config key fix
+- **CSP Updates**: Allow Chart.js from jsdelivr CDN
+- **Netatmo OAuth**: Full OAuth flow with token refresh
+
+### 🐛 **BUG FIXES**
+- Fixed Hue scene activation (use `bridge.set_group()` not `group.scene`)
+- Fixed slow Hue response (removed redundant `_discover_devices()` calls)
+- Fixed Chart.js CSP blocking
+- Fixed config model key mapping for weather settings
+- Fixed chatbot window positioning and visibility
+
+### 📦 **DEPENDENCIES**
+- `phue>=1.1` - Philips Hue Bridge control
+- `pyatmo>=8.0.0,<9.0.0` - Netatmo weather (updated from 9.x)
+- `aiohttp` - Async HTTP for Open-Meteo
+
+---
+
 ## [1.3.0] - 2025-11-17 🚀 **LLM INTEGRATION & DOCKERIZATION**
 
 ### 🚀 **MAJOR FEATURES ADDED**
