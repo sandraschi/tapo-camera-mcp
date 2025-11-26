@@ -522,6 +522,87 @@
         body.modal-open {
             overflow: hidden;
         }
+
+        /* Hamburger menu button */
+        .hamburger-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            color: #374151;
+            transition: background-color 0.2s;
+        }
+        .hamburger-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        [data-theme="dark"] .hamburger-btn {
+            color: #9ca3af;
+        }
+        [data-theme="dark"] .hamburger-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .hamburger-btn i {
+            font-size: 1.25rem;
+        }
+
+        /* Sidebar toggle states */
+        .sidebar {
+            transition: transform 0.3s ease, width 0.3s ease;
+        }
+        .sidebar-collapsed .sidebar {
+            transform: translateX(-100%);
+            width: 0;
+            overflow: hidden;
+        }
+        .sidebar-collapsed .main-content {
+            margin-left: 0;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                z-index: 1000;
+                height: 100vh;
+                transform: translateX(-100%);
+            }
+            .sidebar-open .sidebar {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0 !important;
+            }
+            .top-bar {
+                padding: 0.5rem 1rem;
+            }
+            .search-bar {
+                display: none;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            .content {
+                padding: 1rem;
+            }
+        }
+
+        /* Sidebar overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .sidebar-open .sidebar-overlay {
+            display: block;
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -617,9 +698,15 @@
             <div class="app-version">v1.0.0</div>
         </nav>
 
+        <!-- Sidebar overlay for mobile -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
         <!-- Main Content -->
         <main class="main-content">
             <header class="top-bar">
+                <button class="hamburger-btn" id="hamburger-btn" title="Toggle sidebar" aria-label="Toggle sidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <div class="search-bar">
                     <i class="fas fa-search"></i>
                     <input type="text" id="search-input" placeholder="Search cameras, recordings...">
@@ -837,6 +924,40 @@
 
     <script src="{{ url_for('static', path='/js/main.js') }}"></script>
     <script>
+        // Hamburger menu toggle
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const appContainer = document.querySelector('.app-container');
+        
+        // Load sidebar state from localStorage
+        const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        if (sidebarCollapsed && window.innerWidth > 768) {
+            appContainer.classList.add('sidebar-collapsed');
+        }
+        
+        hamburgerBtn.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                // Mobile: toggle sidebar-open class
+                appContainer.classList.toggle('sidebar-open');
+            } else {
+                // Desktop: toggle sidebar-collapsed class
+                appContainer.classList.toggle('sidebar-collapsed');
+                localStorage.setItem('sidebarCollapsed', appContainer.classList.contains('sidebar-collapsed'));
+            }
+        });
+        
+        // Close sidebar on overlay click (mobile)
+        sidebarOverlay.addEventListener('click', () => {
+            appContainer.classList.remove('sidebar-open');
+        });
+        
+        // Handle resize
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                appContainer.classList.remove('sidebar-open');
+            }
+        });
+
         // Theme toggle functionality
         const themeToggle = document.getElementById('theme-toggle');
         if (themeToggle) {

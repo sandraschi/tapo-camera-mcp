@@ -12,6 +12,48 @@
         border: 1px solid #e5e7eb;
     }
 
+    /* Camera thumbnail responsive styles */
+    .camera-thumb-link {
+        display: block;
+        width: 320px;
+        height: 240px;
+    }
+    .camera-thumb-container {
+        width: 320px;
+        height: 240px;
+    }
+    .camera-thumb-img {
+        width: 320px;
+        height: 240px;
+        object-fit: cover;
+    }
+    .camera-thumb-fallback {
+        width: 320px;
+        height: 240px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: #374151;
+        color: #9CA3AF;
+        font-size: 48px;
+    }
+
+    @media (max-width: 768px) {
+        .camera-thumb-link,
+        .camera-thumb-container,
+        .camera-thumb-img,
+        .camera-thumb-fallback {
+            width: 100%;
+            max-width: 320px;
+            height: auto;
+            aspect-ratio: 4/3;
+        }
+        #camera-row {
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+
     .security-card {
         background: white;
         border-radius: 0.5rem;
@@ -30,9 +72,29 @@
 
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        grid-template-columns: repeat(4, 1fr);
         gap: 1rem;
         margin-bottom: 1.5rem;
+    }
+
+    @media screen and (max-width: 768px) {
+        .stats-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 0.75rem !important;
+        }
+        .stat-card {
+            padding: 0.75rem !important;
+        }
+        .stat-card .text-3xl {
+            font-size: 1.5rem !important;
+        }
+        .stat-card .text-lg {
+            font-size: 0.9rem !important;
+        }
+        .stat-card .text-sm {
+            font-size: 0.75rem !important;
+        }
     }
 
     .stat-card {
@@ -272,13 +334,13 @@
                 const streamUrl = `/api/cameras/${encodeURIComponent(name)}/stream`;
                 
                 html += `
-                    <a href="/cameras" class="flex-shrink-0 group" style="display: block; width: 320px; height: 240px;">
-                        <div class="bg-gray-800 rounded-lg overflow-hidden relative" style="width: 320px; height: 240px;">
+                    <a href="/cameras" class="flex-shrink-0 group camera-thumb-link">
+                        <div class="bg-gray-800 rounded-lg overflow-hidden relative camera-thumb-container">
                             <img src="${streamUrl}" 
                                  alt="${name}" 
-                                 style="width: 320px; height: 240px; object-fit: cover;"
+                                 class="camera-thumb-img"
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div style="width: 320px; height: 240px; display: none; align-items: center; justify-content: center; background: #374151; color: #9CA3AF; font-size: 48px;">
+                            <div class="camera-thumb-fallback">
                                 📹
                             </div>
                             <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 px-3 py-2">
