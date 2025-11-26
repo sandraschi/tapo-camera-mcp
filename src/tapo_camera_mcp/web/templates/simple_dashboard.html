@@ -264,17 +264,17 @@
                 return;
             }
             
-            // Build thumbnails
+            // Build live stream previews
             let html = '';
             for (const cam of cameras) {
                 const name = cam.name || cam.id || 'Camera';
                 const status = cam.status === 'online' ? '🟢' : '🔴';
-                const thumbUrl = `/api/cameras/${encodeURIComponent(name)}/thumbnail`;
+                const streamUrl = `/api/cameras/${encodeURIComponent(name)}/stream`;
                 
                 html += `
                     <a href="/cameras" class="flex-shrink-0 group" style="display: block; width: 320px; height: 240px;">
                         <div class="bg-gray-800 rounded-lg overflow-hidden relative" style="width: 320px; height: 240px;">
-                            <img src="${thumbUrl}" 
+                            <img src="${streamUrl}" 
                                  alt="${name}" 
                                  style="width: 320px; height: 240px; object-fit: cover;"
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
