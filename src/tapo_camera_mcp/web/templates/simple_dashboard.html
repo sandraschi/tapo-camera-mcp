@@ -4,14 +4,7 @@
 
 {% block extra_css %}
 <style>
-    .camera-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .camera-card {
+    .card {
         background: white;
         border-radius: 0.5rem;
         padding: 1rem;
@@ -37,7 +30,7 @@
 
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 1rem;
         margin-bottom: 1.5rem;
     }
@@ -48,20 +41,9 @@
         padding: 1rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         text-align: center;
-    }
-
-    .theme-toggle {
-        background: none;
-        border: none;
-        font-size: 1.2rem;
-        cursor: pointer;
-        padding: 0.5rem;
-        border-radius: 0.375rem;
-        transition: background-color 0.2s;
-    }
-
-    .theme-toggle:hover {
-        background-color: #f3f4f6;
+        text-decoration: none;
+        color: inherit;
+        display: block;
     }
 
     [data-theme="dark"] {
@@ -76,18 +58,12 @@
         color: var(--text-color);
     }
 
-    [data-theme="dark"] .camera-card,
+    [data-theme="dark"] .card,
     [data-theme="dark"] .security-card,
     [data-theme="dark"] .stat-card {
         background-color: var(--card-bg);
         color: var(--text-color);
         border-color: var(--border-color);
-    }
-
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
     }
 </style>
 {% endblock %}
@@ -101,35 +77,35 @@
             </a>
         </div>
 
-        <!-- Stats Overview -->
+        <!-- Quick Links -->
         <div class="stats-grid mb-6">
-            <div class="stat-card">
-                <div class="text-3xl font-bold text-green-600 mb-1">{{ online_cameras }}/{{ total_cameras }}</div>
-                <div class="text-sm text-gray-600">Cameras Online</div>
-                <i class="fas fa-video text-green-500 mt-2"></i>
-            </div>
+            <a href="/lighting" class="stat-card hover:shadow-lg transition-shadow cursor-pointer">
+                <div class="text-3xl mb-1">💡</div>
+                <div class="text-lg font-bold text-yellow-600">Lighting</div>
+                <div class="text-sm text-gray-600">18 Hue lights</div>
+            </a>
 
-            <div class="stat-card">
-                <div class="text-3xl font-bold text-blue-600 mb-1">{{ storage_used }}%</div>
-                <div class="text-sm text-gray-600">Storage Used</div>
-                <i class="fas fa-hdd text-blue-500 mt-2"></i>
-            </div>
+            <a href="/weather" class="stat-card hover:shadow-lg transition-shadow cursor-pointer">
+                <div class="text-3xl mb-1">🌤️</div>
+                <div class="text-lg font-bold text-blue-600">Weather</div>
+                <div class="text-sm text-gray-600">Netatmo + Vienna</div>
+            </a>
 
-            <div class="stat-card">
-                <div class="text-3xl font-bold text-red-600 mb-1">{{ active_alerts }}</div>
-                <div class="text-sm text-gray-600">Active Alerts</div>
-                <i class="fas fa-exclamation-triangle text-red-500 mt-2"></i>
-            </div>
+            <a href="/energy" class="stat-card hover:shadow-lg transition-shadow cursor-pointer">
+                <div class="text-3xl mb-1">⚡</div>
+                <div class="text-lg font-bold text-green-600">Energy</div>
+                <div class="text-sm text-gray-600">3 Tapo P115 plugs</div>
+            </a>
 
-            <div class="stat-card">
-                <div class="text-3xl font-bold text-purple-600 mb-1">{{ active_recordings }}</div>
-                <div class="text-sm text-gray-600">Active Recordings</div>
-                <i class="fas fa-circle text-purple-500 mt-2"></i>
-            </div>
+            <a href="/cameras" class="stat-card hover:shadow-lg transition-shadow cursor-pointer">
+                <div class="text-3xl mb-1">📹</div>
+                <div class="text-lg font-bold text-purple-600">Cameras</div>
+                <div class="text-sm text-gray-600">View feeds</div>
+            </a>
         </div>
 
         <!-- Vienna Public Alerts -->
-        <div class="camera-card mb-6" id="vienna-alerts-section">
+        <div class="card mb-6" id="vienna-alerts-section">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold">🚨 Vienna Public Alerts</h3>
                 <button onclick="refreshAlerts()" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
@@ -142,85 +118,6 @@
                     <p class="text-gray-500 mt-2">Loading alerts...</p>
                 </div>
             </div>
-        </div>
-        
-        <!-- Camera Feeds -->
-        <div class="camera-card">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold">📹 Live Camera Feeds</h3>
-                <a href="/cameras" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                    View All Cameras →
-                </a>
-            </div>
-            {% if cameras %}
-                <div class="camera-grid">
-                    {% for camera in cameras %}
-                    <div class="border rounded-lg p-4">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="font-bold text-lg">{{ camera.name or camera.id }}</h3>
-                            <!-- Status Indicator -->
-                            <div class="flex items-center gap-2">
-                                <span class="text-sm font-medium">Stream:</span>
-                                <span class="w-3 h-3 rounded-full {{ 'bg-green-500' if camera.streaming_capable else 'bg-red-500' }}"></span>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-medium {{ 'text-green-600' if camera.status == 'online' else 'text-red-600' }}">{{ camera.status }}</span>
-                                    {% if camera.type %}
-                                    <span class="text-xs bg-gray-100 px-2 py-1 rounded">{{ camera.type }}</span>
-                                    {% endif %}
-                                </div>
-                                <!-- Status Indicator -->
-                                <div class="flex items-center gap-1">
-                                    <span class="text-sm font-medium">Stream:</span>
-                                    <span class="w-3 h-3 rounded-full {{ 'bg-green-500' if camera.streaming_capable else 'bg-red-500' }}"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="video-container">
-                            <img id="stream-{{ camera.name or camera.id }}"
-                                 class="w-full h-48 object-cover border rounded hidden"
-                                 alt="Video stream">
-                            <div id="placeholder-{{ camera.name or camera.id }}"
-                                 class="w-full h-48 bg-gray-100 border-2 border-dashed border-gray-300 rounded flex items-center justify-center text-gray-500">
-                                <div class="text-center">
-                                    <i class="fas fa-video text-3xl mb-2"></i>
-                                    <p>Click "Start Stream" to view live video</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Large Action Buttons -->
-                        <div class="grid grid-cols-3 gap-3 mt-4">
-                            <button onclick="window.open('/api/cameras/{{ camera.name or camera.id }}/stream', 'stream-{{ camera.name or camera.id }}', 'width=800,height=600')"
-                                    class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-4 rounded-xl text-sm font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex flex-col items-center gap-2 group">
-                                <i class="fas fa-play text-lg group-hover:scale-110 transition-transform"></i>
-                                <span class="font-bold">START STREAM</span>
-                            </button>
-                            <button onclick="alert('Audio recording not implemented yet - coming soon!')"
-                                    class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-4 py-4 rounded-xl text-sm font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex flex-col items-center gap-2 group">
-                                <i class="fas fa-microphone text-lg group-hover:scale-110 transition-transform"></i>
-                                <span class="font-bold">RECORD AUDIO</span>
-                            </button>
-                            <button onclick="window.open('/api/cameras/{{ camera.name or camera.id }}/snapshot', 'snapshot-{{ camera.name or camera.id }}', 'width=800,height=600')"
-                                    class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-4 rounded-xl text-sm font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex flex-col items-center gap-2 group">
-                                <i class="fas fa-camera text-lg group-hover:scale-110 transition-transform"></i>
-                                <span class="font-bold">SNAPSHOT</span>
-                            </button>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p class="text-gray-600">No cameras configured yet.</p>
-                <p class="text-sm text-gray-500 mt-2">
-                    Use the MCP tools to add cameras: <code>add_camera</code>
-                </p>
-            {% endif %}
         </div>
 
         <!-- Security Systems -->
