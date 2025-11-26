@@ -1094,6 +1094,7 @@ Provide a concise summary:"""
         from .api.energy import router as energy_router
         from .api.lighting import router as lighting_router
         from .api.onboarding import router as onboarding_router
+        from .api.ring import router as ring_router
         from .api.security import router as security_router
         from .api.sensors import router as sensors_router
         from .api.weather import router as weather_router
@@ -1105,6 +1106,7 @@ Provide a concise summary:"""
         self.app.include_router(security_router)
         self.app.include_router(lighting_router)
         self.app.include_router(alerts_router)
+        self.app.include_router(ring_router)
 
         # LLM router
         from .api.llm import router as llm_router
@@ -1813,6 +1815,50 @@ Provide a concise summary:"""
         except Exception:
             logger.debug("LM Studio not available at localhost:1234")
 
+    def _init_ring_client(self):
+        """Initialize Ring doorbell/alarm client if configured."""
+        import asyncio
+
+        ring_config = self.config.get("ring", {})
+        if not ring_config.get("enabled", False):
+            logger.debug("Ring integration disabled")
+            return
+
+        email = ring_config.get("email")
+        if not email:
+            logger.warning("Ring enabled but no email configured")
+            return
+
+        password = ring_config.get("password")
+        token_file = ring_config.get("token_file", "ring_token.cache")
+        cache_ttl = ring_config.get("cache_ttl", 60)
+
+        try:
+            from ..integrations.ring_client import init_ring_client
+
+            # Run async init in sync context
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                client = loop.run_until_complete(
+                    init_ring_client(
+                        email=email,
+                        password=password if password else None,
+                        token_file=token_file,
+                        cache_ttl=cache_ttl,
+                    )
+                )
+                if client.is_initialized:
+                    logger.info("Ring client initialized successfully")
+                elif client.is_2fa_pending:
+                    logger.warning("Ring 2FA required - submit code via /api/ring/auth/2fa")
+                else:
+                    logger.warning("Ring client not initialized - check credentials")
+            finally:
+                loop.close()
+        except Exception as e:
+            logger.warning(f"Failed to initialize Ring client: {e}")
+
     def run(self, host: Optional[str] = None, port: Optional[int] = None):
         """Run the web server.
 
@@ -1827,6 +1873,9 @@ Provide a concise summary:"""
 
         # Auto-register LLM providers (Ollama at default port)
         self._register_default_llm_providers()
+
+        # Initialize Ring client if configured
+        self._init_ring_client()
 
         logger.info(f"Starting web server on http://{host}:{port}")
 
@@ -1858,8 +1907,15 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Setup logging
-    setup_logging()
+    # Setup logging with config
+    from tapo_camera_mcp.config import get_config
+
+    config = get_config()
+    log_config = config.get("logging", {})
+    log_file = log_config.get("file", "tapo_mcp.log")
+    log_level = config.get("server", {}).get("log_level", "INFO")
+
+    setup_logging(log_level=log_level, log_file=log_file)
 
     # Create and run the server
     server = WebServer()

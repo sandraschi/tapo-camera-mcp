@@ -288,76 +288,232 @@
         .logger-layout {
             display: grid;
             grid-template-columns: 260px 1fr;
-            gap: 1.5rem;
+            gap: 1rem;
+            height: 65vh;
+            max-height: 550px;
         }
 
         .logger-tools {
-            background: rgba(59, 130, 246, 0.06);
-            border: 1px solid rgba(59, 130, 246, 0.15);
+            background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+            border: 1px solid rgba(99, 102, 241, 0.25);
             border-radius: 0.75rem;
             padding: 1rem;
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 1rem;
+            overflow-y: auto;
+        }
+
+        .logger-tools h4 {
+            color: #818cf8;
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .logger-tools h4 i {
+            font-size: 0.75rem;
+        }
+
+        .logger-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.4rem;
+        }
+
+        .logger-stat {
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 0.4rem;
+            padding: 0.4rem;
+            text-align: center;
+        }
+
+        .logger-stat-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            font-family: "JetBrains Mono", monospace;
+        }
+
+        .logger-stat-value.info { color: #60a5fa; }
+        .logger-stat-value.warn { color: #fbbf24; }
+        .logger-stat-value.error { color: #f87171; }
+        .logger-stat-value.total { color: #a5b4fc; }
+
+        .logger-stat-label {
+            font-size: 0.6rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         [data-theme="dark"] .logger-tools {
-            background: rgba(59, 130, 246, 0.12);
-            border-color: rgba(96, 165, 250, 0.2);
+            background: linear-gradient(145deg, #0c1222 0%, #1e293b 100%);
+        }
+
+        .logger-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
         }
 
         .logger-live-feed {
-            background: #0f172a;
-            color: #f8fafc;
+            background: #0a0f1a;
+            color: #e2e8f0;
             border-radius: 0.75rem;
-            padding: 1rem;
-            font-family: "Fira Code", "Consolas", monospace;
-            font-size: 0.9rem;
-            line-height: 1.4;
-            min-height: 340px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+            font-size: 0.78rem;
+            line-height: 1.5;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
             display: flex;
             flex-direction: column;
-            gap: 0.65rem;
+        }
+
+        .logger-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            background: linear-gradient(to right, rgba(99, 102, 241, 0.1), transparent);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .logger-toolbar-status {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-left: auto;
+            font-size: 0.7rem;
+            color: #64748b;
+        }
+
+        .live-indicator {
+            width: 6px;
+            height: 6px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse-glow 2s infinite;
+            box-shadow: 0 0 6px #22c55e;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; box-shadow: 0 0 6px #22c55e; }
+            50% { opacity: 0.6; box-shadow: 0 0 2px #22c55e; }
+        }
+
+        .logger-entries {
+            padding: 0.25rem 0;
+            flex: 1;
         }
 
         .logger-entry {
             display: grid;
-            grid-template-columns: 90px 70px 1fr;
-            gap: 0.75rem;
-            align-items: baseline;
+            grid-template-columns: 32px 75px 55px 1fr;
+            gap: 0.5rem;
+            padding: 0.35rem 0.75rem;
+            align-items: center;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+            transition: background 0.15s;
+            border-left: 3px solid transparent;
+        }
+
+        .logger-entry:hover {
+            background: rgba(99, 102, 241, 0.08);
+        }
+
+        .logger-entry.level-info {
+            border-left-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.03);
+        }
+        .logger-entry.level-debug {
+            border-left-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.03);
+        }
+        .logger-entry.level-warn, .logger-entry.level-warning {
+            border-left-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.06);
+        }
+        .logger-entry.level-error, .logger-entry.level-critical {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.08);
+        }
+
+        .logger-entry .line-num {
+            color: #475569;
+            font-size: 0.65rem;
+            text-align: right;
+            user-select: none;
+        }
+
+        .logger-entry .timestamp {
+            color: #64748b;
+            font-variant-numeric: tabular-nums;
+            font-size: 0.72rem;
         }
 
         .logger-entry .level {
             font-weight: 600;
+            font-size: 0.68rem;
             text-transform: uppercase;
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.25rem;
+            text-align: center;
         }
 
-        .logger-entry .level.info { color: #60a5fa; }
-        .logger-entry .level.warn { color: #facc15; }
-        .logger-entry .level.error { color: #f87171; }
+        .logger-entry .level.info {
+            color: #60a5fa;
+            background: rgba(96, 165, 250, 0.1);
+        }
+        .logger-entry .level.warn {
+            color: #fbbf24;
+            background: rgba(251, 191, 36, 0.1);
+        }
+        .logger-entry .level.error {
+            color: #f87171;
+            background: rgba(248, 113, 113, 0.15);
+        }
+        .logger-entry .level.debug {
+            color: #a78bfa;
+            background: rgba(167, 139, 250, 0.1);
+        }
 
-        .logger-entry .timestamp {
-            color: #94a3b8;
-            font-variant-numeric: tabular-nums;
+        .logger-entry .message {
+            color: #cbd5e1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .logger-entry .message .logger-name {
+            color: #818cf8;
+            margin-right: 0.5rem;
         }
 
         .log-detail {
-            color: #cbd5f5;
-            font-size: 0.82rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
         }
 
         .logger-synopsis {
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.3);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.08));
+            border: 1px solid rgba(99, 102, 241, 0.25);
             border-radius: 0.5rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            color: #cbd5f5;
+            padding: 0.75rem;
+            margin: 0.5rem;
+            color: #c7d2fe;
         }
 
         [data-theme="dark"] .logger-synopsis {
-            background: rgba(59, 130, 246, 0.15);
-            border-color: rgba(96, 165, 250, 0.4);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.1));
         }
 
         .synopsis-header {
@@ -755,58 +911,99 @@
             <div class="modal-body">
                 <div class="logger-layout">
                     <aside class="logger-tools">
+                        <!-- Stats -->
                         <div>
-                            <h4 class="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">Live Tail Controls</h4>
-                            <div class="flex flex-col gap-2 text-sm">
-                                <label><input type="checkbox" id="logger-ai-summary" checked> AI synopsis every 60s</label>
-                                <label><input type="checkbox" id="logger-semantic-groups" checked> Cluster related events</label>
-                                <label><input type="checkbox" id="logger-anomaly-detector"> Highlight anomaly risk</label>
+                            <h4><i class="fas fa-chart-bar"></i> STATISTICS</h4>
+                            <div class="logger-stats">
+                                <div class="logger-stat">
+                                    <div class="logger-stat-value total" id="stat-total">0</div>
+                                    <div class="logger-stat-label">Total</div>
+                                </div>
+                                <div class="logger-stat">
+                                    <div class="logger-stat-value error" id="stat-errors">0</div>
+                                    <div class="logger-stat-label">Errors</div>
+                                </div>
+                                <div class="logger-stat">
+                                    <div class="logger-stat-value warn" id="stat-warnings">0</div>
+                                    <div class="logger-stat-label">Warnings</div>
+                                </div>
+                                <div class="logger-stat">
+                                    <div class="logger-stat-value info" id="stat-info">0</div>
+                                    <div class="logger-stat-label">Info</div>
+                                </div>
                             </div>
                         </div>
+                        <!-- Controls -->
                         <div>
-                            <h4 class="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">Filters</h4>
-                            <select id="logger-level-filter" class="w-full border border-blue-200 rounded px-2 py-1 text-sm">
-                                <option value="all">All levels</option>
+                            <h4><i class="fas fa-sliders-h"></i> CONTROLS</h4>
+                            <div class="flex flex-col gap-2 text-sm" style="color: #94a3b8;">
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                    <input type="checkbox" id="logger-ai-summary" checked style="accent-color: #818cf8;">
+                                    <span>AI Synopsis (60s)</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                    <input type="checkbox" id="logger-semantic-groups" checked style="accent-color: #818cf8;">
+                                    <span>Cluster Events</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                    <input type="checkbox" id="logger-anomaly-detector" style="accent-color: #818cf8;">
+                                    <span>Anomaly Detection</span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- Filters -->
+                        <div>
+                            <h4><i class="fas fa-filter"></i> FILTERS</h4>
+                            <select id="logger-level-filter" style="width: 100%; background: #1e293b; color: #e2e8f0; border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 0.375rem; padding: 0.4rem 0.5rem; font-size: 0.8rem;">
+                                <option value="all">All Levels</option>
+                                <option value="debug">Debug</option>
                                 <option value="info">Info</option>
                                 <option value="warn">Warning</option>
                                 <option value="error">Error</option>
                             </select>
-                            <input id="logger-query" type="text" class="w-full mt-2 border border-blue-200 rounded px-2 py-1 text-sm" placeholder="Search (camera:test, stream:usb, etc.)">
+                            <input id="logger-query" type="text" style="width: 100%; margin-top: 0.5rem; background: #1e293b; color: #e2e8f0; border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 0.375rem; padding: 0.4rem 0.5rem; font-size: 0.8rem;" placeholder="Search logs...">
                         </div>
-                        <div class="flex gap-2">
-                            <button id="logger-refresh" class="icon-button" style="width: 100%;">
-                                <i class="fas fa-sync-alt"></i>
-                                <span>Refresh Feed</span>
-                            </button>
-                            <button id="logger-export" class="icon-button" style="width: 100%;">
-                                <i class="fas fa-download"></i>
-                                <span>Export</span>
-                            </button>
-                        </div>
+                        <!-- Actions -->
                         <div>
-                            <h4 class="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">SOTA Insights</h4>
-                            <ul class="text-sm text-gray-600 space-y-1">
-                                <li>• Vision-aware event correlation</li>
-                                <li>• LLM-powered remediation playbooks</li>
-                                <li>• Temporal anomaly heatmaps</li>
-                                <li>• Automatic ticket handoff</li>
-                            </ul>
+                            <h4><i class="fas fa-bolt"></i> ACTIONS</h4>
+                            <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                                <button id="logger-refresh" class="icon-button" style="width: 100%; justify-content: center; background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.3);">
+                                    <i class="fas fa-sync-alt"></i>
+                                    <span>Refresh</span>
+                                </button>
+                                <button id="logger-export" class="icon-button" style="width: 100%; justify-content: center; background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.3);">
+                                    <i class="fas fa-download"></i>
+                                    <span>Export JSON</span>
+                                </button>
+                            </div>
                         </div>
                     </aside>
                     <section class="logger-panel">
                         <div id="logger-synopsis" class="logger-synopsis" style="display: none;">
                             <div class="synopsis-header">
-                                <i class="fas fa-brain"></i>
+                                <i class="fas fa-brain" style="color: #a78bfa;"></i>
                                 <strong>AI Synopsis</strong>
-                                <span class="synopsis-timestamp"></span>
+                                <span class="synopsis-timestamp" style="margin-left: auto; font-size: 0.7rem; color: #64748b;"></span>
                             </div>
-                            <div class="synopsis-content"></div>
+                            <div class="synopsis-content" style="font-size: 0.82rem; line-height: 1.5;"></div>
                         </div>
-                        <div id="logger-anomalies" class="logger-anomalies" style="display: none;">
+                        <div id="logger-anomalies" class="logger-anomalies" style="display: none; margin: 0.5rem;">
                             <!-- Anomalies injected via JS -->
                         </div>
                         <div class="logger-live-feed" id="logger-live-feed" aria-live="polite">
-                            <!-- Log entries injected via JS -->
+                            <div class="logger-toolbar">
+                                <span style="font-size: 0.7rem; color: #818cf8; font-weight: 600;">
+                                    <i class="fas fa-terminal"></i> LOG STREAM
+                                </span>
+                                <div class="logger-toolbar-status">
+                                    <div class="live-indicator"></div>
+                                    <span>Live</span>
+                                    <span style="margin-left: 0.5rem;" id="logger-last-update">--:--:--</span>
+                                </div>
+                            </div>
+                            <div class="logger-entries" id="logger-entries">
+                                <!-- Log entries injected via JS -->
+                            </div>
                         </div>
                     </section>
                 </div>
@@ -906,14 +1103,16 @@
                             <h4>Automation & AI Assist</h4>
                             <ul>
                                 <li>LLM summarization of logs and camera events via logger control center.</li>
-                                <li>Pluggable recipe library for device onboarding and energy automation.</li>
-                                <li>Future roadmap: autop-run <em>scene detection</em>, <em>ai-vision</em> alerts, and <em>policy aware</em> automation.</li>
+                                <li>Use chatbot personalities for specialized advice (Home Automation Expert, etc.).</li>
+                                <li>Refine prompts and responses with the Refine buttons.</li>
                                 <li>Document templates available under <code>docs/mcp-technical/</code>.</li>
                             </ul>
-                            <h4>Next Steps</h4>
+                            <h4>Integrations</h4>
                             <ul>
-                                <li>Integrate chaos tests into nightly pipeline.</li>
-                                <li>Complete operational handoff per <code>HANDOFF_CHECKLIST.md</code>.</li>
+                                <li>Philips Hue lighting (18 bulbs, scenes)</li>
+                                <li>Netatmo weather station + Vienna external weather</li>
+                                <li>Ring doorbell & alarm (when authenticated)</li>
+                                <li>Vienna public alerts (GeoSphere, Meteoalarm)</li>
                             </ul>
                         </article>
                     </section>
@@ -1065,7 +1264,15 @@
             }
         });
 
-        // Logger modal demo data
+        // Utility function
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Logger modal data
         const loggerFeed = document.getElementById('logger-live-feed');
         const levelFilter = document.getElementById('logger-level-filter');
         const loggerQuery = document.getElementById('logger-query');
@@ -1105,14 +1312,35 @@
         };
 
         const renderLogs = async () => {
-            loggerFeed.innerHTML = '';
+            const entriesContainer = document.getElementById('logger-entries') || loggerFeed;
+            entriesContainer.innerHTML = '';
+
+            // Update stats
+            const stats = { total: currentLogs.length, info: 0, warn: 0, error: 0 };
+            currentLogs.forEach(log => {
+                const lvl = (log.level || '').toLowerCase();
+                if (lvl === 'info') stats.info++;
+                else if (lvl === 'warning' || lvl === 'warn') stats.warn++;
+                else if (lvl === 'error' || lvl === 'critical') stats.error++;
+            });
+            document.getElementById('stat-total').textContent = stats.total;
+            document.getElementById('stat-info').textContent = stats.info;
+            document.getElementById('stat-warnings').textContent = stats.warn;
+            document.getElementById('stat-errors').textContent = stats.error;
+
+            // Update timestamp
+            const lastUpdate = document.getElementById('logger-last-update');
+            if (lastUpdate) {
+                lastUpdate.textContent = new Date().toLocaleTimeString('de-AT');
+            }
 
             if (currentLogs.length === 0) {
-                const empty = document.createElement('div');
-                empty.style.color = '#cbd5f5';
-                empty.style.fontSize = '0.85rem';
-                empty.textContent = 'No log entries available.';
-                loggerFeed.appendChild(empty);
+                entriesContainer.innerHTML = `
+                    <div style="color: #64748b; font-size: 0.8rem; padding: 2rem; text-align: center;">
+                        <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 0.5rem; display: block; color: #475569;"></i>
+                        No log entries available
+                    </div>
+                `;
                 return;
             }
 
@@ -1141,6 +1369,7 @@
             }
 
             // Render logs (clustered or normal)
+            let lineNum = 1;
             logsToRender.forEach(entry => {
                 const row = document.createElement('div');
                 
@@ -1148,72 +1377,60 @@
                     // Render cluster header
                     row.className = 'logger-entry clustered';
                     row.innerHTML = `
-                        <div class="cluster-header">
+                        <span class="line-num"></span>
+                        <div class="cluster-header" style="grid-column: 2 / -1;">
                             <i class="fas fa-layer-group"></i>
-                            Pattern: ${entry.pattern.substring(0, 80)}${entry.pattern.length > 80 ? '...' : ''}
-                            <span class="cluster-count">(${entry.count} occurrences)</span>
+                            Pattern: ${entry.pattern.substring(0, 60)}${entry.pattern.length > 60 ? '...' : ''}
+                            <span class="cluster-count">(${entry.count}×)</span>
                         </div>
                     `;
-                    loggerFeed.appendChild(row);
+                    entriesContainer.appendChild(row);
                     
                     // Render first few entries from cluster
                     entry.entries.slice(0, 3).forEach(clusterEntry => {
                         const clusterRow = document.createElement('div');
                         clusterRow.className = 'logger-entry';
-                        const timestamp = clusterEntry.timestamp || '';
+                        const timestamp = (clusterEntry.timestamp || '').split(' ')[1] || clusterEntry.timestamp || '';
                         const level = (clusterEntry.level || 'INFO').toLowerCase();
                         const message = clusterEntry.message || '';
-                        const logger = clusterEntry.logger || '';
+                        const loggerName = (clusterEntry.logger || '').split('.').pop() || '';
                         clusterRow.innerHTML = `
+                            <span class="line-num">${lineNum++}</span>
                             <span class="timestamp">${timestamp}</span>
                             <span class="level ${level}">${level}</span>
-                            <div>
-                                <div>${message}</div>
-                                <div class="log-detail">logger: ${logger}</div>
-                            </div>
+                            <div class="message"><span class="logger-name">[${loggerName}]</span>${escapeHtml(message)}</div>
                         `;
-                        loggerFeed.appendChild(clusterRow);
+                        entriesContainer.appendChild(clusterRow);
                     });
                     
                     if (entry.entries.length > 3) {
                         const moreRow = document.createElement('div');
-                        moreRow.className = 'logger-entry';
-                        moreRow.style.color = '#94a3b8';
-                        moreRow.style.fontSize = '0.8rem';
-                        moreRow.style.fontStyle = 'italic';
-                        moreRow.textContent = `... and ${entry.entries.length - 3} more similar entries`;
-                        loggerFeed.appendChild(moreRow);
+                        moreRow.style.cssText = 'color: #64748b; font-size: 0.72rem; font-style: italic; padding: 0.25rem 0.75rem; padding-left: 32px;';
+                        moreRow.textContent = `↳ ${entry.entries.length - 3} more similar entries...`;
+                        entriesContainer.appendChild(moreRow);
                     }
                 } else {
                     // Render normal log entry
-                    row.className = 'logger-entry';
-                    const timestamp = entry.timestamp || '';
+                    const timestamp = (entry.timestamp || '').split(' ')[1] || entry.timestamp || '';
                     const level = (entry.level || 'INFO').toLowerCase();
                     const message = entry.message || '';
-                    const logger = entry.logger || '';
+                    const loggerName = (entry.logger || '').split('.').pop() || '';
                     
-                    // Check for anomaly highlighting
-                    let isAnomaly = false;
-                    if (loggerAnomalyDetector && loggerAnomalyDetector.checked) {
-                        // Highlight errors and warnings
-                        if (level === 'error' || level === 'warning') {
-                            isAnomaly = true;
-                            row.style.borderLeft = '2px solid ' + (level === 'error' ? '#f87171' : '#facc15');
-                            row.style.background = level === 'error' ? 'rgba(248, 113, 113, 0.05)' : 'rgba(250, 204, 21, 0.05)';
-                        }
-                    }
+                    // Add level class for color coding
+                    row.className = `logger-entry level-${level}`;
 
                     row.innerHTML = `
+                        <span class="line-num">${lineNum++}</span>
                         <span class="timestamp">${timestamp}</span>
                         <span class="level ${level}">${level}</span>
-                        <div>
-                            <div>${message}</div>
-                            <div class="log-detail">logger: ${logger}</div>
-                        </div>
+                        <div class="message"><span class="logger-name">[${loggerName}]</span>${escapeHtml(message)}</div>
                     `;
-                    loggerFeed.appendChild(row);
+                    entriesContainer.appendChild(row);
                 }
             });
+
+            // Scroll to bottom
+            entriesContainer.scrollTop = entriesContainer.scrollHeight;
 
             // Render anomalies if enabled
             if (loggerAnomalyDetector && loggerAnomalyDetector.checked) {

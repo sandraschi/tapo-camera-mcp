@@ -94,6 +94,15 @@ weather:
       password: ''
       home_id: ''
 
+# Ring Doorbell and Alarm
+ring:
+  enabled: true
+  email: sandraschipal@hotmail.com
+  # Password only needed for initial auth - after that, token is cached
+  password: "Secret1175ri&"
+  token_file: ring_token.cache
+  cache_ttl: 60
+
 # Vienna Public Emergency Alerts
 # Sources: GeoSphere Austria (ZAMG), Meteoalarm
 alerts:

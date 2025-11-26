@@ -27,6 +27,16 @@ class WebUISettings(BaseModel):
     session_lifetime: int = 86400  # 24 hours in seconds
 
 
+class RingSettings(BaseModel):
+    """Ring doorbell and alarm settings."""
+
+    enabled: bool = False
+    email: Optional[str] = None
+    password: Optional[str] = None
+    token_file: str = "ring_token.cache"
+    cache_ttl: int = 60  # seconds
+
+
 class SecurityIntegrations(BaseModel):
     """Settings for external security system integrations."""
 
@@ -46,6 +56,7 @@ class SecurityIntegrations(BaseModel):
         },
         description="Ring MCP server integration settings",
     )
+    ring: RingSettings = Field(default_factory=RingSettings)
 
 
 class SecuritySettings(BaseModel):

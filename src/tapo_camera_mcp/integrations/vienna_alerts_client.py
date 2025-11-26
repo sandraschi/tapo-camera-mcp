@@ -12,6 +12,7 @@ No API key required for most sources.
 from __future__ import annotations
 
 import asyncio
+import ssl
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -20,6 +21,7 @@ from typing import Any
 from xml.etree import ElementTree as ET
 
 import aiohttp
+import certifi
 
 from ..utils import get_logger
 
@@ -180,9 +182,15 @@ class ViennaAlertsClient:
         self._session: aiohttp.ClientSession | None = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
-        """Get or create aiohttp session."""
+        """Get or create aiohttp session with proper SSL context."""
         if self._session is None or self._session.closed:
-            self._session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30))
+            # Create SSL context with certifi certificates
+            ssl_context = ssl.create_default_context(cafile=certifi.where())
+            connector = aiohttp.TCPConnector(ssl=ssl_context)
+            self._session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=30),
+                connector=connector,
+            )
         return self._session
 
     async def close(self) -> None:

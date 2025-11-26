@@ -193,8 +193,52 @@
         </div>
 
         <!-- Security Systems -->
-        <div class="card mt-6">
-            <h3 class="text-lg font-semibold mb-4">🛡️ Security & Safety</h3>
+        <div class="card mt-6" id="security-section">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">🛡️ Security & Safety</h3>
+                <button onclick="loadRingStatus()" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+
+            <!-- Ring Alarm Status -->
+            <div id="ring-alarm-section" class="mb-4">
+                <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-indigo-500">
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl">🔔</span>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-800">Ring Alarm</h4>
+                            <p class="text-sm text-gray-600" id="ring-alarm-mode">Loading...</p>
+                        </div>
+                        <div class="text-right" id="ring-alarm-controls">
+                            <div class="flex gap-1">
+                                <button onclick="setRingMode('disarmed')" class="px-2 py-1 rounded text-xs font-semibold bg-gray-200 hover:bg-gray-300" id="btn-disarmed">Off</button>
+                                <button onclick="setRingMode('home')" class="px-2 py-1 rounded text-xs font-semibold bg-gray-200 hover:bg-blue-300" id="btn-home">Home</button>
+                                <button onclick="setRingMode('away')" class="px-2 py-1 rounded text-xs font-semibold bg-gray-200 hover:bg-red-300" id="btn-away">Away</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ring Doorbell -->
+            <div id="ring-doorbell-section" class="mb-4 hidden">
+                <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl">🚪</span>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-800">Ring Doorbell</h4>
+                            <p class="text-sm text-gray-600" id="ring-doorbell-status">-</p>
+                        </div>
+                        <div class="text-right" id="ring-doorbell-battery">
+                            <!-- Battery shown here -->
+                        </div>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500" id="ring-last-event">
+                        Last event: -
+                    </div>
+                </div>
+            </div>
 
             <!-- Fire & CO Alarms -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -212,9 +256,6 @@
                             </span>
                         </div>
                     </div>
-                    <div class="mt-2 text-xs text-gray-500">
-                        Last test: Monthly self-check passed
-                    </div>
                 </div>
 
                 <!-- CO Alarm -->
@@ -231,55 +272,16 @@
                             </span>
                         </div>
                     </div>
-                    <div class="mt-2 text-xs text-gray-500">
-                        CO Level: 0 ppm (Safe)
-                    </div>
                 </div>
             </div>
 
-            <!-- Door/Window & Motion Sensors -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Door Sensors -->
-                <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-blue-500">
-                    <div class="flex items-center gap-3">
-                        <span class="text-3xl">🚪</span>
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-gray-800">Entry Points</h4>
-                            <p class="text-sm text-gray-600">Doors & Windows</p>
-                        </div>
-                        <div class="text-right">
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                All Secured
-                            </span>
-                        </div>
-                    </div>
-                    <div class="mt-2 text-xs text-gray-500">
-                        Ring sensors • 0 open
-                    </div>
-                </div>
-
-                <!-- Motion -->
-                <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-cyan-500">
-                    <div class="flex items-center gap-3">
-                        <span class="text-3xl">👁️</span>
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-gray-800">Motion Detection</h4>
-                            <p class="text-sm text-gray-600">All Zones</p>
-                        </div>
-                        <div class="text-right">
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                                Monitoring
-                            </span>
-                        </div>
-                    </div>
-                    <div class="mt-2 text-xs text-gray-500">
-                        Last motion: Living room, 5 min ago
-                    </div>
-                </div>
+            <!-- Ring Sensors -->
+            <div id="ring-sensors-section" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Placeholder - will be populated by JS -->
             </div>
 
             <!-- Status Banner -->
-            <div class="mt-4 bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-3">
+            <div class="mt-4 bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-3" id="security-status-banner">
                 <span class="text-2xl">✅</span>
                 <div>
                     <span class="font-semibold text-green-800">All Systems Normal</span>
@@ -298,11 +300,226 @@
 
 {% block extra_js %}
 <script>
-    // Load alerts and cameras on page load
+    // Load alerts, cameras, and Ring status on page load
     document.addEventListener('DOMContentLoaded', function() {
         loadAlerts();
         loadCameras();
+        loadRingStatus();
     });
+
+    // Ring Alarm Functions
+    async function loadRingStatus() {
+        try {
+            const response = await fetch('/api/ring/summary');
+            if (!response.ok) throw new Error('Failed to fetch Ring status');
+
+            const data = await response.json();
+            renderRingStatus(data);
+        } catch (error) {
+            console.error('Error loading Ring status:', error);
+            document.getElementById('ring-alarm-mode').textContent = 'Not connected';
+        }
+    }
+
+    function renderRingStatus(data) {
+        const modeEl = document.getElementById('ring-alarm-mode');
+        const controlsEl = document.getElementById('ring-alarm-controls');
+        const doorbellSection = document.getElementById('ring-doorbell-section');
+        const sensorsSection = document.getElementById('ring-sensors-section');
+        const lastEventEl = document.getElementById('ring-last-event');
+        const statusBanner = document.getElementById('security-status-banner');
+
+        if (!data.initialized) {
+            if (data.two_fa_pending) {
+                modeEl.textContent = '2FA code required';
+                controlsEl.innerHTML = `
+                    <input type="text" id="ring-2fa-code" placeholder="Enter code" class="px-2 py-1 text-xs border rounded w-20">
+                    <button onclick="submitRing2FA()" class="px-2 py-1 rounded text-xs font-semibold bg-blue-500 text-white">Submit</button>
+                `;
+            } else {
+                modeEl.textContent = 'Not connected';
+                controlsEl.innerHTML = `<span class="text-xs text-gray-500">Configure in settings</span>`;
+            }
+            return;
+        }
+
+        // Render alarm mode
+        if (data.alarm) {
+            const modeNames = { 'none': 'Disarmed', 'some': 'Home', 'all': 'Away' };
+            const modeColors = { 'none': 'gray', 'some': 'blue', 'all': 'red' };
+            const currentMode = data.alarm.mode;
+            modeEl.textContent = `Mode: ${modeNames[currentMode] || 'Unknown'}`;
+
+            // Highlight active mode button
+            ['disarmed', 'home', 'away'].forEach(m => {
+                const btn = document.getElementById(`btn-${m}`);
+                if (btn) {
+                    const isActive = (m === 'disarmed' && currentMode === 'none') ||
+                                   (m === 'home' && currentMode === 'some') ||
+                                   (m === 'away' && currentMode === 'all');
+                    if (isActive) {
+                        btn.classList.remove('bg-gray-200');
+                        btn.classList.add(m === 'away' ? 'bg-red-500' : m === 'home' ? 'bg-blue-500' : 'bg-green-500', 'text-white');
+                    } else {
+                        btn.classList.remove('bg-red-500', 'bg-blue-500', 'bg-green-500', 'text-white');
+                        btn.classList.add('bg-gray-200');
+                    }
+                }
+            });
+
+            // Render sensors
+            if (data.alarm.sensors && data.alarm.sensors.length > 0) {
+                let sensorHtml = '';
+                const contactSensors = data.alarm.sensors.filter(s => s.sensor_type === 'contact');
+                const motionSensors = data.alarm.sensors.filter(s => s.sensor_type === 'motion');
+                const openDoors = contactSensors.filter(s => s.is_open);
+
+                // Contact Sensors
+                if (contactSensors.length > 0) {
+                    sensorHtml += `
+                        <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-blue-500">
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl">🚪</span>
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-800">Entry Points</h4>
+                                    <p class="text-sm text-gray-600">Ring Sensors</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold ${openDoors.length > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">
+                                        ${openDoors.length > 0 ? openDoors.length + ' Open' : 'All Secured'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-xs text-gray-500">
+                                ${contactSensors.length} sensor${contactSensors.length !== 1 ? 's' : ''}
+                                ${openDoors.length > 0 ? ' • ' + openDoors.map(s => s.name).join(', ') : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Motion Sensors
+                if (motionSensors.length > 0) {
+                    sensorHtml += `
+                        <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-cyan-500">
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl">👁️</span>
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-800">Motion Detection</h4>
+                                    <p class="text-sm text-gray-600">Ring Sensors</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                                        Monitoring
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-xs text-gray-500">
+                                ${motionSensors.length} sensor${motionSensors.length !== 1 ? 's' : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                sensorsSection.innerHTML = sensorHtml;
+
+                // Update status banner based on alarm state
+                if (data.alarm.is_armed) {
+                    statusBanner.className = 'mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-3';
+                    statusBanner.innerHTML = `
+                        <span class="text-2xl">🛡️</span>
+                        <div>
+                            <span class="font-semibold text-blue-800">System Armed</span>
+                            <span class="text-blue-600 text-sm ml-2">${modeNames[currentMode]} mode</span>
+                        </div>
+                    `;
+                } else if (openDoors.length > 0) {
+                    statusBanner.className = 'mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center gap-3';
+                    statusBanner.innerHTML = `
+                        <span class="text-2xl">⚠️</span>
+                        <div>
+                            <span class="font-semibold text-yellow-800">Entry Point Open</span>
+                            <span class="text-yellow-600 text-sm ml-2">${openDoors.map(s => s.name).join(', ')}</span>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Render doorbells
+        if (data.doorbells && data.doorbells.length > 0) {
+            doorbellSection.classList.remove('hidden');
+            const doorbell = data.doorbells[0];
+            document.getElementById('ring-doorbell-status').textContent = doorbell.kind || 'Video Doorbell';
+            const batteryEl = document.getElementById('ring-doorbell-battery');
+            if (doorbell.battery_level) {
+                batteryEl.innerHTML = `<span class="text-sm">🔋 ${doorbell.battery_level}%</span>`;
+            }
+        }
+
+        // Last event
+        if (data.last_event) {
+            const eventTime = new Date(data.last_event.timestamp);
+            const timeStr = eventTime.toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' });
+            const eventType = data.last_event.event_type === 'ding' ? '🔔 Doorbell' : '🏃 Motion';
+            lastEventEl.textContent = `Last event: ${eventType} at ${timeStr}`;
+        }
+    }
+
+    async function setRingMode(mode) {
+        const btn = document.getElementById(`btn-${mode}`);
+        if (btn) {
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        }
+
+        try {
+            const response = await fetch('/api/ring/alarm/mode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: mode })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.detail || 'Failed to set mode');
+            }
+
+            // Reload Ring status
+            await loadRingStatus();
+        } catch (error) {
+            console.error('Error setting Ring mode:', error);
+            alert('Failed to set alarm mode: ' + error.message);
+            loadRingStatus(); // Restore button state
+        }
+    }
+
+    async function submitRing2FA() {
+        const codeInput = document.getElementById('ring-2fa-code');
+        const code = codeInput.value.trim();
+        if (!code) return;
+
+        try {
+            const response = await fetch('/api/ring/auth/2fa', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.detail || 'Invalid code');
+            }
+
+            // Reload Ring status
+            await loadRingStatus();
+        } catch (error) {
+            console.error('Ring 2FA error:', error);
+            alert('2FA failed: ' + error.message);
+        }
+    }
+
+    // Auto-refresh Ring status every minute
+    setInterval(loadRingStatus, 60 * 1000);
     
     async function loadCameras() {
         const container = document.getElementById('camera-row');
