@@ -61,10 +61,10 @@ class EdgeCollector:
         aggressive polling and coordinate with other monitoring tasks.
         """
         # Use centralized polling manager instead of manual loop
-        from ..polling_manager import get_polling_manager, PollingPriority
+        from ..polling_manager import PollingPriority, get_polling_manager
 
         manager = get_polling_manager()
-        
+
         # Determine priority based on scrape interval
         if self.config.scrape_interval < 10:
             priority = PollingPriority.HIGH
@@ -104,7 +104,7 @@ class EdgeCollector:
             f"Edge collector {self.config.host} registered with polling manager "
             f"(interval: {self.config.scrape_interval}s, priority: {priority.value})"
         )
-        
+
         # Keep the task running (polling manager handles the actual polling)
         # This allows the method to be awaited and cancelled properly
         try:

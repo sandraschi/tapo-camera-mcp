@@ -294,16 +294,25 @@ class ConfigManager:
                 cache_dir=Path(config.get("cache_dir", "cache")),
                 api_key=config.get("api_key"),
             )
+
+        # Map model class names to config keys (some don't match exactly)
+        model_key_map = {
+            "weathersettings": "weather",
+            "energysettings": "energy",
+            "lightingsettings": "lighting",
+        }
+        config_key = model_key_map.get(model_name, model_name)
+
         if hasattr(model_class, "model_validate"):
             # Handle Pydantic v2 models
-            model_config = config.get(model_name, {})
+            model_config = config.get(config_key, {})
             return model_class.model_validate(model_config)
         if hasattr(model_class, "parse_obj"):
             # Handle Pydantic v1 models
-            model_config = config.get(model_name, {})
+            model_config = config.get(config_key, {})
             return model_class.parse_obj(model_config)
         # Handle dataclasses
-        model_config = config.get(model_name, {})
+        model_config = config.get(config_key, {})
         return model_class(**model_config)
 
 

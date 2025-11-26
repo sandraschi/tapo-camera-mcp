@@ -102,7 +102,7 @@ def register_configuration_management_tool(mcp: FastMCP) -> None:
                 )
                 return {"success": True, "action": action, "data": result}
 
-            elif action in ["privacy_settings", "privacy_mode"]:
+            if action in ["privacy_settings", "privacy_mode"]:
                 tool = PrivacySettingsTool()
                 result = await tool.execute(
                     operation=action,
@@ -115,5 +115,5 @@ def register_configuration_management_tool(mcp: FastMCP) -> None:
 
         except Exception as e:
             logger.error(f"Error in configuration management action '{action}': {e}", exc_info=True)
-            return {"success": False, "error": f"Failed to execute action '{action}': {str(e)}"}
+            return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
 

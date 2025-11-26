@@ -96,5 +96,5 @@ def register_energy_management_tool(mcp: FastMCP) -> None:
 
         except Exception as e:
             logger.error(f"Error in energy management action '{action}': {e}", exc_info=True)
-            return {"success": False, "error": f"Failed to execute action '{action}': {str(e)}"}
+            return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
 

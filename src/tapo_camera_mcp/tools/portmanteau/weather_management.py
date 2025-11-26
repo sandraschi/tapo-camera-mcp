@@ -9,8 +9,8 @@ from typing import Any, Literal
 
 from fastmcp import FastMCP
 
-from tapo_camera_mcp.tools.weather.netatmo_weather_tool import NetatmoWeatherTool
 from tapo_camera_mcp.tools.weather.netatmo_analysis_tool import NetatmoAnalysisTool
+from tapo_camera_mcp.tools.weather.netatmo_weather_tool import NetatmoWeatherTool
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +106,7 @@ def register_weather_management_tool(mcp: FastMCP) -> None:
                 )
                 return {"success": True, "action": action, "data": result}
 
-            elif action == "analyze":
+            if action == "analyze":
                 tool = NetatmoAnalysisTool()
                 result = await tool.execute(
                     station_id=station_id,
@@ -119,5 +119,5 @@ def register_weather_management_tool(mcp: FastMCP) -> None:
 
         except Exception as e:
             logger.error(f"Error in weather management action '{action}': {e}", exc_info=True)
-            return {"success": False, "error": f"Failed to execute action '{action}': {str(e)}"}
+            return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
 

@@ -156,7 +156,7 @@ def register_camera_management_tool(mcp: FastMCP) -> None:
             if action == "list":
                 return await _handle_list_cameras()
 
-            elif action == "add":
+            if action == "add":
                 return await _handle_add_camera(
                     camera_name=camera_name,
                     camera_type=camera_type,
@@ -165,43 +165,42 @@ def register_camera_management_tool(mcp: FastMCP) -> None:
                     password=password,
                 )
 
-            elif action == "remove":
+            if action == "remove":
                 return await _handle_remove_camera(camera_name=camera_name, camera_id=camera_id)
 
-            elif action == "connect":
+            if action == "connect":
                 return await _handle_connect_camera(camera_name=camera_name, camera_id=camera_id)
 
-            elif action == "disconnect":
+            if action == "disconnect":
                 return await _handle_disconnect_camera(camera_name=camera_name, camera_id=camera_id)
 
-            elif action == "info":
+            if action == "info":
                 return await _handle_get_camera_info(camera_name=camera_name, camera_id=camera_id)
 
-            elif action == "status":
+            if action == "status":
                 return await _handle_get_camera_status(camera_name=camera_name, camera_id=camera_id)
 
-            elif action == "set_active":
+            if action == "set_active":
                 return await _handle_set_active_camera(camera_name=camera_name, camera_id=camera_id)
 
-            elif action == "manage_groups":
+            if action == "manage_groups":
                 return await _handle_manage_groups(
                     group_action=group_action,
                     group_name=group_name,
                     camera_name=camera_name,
                 )
 
-            else:
-                return {
-                    "success": False,
-                    "error": f"Action '{action}' not implemented",
-                    "available_actions": CAMERA_ACTIONS,
-                }
+            return {
+                "success": False,
+                "error": f"Action '{action}' not implemented",
+                "available_actions": CAMERA_ACTIONS,
+            }
 
         except Exception as e:
             logger.error(f"Error in camera management action '{action}': {e}", exc_info=True)
             return {
                 "success": False,
-                "error": f"Failed to execute action '{action}': {str(e)}",
+                "error": f"Failed to execute action '{action}': {e!s}",
                 "action": action,
                 "available_actions": CAMERA_ACTIONS,
             }
@@ -221,7 +220,7 @@ async def _handle_list_cameras() -> dict[str, Any]:
             }
         return {"success": False, "action": "list", "error": "Failed to list cameras"}
     except Exception as e:
-        return {"success": False, "action": "list", "error": f"Failed to list cameras: {str(e)}"}
+        return {"success": False, "action": "list", "error": f"Failed to list cameras: {e!s}"}
 
 
 async def _handle_add_camera(
@@ -268,7 +267,7 @@ async def _handle_add_camera(
             "success": False,
             "action": "add",
             "camera_name": camera_name,
-            "error": f"Failed to add camera: {str(e)}",
+            "error": f"Failed to add camera: {e!s}",
         }
 
 
@@ -293,7 +292,7 @@ async def _handle_remove_camera(
             "success": False,
             "action": "remove",
             "camera_id": identifier,
-            "error": f"Failed to remove camera: {str(e)}",
+            "error": f"Failed to remove camera: {e!s}",
         }
 
 
@@ -318,7 +317,7 @@ async def _handle_connect_camera(
             "success": False,
             "action": "connect",
             "camera_id": identifier,
-            "error": f"Failed to connect camera: {str(e)}",
+            "error": f"Failed to connect camera: {e!s}",
         }
 
 
@@ -343,7 +342,7 @@ async def _handle_disconnect_camera(
             "success": False,
             "action": "disconnect",
             "camera_id": identifier,
-            "error": f"Failed to disconnect camera: {str(e)}",
+            "error": f"Failed to disconnect camera: {e!s}",
         }
 
 
@@ -368,7 +367,7 @@ async def _handle_get_camera_info(
             "success": False,
             "action": "info",
             "camera_id": identifier,
-            "error": f"Failed to get camera info: {str(e)}",
+            "error": f"Failed to get camera info: {e!s}",
         }
 
 
@@ -393,7 +392,7 @@ async def _handle_get_camera_status(
             "success": False,
             "action": "status",
             "camera_id": identifier,
-            "error": f"Failed to get camera status: {str(e)}",
+            "error": f"Failed to get camera status: {e!s}",
         }
 
 
@@ -418,7 +417,7 @@ async def _handle_set_active_camera(
             "success": False,
             "action": "set_active",
             "camera_id": identifier,
-            "error": f"Failed to set active camera: {str(e)}",
+            "error": f"Failed to set active camera: {e!s}",
         }
 
 
@@ -450,6 +449,6 @@ async def _handle_manage_groups(
         return {
             "success": False,
             "action": "manage_groups",
-            "error": f"Failed to manage groups: {str(e)}",
+            "error": f"Failed to manage groups: {e!s}",
         }
 

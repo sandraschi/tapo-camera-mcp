@@ -108,6 +108,7 @@ class ToolCategory(str, Enum):
     WEATHER = "Weather"
     AI_ANALYSIS = "AI Analysis"
     AUTOMATION = "Automation"
+    LIGHTING = "Lighting"
     ONBOARDING = "Onboarding"
 
 

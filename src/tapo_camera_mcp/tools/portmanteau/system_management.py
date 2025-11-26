@@ -9,9 +9,9 @@ from typing import Any, Literal
 
 from fastmcp import FastMCP
 
+from tapo_camera_mcp.tools.system.health_tool import HealthCheckTool
 from tapo_camera_mcp.tools.system.system_control_tool import SystemControlTool
 from tapo_camera_mcp.tools.system.system_info_tool import SystemInfoTool
-from tapo_camera_mcp.tools.system.health_tool import HealthCheckTool
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +99,7 @@ def register_system_management_tool(mcp: FastMCP) -> None:
                 result = await tool.execute()
                 return {"success": True, "action": action, "data": result}
 
-            elif action in ["status", "reboot", "logs"]:
+            if action in ["status", "reboot", "logs"]:
                 tool = SystemControlTool()
                 operation_map = {
                     "status": "status",
@@ -115,7 +115,7 @@ def register_system_management_tool(mcp: FastMCP) -> None:
                 )
                 return {"success": True, "action": action, "data": result}
 
-            elif action == "health":
+            if action == "health":
                 tool = HealthCheckTool()
                 result = await tool.execute()
                 return {"success": True, "action": action, "data": result}
@@ -124,5 +124,5 @@ def register_system_management_tool(mcp: FastMCP) -> None:
 
         except Exception as e:
             logger.error(f"Error in system management action '{action}': {e}", exc_info=True)
-            return {"success": False, "error": f"Failed to execute action '{action}': {str(e)}"}
+            return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
 

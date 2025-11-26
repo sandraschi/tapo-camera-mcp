@@ -11,6 +11,7 @@
 [![Dashboard](https://img.shields.io/badge/Dashboard-Live-green.svg)](http://localhost:7777)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
 [![Energy Dashboard](https://img.shields.io/badge/Energy%20Dashboard-Operational-success.svg)](http://localhost:7777/energy)
+[![Lighting Dashboard](https://img.shields.io/badge/Lighting%20Dashboard-Operational-success.svg)](http://localhost:7777/lighting)
 [![Multi-Device](https://img.shields.io/badge/Devices-Tapo%20%7C%20Ring%20%7C%20Nest%20%7C%20USB-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp)
 [![LLM Integration](https://img.shields.io/badge/LLM-Multi--Provider-orange.svg)](https://github.com/sandraschi/tapo-camera-mcp)
 
@@ -42,10 +43,11 @@
 - **🤖 LLM Integration**: Multi-provider support (Ollama, LM Studio, OpenAI) with chatbot UI
 - **🐳 Dockerization**: Complete MyHomeControl stack with optimized production builds
 - **🌤️ Netatmo Weather**: OAuth-based weather station integration
+- **💡 Philips Hue Lighting**: Complete smart lighting control (16 lights, 52 scenes)
 - **📊 Monitoring**: GitLab CE setup with unified monitoring stack
 - **⚡ CI/CD Modernization**: Ruff linting, caching, concurrency, Dependabot
 - **🧪 Testing**: Comprehensive unit + integration test suite
-- **🎨 UX Improvements**: Camera thumbnails, energy dashboard, real device prioritization
+- **🎨 UX Improvements**: Camera thumbnails, energy dashboard, lighting dashboard, real device prioritization
 
 **🎯 Current Status**: Production-ready Docker deployment, AI-powered interactions, comprehensive monitoring, and modern development workflow.
 
@@ -221,6 +223,15 @@ cameras:
 - **Energy Saving Mode**: Intelligent power optimization
 - **Historical Data**: Limited to current day (P115 limitation) with Home Assistant integration recommended
 
+#### 💡 **Lighting Control Dashboard** (NEW in v1.3.0)
+- **Philips Hue Integration**: Full support for Hue Bridge and lights
+- **Light Discovery**: Automatic discovery of all Hue lights (16 lights detected)
+- **Light Control**: On/off toggle and brightness adjustment
+- **Group Management**: Support for Hue groups/rooms
+- **Scene Activation**: Hue scene support (52 scenes available)
+- **Real-time Status**: Live light state monitoring and updates
+- **Settings Integration**: Bridge IP and username configuration via settings page
+
 #### 🚨 **Alarm System Integration**
 - **Nest Protect**: Smoke and CO detector monitoring
 - **Ring Alarms**: Door/window sensors and motion detectors
@@ -264,6 +275,7 @@ python start.py dashboard
 - ✅ **MCP Tools**: 30+ tools available in Claude Desktop (FastMCP 2.12 compliant)
   - **Device Onboarding**: Progressive discovery and configuration tools
   - **Energy Management**: Tapo P115 smart plug control and monitoring
+  - **Lighting Control**: Philips Hue Bridge integration (16 lights, 52 scenes)
   - **Security Integration**: Nest Protect and Ring device management
   - **AI Analytics**: Performance monitoring and intelligent automation
 

@@ -125,10 +125,12 @@ async def get_station_weather_data(
                 station_id=station_id, module_type=module_type, data=data, timestamp=ts
             )
         # No Netatmo configured - return error instead of mock data
-        logger.warning(f"Netatmo integration not enabled. Cannot get weather data for station {station_id}.")
+        logger.warning(
+            f"Netatmo integration not enabled. Cannot get weather data for station {station_id}."
+        )
         raise HTTPException(
             status_code=503,
-            detail="Netatmo integration not enabled. Configure Netatmo in config.yaml to enable weather data."
+            detail="Netatmo integration not enabled. Configure Netatmo in config.yaml to enable weather data.",
         )
 
     except Exception as e:
@@ -152,10 +154,12 @@ async def get_station_historical_data(
         use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
 
         if not use_netatmo:
-            logger.warning(f"Netatmo integration not enabled. Cannot get historical data for station {station_id}.")
+            logger.warning(
+                f"Netatmo integration not enabled. Cannot get historical data for station {station_id}."
+            )
             raise HTTPException(
                 status_code=503,
-                detail="Netatmo integration not enabled. Configure Netatmo in config.yaml to enable historical weather data."
+                detail="Netatmo integration not enabled. Configure Netatmo in config.yaml to enable historical weather data.",
             )
 
         # Get historical data from database
@@ -405,4 +409,171 @@ async def get_weather_overview() -> Dict[str, Any]:
 
     except Exception as e:
         logger.exception("Failed to get weather overview")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+# ============================================================================
+# External Weather (Open-Meteo API - Free, no API key required)
+# ============================================================================
+
+from ...integrations.openmeteo_client import VIENNA_LAT, VIENNA_LON, openmeteo_client
+
+
+class ExternalWeatherResponse(BaseModel):
+    """External weather data response."""
+
+    location: str = Field(..., description="Location name")
+    latitude: float = Field(..., description="Latitude")
+    longitude: float = Field(..., description="Longitude")
+    temperature: float = Field(..., description="Temperature in Celsius")
+    humidity: int = Field(..., description="Humidity percentage")
+    pressure: float = Field(..., description="Pressure in hPa")
+    wind_speed: float = Field(..., description="Wind speed in km/h")
+    wind_direction: int = Field(..., description="Wind direction in degrees")
+    weather_code: int = Field(..., description="WMO weather code")
+    weather_description: str = Field(..., description="Weather description")
+    cloud_cover: int = Field(..., description="Cloud cover percentage")
+    precipitation: float = Field(..., description="Precipitation in mm")
+    is_day: bool = Field(..., description="Is daytime")
+    timestamp: float = Field(..., description="Data timestamp")
+
+
+class ForecastDayResponse(BaseModel):
+    """Daily forecast response."""
+
+    date: str = Field(..., description="Date (YYYY-MM-DD)")
+    temp_max: float | None = Field(None, description="Max temperature")
+    temp_min: float | None = Field(None, description="Min temperature")
+    precipitation: float = Field(0, description="Precipitation in mm")
+    weather_code: int = Field(0, description="WMO weather code")
+    weather_description: str = Field("", description="Weather description")
+    wind_speed_max: float = Field(0, description="Max wind speed")
+
+
+@router.get("/external/current", response_model=ExternalWeatherResponse)
+async def get_external_weather(
+    lat: float = Query(VIENNA_LAT, description="Latitude"),
+    lon: float = Query(VIENNA_LON, description="Longitude"),
+    location: str = Query("Vienna, Austria", description="Location name"),
+) -> ExternalWeatherResponse:
+    """Get current external weather from Open-Meteo API (free, no API key)."""
+    try:
+        logger.info(f"Getting external weather for {location} ({lat}, {lon})")
+
+        weather = await openmeteo_client.get_current_weather(lat, lon, location)
+
+        if not weather:
+            raise HTTPException(status_code=503, detail="Failed to fetch external weather")
+
+        return ExternalWeatherResponse(
+            location=weather.location,
+            latitude=weather.latitude,
+            longitude=weather.longitude,
+            temperature=weather.temperature,
+            humidity=weather.humidity,
+            pressure=weather.pressure,
+            wind_speed=weather.wind_speed,
+            wind_direction=weather.wind_direction,
+            weather_code=weather.weather_code,
+            weather_description=weather.weather_description,
+            cloud_cover=weather.cloud_cover,
+            precipitation=weather.precipitation,
+            is_day=weather.is_day,
+            timestamp=weather.timestamp,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to get external weather")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/external/forecast", response_model=List[ForecastDayResponse])
+async def get_external_forecast(
+    lat: float = Query(VIENNA_LAT, description="Latitude"),
+    lon: float = Query(VIENNA_LON, description="Longitude"),
+    days: int = Query(7, ge=1, le=14, description="Number of forecast days"),
+) -> List[ForecastDayResponse]:
+    """Get weather forecast from Open-Meteo API."""
+    try:
+        logger.info(f"Getting {days}-day forecast for ({lat}, {lon})")
+
+        forecast = await openmeteo_client.get_forecast(lat, lon, days)
+
+        return [
+            ForecastDayResponse(
+                date=day["date"],
+                temp_max=day.get("temp_max"),
+                temp_min=day.get("temp_min"),
+                precipitation=day.get("precipitation", 0),
+                weather_code=day.get("weather_code", 0),
+                weather_description=day.get("weather_description", ""),
+                wind_speed_max=day.get("wind_speed_max", 0),
+            )
+            for day in forecast
+        ]
+
+    except Exception as e:
+        logger.exception("Failed to get forecast")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/combined")
+async def get_combined_weather() -> Dict[str, Any]:
+    """Get combined internal (Netatmo) and external (Vienna) weather."""
+    try:
+        logger.info("Getting combined weather data")
+
+        # Get internal Netatmo data
+        cfg = get_model(WeatherSettings)
+        use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
+
+        internal_data = None
+        if use_netatmo:
+            try:
+                stations = await _netatmo_service.list_stations()
+                if stations:
+                    station_id = stations[0]["station_id"]
+                    data, ts = await _netatmo_service.current_data(station_id, "all")
+                    internal_data = {
+                        "station_name": stations[0].get("station_name", "Netatmo"),
+                        "location": stations[0].get("location", "Home"),
+                        "data": data,
+                        "timestamp": ts,
+                    }
+            except Exception as e:
+                logger.warning(f"Failed to get Netatmo data: {e}")
+
+        # Get external Vienna weather
+        external_data = None
+        try:
+            weather = await openmeteo_client.get_current_weather()
+            if weather:
+                external_data = {
+                    "location": weather.location,
+                    "temperature": weather.temperature,
+                    "humidity": weather.humidity,
+                    "pressure": weather.pressure,
+                    "wind_speed": weather.wind_speed,
+                    "weather_description": weather.weather_description,
+                    "cloud_cover": weather.cloud_cover,
+                    "is_day": weather.is_day,
+                    "timestamp": weather.timestamp,
+                }
+        except Exception as e:
+            logger.warning(f"Failed to get external weather: {e}")
+
+        # Get forecast
+        forecast = await openmeteo_client.get_forecast(days=5)
+
+        return {
+            "internal": internal_data,
+            "external": external_data,
+            "forecast": forecast[:5],  # 5-day forecast
+            "timestamp": time.time(),
+        }
+
+    except Exception as e:
+        logger.exception("Failed to get combined weather")
         raise HTTPException(status_code=500, detail=str(e)) from e

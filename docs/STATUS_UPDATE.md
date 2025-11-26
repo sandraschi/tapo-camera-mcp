@@ -37,6 +37,18 @@
 - ✅ **Energy Charts**: Chart.js-based consumption visualization (FIXED: CSP updated to allow CDN)
 - ✅ **Device Display**: All configured devices show on energy page (FIXED: Server startup initialization)
 
+### **💡 Lighting Control** (90% Complete - v1.3.0)
+- ✅ **Philips Hue Integration**: Full support for Hue Bridge and lights
+- ✅ **Light Discovery**: Automatic discovery of all Hue lights (18 lights detected)
+- ✅ **Light Control**: On/off toggle and brightness control (instant response)
+- ✅ **Group Management**: Support for Hue groups/rooms with on/off control
+- ✅ **Scene Activation**: 11 predefined scenes (Sunset, Aurora, etc.) - working correctly
+- ✅ **Settings Page**: Bridge IP and username configuration
+- ✅ **Lighting Dashboard**: Dedicated page at `/lighting` with real-time status
+- ✅ **Performance Caching**: Device lists cached on startup, manual rescan button added
+- ✅ **Rescan Button**: Manual refresh of lights/groups/scenes with last scan time display
+- ℹ️ **Note**: Scenes only affect lights within their configured room (Hue limitation, configure in Hue app)
+
 ### **🤖 LLM Integration** (NEW in v1.3.0)
 - ✅ **Multi-Provider**: Ollama, LM Studio, OpenAI support
 - ✅ **Chatbot UI**: Floating chat interface with streaming support
@@ -62,6 +74,13 @@
   - ✅ Devices display correctly on energy page
   - ✅ Toggle on/off functionality working
   - ✅ Energy consumption charts rendering properly
+- **Lighting Control**: ✅ Philips Hue integration 90% complete (18 lights, 11 scenes)
+  - ✅ Bridge connection and authentication working
+  - ✅ Light/group discovery with caching (fast page loads)
+  - ✅ On/off toggle instant (removed redundant bridge queries)
+  - ✅ Scene activation working (predefined scenes like Sunset, Aurora)
+  - ✅ Rescan button for manual cache refresh
+  - ℹ️ Scenes are per-room (Hue app limitation, not code)
 - **LLM Integration**: ✅ Multi-provider support operational
 - **Docker Deployment**: ✅ Production-ready containers
 - **CI/CD**: ✅ Modern workflow with automated testing
@@ -88,6 +107,12 @@
 - **Chart.js Loading**: Fixed energy consumption chart not displaying
   - **Solution**: Updated Content Security Policy to allow Chart.js from CDN
   - **Files Changed**: `src/tapo_camera_mcp/web/server.py`, `src/tapo_camera_mcp/web/templates/energy.html`
+- **Philips Hue Integration**: Implemented complete lighting control system (90% complete)
+  - **Features**: Bridge connection, light discovery, on/off control, brightness, groups, scenes
+  - **Performance**: Added caching to eliminate slow bridge queries on every operation
+  - **Files Created**: `src/tapo_camera_mcp/tools/lighting/hue_tools.py`, `src/tapo_camera_mcp/web/api/lighting.py`, `src/tapo_camera_mcp/web/templates/lighting.html`
+  - **Status**: 18 lights, 11 predefined scenes, instant toggle response, rescan button for cache refresh
+  - **Note**: Scenes only affect lights within their configured Hue room (limitation of Hue app configuration)
 
 ---
 
@@ -129,10 +154,11 @@
 ## 📈 **PROGRESS METRICS**
 
 - **Server Stability**: 100% ✅ (Production-ready)
-- **Dashboard Functionality**: 85% ✅ (Missing video streaming UI)
+- **Dashboard Functionality**: 90% ✅ (Missing video streaming UI)
 - **Camera Detection**: 100% ✅ (USB webcams working)
 - **Claude Integration**: 100% ✅ (MCP server loads successfully)
 - **Energy Management**: 100% ✅ (P115 plugs fully operational with working toggle and charts)
+- **Lighting Control**: 90% ✅ (Philips Hue fully functional with caching, scenes per-room only)
 - **LLM Integration**: 100% ✅ (Multi-provider support)
 - **Docker Deployment**: 100% ✅ (Production-ready)
 - **CI/CD**: 100% ✅ (Modern workflow operational)
@@ -145,13 +171,11 @@ The platform foundation is solid with working MCP integration, energy management
 
 **Current Status**: 🎯 **Production-Ready Platform v1.3.0 with Minor Auth Issues**
 
-**Version**: 1.3.0 (LLM Integration & Dockerization)  
-**Release Date**: November 17, 2025
+**Version**: 1.3.0 (LLM Integration, Dockerization & Lighting Control)  
+**Release Date**: November 17, 2025  
+**Latest Update**: November 26, 2025 (Philips Hue Integration)
 
 ---
 
 *Status Update by: AI Assistant*  
-*Last Updated: November 26, 2025*</contents>
-</xai:function_call">  
-<xai:function_call name="run_terminal_cmd">
-<parameter name="command">git add .
+*Last Updated: November 26, 2025*

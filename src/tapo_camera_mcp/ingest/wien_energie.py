@@ -10,8 +10,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING
+from datetime import datetime, timezone
 
 from ..config import get_config
 from ..db import TimeSeriesDB

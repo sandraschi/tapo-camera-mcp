@@ -3,11 +3,9 @@ PostgreSQL database for media metadata (recordings, snapshots, AI analysis).
 """
 
 import os
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
+from datetime import datetime, timezone
 from typing import Any
 
-import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
 
@@ -162,7 +160,7 @@ class MediaMetadataDB:
             self._return_connection(conn)
             logger.info("Media metadata database initialized")
 
-        except Exception as e:
+        except Exception:
             logger.exception("Error initializing media metadata database")
             if conn:
                 conn.rollback()
@@ -222,7 +220,7 @@ class MediaMetadataDB:
             cursor.close()
             return dict(result) if result else {}
 
-        except Exception as e:
+        except Exception:
             logger.exception("Error adding recording")
             conn.rollback()
             raise
@@ -269,7 +267,7 @@ class MediaMetadataDB:
             cursor.close()
             return dict(result) if result else {}
 
-        except Exception as e:
+        except Exception:
             logger.exception("Error adding snapshot")
             conn.rollback()
             raise
@@ -312,7 +310,7 @@ class MediaMetadataDB:
             cursor.close()
             return dict(result) if result else {}
 
-        except Exception as e:
+        except Exception:
             logger.exception("Error adding AI analysis")
             conn.rollback()
             raise
@@ -387,7 +385,7 @@ class MediaMetadataDB:
             cursor.close()
             return results
 
-        except Exception as e:
+        except Exception:
             logger.exception("Error getting recordings")
             raise
         finally:
@@ -443,7 +441,7 @@ class MediaMetadataDB:
             cursor.close()
             return results
 
-        except Exception as e:
+        except Exception:
             logger.exception("Error getting snapshots")
             raise
         finally:
@@ -489,7 +487,7 @@ class MediaMetadataDB:
             cursor.close()
             return results
 
-        except Exception as e:
+        except Exception:
             logger.exception("Error getting AI analysis")
             raise
         finally:
@@ -515,7 +513,7 @@ class MediaMetadataDB:
             cursor.close()
             return deleted
 
-        except Exception as e:
+        except Exception:
             logger.exception("Error deleting recording")
             conn.rollback()
             raise
@@ -542,7 +540,7 @@ class MediaMetadataDB:
             cursor.close()
             return deleted
 
-        except Exception as e:
+        except Exception:
             logger.exception("Error deleting snapshot")
             conn.rollback()
             raise
@@ -592,7 +590,7 @@ class MediaMetadataDB:
                 "unusual_recordings": rec_stats.get("unusual_recordings", 0) or 0,
             }
 
-        except Exception as e:
+        except Exception:
             logger.exception("Error getting storage stats")
             raise
         finally:

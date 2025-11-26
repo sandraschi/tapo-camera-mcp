@@ -564,6 +564,24 @@
                         <span>Energy</span>
                     </a>
                 </li>
+                <li class="nav-item {% if request.url.path == '/lighting' %}active{% endif %}">
+                    <a href="/lighting">
+                        <i class="fas fa-lightbulb"></i>
+                        <span>Lighting</span>
+                    </a>
+                </li>
+                <li class="nav-item {% if request.url.path == '/robots' %}active{% endif %}">
+                    <a href="/robots">
+                        <i class="fas fa-robot"></i>
+                        <span>Robots</span>
+                    </a>
+                </li>
+                <li class="nav-item {% if request.url.path == '/kitchen' %}active{% endif %}">
+                    <a href="/kitchen">
+                        <i class="fas fa-utensils"></i>
+                        <span>Kitchen</span>
+                    </a>
+                </li>
                 <li class="nav-item {% if request.url.path == '/alarms' %}active{% endif %}">
                     <a href="/alarms">
                         <i class="fas fa-shield-alt"></i>

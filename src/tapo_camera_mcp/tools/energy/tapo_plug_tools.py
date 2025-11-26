@@ -11,8 +11,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from ...ingest import IngestionUnavailableError, TapoP115IngestionService
 from ...config import get_config
+from ...ingest import IngestionUnavailableError, TapoP115IngestionService
 from ...tools.base_tool import BaseTool, ToolCategory, tool
 
 logger = logging.getLogger(__name__)
@@ -455,7 +455,7 @@ class TapoPlugManager:
             await self.initialize({})
 
         from datetime import timezone
-        
+
         # Use UTC-aware datetime to match ingestion service timestamps
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
 

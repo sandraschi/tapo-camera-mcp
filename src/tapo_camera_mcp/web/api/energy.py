@@ -40,7 +40,7 @@ async def list_energy_devices() -> dict[str, Any]:
     Return all energy monitoring devices (Tapo P115 plugs + Wien Energie smart meter).
     """
     devices = []
-    
+
     # Get Tapo P115 devices
     try:
         tapo_devices = await tapo_plug_manager.get_all_devices()
@@ -61,10 +61,10 @@ async def list_energy_devices() -> dict[str, Any]:
                 "monthly_cost": device.monthly_cost,
                 "last_seen": device.last_seen,
             })
-    except Exception as e:
+    except Exception:
         # Continue even if Tapo devices fail
         pass
-    
+
     # Get Wien Energie smart meter
     try:
         service = get_smart_meter_service()
@@ -74,7 +74,7 @@ async def list_energy_devices() -> dict[str, Any]:
             if meter_info and reading:
                 tariff_info = await service.get_tariff_info()
                 cost = service.calculate_energy_cost(reading.get("daily_energy_kwh", 0))
-                
+
                 devices.append({
                     "device_id": "wien_energie_smart_meter",
                     "name": "Wien Energie Smart Meter",
@@ -95,7 +95,7 @@ async def list_energy_devices() -> dict[str, Any]:
     except Exception:
         # Continue even if smart meter fails
         pass
-    
+
     return {
         "devices": devices,
         "total_devices": len(devices),
@@ -115,7 +115,7 @@ async def get_smart_meter_status() -> dict[str, Any]:
             status_code=503,
             detail="Smart meter service not available. Check configuration and adapter connection."
         )
-    
+
     try:
         meter_info = await service.discover_meter()
         if not meter_info:
@@ -123,16 +123,16 @@ async def get_smart_meter_status() -> dict[str, Any]:
                 status_code=503,
                 detail="Unable to discover smart meter. Check adapter connection and security key."
             )
-        
+
         reading = await service.fetch_current_reading()
         if not reading:
             raise HTTPException(
                 status_code=503,
                 detail="Unable to fetch current reading from smart meter."
             )
-        
+
         tariff_info = await service.get_tariff_info()
-        
+
         return {
             "success": True,
             "meter": meter_info,
@@ -157,7 +157,7 @@ async def get_smart_meter_current() -> dict[str, Any]:
             status_code=503,
             detail="Smart meter service not available."
         )
-    
+
     try:
         reading = await service.fetch_current_reading()
         if not reading:
@@ -165,7 +165,7 @@ async def get_smart_meter_current() -> dict[str, Any]:
                 status_code=503,
                 detail="Unable to fetch current reading."
             )
-        
+
         return {
             "success": True,
             "data": reading,
@@ -192,7 +192,7 @@ async def get_smart_meter_history(
             status_code=503,
             detail="Smart meter service not available."
         )
-    
+
     try:
         if start_date and end_date:
             start = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
@@ -200,9 +200,9 @@ async def get_smart_meter_history(
         else:
             end = datetime.now(timezone.utc)
             start = end - timedelta(hours=hours)
-        
+
         history = await service.fetch_historical_data(start, end)
-        
+
         return {
             "success": True,
             "start_date": start.isoformat(),
@@ -229,10 +229,10 @@ async def calculate_smart_meter_cost(
             status_code=503,
             detail="Smart meter service not available."
         )
-    
+
     try:
         tariff_info = await service.get_tariff_info()
-        
+
         if energy_kwh is None:
             reading = await service.fetch_current_reading()
             if reading:
@@ -251,9 +251,9 @@ async def calculate_smart_meter_cost(
                     status_code=400,
                     detail="Unable to fetch current reading. Please provide energy_kwh parameter."
                 )
-        
+
         cost = service.calculate_energy_cost(energy_kwh)
-        
+
         return {
             "success": True,
             "energy_kwh": energy_kwh,
@@ -277,7 +277,7 @@ async def get_current_usage() -> dict[str, Any]:
     total_power = 0.0
     total_daily_energy = 0.0
     total_daily_cost = 0.0
-    
+
     # Get Tapo P115 devices
     try:
         tapo_devices = await tapo_plug_manager.get_all_devices()
@@ -294,7 +294,7 @@ async def get_current_usage() -> dict[str, Any]:
             total_daily_cost += device.daily_cost
     except Exception:
         pass
-    
+
     # Get smart meter data
     try:
         service = get_smart_meter_service()
@@ -315,7 +315,7 @@ async def get_current_usage() -> dict[str, Any]:
                 total_daily_cost += cost
     except Exception:
         pass
-    
+
     return {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "total_power_w": total_power,
@@ -341,9 +341,9 @@ async def get_usage_history(
         start = end - timedelta(days=30)
     else:
         start = end - timedelta(days=1)
-    
+
     history = _db.get_energy_history(start_time=start, end_time=end)
-    
+
     return {
         "period": period,
         "start_date": start.isoformat(),
@@ -363,7 +363,7 @@ async def get_energy_stats() -> dict[str, Any]:
         active_devices = sum(1 for d in devices if d.power_state)
         total_power = sum(d.current_power for d in devices)
         daily_cost = sum(d.daily_cost for d in devices)
-        
+
         # Add smart meter if available
         service = get_smart_meter_service()
         if service:
@@ -374,7 +374,7 @@ async def get_energy_stats() -> dict[str, Any]:
                     active_devices += 1
                 total_power += reading.get("active_power_w", 0)
                 daily_cost += service.calculate_energy_cost(reading.get("daily_energy_kwh", 0))
-        
+
         return {
             "total_devices": total_devices,
             "active_devices": active_devices,

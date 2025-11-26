@@ -477,6 +477,72 @@
         </div>
     </div>
 
+    <!-- Philips Hue Bridge Configuration -->
+    <div class="settings-section">
+        <h3>
+            <i class="fas fa-lightbulb text-yellow-500"></i>
+            Philips Hue Bridge Configuration
+        </h3>
+        <div class="settings-grid">
+            <div class="setting-item" style="grid-column: 1 / -1;">
+                <div class="setting-info">
+                    <div class="setting-label">Bridge IP Address</div>
+                    <div class="setting-description">IP address of your Philips Hue Bridge (e.g., 192.168.1.100)</div>
+                </div>
+                <div class="setting-control">
+                    <input type="text" id="hue-bridge-ip" class="form-input" placeholder="192.168.1.100" style="width: 200px;">
+                </div>
+            </div>
+            <div class="setting-item" style="grid-column: 1 / -1;">
+                <div class="setting-info">
+                    <div class="setting-label">Bridge Username (API Key)</div>
+                    <div class="setting-description">Press the button on your Hue Bridge, then click "Connect" to generate</div>
+                </div>
+                <div class="setting-control">
+                    <input type="text" id="hue-username" class="form-input" placeholder="Leave empty to auto-generate" style="width: 300px;">
+                    <button id="hue-connect" class="btn-primary" style="margin-left: 12px;">
+                        <i class="fas fa-plug mr-2"></i>
+                        Create New Username (Press Button)
+                    </button>
+                    <button id="hue-test-existing" class="btn-secondary" style="margin-left: 12px;">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Test Existing Username
+                    </button>
+                </div>
+            </div>
+            <div class="setting-item" style="grid-column: 1 / -1;">
+                <div class="setting-info">
+                    <div class="setting-label">Connection Status</div>
+                    <div class="setting-description" id="hue-status-desc">Not configured</div>
+                </div>
+                <div class="setting-control">
+                    <span id="hue-status" class="status-indicator status-offline">
+                        <i class="fas fa-circle"></i>
+                        Disconnected
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 flex gap-4">
+            <button id="save-hue-config" class="btn-primary">
+                <i class="fas fa-save mr-2"></i>
+                Save Configuration
+            </button>
+            <button id="test-hue-connection" class="btn-secondary">
+                <i class="fas fa-check-circle mr-2"></i>
+                Test Connection
+            </button>
+        </div>
+        <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p class="text-sm text-blue-800">
+                <strong>Option 1 - Use Existing Username:</strong> If you have a username from another app (Hue app, Home Assistant, etc.), 
+                enter it and click "Test Existing".<br><br>
+                <strong>Option 2 - Create New Username:</strong> Press the button on your Hue Bridge, then click "Create New (Press Button)". 
+                This creates a new API username for this system and will <strong>NOT</strong> affect your Alexa connection or any other integrations.
+            </p>
+        </div>
+    </div>
+
     <!-- Retention Policies -->
     <div class="settings-section">
         <h3>
@@ -588,6 +654,36 @@
             // Load Nest Protect battery status
             loadNestBatteryStatus();
             setInterval(loadNestBatteryStatus, 60000); // Refresh every minute
+
+            // Load Hue Bridge configuration
+            loadHueConfig();
+
+            // Hue Bridge configuration handlers
+            const saveHueBtn = document.getElementById('save-hue-config');
+            if (saveHueBtn) {
+                saveHueBtn.addEventListener('click', saveHueConfig);
+            }
+
+            const testHueBtn = document.getElementById('test-hue-connection');
+            if (testHueBtn) {
+                testHueBtn.addEventListener('click', testHueConnection);
+            }
+
+            const connectHueBtn = document.getElementById('hue-connect');
+            if (connectHueBtn) {
+                console.log('Attaching click handler to hue-connect button');
+                connectHueBtn.addEventListener('click', function(e) {
+                    console.log('hue-connect button clicked', e);
+                    e.preventDefault();
+                    connectHueBridge();
+                });
+            } else {
+                console.error('hue-connect button not found!');
+            }
+            const testExistingBtn = document.getElementById('hue-test-existing');
+            if (testExistingBtn) {
+                testExistingBtn.addEventListener('click', testExistingUsername);
+            }
 
             // Save retention policies
             const saveRetentionBtn = document.getElementById('save-retention');
@@ -862,6 +958,297 @@
                 if (scrubExecuteBtn) {
                     scrubExecuteBtn.disabled = false;
                 }
+            }
+        }
+
+        async function loadHueConfig() {
+            try {
+                const response = await fetch('/api/lighting/hue/config');
+                const data = await response.json();
+                
+                if (data.bridge_ip) {
+                    document.getElementById('hue-bridge-ip').value = data.bridge_ip;
+                }
+                if (data.username) {
+                    document.getElementById('hue-username').value = data.username;
+                }
+                
+                // Update status
+                updateHueStatus(data.connected || false, data.error || null);
+            } catch (error) {
+                console.error('Error loading Hue config:', error);
+                updateHueStatus(false, 'Failed to load configuration');
+            }
+        }
+
+        async function saveHueConfig() {
+            const bridgeIp = document.getElementById('hue-bridge-ip').value.trim();
+            const username = document.getElementById('hue-username').value.trim();
+
+            if (!bridgeIp) {
+                alert('Please enter a Bridge IP address');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/lighting/hue/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        bridge_ip: bridgeIp,
+                        username: username || null,
+                    }),
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert('Configuration saved successfully! Please restart the server for changes to take effect.');
+                    await loadHueConfig();
+                } else {
+                    alert('Error saving configuration: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error saving Hue config:', error);
+                alert('Error saving configuration: ' + error.message);
+            }
+        }
+
+        async function testHueConnection() {
+            const bridgeIp = document.getElementById('hue-bridge-ip').value.trim();
+            const username = document.getElementById('hue-username').value.trim();
+
+            if (!bridgeIp) {
+                alert('Please enter a Bridge IP address first');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/lighting/hue/test-connection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        bridge_ip: bridgeIp,
+                        username: username || null,
+                    }),
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert('Connection successful! Found ' + (data.lights_count || 0) + ' lights.');
+                    if (data.username && !username) {
+                        document.getElementById('hue-username').value = data.username;
+                    }
+                    updateHueStatus(true, null);
+                } else {
+                    alert('Connection failed: ' + (data.error || 'Unknown error'));
+                    updateHueStatus(false, data.error || 'Connection failed');
+                }
+            } catch (error) {
+                console.error('Error testing Hue connection:', error);
+                alert('Error testing connection: ' + error.message);
+            }
+        }
+
+        async function connectHueBridge() {
+            console.log('connectHueBridge called');
+            const bridgeIp = document.getElementById('hue-bridge-ip');
+            if (!bridgeIp) {
+                console.error('Bridge IP input not found');
+                alert('Error: Bridge IP input field not found');
+                return;
+            }
+            
+            const bridgeIpValue = bridgeIp.value.trim();
+            console.log('Bridge IP:', bridgeIpValue);
+
+            if (!bridgeIpValue) {
+                alert('Please enter a Bridge IP address first');
+                return;
+            }
+
+            const confirmed = confirm(
+                'IMPORTANT: Press the button on your Hue Bridge NOW, then click OK to connect.\n\n' +
+                'You have 30 seconds after pressing the button to complete the connection.\n\n' +
+                'This will generate an API username. It will NOT affect your Alexa connection.'
+            );
+
+            if (!confirmed) {
+                console.log('User cancelled');
+                return;
+            }
+            
+            console.log('Proceeding with connection...');
+
+            try {
+                const response = await fetch('/api/lighting/hue/connect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        bridge_ip: bridgeIpValue,
+                    }),
+                });
+
+                if (!response.ok) {
+                    let errorMessage = 'HTTP error! status: ' + response.status;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.detail || errorData.error || errorMessage;
+                    } catch (e) {
+                        const text = await response.text();
+                        errorMessage = text || errorMessage;
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    if (data.username) {
+                        document.getElementById('hue-username').value = data.username;
+                        alert('Connection successful! Username generated: ' + data.username + '\n\nClick "Save Configuration" to save it.');
+                    }
+                    updateHueStatus(true, null);
+                } else {
+                    const errorMsg = data.error || 'Unknown error';
+                    console.error('Connection failed:', errorMsg);
+                    alert('Connection failed: ' + errorMsg + '\n\nMake sure you pressed the button on your Hue Bridge.');
+                    updateHueStatus(false, errorMsg);
+                }
+            } catch (error) {
+                console.error('Error connecting to Hue Bridge:', error);
+                const errorMsg = error.message || String(error);
+                alert('Error connecting: ' + errorMsg + '\n\nCheck the browser console (F12) for more details.');
+                updateHueStatus(false, errorMsg);
+            }
+        }
+
+        async function testExistingUsername() {
+            const bridgeIp = document.getElementById('hue-bridge-ip').value.trim();
+            const username = document.getElementById('hue-username').value.trim();
+
+            if (!bridgeIp) {
+                alert('Please enter a Bridge IP address first');
+                return;
+            }
+
+            if (!username) {
+                alert('Please enter an existing username to test. If you don\'t have one, use "Create New (Press Button)" instead.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/lighting/hue/test-connection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        bridge_ip: bridgeIp,
+                        username: username,
+                    }),
+                });
+
+                if (!response.ok) {
+                    let errorMessage = 'HTTP error! status: ' + response.status;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.detail || errorData.error || errorMessage;
+                    } catch (e) {
+                        const text = await response.text();
+                        errorMessage = text || errorMessage;
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    alert(`Connection successful!\n\nFound ${data.lights_count || 0} lights and ${data.groups_count || 0} groups.\n\nClick "Save Configuration" to save this username.`);
+                    updateHueStatus(true, null);
+                } else {
+                    const errorMsg = data.error || 'Unknown error';
+                    alert('Connection failed: ' + errorMsg + '\n\nThe username may be incorrect, or you may need to create a new one by pressing the button.');
+                    updateHueStatus(false, errorMsg);
+                }
+            } catch (error) {
+                console.error('Error testing existing username:', error);
+                const errorMsg = error.message || String(error);
+                alert('Error testing connection: ' + errorMsg);
+                updateHueStatus(false, errorMsg);
+            }
+        }
+
+        async function testExistingUsername() {
+            const bridgeIp = document.getElementById('hue-bridge-ip').value.trim();
+            const username = document.getElementById('hue-username').value.trim();
+
+            if (!bridgeIp) {
+                alert('Please enter a Bridge IP address first');
+                return;
+            }
+
+            if (!username) {
+                alert('Please enter an existing username to test. If you don\'t have one, use "Create New (Press Button)" instead.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/lighting/hue/test-connection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        bridge_ip: bridgeIp,
+                        username: username,
+                    }),
+                });
+
+                if (!response.ok) {
+                    let errorMessage = 'HTTP error! status: ' + response.status;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.detail || errorData.error || errorMessage;
+                    } catch (e) {
+                        const text = await response.text();
+                        errorMessage = text || errorMessage;
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    alert(`Connection successful!\n\nFound ${data.lights_count || 0} lights and ${data.groups_count || 0} groups.\n\nClick "Save Configuration" to save this username.`);
+                    updateHueStatus(true, null);
+                } else {
+                    const errorMsg = data.error || 'Unknown error';
+                    alert('Connection failed: ' + errorMsg + '\n\nThe username may be incorrect, or you may need to create a new one by pressing the button.');
+                    updateHueStatus(false, errorMsg);
+                }
+            } catch (error) {
+                console.error('Error testing existing username:', error);
+                const errorMsg = error.message || String(error);
+                alert('Error testing connection: ' + errorMsg);
+                updateHueStatus(false, errorMsg);
+            }
+        }
+
+        function updateHueStatus(connected, error) {
+            const statusEl = document.getElementById('hue-status');
+            const descEl = document.getElementById('hue-status-desc');
+
+            if (connected) {
+                statusEl.className = 'status-indicator status-online';
+                statusEl.innerHTML = '<i class="fas fa-circle"></i> Connected';
+                descEl.textContent = 'Hue Bridge is connected and ready';
+            } else {
+                statusEl.className = 'status-indicator status-offline';
+                statusEl.innerHTML = '<i class="fas fa-circle"></i> Disconnected';
+                descEl.textContent = error || 'Hue Bridge not configured';
             }
         }
     </script>

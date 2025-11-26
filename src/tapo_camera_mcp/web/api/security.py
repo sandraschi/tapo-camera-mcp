@@ -7,8 +7,8 @@ from fastapi import APIRouter
 
 from ...config import get_model
 from ...config.models import SecuritySettings
-from ...security.integrations import SecurityIntegrationManager
 from ...core.server import TapoCameraServer
+from ...security.integrations import SecurityIntegrationManager
 
 logger = logging.getLogger(__name__)
 
@@ -32,11 +32,11 @@ async def _compute_ring_status() -> Dict[str, Any]:
     """Get real Ring device status with battery monitoring."""
     cfg = get_model(SecuritySettings)
     enabled = bool(cfg.integrations.ring_mcp.get("enabled", False))
-    
+
     devices: list[Dict[str, Any]] = []
     battery_warnings = 0
     battery_critical = 0
-    
+
     if enabled:
         try:
             # Try to get Ring devices from camera manager
@@ -53,7 +53,7 @@ async def _compute_ring_status() -> Dict[str, Any]:
                         battery_level = None
                         battery_status = "unknown"
                         is_charging = False
-                        
+
                         if battery_life is not None:
                             # battery_life can be a percentage (0-100) or "ok"/"low" string
                             if isinstance(battery_life, (int, float)):
@@ -72,12 +72,12 @@ async def _compute_ring_status() -> Dict[str, Any]:
                                     battery_warnings += 1
                                 elif battery_status in ("critical", "dead"):
                                     battery_critical += 1
-                        
+
                         # Check if device is charging (if available in health data)
                         health_data = camera_info.get("health", {})
                         if isinstance(health_data, dict):
                             is_charging = health_data.get("charging", False) or health_data.get("powered", False)
-                        
+
                         devices.append({
                             "device_id": cam.get("name", ""),
                             "name": cam.get("name", ""),
@@ -90,9 +90,9 @@ async def _compute_ring_status() -> Dict[str, Any]:
                             "is_charging": is_charging,
                             "model": camera_info.get("model", "Unknown"),
                         })
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to get Ring devices")
-    
+
     devices_total = len(devices)
     health = {
         "ok": True,
@@ -119,11 +119,11 @@ async def _compute_nest_status() -> Dict[str, Any]:
     """Get real Nest Protect device status with battery monitoring."""
     cfg = get_model(SecuritySettings)
     enabled = bool(cfg.integrations.nest_protect.get("enabled", False))
-    
+
     devices: list[Dict[str, Any]] = []
     battery_warnings = 0
     battery_critical = 0
-    
+
     if enabled:
         try:
             manager = await _get_security_manager()
@@ -131,7 +131,7 @@ async def _compute_nest_status() -> Dict[str, Any]:
             for device in nest_devices:
                 battery_level = device.battery_level
                 battery_status = "unknown"
-                
+
                 # Determine battery status from level
                 if battery_level is not None:
                     if battery_level <= 20:
@@ -142,7 +142,7 @@ async def _compute_nest_status() -> Dict[str, Any]:
                         battery_warnings += 1
                     else:
                         battery_status = "good"
-                
+
                 devices.append({
                     "device_id": device.id,
                     "name": device.name,
@@ -153,9 +153,9 @@ async def _compute_nest_status() -> Dict[str, Any]:
                     "battery_status": battery_status,
                     "last_seen": device.last_seen.isoformat() if device.last_seen else None,
                 })
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to get Nest Protect devices")
-    
+
     devices_total = len(devices)
     health = {
         "ok": True,

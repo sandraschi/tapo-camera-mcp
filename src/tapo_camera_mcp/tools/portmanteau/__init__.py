@@ -15,10 +15,13 @@ from fastmcp import FastMCP
 from .camera_management import register_camera_management_tool
 from .configuration_management import register_configuration_management_tool
 from .energy_management import register_energy_management_tool
+from .kitchen_management import register_kitchen_management_tool
+from .lighting_management import register_lighting_management_tool
 from .media_management import register_media_management_tool
 from .ptz_management import register_ptz_management_tool
 from .security_management import register_security_management_tool
 from .system_management import register_system_management_tool
+from .tapo_control import register_tapo_control_tool
 from .weather_management import register_weather_management_tool
 
 logger = logging.getLogger(__name__)
@@ -31,10 +34,13 @@ def register_all_portmanteau_tools(mcp: FastMCP) -> None:
         mcp: The FastMCP instance to register tools with
     """
     # Core portmanteau tools (always registered)
+    register_tapo_control_tool(mcp)  # Unified "tapo" tool - register first for natural commands
     register_camera_management_tool(mcp)
     register_ptz_management_tool(mcp)
     register_media_management_tool(mcp)
     register_energy_management_tool(mcp)
+    register_lighting_management_tool(mcp)
+    register_kitchen_management_tool(mcp)
     register_security_management_tool(mcp)
     register_system_management_tool(mcp)
     register_weather_management_tool(mcp)

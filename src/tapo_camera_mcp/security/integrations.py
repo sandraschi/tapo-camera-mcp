@@ -232,7 +232,7 @@ class RingMCPClient:
                                 alerts=[],
                             )
                             devices.append(device)
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to get Ring devices from camera manager")
         return devices
 

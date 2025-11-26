@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Body, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from ...db import TimeSeriesDB
@@ -16,7 +16,7 @@ from ...tools.energy.tapo_plug_tools import tapo_plug_manager
 class ToggleRequest(BaseModel):
     """Request model for toggling device power state."""
     turn_on: bool
-    
+
     class Config:
         """Pydantic config."""
         json_schema_extra = {
@@ -103,11 +103,11 @@ async def toggle_tapo_p115(
     """
     import logging
     logger = logging.getLogger(__name__)
-    
+
     try:
         turn_on = toggle_request.turn_on
         logger.info(f"Toggle request for device {device_id}: turn_on={turn_on}")
-        
+
         device = await tapo_plug_manager.get_device_status(device_id)
         if not device:
             raise HTTPException(status_code=404, detail=f"Device {device_id} not found")
@@ -124,11 +124,11 @@ async def toggle_tapo_p115(
         # Refresh device status after a brief delay to allow device to update
         import asyncio
         await asyncio.sleep(0.5)
-        
+
         # Re-discover devices to get fresh data from the actual device
         await tapo_plug_manager._discover_devices()
         updated_device = await tapo_plug_manager.get_device_status(device_id)
-        
+
         logger.info(f"Device {device_id} toggled successfully, new state: {updated_device.power_state if updated_device else turn_on}")
         return {
             "success": True,
@@ -140,4 +140,4 @@ async def toggle_tapo_p115(
         raise
     except Exception as e:
         logger.exception(f"Error toggling device {device_id}")
-        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal error: {e!s}")

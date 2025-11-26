@@ -74,16 +74,16 @@ class NestProtectManager:
         """Discover Nest Protect devices on the network."""
         # Use real SecurityIntegrationManager instead of mock devices
         try:
-            from ...security.integrations import SecurityIntegrationManager
             from ...config import get_model
             from ...config.models import SecuritySettings
-            
+            from ...security.integrations import SecurityIntegrationManager
+
             cfg = get_model(SecuritySettings)
             if cfg.integrations.nest_protect.get("enabled", False):
                 manager = SecurityIntegrationManager()
                 await manager.initialize(cfg.integrations.model_dump())
                 nest_devices = await manager.get_all_devices()
-                
+
                 # Convert SecurityDevice to NestProtectDevice
                 for sec_device in nest_devices:
                     device = NestProtectDevice(
@@ -103,7 +103,7 @@ class NestProtectManager:
                 return
         except Exception as e:
             logger.warning(f"Failed to load real Nest Protect devices: {e}")
-        
+
         # No real devices found - return empty
         logger.warning("No Nest Protect devices found. Configure Nest Protect integration in config.yaml")
         self.devices.clear()
@@ -129,16 +129,16 @@ class NestProtectManager:
 
         # Get real alerts from SecurityIntegrationManager
         try:
-            from ...security.integrations import SecurityIntegrationManager
             from ...config import get_model
             from ...config.models import SecuritySettings
-            
+            from ...security.integrations import SecurityIntegrationManager
+
             cfg = get_model(SecuritySettings)
             if cfg.integrations.nest_protect.get("enabled", False):
                 manager = SecurityIntegrationManager()
                 await manager.initialize(cfg.integrations.model_dump())
                 security_alerts = await manager.get_all_alerts()
-                
+
                 # Convert SecurityAlert to NestProtectAlert
                 alerts = []
                 for sec_alert in security_alerts:
@@ -157,7 +157,7 @@ class NestProtectManager:
                 return alerts
         except Exception as e:
             logger.warning(f"Failed to load real Nest Protect alerts: {e}")
-        
+
         # No real alerts - return empty
         return []
 

@@ -103,10 +103,10 @@ class TapoCameraServer:
     async def _register_tools(self):
         """Register all tools with the MCP server using FastMCP 2.12 patterns."""
         # Use portmanteau tools registration (cleaner, more maintainable)
-        from tapo_camera_mcp.tools.register_tools import register_all_tools
-
         # Get tool mode from environment or config (default: production)
         import os
+
+        from tapo_camera_mcp.tools.register_tools import register_all_tools
         tool_mode = os.getenv("TAPO_MCP_TOOL_MODE", "production")
 
         # Register all tools (portmanteau tools by default)

@@ -362,76 +362,140 @@
 <div class="weather-dashboard">
     <div class="page-header">
         <h1>🌡️ Weather Monitoring</h1>
-        <p>Monitor indoor air quality, temperature, humidity, CO2 levels, and environmental conditions with Netatmo weather stations</p>
+        <p>Indoor air quality (Netatmo) and external weather (Vienna) side by side</p>
     </div>
     
-    <!-- Setup Notice -->
-    <div class="setup-notice">
-        <h3>🚀 Get Started with Device Setup</h3>
-        <p>Set up your Netatmo weather stations and connected modules using our guided onboarding process.</p>
-        <a href="/onboarding">Start Device Setup →</a>
+    <!-- Two-Column Layout: Internal vs External -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 30px;">
+        
+        <!-- Internal Weather (Netatmo) -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 24px; color: white;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <h2 style="margin: 0; font-size: 20px; font-weight: 600;">🏠 Indoor</h2>
+                    <p style="margin: 4px 0 0 0; opacity: 0.8; font-size: 14px;" id="internal-location">Netatmo Weather Station</p>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 48px; font-weight: 700;" id="internal-temp">--°</div>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 12px; opacity: 0.8;">Humidity</div>
+                    <div style="font-size: 20px; font-weight: 600;" id="internal-humidity">--%</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 12px; opacity: 0.8;">CO2</div>
+                    <div style="font-size: 20px; font-weight: 600;" id="internal-co2">-- ppm</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 12px; opacity: 0.8;">Pressure</div>
+                    <div style="font-size: 20px; font-weight: 600;" id="internal-pressure">-- hPa</div>
+                </div>
+            </div>
+            <div style="margin-top: 12px; display: flex; gap: 12px;">
+                <div style="background: rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 8px; font-size: 12px;">
+                    🔇 <span id="internal-noise">--</span> dB
+                </div>
+                <div style="background: rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 8px; font-size: 12px;" id="internal-trend">
+                    📈 Stable
+                </div>
+            </div>
+        </div>
+        
+        <!-- External Weather (Vienna) -->
+        <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border-radius: 16px; padding: 24px; color: white;" id="external-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <h2 style="margin: 0; font-size: 20px; font-weight: 600;">🌍 Vienna</h2>
+                    <p style="margin: 4px 0 0 0; opacity: 0.8; font-size: 14px;" id="external-description">Loading...</p>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 48px; font-weight: 700;" id="external-temp">--°</div>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 12px; opacity: 0.8;">Humidity</div>
+                    <div style="font-size: 20px; font-weight: 600;" id="external-humidity">--%</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 12px; opacity: 0.8;">Wind</div>
+                    <div style="font-size: 20px; font-weight: 600;" id="external-wind">-- km/h</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 12px; opacity: 0.8;">Clouds</div>
+                    <div style="font-size: 20px; font-weight: 600;" id="external-clouds">--%</div>
+                </div>
+            </div>
+            <div style="margin-top: 12px; display: flex; gap: 12px;">
+                <div style="background: rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 8px; font-size: 12px;">
+                    📊 <span id="external-pressure">--</span> hPa
+                </div>
+                <div style="background: rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 8px; font-size: 12px;" id="external-daynight">
+                    🌙 Night
+                </div>
+            </div>
+        </div>
     </div>
     
-    <!-- Weather Overview -->
+    <!-- 5-Day Forecast -->
+    <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px;">
+        <h3 style="margin: 0 0 16px 0; color: #1f2937;">📅 5-Day Forecast (Vienna)</h3>
+        <div id="forecast-container" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;">
+            <!-- Forecast will be loaded dynamically -->
+            <div style="text-align: center; padding: 16px; background: #f3f4f6; border-radius: 8px;">
+                <div style="color: #6b7280;">Loading...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Detailed Weather Cards -->
+    <h3 style="margin: 0 0 16px 0; color: #1f2937;">📊 Indoor Details (Netatmo)</h3>
     <div class="weather-overview">
         <div class="weather-card">
             <h3>🌡️ Temperature</h3>
-            <div class="weather-value">22.3°</div>
+            <div class="weather-value" id="card-temp">--°</div>
             <div class="weather-unit">Celsius</div>
-            <div class="weather-trend trend-stable">
-                <i class="fas fa-minus"></i>
-                <span>Stable</span>
+            <div class="weather-trend trend-stable" id="card-temp-trend">
+                <span>Loading...</span>
             </div>
         </div>
         
         <div class="weather-card">
             <h3>💧 Humidity</h3>
-            <div class="weather-value">45%</div>
+            <div class="weather-value" id="card-humidity">--%</div>
             <div class="weather-unit">Relative</div>
-            <div class="weather-trend trend-down">
-                <i class="fas fa-arrow-down"></i>
-                <span>-2% from yesterday</span>
-            </div>
         </div>
         
         <div class="weather-card">
             <h3>💨 CO2 Level</h3>
-            <div class="weather-value">420</div>
+            <div class="weather-value" id="card-co2">--</div>
             <div class="weather-unit">ppm</div>
-            <div class="health-indicator health-excellent">
-                <i class="fas fa-check-circle"></i>
-                <span>Excellent</span>
+            <div class="health-indicator health-excellent" id="card-co2-status">
+                <span>--</span>
             </div>
         </div>
         
         <div class="weather-card">
             <h3>🔇 Noise Level</h3>
-            <div class="weather-value">35</div>
+            <div class="weather-value" id="card-noise">--</div>
             <div class="weather-unit">dB</div>
-            <div class="weather-trend trend-stable">
-                <i class="fas fa-volume-down"></i>
-                <span>Quiet</span>
-            </div>
         </div>
         
         <div class="weather-card">
             <h3>📊 Pressure</h3>
-            <div class="weather-value">1013.2</div>
-            <div class="weather-unit">mbar</div>
-            <div class="weather-trend trend-up">
-                <i class="fas fa-arrow-up"></i>
-                <span>Rising</span>
+            <div class="weather-value" id="card-pressure">--</div>
+            <div class="weather-unit">hPa</div>
+            <div class="weather-trend" id="card-pressure-trend">
+                <span>--</span>
             </div>
         </div>
         
         <div class="weather-card">
-            <h3>🏠 Health Score</h3>
-            <div class="weather-value">85</div>
-            <div class="weather-unit">/100</div>
-            <div class="health-indicator health-good">
-                <i class="fas fa-heart"></i>
-                <span>Good</span>
-            </div>
+            <h3>🌡️ Diff Indoor/Outdoor</h3>
+            <div class="weather-value" id="card-temp-diff">--°</div>
+            <div class="weather-unit">Warmer inside</div>
         </div>
     </div>
     
@@ -991,6 +1055,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Request notification permission for CO2 alerts
     requestNotificationPermission();
     
+    // Load combined weather data
+    loadCombinedWeather();
+    setInterval(loadCombinedWeather, 60000); // Refresh every minute
+    
     // Initialize chart
     setTimeout(() => {
         if (typeof Chart !== 'undefined') {
@@ -1002,5 +1070,125 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 500);
 });
+
+// Load combined internal + external weather
+async function loadCombinedWeather() {
+    try {
+        const response = await fetch('/api/weather/combined');
+        const data = await response.json();
+        
+        // Update internal weather (Netatmo)
+        if (data.internal && data.internal.data) {
+            const indoor = data.internal.data.indoor || {};
+            document.getElementById('internal-location').textContent = data.internal.location || 'Home';
+            document.getElementById('internal-temp').textContent = `${indoor.temperature?.toFixed(1) || '--'}°`;
+            document.getElementById('internal-humidity').textContent = `${indoor.humidity || '--'}%`;
+            document.getElementById('internal-co2').textContent = `${indoor.co2 || '--'} ppm`;
+            document.getElementById('internal-pressure').textContent = `${indoor.pressure?.toFixed(0) || '--'} hPa`;
+            document.getElementById('internal-noise').textContent = indoor.noise || '--';
+            document.getElementById('internal-trend').textContent = `📈 ${indoor.temp_trend || 'Stable'}`;
+            
+            // Update detail cards
+            document.getElementById('card-temp').textContent = `${indoor.temperature?.toFixed(1) || '--'}°`;
+            document.getElementById('card-humidity').textContent = `${indoor.humidity || '--'}%`;
+            document.getElementById('card-co2').textContent = indoor.co2 || '--';
+            document.getElementById('card-noise').textContent = indoor.noise || '--';
+            document.getElementById('card-pressure').textContent = indoor.pressure?.toFixed(0) || '--';
+            document.getElementById('card-temp-trend').innerHTML = `<span>${indoor.temp_trend || 'Stable'}</span>`;
+            document.getElementById('card-pressure-trend').innerHTML = `<span>${indoor.pressure_trend || '--'}</span>`;
+            
+            // CO2 status
+            const co2 = indoor.co2 || 0;
+            const co2Status = document.getElementById('card-co2-status');
+            if (co2 < 600) {
+                co2Status.className = 'health-indicator health-excellent';
+                co2Status.innerHTML = '<span>Excellent</span>';
+            } else if (co2 < 800) {
+                co2Status.className = 'health-indicator health-good';
+                co2Status.innerHTML = '<span>Good</span>';
+            } else if (co2 < 1000) {
+                co2Status.className = 'health-indicator health-fair';
+                co2Status.innerHTML = '<span>Fair</span>';
+            } else {
+                co2Status.className = 'health-indicator health-poor';
+                co2Status.innerHTML = '<span>Poor</span>';
+            }
+            
+            // Temperature difference
+            if (data.external) {
+                const diff = indoor.temperature - data.external.temperature;
+                document.getElementById('card-temp-diff').textContent = `${diff > 0 ? '+' : ''}${diff.toFixed(1)}°`;
+            }
+        }
+        
+        // Update external weather (Vienna)
+        if (data.external) {
+            const ext = data.external;
+            document.getElementById('external-temp').textContent = `${ext.temperature?.toFixed(1) || '--'}°`;
+            document.getElementById('external-humidity').textContent = `${ext.humidity || '--'}%`;
+            document.getElementById('external-wind').textContent = `${ext.wind_speed?.toFixed(0) || '--'} km/h`;
+            document.getElementById('external-clouds').textContent = `${ext.cloud_cover || '--'}%`;
+            document.getElementById('external-pressure').textContent = ext.pressure?.toFixed(0) || '--';
+            document.getElementById('external-description').textContent = ext.weather_description || 'Unknown';
+            document.getElementById('external-daynight').textContent = ext.is_day ? '☀️ Day' : '🌙 Night';
+            
+            // Change card color based on weather
+            const card = document.getElementById('external-card');
+            if (!ext.is_day) {
+                card.style.background = 'linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%)';
+            } else if (ext.cloud_cover > 70) {
+                card.style.background = 'linear-gradient(135deg, #606c88 0%, #3f4c6b 100%)';
+            } else {
+                card.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+            }
+        }
+        
+        // Update forecast
+        if (data.forecast && data.forecast.length > 0) {
+            const container = document.getElementById('forecast-container');
+            container.innerHTML = data.forecast.map(day => {
+                const weatherIcon = getWeatherIcon(day.weather_code);
+                const date = new Date(day.date);
+                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                return `
+                    <div style="text-align: center; padding: 16px; background: #f3f4f6; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #374151; margin-bottom: 8px;">${dayName}</div>
+                        <div style="font-size: 28px; margin-bottom: 8px;">${weatherIcon}</div>
+                        <div style="font-size: 18px; font-weight: 600; color: #1f2937;">
+                            ${day.temp_max?.toFixed(0) || '--'}°
+                        </div>
+                        <div style="font-size: 14px; color: #6b7280;">
+                            ${day.temp_min?.toFixed(0) || '--'}°
+                        </div>
+                        <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">
+                            ${day.weather_description}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+    } catch (error) {
+        console.error('Error loading combined weather:', error);
+    }
+}
+
+// Get weather icon from WMO code
+function getWeatherIcon(code) {
+    const icons = {
+        0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
+        45: '🌫️', 48: '🌫️',
+        51: '🌦️', 53: '🌦️', 55: '🌧️',
+        56: '🌧️', 57: '🌧️',
+        61: '🌧️', 63: '🌧️', 65: '🌧️',
+        66: '🌧️', 67: '🌧️',
+        71: '🌨️', 73: '🌨️', 75: '❄️',
+        77: '🌨️',
+        80: '🌦️', 81: '🌧️', 82: '⛈️',
+        85: '🌨️', 86: '❄️',
+        95: '⛈️', 96: '⛈️', 99: '⛈️',
+    };
+    return icons[code] || '🌡️';
+}
 </script>
 {% endblock %}

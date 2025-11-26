@@ -120,7 +120,7 @@ def register_ptz_management_tool(mcp: FastMCP) -> None:
                 )
                 return {"success": True, "action": action, "data": result}
 
-            elif action in ["save_preset", "recall_preset", "list_presets", "delete_preset", "home"]:
+            if action in ["save_preset", "recall_preset", "list_presets", "delete_preset", "home"]:
                 tool = PTZPresetTool()
                 operation_map = {
                     "save_preset": "save",
@@ -141,5 +141,5 @@ def register_ptz_management_tool(mcp: FastMCP) -> None:
 
         except Exception as e:
             logger.error(f"Error in PTZ management action '{action}': {e}", exc_info=True)
-            return {"success": False, "error": f"Failed to execute action '{action}': {str(e)}"}
+            return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
 
