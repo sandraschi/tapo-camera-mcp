@@ -273,16 +273,16 @@
                 
                 html += `
                     <a href="/cameras" class="flex-shrink-0 group">
-                        <div class="w-32 h-20 bg-gray-800 rounded-lg overflow-hidden relative">
+                        <div class="bg-gray-800 rounded-lg overflow-hidden relative" style="width: 320px; height: 240px;">
                             <img src="${thumbUrl}" 
                                  alt="${name}" 
                                  class="w-full h-full object-cover"
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div class="w-full h-full bg-gray-700 items-center justify-center text-gray-400 text-2xl hidden">
+                            <div class="w-full h-full bg-gray-700 items-center justify-center text-gray-400 text-4xl hidden">
                                 📹
                             </div>
-                            <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 px-2 py-1">
-                                <span class="text-white text-xs truncate block">${status} ${name}</span>
+                            <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 px-3 py-2">
+                                <span class="text-white text-sm truncate block">${status} ${name}</span>
                             </div>
                         </div>
                     </a>
