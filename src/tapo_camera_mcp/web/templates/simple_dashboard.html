@@ -272,13 +272,13 @@
                 const thumbUrl = `/api/cameras/${encodeURIComponent(name)}/thumbnail`;
                 
                 html += `
-                    <a href="/cameras" class="flex-shrink-0 group">
+                    <a href="/cameras" class="flex-shrink-0 group" style="display: block; width: 320px; height: 240px;">
                         <div class="bg-gray-800 rounded-lg overflow-hidden relative" style="width: 320px; height: 240px;">
                             <img src="${thumbUrl}" 
                                  alt="${name}" 
-                                 class="w-full h-full object-cover"
+                                 style="width: 320px; height: 240px; object-fit: cover;"
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div class="w-full h-full bg-gray-700 items-center justify-center text-gray-400 text-4xl hidden">
+                            <div style="width: 320px; height: 240px; display: none; align-items: center; justify-content: center; background: #374151; color: #9CA3AF; font-size: 48px;">
                                 📹
                             </div>
                             <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 px-3 py-2">
