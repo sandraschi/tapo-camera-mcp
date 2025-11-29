@@ -88,3 +88,11 @@ deploy/gitlab/config/initial_root_password
 # Docker runtime files
 *.pid
 *.sock
+
+# Sensitive files
+ring_token.cache
+config.yaml
+deploy/homeassistant/config/secrets.yaml
+deploy/homeassistant/config/.storage/auth
+deploy/homeassistant/config/.storage/auth_provider.homeassistant
+deploy/homeassistant/config/.storage/http.auth
