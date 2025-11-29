@@ -1,14 +1,44 @@
 # Tapo Camera Authentication Status
 
-**Date**: Current  
-**Status**: Authentication failing with pytapo
+**Date**: November 29, 2025  
+**Status**: ✅ WORKING via ONVIF (pytapo still failing)
 
 ## Summary
 
-Both cameras are failing authentication with pytapo library, even with:
+**RESOLVED**: Both cameras now work via ONVIF protocol!
+
+| Protocol | Status |
+|----------|--------|
+| pytapo 3.3.53 | ❌ "Invalid authentication data" |
+| ONVIF | ✅ **Fully working** |
+
+## ONVIF Solution
+
+ONVIF provides full camera access without pytapo authentication issues:
+- ✅ Device info and status
+- ✅ RTSP stream URL (`rtsp://host:554/stream1`)
+- ✅ Snapshot capture (via RTSP frame grab)
+- ✅ PTZ control (pan, tilt, zoom)
+- ✅ Media profiles (mainStream, minorStream, jpegStream)
+
+### Configuration (config.yaml)
+```yaml
+cameras:
+  kitchen_cam:
+    type: onvif
+    params:
+      host: 192.168.0.164
+      onvif_port: 2020
+      username: sandraschi
+      password: Sec1000kitchen
+```
+
+## Legacy pytapo Status (Still Failing)
+
+Both cameras fail authentication with pytapo library, even with:
 - ✅ Correct Camera Account credentials (verified in app)
 - ✅ Third-Party Compatibility enabled (global setting)
-- ✅ pytapo updated to latest version (3.3.49 → 3.3.51)
+- ✅ pytapo updated to latest version (3.3.53)
 - ✅ Camera online (port 443 reachable)
 - ✅ Credentials verified multiple times
 
