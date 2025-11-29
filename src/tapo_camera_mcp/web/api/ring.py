@@ -159,16 +159,86 @@ async def set_alarm_mode(request: RingAlarmModeRequest):
 
 @router.get("/events")
 async def get_recent_events(limit: int = 10):
-    """Get recent Ring events."""
+    """Get recent Ring events (motion, ding, on-demand).
+
+    Returns motion and doorbell events with video URLs when available.
+    """
     client = get_ring_client()
     if not client or not client.is_initialized:
         raise HTTPException(status_code=503, detail="Ring not initialized")
 
     try:
         events = await client.get_recent_events(limit=limit)
-        return {"events": events}
+
+        # Categorize events
+        motion_events = [e for e in events if e.get("event_type") == "motion"]
+        ding_events = [e for e in events if e.get("event_type") == "ding"]
+        other_events = [e for e in events if e.get("event_type") not in ["motion", "ding"]]
+
+        return {
+            "events": events,
+            "summary": {
+                "total": len(events),
+                "motion": len(motion_events),
+                "dings": len(ding_events),
+                "other": len(other_events),
+            },
+            "latest_motion": motion_events[0] if motion_events else None,
+            "latest_ding": ding_events[0] if ding_events else None,
+        }
     except Exception as e:
         logger.exception("Failed to get Ring events")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/events/{device_id}/video/{recording_id}")
+async def get_event_video_url(device_id: str, recording_id: str):
+    """Get video URL for a specific Ring event.
+
+    Note: Requires Ring Protect subscription to access recordings.
+    """
+    import asyncio
+
+    client = get_ring_client()
+    if not client or not client.is_initialized:
+        raise HTTPException(status_code=503, detail="Ring not initialized")
+
+    try:
+        # Run in separate thread to avoid event loop issues
+        def get_url():
+            for db in client._ring.video_devices():
+                if str(db.id) == device_id:
+                    if not db.has_subscription:
+                        return {"error": "subscription_required", "has_subscription": False}
+                    url = db.recording_url(recording_id)
+                    return {"url": url, "has_subscription": True}
+            return None
+
+        result = await asyncio.to_thread(get_url)
+
+        if not result:
+            raise HTTPException(status_code=404, detail="Device not found")
+
+        if result.get("error") == "subscription_required":
+            return {
+                "video_url": None,
+                "recording_id": recording_id,
+                "has_subscription": False,
+                "message": "Ring Protect subscription required to access video recordings"
+            }
+
+        if not result.get("url"):
+            return {
+                "video_url": None,
+                "recording_id": recording_id,
+                "message": "Video not available for this recording"
+            }
+
+        return {"video_url": result["url"], "recording_id": recording_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to get Ring video URL")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -224,3 +294,306 @@ async def initialize_ring(request: RingAuthRequest):
         logger.exception("Failed to initialize Ring")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
+@router.get("/snapshot/{device_id}")
+async def get_doorbell_snapshot(device_id: str):
+    """Get a snapshot image from a Ring doorbell.
+
+    Note: Ring snapshots require a Ring Protect subscription.
+    Without subscription, this returns the last recorded event thumbnail.
+    """
+    from fastapi.responses import Response
+
+    client = get_ring_client()
+    if not client or not client.is_initialized:
+        raise HTTPException(status_code=503, detail="Ring not initialized")
+
+    try:
+
+        # Get the doorbell device
+        await client._update_data()
+        doorbell = None
+        for db in client._ring.video_devices():
+            if str(db.id) == device_id:
+                doorbell = db
+                break
+
+        if not doorbell:
+            raise HTTPException(status_code=404, detail=f"Doorbell {device_id} not found")
+
+        # Try async_get_snapshot directly
+        try:
+            snapshot = await doorbell.async_get_snapshot()
+        except (IndexError, KeyError) as e:
+            # Snapshot not available - try getting last recording thumbnail
+            logger.warning(f"Snapshot unavailable ({e}), trying last recording...")
+            try:
+                # Get last recording ID
+                last_id = await doorbell.async_get_last_recording_id()
+                if last_id:
+                    # Get recording URL for thumbnail
+                    url = await doorbell.async_recording_url(last_id)
+                    return {"message": "Snapshot unavailable", "last_recording_url": url, "recording_id": last_id}
+            except Exception as e:
+                logger.debug("Could not get fallback recording URL: %s", e)
+            raise HTTPException(
+                status_code=503,
+                detail="Snapshot unavailable. Ring Protect subscription may be required for live snapshots."
+            ) from None
+
+        if not snapshot:
+            raise HTTPException(status_code=500, detail="Failed to get snapshot")
+
+        return Response(content=snapshot, media_type="image/jpeg")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to get Ring snapshot")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/last-recording/{device_id}")
+async def get_last_recording(device_id: str):
+    """Get the last recorded video from Ring doorbell.
+
+    Works without Ring Protect subscription for recent motion/ding events.
+    """
+    client = get_ring_client()
+    if not client or not client.is_initialized:
+        raise HTTPException(status_code=503, detail="Ring not initialized")
+
+    try:
+        # Get the doorbell device
+        await client._update_data()
+        doorbell = None
+        for db in client._ring.video_devices():
+            if str(db.id) == device_id:
+                doorbell = db
+                break
+
+        if not doorbell:
+            raise HTTPException(status_code=404, detail=f"Doorbell {device_id} not found")
+
+        # Get last recording ID
+        last_id = await doorbell.async_get_last_recording_id()
+        if not last_id:
+            return {"message": "No recordings available", "has_subscription": doorbell.has_subscription}
+
+        # Get recording URL
+        url = await doorbell.async_recording_url(last_id)
+
+        return {
+            "recording_id": last_id,
+            "video_url": url,
+            "has_subscription": doorbell.has_subscription,
+            "message": "Use video_url to view the last recording"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to get Ring recording")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+class WebRTCOfferRequest(BaseModel):
+    sdp_offer: str
+    device_id: str
+
+
+class WebRTCCandidateRequest(BaseModel):
+    candidate: str
+    device_id: str
+
+
+@router.post("/webrtc/offer")
+async def create_webrtc_stream(request: WebRTCOfferRequest):
+    """Create WebRTC stream for live view and two-way talk.
+
+    Send browser's SDP offer, get Ring's SDP answer back.
+    """
+    import asyncio
+
+    client = get_ring_client()
+    if not client or not client.is_initialized:
+        raise HTTPException(status_code=503, detail="Ring not initialized")
+
+    try:
+        # Find the doorbell
+        doorbell = None
+        for db in client._ring.video_devices():
+            if str(db.id) == request.device_id:
+                doorbell = db
+                break
+
+        if not doorbell:
+            raise HTTPException(status_code=404, detail=f"Doorbell {request.device_id} not found")
+
+        # Generate WebRTC stream - this returns SDP answer
+        def get_answer():
+            return doorbell.generate_webrtc_stream(request.sdp_offer, keep_alive_timeout=60)
+
+        sdp_answer = await asyncio.to_thread(get_answer)
+
+        return {
+            "sdp_answer": sdp_answer,
+            "device_id": request.device_id,
+            "status": "stream_created"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to create WebRTC stream")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.post("/webrtc/candidate")
+async def send_ice_candidate(request: WebRTCCandidateRequest):
+    """Send ICE candidate to Ring for WebRTC connection."""
+    import asyncio
+
+    client = get_ring_client()
+    if not client or not client.is_initialized:
+        raise HTTPException(status_code=503, detail="Ring not initialized")
+
+    try:
+        # Find the doorbell
+        doorbell = None
+        for db in client._ring.video_devices():
+            if str(db.id) == request.device_id:
+                doorbell = db
+                break
+
+        if not doorbell:
+            raise HTTPException(status_code=404, detail=f"Doorbell {request.device_id} not found")
+
+        # Send ICE candidate
+        def send_candidate():
+            doorbell.on_webrtc_candidate(request.candidate)
+
+        await asyncio.to_thread(send_candidate)
+
+        return {"status": "candidate_sent"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to send ICE candidate")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.post("/webrtc/keepalive/{device_id}")
+async def keepalive_webrtc_stream(device_id: str):
+    """Keep WebRTC stream alive."""
+    import asyncio
+
+    client = get_ring_client()
+    if not client or not client.is_initialized:
+        raise HTTPException(status_code=503, detail="Ring not initialized")
+
+    try:
+        doorbell = None
+        for db in client._ring.video_devices():
+            if str(db.id) == device_id:
+                doorbell = db
+                break
+
+        if not doorbell:
+            raise HTTPException(status_code=404, detail=f"Doorbell {device_id} not found")
+
+        await asyncio.to_thread(doorbell.keep_alive_webrtc_stream)
+        return {"status": "keepalive_sent"}
+    except Exception as e:
+        logger.exception("Failed to send keepalive")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.post("/webrtc/close/{device_id}")
+async def close_webrtc_stream(device_id: str):
+    """Close WebRTC stream."""
+    import asyncio
+
+    client = get_ring_client()
+    if not client or not client.is_initialized:
+        raise HTTPException(status_code=503, detail="Ring not initialized")
+
+    try:
+        doorbell = None
+        for db in client._ring.video_devices():
+            if str(db.id) == device_id:
+                doorbell = db
+                break
+
+        if not doorbell:
+            raise HTTPException(status_code=404, detail=f"Doorbell {device_id} not found")
+
+        await asyncio.to_thread(doorbell.close_webrtc_stream)
+        return {"status": "stream_closed"}
+    except Exception as e:
+        logger.exception("Failed to close stream")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/webrtc/ice-servers")
+async def get_ice_servers():
+    """Get ICE servers for WebRTC connection."""
+    import asyncio
+
+    client = get_ring_client()
+    if not client or not client.is_initialized:
+        raise HTTPException(status_code=503, detail="Ring not initialized")
+
+    try:
+        doorbell = None
+        for db in client._ring.video_devices():
+            doorbell = db
+            break
+
+        if not doorbell:
+            raise HTTPException(status_code=404, detail="No doorbell found")
+
+        ice_servers = await asyncio.to_thread(doorbell.get_ice_servers)
+        return {"ice_servers": ice_servers}
+    except Exception as e:
+        logger.exception("Failed to get ICE servers")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/capabilities/{device_id}")
+async def get_doorbell_capabilities(device_id: str):
+    """Get Ring doorbell capabilities and subscription status."""
+    client = get_ring_client()
+    if not client or not client.is_initialized:
+        raise HTTPException(status_code=503, detail="Ring not initialized")
+
+    try:
+        await client._update_data()
+        doorbell = None
+        for db in client._ring.video_devices():
+            if str(db.id) == device_id:
+                doorbell = db
+                break
+
+        if not doorbell:
+            raise HTTPException(status_code=404, detail=f"Doorbell {device_id} not found")
+
+        return {
+            "device_id": device_id,
+            "name": doorbell.name,
+            "model": doorbell.model,
+            "has_subscription": doorbell.has_subscription,
+            "battery_life": doorbell.battery_life,
+            "wifi_signal": doorbell.wifi_signal_strength,
+            "firmware": doorbell.firmware,
+            "features": {
+                "live_view": doorbell.has_subscription,  # Requires subscription
+                "snapshots": doorbell.has_subscription,  # Requires subscription
+                "recordings": True,  # Last 60 days of motion/ring events
+                "motion_detection": True,
+                "two_way_audio": True,
+            },
+            "note": "Live snapshots and on-demand live view require Ring Protect subscription"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to get Ring capabilities")
+        raise HTTPException(status_code=500, detail=str(e)) from e

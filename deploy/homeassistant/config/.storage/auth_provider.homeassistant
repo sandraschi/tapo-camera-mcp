@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "auth_provider.homeassistant",
+  "data": {
+    "users": [
+      {
+        "username": "sandra",
+        "password": "JDJiJDEyJFhXUGpId3N2RlZ0WExwSTY5VDBOQS5KLnJhWHF2WTIxbnRFQ0t6VFlraHpocmlhNExnemJT"
+      }
+    ]
+  }
+}

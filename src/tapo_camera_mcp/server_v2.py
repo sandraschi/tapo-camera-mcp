@@ -31,7 +31,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 # Apply patch for ring_doorbell imports first
 try:
-    import patch_ring_doorbell
+    from . import patch_ring_doorbell
 
     patch_ring_doorbell.patch_ring_doorbell()
 except Exception as e:

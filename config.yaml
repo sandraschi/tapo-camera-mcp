@@ -99,9 +99,21 @@ ring:
   enabled: true
   email: sandraschipal@hotmail.com
   # Password only needed for initial auth - after that, token is cached
-  password: "Secret1175ri&"
+  password: "Sec1000ri#"
   token_file: ring_token.cache
   cache_ttl: 60
+
+# Security Systems
+security:
+  integrations:
+    # Home Assistant integration for Nest Protect
+    # HA has verified Google OAuth - run via deploy/homeassistant/docker-compose.yml
+    homeassistant:
+      enabled: true
+      url: http://localhost:8123
+      # Get token: HA Profile > Security > Long-Lived Access Tokens > Create Token
+      access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJmZjZhNzU4NTE5ODk0OWRhYTNlNWQzNzcxYjE4MzA5NCIsImlhdCI6MTc2NDM3NDYxMiwiZXhwIjoyMDc5NzM0NjEyfQ.sbpnoqFypKnt7hYB-FHHrFxVVTrekacJvYcXGF1nqnY"
+      cache_ttl: 30
 
 # Vienna Public Emergency Alerts
 # Sources: GeoSphere Austria (ZAMG), Meteoalarm

@@ -1,0 +1,155 @@
+# Ring Doorbell Integration
+
+## Overview
+
+The Tapo Camera MCP integrates with Ring doorbells to provide:
+- Live video streaming (WebRTC)
+- Two-way audio communication
+- Motion and doorbell event notifications
+- Alarm system status and control
+
+## Features by Subscription
+
+### Without Ring Protect (FREE)
+
+| Feature | Status |
+|---------|--------|
+| Live View | ✅ Works |
+| Two-Way Talk | ✅ Works |
+| Motion Notifications | ✅ Works |
+| Ding Notifications | ✅ Works |
+| Device Status | ✅ Works |
+| Alarm Control | ✅ Works |
+
+### With Ring Protect (~€4/month)
+
+| Feature | Status |
+|---------|--------|
+| All free features | ✅ Works |
+| Video Recording | ✅ Works |
+| Event History Playback | ✅ Works |
+| Snapshots | ✅ Works |
+
+## Configuration
+
+Add Ring credentials to `config.yaml`:
+
+```yaml
+ring:
+  enabled: true
+  email: your-email@example.com
+  password: "your-ring-password"
+  token_file: ring_token.cache
+  cache_ttl: 60
+```
+
+## First-Time Authentication
+
+1. Start the dashboard: `python start.py dashboard`
+2. Ring will require 2FA - check your email/SMS for code
+3. Go to http://localhost:7777/alarms
+4. Enter the 2FA code when prompted
+5. Token is cached for future sessions
+
+## API Endpoints
+
+### Status & Summary
+
+```
+GET /api/ring/status
+GET /api/ring/summary
+GET /api/ring/capabilities/{device_id}
+```
+
+### Events
+
+```
+GET /api/ring/events?limit=10
+GET /api/ring/events/{device_id}/video/{recording_id}
+```
+
+### Alarm Control
+
+```
+GET /api/ring/alarm
+POST /api/ring/alarm/mode
+Body: {"mode": "disarmed|home|away"}
+```
+
+### WebRTC Live View
+
+```
+POST /api/ring/webrtc/offer
+Body: {"device_id": "xxx", "sdp_offer": "..."}
+
+POST /api/ring/webrtc/candidate
+Body: {"device_id": "xxx", "candidate": "..."}
+
+POST /api/ring/webrtc/keepalive/{device_id}
+POST /api/ring/webrtc/close/{device_id}
+GET /api/ring/webrtc/ice-servers
+```
+
+### Authentication
+
+```
+POST /api/ring/auth/init
+Body: {"email": "...", "password": "..."}
+
+POST /api/ring/auth/2fa
+Body: {"code": "123456"}
+```
+
+## Dashboard Features
+
+### Alarms Page (http://localhost:7777/alarms)
+
+- **Device Cards**: Shows all Ring doorbells with status
+- **Live View Button**: Opens WebRTC stream with two-way talk
+- **Alarm Controls**: Arm/disarm Ring alarm system
+- **Event List**: Recent motion and ding events
+- **DING Alert**: Full-screen popup when doorbell is pressed
+
+### Alert System
+
+The dashboard polls for new events every 10 seconds:
+
+- **Doorbell Ring**: Full-screen orange alert with sound
+- **Motion Detection**: Toast notification (slides in from right)
+
+## Troubleshooting
+
+### "Invalid user credentials"
+- Check email/password in config.yaml
+- Password may have special characters - use quotes
+
+### "2FA Required"
+- Check email/SMS for Ring verification code
+- Enter via dashboard or API endpoint
+
+### "No subscription" warnings
+- Normal for free accounts
+- Live view still works
+- Video playback requires Ring Protect
+
+### WebRTC Connection Issues
+- Check browser console for errors
+- Ensure microphone permissions granted
+- Try refreshing the page
+
+## Technical Notes
+
+### Dependencies
+- `ring_doorbell` library (installed via requirements.txt)
+- WebRTC support in browser (Chrome/Firefox/Edge)
+
+### Token Caching
+- After successful 2FA, token is saved to `ring_token.cache`
+- Future startups use cached token (no 2FA needed)
+- Token auto-refreshes as needed
+
+### Rate Limiting
+- Ring API has rate limits
+- Dashboard caches responses for 60 seconds
+- Snapshot API limited without subscription
+

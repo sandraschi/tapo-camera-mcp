@@ -76,6 +76,25 @@ class WebServer:
             }
         )
 
+        # Setup startup event for Ring initialization
+        @self.app.on_event("startup")
+        async def init_ring_on_startup():
+            """Initialize Ring client from config on server startup."""
+            ring_config = self.config.get("ring", {})
+            if ring_config.get("enabled", False):
+                try:
+                    from tapo_camera_mcp.integrations.ring_client import init_ring_client
+                    logger.info("Initializing Ring client from config...")
+                    await init_ring_client(
+                        email=ring_config.get("email", ""),
+                        password=ring_config.get("password"),
+                        token_file=ring_config.get("token_file", "ring_token.cache"),
+                        cache_ttl=ring_config.get("cache_ttl", 60),
+                    )
+                    logger.info("Ring client initialized successfully")
+                except Exception as e:
+                    logger.warning(f"Failed to initialize Ring client: {e}")
+
     def _setup_middleware(self) -> None:
         """Setup middleware for the FastAPI app."""
         # CORS middleware
@@ -100,10 +119,7 @@ class WebServer:
             response.headers["X-XSS-Protection"] = "1; mode=block"
             response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
             response.headers["Content-Security-Policy"] = (
-                "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-                "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
-                "img-src 'self' data:;"
+                "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
             )
             return response
 
@@ -157,7 +173,7 @@ class WebServer:
             # Enhance each camera with additional details
             for camera in cameras_list:
                 camera_info = dict(camera)  # Copy base info
-
+                
                 # Extract status - camera_manager.list_cameras() returns status as a dict
                 status_dict = camera.get("status", {})
                 if isinstance(status_dict, dict):
@@ -175,7 +191,7 @@ class WebServer:
                 else:
                     # Fallback if status is already a string
                     camera_info["status"] = str(status_dict) if status_dict else "offline"
-
+                
                 # Ensure status is always a string, never a dict
                 if not isinstance(camera_info.get("status"), str):
                     camera_info["status"] = "offline"
@@ -333,25 +349,24 @@ class WebServer:
         async def get_health():
             """Get comprehensive system health metrics including disk, CPU, memory, uptime, and services."""
             try:
+                import psutil
                 import time
                 from pathlib import Path
-
-                import psutil
 
                 # System resources
                 cpu_percent = psutil.cpu_percent(interval=0.1)
                 memory = psutil.virtual_memory()
                 disk = psutil.disk_usage("/")
-
+                
                 # System uptime
                 boot_time = psutil.boot_time()
                 uptime_seconds = time.time() - boot_time
-
+                
                 # Process info
                 process = psutil.Process()
                 process_memory = process.memory_info()
                 process_cpu = process.cpu_percent(interval=0.1)
-
+                
                 # Network stats
                 try:
                     net_io = psutil.net_io_counters()
@@ -363,7 +378,7 @@ class WebServer:
                     }
                 except Exception:
                     network = None
-
+                
                 # Database status
                 db_status = {}
                 try:
@@ -381,7 +396,7 @@ class WebServer:
                         db_status["timeseries"] = {"status": "not_found"}
                 except Exception as e:
                     db_status["timeseries"] = {"status": "error", "error": str(e)}
-
+                
                 # Check PostgreSQL
                 postgres_status = {"status": "unknown"}
                 try:
@@ -401,9 +416,9 @@ class WebServer:
                         postgres_status = {"status": "not_configured"}
                 except Exception as e:
                     postgres_status = {"status": "error", "error": str(e)}
-
+                
                 db_status["postgres"] = postgres_status
-
+                
                 # Camera status
                 camera_status = {"total": 0, "online": 0, "offline": 0}
                 try:
@@ -415,32 +430,32 @@ class WebServer:
                     camera_status["offline"] = camera_status["total"] - camera_status["online"]
                 except Exception:
                     pass
-
+                
                 # Determine overall health status
                 issues = []
                 if cpu_percent > 90:
                     issues.append("critical_cpu")
                 elif cpu_percent > 80:
                     issues.append("high_cpu")
-
+                
                 if memory.percent > 95:
                     issues.append("critical_memory")
                 elif memory.percent > 85:
                     issues.append("high_memory")
-
+                
                 if disk.percent > 95:
                     issues.append("critical_disk")
                 elif disk.percent > 90:
                     issues.append("high_disk")
-
+                
                 if camera_status["total"] > 0 and camera_status["online"] == 0:
                     issues.append("no_cameras_online")
-
+                
                 if postgres_status.get("status") == "unreachable":
                     issues.append("postgres_unreachable")
-
+                
                 overall_status = "critical" if any("critical" in issue for issue in issues) else "warning" if issues else "healthy"
-
+                
                 return {
                     "status": overall_status,
                     "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -828,11 +843,11 @@ class WebServer:
                         normalized = re.sub(r'\d+', 'N', normalized)
                         normalized = re.sub(r'[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}', 'UUID', normalized)
                         normalized = re.sub(r'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}', 'IP', normalized)
-
+                        
                         if normalized not in clusters:
                             clusters[normalized] = []
                         clusters[normalized].append(log_entry)
-
+                    
                     # Convert clusters to grouped format
                     clustered_logs = []
                     for cluster_key, cluster_entries in clusters.items():
@@ -845,19 +860,19 @@ class WebServer:
                             })
                         else:
                             clustered_logs.extend(cluster_entries)
-
+                    
                     result["clustered"] = clustered_logs
 
                 # Anomaly detection: Find unusual patterns
                 if enable_anomaly_detection:
                     anomalies = []
-
+                    
                     # Count log levels
                     level_counts = {}
                     for log_entry in logs:
                         level = log_entry.get("level", "INFO")
                         level_counts[level] = level_counts.get(level, 0) + 1
-
+                    
                     # Detect high error rate
                     total_logs = len(logs)
                     if total_logs > 0:
@@ -869,7 +884,7 @@ class WebServer:
                                 "message": f"High error rate detected: {error_rate*100:.1f}% of logs are errors",
                                 "count": level_counts.get("ERROR", 0),
                             })
-
+                        
                         # Detect sudden spike in warnings
                         if level_counts.get("WARNING", 0) > total_logs * 0.2:
                             anomalies.append({
@@ -878,14 +893,14 @@ class WebServer:
                                 "message": f"Warning spike detected: {level_counts.get('WARNING', 0)} warnings in recent logs",
                                 "count": level_counts.get("WARNING", 0),
                             })
-
+                    
                     # Detect repeated errors (same message multiple times)
                     error_messages = {}
                     for log_entry in logs:
                         if log_entry.get("level") == "ERROR":
                             msg = log_entry.get("message", "")
                             error_messages[msg] = error_messages.get(msg, 0) + 1
-
+                    
                     for msg, count in error_messages.items():
                         if count >= 5:  # Same error 5+ times
                             anomalies.append({
@@ -895,19 +910,19 @@ class WebServer:
                                 "count": count,
                                 "pattern": msg,
                             })
-
+                    
                     result["anomalies"] = anomalies
 
                 # AI Synopsis: Generate summary using LLM
                 if enable_ai_synopsis:
                     try:
                         from ...llm.manager import get_llm_manager
-
+                        
                         # Prepare log summary for LLM
                         log_summary = f"Recent log entries ({len(logs)} total):\n\n"
                         for i, log_entry in enumerate(logs[:50]):  # Limit to first 50 for context
                             log_summary += f"[{log_entry.get('level', 'INFO')}] {log_entry.get('message', '')}\n"
-
+                        
                         prompt = f"""Analyze these application logs and provide a brief synopsis (2-3 sentences):
                         
 {log_summary}
@@ -923,7 +938,7 @@ Provide a concise summary:"""
                         messages = [
                             {"role": "user", "content": prompt}
                         ]
-
+                        
                         # Try to get synopsis (non-blocking, fallback if LLM unavailable)
                         try:
                             synopsis = await manager.chat(messages, stream=False)
@@ -935,12 +950,12 @@ Provide a concise summary:"""
                                 result["synopsis"] = "AI synopsis unavailable - LLM provider not configured"
                         except Exception as e:
                             logger.warning(f"AI synopsis generation failed: {e}")
-                            result["synopsis"] = f"AI synopsis unavailable: {e!s}"
+                            result["synopsis"] = f"AI synopsis unavailable: {str(e)}"
                     except ImportError:
                         result["synopsis"] = "AI synopsis unavailable - LLM module not available"
                     except Exception as e:
                         logger.exception("Error generating AI synopsis")
-                        result["synopsis"] = f"AI synopsis error: {e!s}"
+                        result["synopsis"] = f"AI synopsis error: {str(e)}"
 
                 return result
             except Exception as e:
@@ -962,10 +977,7 @@ Provide a concise summary:"""
                 from ...tools.energy.tapo_plug_tools import tapo_plug_manager
                 # Lazy import weather API helpers for environment metrics (simulated/real)
                 try:
-                    from .api.weather import (  # type: ignore
-                        get_station_weather_data,
-                        get_weather_stations,
-                    )
+                    from .api.weather import get_weather_stations, get_station_weather_data  # type: ignore
                 except Exception:
                     get_weather_stations = None  # type: ignore[assignment]
                     get_station_weather_data = None  # type: ignore[assignment]
@@ -979,49 +991,49 @@ Provide a concise summary:"""
                     host = tapo_plug_manager.get_device_host(device_id) or "unknown"
                     name = device.name or device_id
                     location = getattr(device, "location", "unknown")
-
+                    
                     # Power consumption in watts
                     power_watts = device.current_power
                     metrics_lines.append(
                         f'tapo_p115_power_watts{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {power_watts}'
                     )
-
+                    
                     # Voltage
                     voltage = getattr(device, "voltage", 0.0)
                     metrics_lines.append(
                         f'tapo_p115_voltage_volts{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {voltage}'
                     )
-
+                    
                     # Current
                     current = getattr(device, "current", 0.0)
                     metrics_lines.append(
                         f'tapo_p115_current_amps{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {current}'
                     )
-
+                    
                     # Daily energy in kWh
                     daily_energy = device.daily_energy
                     metrics_lines.append(
                         f'tapo_p115_daily_energy_kwh{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {daily_energy}'
                     )
-
+                    
                     # Monthly energy in kWh
                     monthly_energy = device.monthly_energy
                     metrics_lines.append(
                         f'tapo_p115_monthly_energy_kwh{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {monthly_energy}'
                     )
-
+                    
                     # Daily cost in USD
                     daily_cost = getattr(device, "daily_cost", 0.0)
                     metrics_lines.append(
                         f'tapo_p115_daily_cost_usd{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {daily_cost}'
                     )
-
+                    
                     # Power state (1=ON, 0=OFF)
                     power_state = 1 if device.power_state else 0
                     metrics_lines.append(
                         f'tapo_p115_power_state{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {power_state}'
                     )
-
+                
                 # Environment metrics (Netatmo-style). Use weather API if available.
                 try:
                     if get_weather_stations and get_station_weather_data:
@@ -1056,10 +1068,7 @@ Provide a concise summary:"""
 
                 # Ring and Nest Protect basic health metrics (stubs that can be backed by real integrations)
                 try:
-                    from .api.security import (  # type: ignore
-                        _compute_nest_status,
-                        _compute_ring_status,
-                    )
+                    from .api.security import _compute_ring_status, _compute_nest_status  # type: ignore
                     ring_status = _compute_ring_status()
                     nest_status = _compute_nest_status()
                     ring_enabled = bool(ring_status.get("enabled", False))
@@ -1080,7 +1089,7 @@ Provide a concise summary:"""
 
                 metrics_text = "\n".join(metrics_lines) + "\n"
                 return Response(content=metrics_text, media_type="text/plain; version=0.0.4")
-
+                
             except Exception as e:
                 logger.exception("Error generating Prometheus metrics")
                 return Response(
@@ -1090,24 +1099,20 @@ Provide a concise summary:"""
                 )
 
         # Include API routes
-        from .api.alerts import router as alerts_router
-        from .api.energy import router as energy_router
-        from .api.lighting import router as lighting_router
         from .api.onboarding import router as onboarding_router
-        from .api.ring import router as ring_router
-        from .api.security import router as security_router
         from .api.sensors import router as sensors_router
+        from .api.energy import router as energy_router
         from .api.weather import router as weather_router
+        from .api.security import router as security_router
+        from .api.ring import router as ring_router
 
         self.app.include_router(onboarding_router)
         self.app.include_router(sensors_router)
         self.app.include_router(energy_router)
         self.app.include_router(weather_router)
         self.app.include_router(security_router)
-        self.app.include_router(lighting_router)
-        self.app.include_router(alerts_router)
         self.app.include_router(ring_router)
-
+        
         # LLM router
         from .api.llm import router as llm_router
         self.app.include_router(llm_router)
@@ -1161,19 +1166,6 @@ Provide a concise summary:"""
                     "request": request,
                     "title": "Weather Monitoring - Tapo Camera MCP",
                     "description": "Monitor Netatmo weather stations with temperature, humidity, CO2, and environmental data",
-                },
-            )
-
-        # Lighting Control route
-        @self.app.get("/lighting", response_class=HTMLResponse, name="lighting")
-        async def lighting_page(request: Request):
-            """Serve the lighting control dashboard page."""
-            return self.templates.TemplateResponse(
-                "lighting.html",
-                {
-                    "request": request,
-                    "title": "Lighting Control - Tapo Camera MCP",
-                    "description": "Control Philips Hue lights, groups, and scenes",
                 },
             )
 
@@ -1423,7 +1415,7 @@ Provide a concise summary:"""
 
                 config = get_config()
                 storage_cfg = get_model(StorageSettings)
-
+                
                 # Update policies
                 if video_recordings is not None:
                     storage_cfg.retention_policies["video_recordings"] = video_recordings
@@ -1431,13 +1423,13 @@ Provide a concise summary:"""
                     storage_cfg.retention_policies["snapshots"] = snapshots
                 if environment_data is not None:
                     storage_cfg.retention_policies["environment_data"] = environment_data
-
+                
                 # Save to config
                 if "storage" not in config:
                     config["storage"] = {}
                 config["storage"]["retention_policies"] = storage_cfg.retention_policies
                 save_config(config)
-
+                
                 return {
                     "success": True,
                     "policies": storage_cfg.retention_policies,
@@ -1458,17 +1450,17 @@ Provide a concise summary:"""
                     "success": False,
                     "error": "Confirmation required. Set 'confirm' to true to proceed.",
                 }
-
+            
             try:
-                from datetime import timedelta
-
                 from ...config import get_model
                 from ...config.models import StorageSettings
                 from ...db import MediaMetadataDB, TimeSeriesDB
+                from ...utils.storage import RecordingStore
+                from datetime import timedelta
 
                 storage_cfg = get_model(StorageSettings)
                 policies = storage_cfg.retention_policies
-
+                
                 results = {
                     "videos_deleted": 0,
                     "snapshots_deleted": 0,
@@ -1476,9 +1468,9 @@ Provide a concise summary:"""
                     "files_deleted": 0,
                     "space_freed_mb": 0,
                 }
-
+                
                 cutoff_time = datetime.now() - timedelta(days=max(policies.values()))
-
+                
                 # Scrub video recordings
                 db = MediaMetadataDB()
                 video_cutoff = datetime.now(timezone.utc) - timedelta(days=policies["video_recordings"])
@@ -1491,7 +1483,7 @@ Provide a concise summary:"""
                             rec_timestamp = datetime.fromisoformat(rec_timestamp.replace("Z", "+00:00"))
                         elif not isinstance(rec_timestamp, datetime):
                             continue
-
+                        
                         if rec_timestamp < video_cutoff:
                             if not dry_run:
                                 file_path = recording.get("file_path")
@@ -1507,7 +1499,7 @@ Provide a concise summary:"""
                 except Exception as e:
                     logger.exception("Error scrubbing videos")
                     results["error"] = str(e)
-
+                
                 # Scrub snapshots
                 snapshot_cutoff = datetime.now(timezone.utc) - timedelta(days=policies["snapshots"])
                 try:
@@ -1519,7 +1511,7 @@ Provide a concise summary:"""
                             snap_timestamp = datetime.fromisoformat(snap_timestamp.replace("Z", "+00:00"))
                         elif not isinstance(snap_timestamp, datetime):
                             continue
-
+                        
                         if snap_timestamp < snapshot_cutoff:
                             if not dry_run:
                                 file_path = snapshot.get("file_path")
@@ -1532,9 +1524,9 @@ Provide a concise summary:"""
                                         pass
                                 db.delete_snapshot(snapshot.get("snapshot_id"))
                             results["snapshots_deleted"] += 1
-                except Exception:
+                except Exception as e:
                     logger.exception("Error scrubbing snapshots")
-
+                
                 # Scrub environment data (time series)
                 env_cutoff = datetime.now(timezone.utc) - timedelta(days=policies["environment_data"])
                 try:
@@ -1545,9 +1537,9 @@ Provide a concise summary:"""
                     results["environment_records_deleted"] = 0
                     if not dry_run:
                         logger.info(f"Environment data cleanup not yet implemented - cutoff: {env_cutoff}")
-                except Exception:
+                except Exception as e:
                     logger.exception("Error scrubbing environment data")
-
+                
                 return {
                     "success": True,
                     "dry_run": dry_run,
@@ -1788,77 +1780,6 @@ Provide a concise summary:"""
             )
             yield error_frame
 
-    def _register_default_llm_providers(self):
-        """Auto-register default LLM providers (Ollama, LM Studio) if available."""
-        import httpx
-
-        from ..llm.manager import get_llm_manager
-        from ..llm.providers import ProviderType
-
-        manager = get_llm_manager()
-
-        # Try to register Ollama (default at localhost:11434)
-        try:
-            response = httpx.get("http://localhost:11434/api/tags", timeout=2.0)
-            if response.status_code == 200:
-                manager.register_provider(ProviderType.OLLAMA, "http://localhost:11434")
-                logger.info("Auto-registered Ollama LLM provider at localhost:11434")
-        except Exception:
-            logger.debug("Ollama not available at localhost:11434")
-
-        # Try to register LM Studio (default at localhost:1234)
-        try:
-            response = httpx.get("http://localhost:1234/v1/models", timeout=2.0)
-            if response.status_code == 200:
-                manager.register_provider(ProviderType.LM_STUDIO, "http://localhost:1234")
-                logger.info("Auto-registered LM Studio provider at localhost:1234")
-        except Exception:
-            logger.debug("LM Studio not available at localhost:1234")
-
-    def _init_ring_client(self):
-        """Initialize Ring doorbell/alarm client if configured."""
-        import asyncio
-
-        ring_config = self.config.get("ring", {})
-        if not ring_config.get("enabled", False):
-            logger.debug("Ring integration disabled")
-            return
-
-        email = ring_config.get("email")
-        if not email:
-            logger.warning("Ring enabled but no email configured")
-            return
-
-        password = ring_config.get("password")
-        token_file = ring_config.get("token_file", "ring_token.cache")
-        cache_ttl = ring_config.get("cache_ttl", 60)
-
-        try:
-            from ..integrations.ring_client import init_ring_client
-
-            # Run async init in sync context
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                client = loop.run_until_complete(
-                    init_ring_client(
-                        email=email,
-                        password=password if password else None,
-                        token_file=token_file,
-                        cache_ttl=cache_ttl,
-                    )
-                )
-                if client.is_initialized:
-                    logger.info("Ring client initialized successfully")
-                elif client.is_2fa_pending:
-                    logger.warning("Ring 2FA required - submit code via /api/ring/auth/2fa")
-                else:
-                    logger.warning("Ring client not initialized - check credentials")
-            finally:
-                loop.close()
-        except Exception as e:
-            logger.warning(f"Failed to initialize Ring client: {e}")
-
     def run(self, host: Optional[str] = None, port: Optional[int] = None):
         """Run the web server.
 
@@ -1870,12 +1791,6 @@ Provide a concise summary:"""
 
         host = host or self.web_config.host
         port = port or self.web_config.port
-
-        # Auto-register LLM providers (Ollama at default port)
-        self._register_default_llm_providers()
-
-        # Initialize Ring client if configured
-        self._init_ring_client()
 
         logger.info(f"Starting web server on http://{host}:{port}")
 
@@ -1907,15 +1822,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Setup logging with config
-    from tapo_camera_mcp.config import get_config
-
-    config = get_config()
-    log_config = config.get("logging", {})
-    log_file = log_config.get("file", "tapo_mcp.log")
-    log_level = config.get("server", {}).get("log_level", "INFO")
-
-    setup_logging(log_level=log_level, log_file=log_file)
+    # Setup logging
+    setup_logging()
 
     # Create and run the server
     server = WebServer()

@@ -37,6 +37,24 @@ class RingSettings(BaseModel):
     cache_ttl: int = 60  # seconds
 
 
+class NestSettings(BaseModel):
+    """Nest Protect settings - uses Google account auth."""
+
+    enabled: bool = False
+    refresh_token: Optional[str] = None  # Google OAuth refresh token
+    token_file: str = "nest_token.cache"
+    cache_ttl: int = 60  # seconds
+
+
+class HomeAssistantSettings(BaseModel):
+    """Home Assistant integration settings."""
+
+    enabled: bool = False
+    url: str = "http://localhost:8123"
+    access_token: Optional[str] = None  # Long-lived access token from HA
+    cache_ttl: int = 30  # seconds
+
+
 class SecurityIntegrations(BaseModel):
     """Settings for external security system integrations."""
 
@@ -46,7 +64,15 @@ class SecurityIntegrations(BaseModel):
             "server_url": "http://localhost:8123",
             "api_key": None,
         },
-        description="Nest Protect MCP server integration settings",
+        description="Nest Protect MCP server integration settings (legacy REST)",
+    )
+    nest: NestSettings = Field(
+        default_factory=NestSettings,
+        description="Nest Protect via Google account auth (deprecated - use HA)",
+    )
+    homeassistant: HomeAssistantSettings = Field(
+        default_factory=HomeAssistantSettings,
+        description="Home Assistant for Nest Protect (recommended)",
     )
     ring_mcp: Dict[str, Any] = Field(
         default_factory=lambda: {

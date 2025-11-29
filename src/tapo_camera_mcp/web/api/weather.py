@@ -195,12 +195,13 @@ async def get_station_historical_data(
             for point in history
         ]
 
+        import time
         return HistoricalDataResponse(
             station_id=station_id,
             data_type=data_type,
             time_range=time_range,
             data_points=data_points,
-            count=len(data_points),
+            timestamp=time.time(),
         )
 
         # REMOVED: Mock historical data generation

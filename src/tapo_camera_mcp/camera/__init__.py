@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 try:
     # Apply patch before importing ring module
     try:
-        import patch_ring_doorbell
+        from .. import patch_ring_doorbell
 
         patch_ring_doorbell.patch_ring_doorbell()
     except Exception as e:

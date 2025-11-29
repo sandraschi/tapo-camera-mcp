@@ -159,12 +159,13 @@ class RingClient:
                     self._auth.fetch_token, self.email, self.password
                 )
             except Exception as e:
-                if "Verification Code" in str(e) or "2fa" in str(e).lower():
+                error_str = str(type(e).__name__).lower() + " " + str(e).lower()
+                if "2fa" in error_str or "verification" in error_str or "requires2fa" in error_str:
                     self._2fa_pending = True
                     logger.warning(
                         "Ring 2FA required - check your email/SMS for code"
                     )
-                    return False
+                    return True  # Return True so client stays active for 2FA
                 raise
 
             self._ring = Ring(self._auth)
@@ -412,7 +413,7 @@ class RingClient:
             return None
 
     async def get_recent_events(self, limit: int = 10) -> list[dict]:
-        """Get recent Ring events."""
+        """Get recent Ring events (motion, ding, etc.)."""
         if not self._initialized:
             return []
 
@@ -424,16 +425,29 @@ class RingClient:
             events = []
 
             for doorbell in self._ring.video_devices():
-                if hasattr(doorbell, "history"):
-                    history = doorbell.history(limit=limit)
+                try:
+                    # Use async history method
+                    history = await doorbell.async_history(limit=limit)
                     for event in history:
-                        events.append({
+                        event_data = {
                             "device_id": str(doorbell.id),
                             "device_name": doorbell.name,
                             "event_type": event.get("kind", "unknown"),
                             "timestamp": event.get("created_at"),
                             "answered": event.get("answered", False),
-                        })
+                            "recording_id": event.get("id"),
+                            "duration": event.get("duration"),
+                        }
+                        # Try to get video URL for this event
+                        try:
+                            if event.get("id"):
+                                url = await doorbell.async_recording_url(event["id"])
+                                event_data["video_url"] = url
+                        except Exception as url_err:
+                            logger.debug("Could not get video URL: %s", url_err)
+                        events.append(event_data)
+                except Exception as e:
+                    logger.warning(f"Failed to get history for {doorbell.name}: {e}")
 
             # Sort by timestamp
             events.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
