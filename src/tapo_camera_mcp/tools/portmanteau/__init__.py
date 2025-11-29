@@ -12,13 +12,17 @@ import logging
 
 from fastmcp import FastMCP
 
+from .audio_management import register_audio_management_tool
 from .camera_management import register_camera_management_tool
 from .configuration_management import register_configuration_management_tool
 from .energy_management import register_energy_management_tool
+from .home_assistant_management import register_home_assistant_management_tool
 from .kitchen_management import register_kitchen_management_tool
 from .lighting_management import register_lighting_management_tool
 from .media_management import register_media_management_tool
+from .motion_management import register_motion_management_tool
 from .ptz_management import register_ptz_management_tool
+from .ring_management import register_ring_management_tool
 from .security_management import register_security_management_tool
 from .system_management import register_system_management_tool
 from .tapo_control import register_tapo_control_tool
@@ -46,7 +50,13 @@ def register_all_portmanteau_tools(mcp: FastMCP) -> None:
     register_weather_management_tool(mcp)
     register_configuration_management_tool(mcp)
 
-    logger.info("All portmanteau tools registered successfully")
+    # New tools (v1.5.0)
+    register_ring_management_tool(mcp)  # Ring doorbell integration
+    register_audio_management_tool(mcp)  # Audio streaming
+    register_motion_management_tool(mcp)  # Motion detection
+    register_home_assistant_management_tool(mcp)  # HA bridge for Nest Protect
+
+    logger.info("All portmanteau tools registered successfully (15 tools)")
 
 
 # Export the registration function
