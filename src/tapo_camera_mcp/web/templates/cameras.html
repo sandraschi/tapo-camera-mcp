@@ -336,6 +336,105 @@
         width: 50px;
         font-size: 0.85rem;
     }
+
+    /* Audio Control Panel Styles */
+    .audio-panel {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+        border-radius: 0.75rem;
+        border: 1px solid #3d5a7f;
+    }
+
+    .audio-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .audio-title {
+        color: #e2e8f0;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .audio-close {
+        background: none;
+        border: none;
+        color: #94a3b8;
+        font-size: 1.25rem;
+        cursor: pointer;
+        padding: 0 0.25rem;
+    }
+
+    .audio-close:hover {
+        color: #f1f5f9;
+    }
+
+    .audio-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .audio-status {
+        background: rgba(0, 0, 0, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 0.85rem;
+    }
+
+    .audio-controls {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .audio-btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+    }
+
+    .audio-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    .audio-btn-primary {
+        background: #3b82f6;
+    }
+
+    .audio-btn-primary:hover {
+        background: #2563eb;
+    }
+
+    .audio-btn-vlc {
+        background: #ff6600;
+    }
+
+    .audio-btn-vlc:hover {
+        background: #e55c00;
+    }
+
+    .audio-warning {
+        background: rgba(251, 191, 36, 0.15);
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        font-size: 0.8rem;
+        color: #fde68a;
+        text-align: center;
+    }
 </style>
 {% endblock %}
 
@@ -479,7 +578,7 @@
                     </svg>
                     Start Stream
                 </button>
-                <button onclick="alert('Audio recording not implemented yet - coming soon!')" class="action-button">
+                <button onclick="toggleAudioPanel('{{ camera.name or camera.id }}')" class="action-button">
                     <svg class="w-4 h-4 mr-1 inline" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0 5 5 0 01-10 0 1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"></path>
                     </svg>
@@ -522,6 +621,34 @@
                 </div>
             </div>
             {% endif %}
+
+            <!-- Audio Control Panel (hidden by default) -->
+            <div id="audio-panel-{{ camera.name or camera.id }}" class="audio-panel" style="display: none;">
+                <div class="audio-header">
+                    <span class="audio-title">🔊 Audio Stream</span>
+                    <button onclick="toggleAudioPanel('{{ camera.name or camera.id }}')" class="audio-close">&times;</button>
+                </div>
+                <div class="audio-content">
+                    <div class="audio-status" id="audio-status-{{ camera.name or camera.id }}">
+                        Ready to listen
+                    </div>
+                    <div class="audio-controls">
+                        <button class="audio-btn audio-btn-primary" onclick="openAudioPlayer('{{ camera.name or camera.id }}')">
+                            🎧 Open Audio Player
+                        </button>
+                        <button class="audio-btn audio-btn-vlc" onclick="openInVLC('{{ camera.name or camera.id }}')">
+                            🎬 Open in VLC
+                        </button>
+                        <button class="audio-btn" onclick="copyRtspUrl('{{ camera.name or camera.id }}')">
+                            📋 Copy RTSP URL
+                        </button>
+                    </div>
+                    <div class="audio-warning">
+                        <strong>⚠️ Two-Way Audio Limitation</strong><br>
+                        ONVIF only supports <em>listening</em>. For two-way talk, use the <strong>Tapo app</strong>.
+                    </div>
+                </div>
+            </div>
             {% endif %}
         </div>
         {% endfor %}
@@ -594,5 +721,56 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Audio Control Functions
+function toggleAudioPanel(cameraName) {
+    const panel = document.getElementById('audio-panel-' + cameraName);
+    if (panel) {
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+function openAudioPlayer(cameraName) {
+    window.open('/api/audio/player/' + cameraName, 'audio-' + cameraName, 'width=900,height=700');
+}
+
+async function openInVLC(cameraName) {
+    try {
+        const response = await fetch('/api/audio/info/' + cameraName);
+        const data = await response.json();
+        if (data.rtsp_url_full) {
+            // Try to open VLC protocol handler
+            window.location.href = 'vlc://' + data.rtsp_url_full;
+            // Also show the URL for manual copy
+            const statusEl = document.getElementById('audio-status-' + cameraName);
+            if (statusEl) {
+                statusEl.innerHTML = '🎬 Opening VLC... If it doesn\'t open, copy the RTSP URL.';
+            }
+        }
+    } catch (err) {
+        console.error('Failed to get RTSP URL:', err);
+        alert('Failed to get stream URL. Make sure camera is connected.');
+    }
+}
+
+async function copyRtspUrl(cameraName) {
+    try {
+        const response = await fetch('/api/audio/info/' + cameraName);
+        const data = await response.json();
+        if (data.rtsp_url_full) {
+            await navigator.clipboard.writeText(data.rtsp_url_full);
+            const statusEl = document.getElementById('audio-status-' + cameraName);
+            if (statusEl) {
+                statusEl.innerHTML = '✅ RTSP URL copied to clipboard!';
+                setTimeout(() => {
+                    statusEl.innerHTML = 'Ready to listen';
+                }, 3000);
+            }
+        }
+    } catch (err) {
+        console.error('Failed to copy RTSP URL:', err);
+        alert('Failed to copy URL. See console for details.');
+    }
+}
 </script>
 {% endblock %}

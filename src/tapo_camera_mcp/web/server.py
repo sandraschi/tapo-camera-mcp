@@ -1106,6 +1106,7 @@ Provide a concise summary:"""
         from .api.security import router as security_router
         from .api.ring import router as ring_router
         from .api.ptz import router as ptz_router
+        from .api.audio import router as audio_router
 
         self.app.include_router(onboarding_router)
         self.app.include_router(sensors_router)
@@ -1114,6 +1115,7 @@ Provide a concise summary:"""
         self.app.include_router(security_router)
         self.app.include_router(ring_router)
         self.app.include_router(ptz_router)
+        self.app.include_router(audio_router)
         
         # LLM router
         from .api.llm import router as llm_router
