@@ -215,7 +215,12 @@ $exclusions = @(
     "quarantine",
     "analysis",
     "backups",
-    "*.dxt"        # Old DXT package format
+    "*.dxt",        # Old DXT package format
+    "gitlab\\data",  # GitLab PostgreSQL data (huge, often locked)
+    "gitlab\\logs",  # GitLab logs (often locked)
+    "postgresql\\data",  # PostgreSQL data directories
+    "home-assistant_v2.db",  # HA database (locked)
+    ".ha_run.lock"  # HA lock file
 )
 
 # Large test files that should be excluded (can be regenerated)
