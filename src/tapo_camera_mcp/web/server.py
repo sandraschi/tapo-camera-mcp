@@ -557,6 +557,19 @@ class WebServer:
                             stream_url = await camera.get_stream_url()
                             if stream_url:
                                 return {"stream_url": stream_url, "type": "rtsp"}
+                        # For ONVIF cameras, return RTSP stream URL with auth
+                        if camera_type == "onvif":
+                            stream_url = await camera.get_stream_url()
+                            if stream_url:
+                                # Add auth credentials to URL
+                                from urllib.parse import urlparse
+                                parsed = urlparse(stream_url)
+                                username = camera.config.params.get("username", "")
+                                password = camera.config.params.get("password", "")
+                                if username and password:
+                                    auth_url = f"rtsp://{username}:{password}@{parsed.hostname}:{parsed.port or 554}{parsed.path}"
+                                    return {"stream_url": auth_url, "type": "rtsp", "note": "Open in VLC: Media → Open Network Stream"}
+                                return {"stream_url": stream_url, "type": "rtsp"}
 
                 return {"error": "Camera not found or not supported"}
             except Exception as e:
@@ -1107,6 +1120,7 @@ Provide a concise summary:"""
         from .api.ring import router as ring_router
         from .api.ptz import router as ptz_router
         from .api.audio import router as audio_router
+        from .api.motion import router as motion_router
 
         self.app.include_router(onboarding_router)
         self.app.include_router(sensors_router)
@@ -1116,6 +1130,7 @@ Provide a concise summary:"""
         self.app.include_router(ring_router)
         self.app.include_router(ptz_router)
         self.app.include_router(audio_router)
+        self.app.include_router(motion_router)
         
         # LLM router
         from .api.llm import router as llm_router
