@@ -3,6 +3,7 @@
 import asyncio
 import contextlib
 import logging
+import os
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -10,6 +11,10 @@ import cv2
 from PIL import Image
 
 from .base import BaseCamera, CameraFactory, CameraType
+
+# Suppress OpenCV warnings (MSMF grab frame errors)
+os.environ["OPENCV_LOG_LEVEL"] = "ERROR"
+cv2.setLogLevel(0)  # 0 = silent
 
 logger = logging.getLogger(__name__)
 

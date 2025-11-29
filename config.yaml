@@ -4,12 +4,13 @@ server:
   debug: false
   log_level: INFO
 cameras:
-  test_webcam:
-    type: webcam
-    params:
-      device_id: 0
-      resolution: 1920x1080
-      fps: 30
+  # test_webcam disabled - uncomment if USB webcam connected
+  # test_webcam:
+  #   type: webcam
+  #   params:
+  #     device_id: 0
+  #     resolution: 1920x1080
+  #     fps: 30
   kitchen_cam:
     type: onvif
     params:
