@@ -236,6 +236,106 @@
             flex-direction: column;
         }
     }
+
+    /* PTZ Control Panel Styles */
+    .ptz-panel {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        border-radius: 0.75rem;
+        border: 1px solid #475569;
+    }
+
+    .ptz-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .ptz-title {
+        color: #e2e8f0;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .ptz-close {
+        background: none;
+        border: none;
+        color: #94a3b8;
+        font-size: 1.25rem;
+        cursor: pointer;
+        padding: 0 0.25rem;
+    }
+
+    .ptz-close:hover {
+        color: #f1f5f9;
+    }
+
+    .ptz-controls {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .ptz-dpad {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .ptz-middle-row {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .ptz-btn {
+        width: 44px;
+        height: 44px;
+        border: none;
+        border-radius: 0.5rem;
+        background: #3b82f6;
+        color: white;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease;
+        user-select: none;
+    }
+
+    .ptz-btn:hover {
+        background: #2563eb;
+        transform: scale(1.05);
+    }
+
+    .ptz-btn:active {
+        background: #1d4ed8;
+        transform: scale(0.95);
+    }
+
+    .ptz-center {
+        background: #64748b;
+        font-size: 0.75rem;
+    }
+
+    .ptz-center:hover {
+        background: #475569;
+    }
+
+    .ptz-zoom {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .ptz-zoom-in, .ptz-zoom-out {
+        width: 50px;
+        font-size: 0.85rem;
+    }
 </style>
 {% endblock %}
 
@@ -391,7 +491,37 @@
                     </svg>
                     📸 Snapshot
                 </button>
+                {% if camera.ptz_capable %}
+                <button onclick="togglePTZ('{{ camera.name or camera.id }}')" class="action-button">
+                    🎮 PTZ Controls
+                </button>
+                {% endif %}
             </div>
+
+            <!-- PTZ Control Panel (hidden by default) -->
+            {% if camera.ptz_capable %}
+            <div id="ptz-panel-{{ camera.name or camera.id }}" class="ptz-panel" style="display: none;">
+                <div class="ptz-header">
+                    <span class="ptz-title">🎮 PTZ Controls</span>
+                    <button onclick="togglePTZ('{{ camera.name or camera.id }}')" class="ptz-close">&times;</button>
+                </div>
+                <div class="ptz-controls">
+                    <div class="ptz-dpad">
+                        <button class="ptz-btn ptz-up" onmousedown="ptzMove('{{ camera.name or camera.id }}', 0, 0.5, 0)" onmouseup="ptzStop('{{ camera.name or camera.id }}')" onmouseleave="ptzStop('{{ camera.name or camera.id }}')">▲</button>
+                        <div class="ptz-middle-row">
+                            <button class="ptz-btn ptz-left" onmousedown="ptzMove('{{ camera.name or camera.id }}', -0.5, 0, 0)" onmouseup="ptzStop('{{ camera.name or camera.id }}')" onmouseleave="ptzStop('{{ camera.name or camera.id }}')">◀</button>
+                            <button class="ptz-btn ptz-center" onclick="ptzStop('{{ camera.name or camera.id }}')">⬤</button>
+                            <button class="ptz-btn ptz-right" onmousedown="ptzMove('{{ camera.name or camera.id }}', 0.5, 0, 0)" onmouseup="ptzStop('{{ camera.name or camera.id }}')" onmouseleave="ptzStop('{{ camera.name or camera.id }}')">▶</button>
+                        </div>
+                        <button class="ptz-btn ptz-down" onmousedown="ptzMove('{{ camera.name or camera.id }}', 0, -0.5, 0)" onmouseup="ptzStop('{{ camera.name or camera.id }}')" onmouseleave="ptzStop('{{ camera.name or camera.id }}')">▼</button>
+                    </div>
+                    <div class="ptz-zoom">
+                        <button class="ptz-btn ptz-zoom-in" onmousedown="ptzMove('{{ camera.name or camera.id }}', 0, 0, 0.3)" onmouseup="ptzStop('{{ camera.name or camera.id }}')" onmouseleave="ptzStop('{{ camera.name or camera.id }}')">🔍+</button>
+                        <button class="ptz-btn ptz-zoom-out" onmousedown="ptzMove('{{ camera.name or camera.id }}', 0, 0, -0.3)" onmouseup="ptzStop('{{ camera.name or camera.id }}')" onmouseleave="ptzStop('{{ camera.name or camera.id }}')">🔍−</button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
             {% endif %}
         </div>
         {% endfor %}
@@ -410,4 +540,59 @@
     {% endif %}
     </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// PTZ Control Functions
+function togglePTZ(cameraName) {
+    const panel = document.getElementById('ptz-panel-' + cameraName);
+    if (panel) {
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+async function ptzMove(cameraName, pan, tilt, zoom) {
+    try {
+        const response = await fetch('/api/ptz/move', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                camera_name: cameraName,
+                pan: pan,
+                tilt: tilt,
+                zoom: zoom
+            })
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            console.error('PTZ move failed:', error.detail);
+        }
+    } catch (err) {
+        console.error('PTZ move error:', err);
+    }
+}
+
+async function ptzStop(cameraName) {
+    try {
+        await fetch('/api/ptz/stop/' + cameraName, { method: 'POST' });
+    } catch (err) {
+        console.error('PTZ stop error:', err);
+    }
+}
+
+// Touch support for mobile
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.ptz-btn').forEach(btn => {
+        btn.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            this.dispatchEvent(new Event('mousedown'));
+        });
+        btn.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            this.dispatchEvent(new Event('mouseup'));
+        });
+    });
+});
+</script>
 {% endblock %}
