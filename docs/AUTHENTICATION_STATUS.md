@@ -1,27 +1,51 @@
 # Tapo Camera Authentication Status
 
 **Date**: November 29, 2025  
-**Status**: ✅ WORKING via ONVIF (pytapo still failing)
+**Status**: ✅ FULLY WORKING via ONVIF
 
 ## Summary
 
-**RESOLVED**: Both cameras now work via ONVIF protocol!
+**RESOLVED**: Both Tapo C200 cameras now fully operational via ONVIF protocol!
 
-| Protocol | Status |
-|----------|--------|
-| pytapo 3.3.53 | ❌ "Invalid authentication data" |
-| ONVIF | ✅ **Fully working** |
+| Protocol | Status | Features |
+|----------|--------|----------|
+| ONVIF | ✅ **Fully working** | Live stream, PTZ, snapshots |
+| pytapo 3.3.53 | ❌ "Invalid authentication data" | N/A |
 
-## ONVIF Solution
+## Working Features (ONVIF)
 
-ONVIF provides full camera access without pytapo authentication issues:
-- ✅ Device info and status
-- ✅ RTSP stream URL (`rtsp://host:554/stream1`)
-- ✅ Snapshot capture (via RTSP frame grab)
-- ✅ PTZ control (pan, tilt, zoom)
-- ✅ Media profiles (mainStream, minorStream, jpegStream)
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Device Info | ✅ | Model, firmware, serial |
+| RTSP Streaming | ✅ | `rtsp://host:554/stream1` |
+| Snapshot Capture | ✅ | Via RTSP frame grab |
+| PTZ Control | ✅ | Pan, tilt, zoom |
+| Media Profiles | ✅ | mainStream, minorStream, jpegStream |
 
-### Configuration (config.yaml)
+## Camera Configuration
+
+### Kitchen Camera (192.168.0.164)
+
+| Property | Value |
+|----------|-------|
+| Device Name | Kitchencam |
+| Model | Tapo C200 |
+| Firmware | 1.4.4 Build 250922 Rel.71116n |
+| Serial | 746161dd |
+| Status | ✅ Online |
+
+### Living Room Camera (192.168.0.206)
+
+| Property | Value |
+|----------|-------|
+| Device Name | Living Room |
+| Model | Tapo C200 |
+| Firmware | 1.4.4 Build 250922 Rel.71116n |
+| Serial | 7461ae28 |
+| Status | ✅ Online |
+
+## config.yaml (Working)
+
 ```yaml
 cameras:
   kitchen_cam:
@@ -30,107 +54,54 @@ cameras:
       host: 192.168.0.164
       onvif_port: 2020
       username: sandraschi
-      password: Sec1000kitchen
+      password: <redacted>
+
+  living_room_cam:
+    type: onvif
+    params:
+      host: 192.168.0.206
+      onvif_port: 2020
+      username: sandraschi
+      password: <redacted>
 ```
 
-## Legacy pytapo Status (Still Failing)
+## PTZ Controls (Working)
 
-Both cameras fail authentication with pytapo library, even with:
-- ✅ Correct Camera Account credentials (verified in app)
-- ✅ Third-Party Compatibility enabled (global setting)
-- ✅ pytapo updated to latest version (3.3.53)
+Dashboard UI at `/cameras` includes:
+- D-pad for pan/tilt
+- Zoom in/out buttons
+- Stop button (center)
+- Hold-to-move interaction
+
+API endpoints:
+- `POST /api/ptz/move` - Continuous movement
+- `POST /api/ptz/stop/{camera_id}` - Stop movement
+- `GET /api/ptz/presets/{camera_id}` - List presets
+- `POST /api/ptz/preset/{camera_id}` - Go to preset
+
+## Demo Script
+
+```bash
+# Full demo with PTZ movements
+python scripts/demo.py --camera kitchen_cam
+
+# Skip PTZ (just info and snapshot)
+python scripts/demo.py --camera living_room_cam --no-ptz
+
+# List all cameras
+python scripts/demo.py --list
+```
+
+## Legacy pytapo Status (Deprecated)
+
+pytapo library fails authentication for Tapo C200 cameras even with:
+- ✅ Correct Camera Account credentials
+- ✅ Third-Party Compatibility enabled
+- ✅ Latest pytapo version (3.3.53)
 - ✅ Camera online (port 443 reachable)
-- ✅ Credentials verified multiple times
 
-## Current Configuration
+**Recommendation**: Use ONVIF for Tapo C200 cameras. pytapo may work for other Tapo models.
 
-### Kitchen Camera (192.168.0.164)
-- Device Name: Kitchencam
-- Username: sandraschi
-- Password: Sec1000kitchen
-- Status: Authentication failing
+---
 
-### Living Room Camera (192.168.0.206)
-- Username: sandraschi
-- Password: Sec1000living
-- Static IP: Enabled
-- Status: Authentication failing
-
-## Attempted Solutions
-
-1. ✅ Updated pytapo (3.3.49 → 3.3.51) - Still failing
-2. ✅ Enabled Third-Party Compatibility - Still failing
-3. ✅ Verified credentials multiple times - Still failing
-4. 🔄 Testing ONVIF authentication (alternative protocol)
-
-## Possible Causes
-
-### 1. pytapo Library Issue
-- Library may have compatibility issues with C200 firmware
-- Authentication method may not match what C200 expects
-- May need different initialization or connection method
-
-### 2. Camera Firmware
-- Firmware version may not be compatible with current pytapo
-- May need firmware update in Tapo app
-- Some firmware versions changed authentication
-
-### 3. Missing Setting
-- There may be another setting needed in Tapo app
-- ONVIF might need to be enabled separately
-- API access might need explicit enabling
-
-### 4. Authentication Method Mismatch
-- C200 might require different authentication flow
-- Camera Account might work differently than expected
-- May need to use ONVIF instead of Tapo API
-
-## Next Steps
-
-1. **Test ONVIF Authentication** (if library installed)
-   - Alternative protocol some Tapo cameras support
-   - Uses different authentication method
-   - May work where pytapo fails
-
-2. **Check pytapo GitHub Issues**
-   - Search for C200 authentication issues
-   - Check for known compatibility problems
-   - Look for workarounds or fixes
-
-3. **Try Alternative Library**
-   - Look for other Tapo camera Python libraries
-   - May have better C200 support
-   - Home Assistant integration might have working code
-
-4. **Contact TP-Link Support**
-   - Report authentication issue with API access
-   - Ask about C200 API compatibility
-   - Request official API documentation
-
-## Alternative Approaches
-
-### Option 1: Use Home Assistant Integration
-- Home Assistant has working Tapo integration
-- Could use their codebase as reference
-- May have already solved this issue
-
-### Option 2: Direct HTTP API Calls
-- Bypass pytapo and use raw HTTP
-- May have better control over authentication
-- Can debug exact requests/responses
-
-### Option 3: RTSP Streaming Only
-- Skip API control features
-- Use RTSP for video streaming
-- Control via Tapo app only
-
-## Current Status
-
-**Blocked**: Cannot authenticate to cameras using pytapo library despite:
-- Correct credentials
-- Third-Party Compatibility enabled
-- Latest pytapo version
-- Both cameras set up identically
-
-**Next Action**: Test ONVIF authentication or investigate pytapo/C200 compatibility issue.
-
+*Last Updated: November 29, 2025*
