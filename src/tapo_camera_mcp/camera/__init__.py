@@ -3,6 +3,7 @@
 import logging
 
 from .laptop import LaptopCamera
+from .onvif_camera import ONVIFBasedCamera
 from .petcube import PetcubeCamera
 from .tapo import TapoCamera
 from .webcam import WebCamera
@@ -27,7 +28,7 @@ except Exception as e:
     RING_AVAILABLE = False
     RingCamera = None  # type: ignore[assignment,misc]
 
-__all__ = ["LaptopCamera", "PetcubeCamera", "TapoCamera", "WebCamera"]
+__all__ = ["LaptopCamera", "ONVIFBasedCamera", "PetcubeCamera", "TapoCamera", "WebCamera"]
 
 # Only add RingCamera to __all__ if it's available
 if RING_AVAILABLE:

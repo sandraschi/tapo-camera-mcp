@@ -13,7 +13,8 @@ class CameraType(str, Enum):
     """Supported camera types.
 
     Attributes:
-        TAPO: Tapo camera (TP-Link)
+        TAPO: Tapo camera (TP-Link) via pytapo
+        ONVIF: ONVIF-compatible cameras (including Tapo)
         RING: Ring doorbell camera
         WEBCAM: Standard USB/web camera
         LAPTOP: Built-in laptop camera
@@ -22,6 +23,7 @@ class CameraType(str, Enum):
     """
 
     TAPO = "tapo"
+    ONVIF = "onvif"
     RING = "ring"
     WEBCAM = "webcam"
     LAPTOP = "laptop"
@@ -212,4 +214,8 @@ class CameraFactory:
             # Furbo cameras are similar to Petcube, reuse the mock
             mock_furbo = MockPetcubeCamera(config.params)
             return cls._camera_classes[CameraType.PETCUBE](config, mock_petcube=mock_furbo)
+        if config.type == CameraType.ONVIF:
+            # ONVIF cameras use Tapo mock for testing
+            mock_onvif = MockTapoCamera(config.params)
+            return cls._camera_classes[CameraType.ONVIF](config, mock_camera=mock_onvif)
         raise ValueError(f"Unsupported camera type for mocking: {config.type}")

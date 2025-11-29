@@ -10,6 +10,20 @@ cameras:
       device_id: 0
       resolution: 1920x1080
       fps: 30
+  kitchen_cam:
+    type: onvif
+    params:
+      host: 192.168.0.164
+      onvif_port: 2020
+      username: sandraschi
+      password: Sec1000kitchen
+  living_room_cam:
+    type: onvif
+    params:
+      host: 192.168.0.206
+      onvif_port: 2020
+      username: sandraschi
+      password: Sec1000living
 web:
   enabled: true
   host: 0.0.0.0
