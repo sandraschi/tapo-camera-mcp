@@ -4,7 +4,10 @@ PTZ Management Portmanteau Tool
 Consolidates all PTZ-related operations into a single tool with action-based interface.
 """
 
+import asyncio
 import logging
+import math
+import random
 from typing import Any, Literal
 
 from fastmcp import FastMCP
@@ -13,6 +16,85 @@ from tapo_camera_mcp.tools.ptz.ptz_control_tool import PTZControlTool
 from tapo_camera_mcp.tools.ptz.ptz_preset_tool import PTZPresetTool
 
 logger = logging.getLogger(__name__)
+
+
+async def _ptz_prank_nod(tool: PTZControlTool, camera_name: str, duration: float) -> dict[str, Any]:
+    """Nod mode - enthusiastic up/down nodding like 'yes yes yes!'."""
+    end_time = asyncio.get_event_loop().time() + duration
+    cycles = 0
+
+    while asyncio.get_event_loop().time() < end_time:
+        # Look up
+        await tool.execute(operation="move", camera_id=camera_name, pan=0, tilt=0.8, zoom=0, speed=8)
+        await asyncio.sleep(0.2)
+        # Look down
+        await tool.execute(operation="move", camera_id=camera_name, pan=0, tilt=-0.8, zoom=0, speed=8)
+        await asyncio.sleep(0.2)
+        cycles += 1
+
+    # Return to center
+    await tool.execute(operation="move", camera_id=camera_name, pan=0, tilt=0, zoom=0, speed=5)
+    return {"mode": "nod", "cycles": cycles}
+
+
+async def _ptz_prank_shake(tool: PTZControlTool, camera_name: str, duration: float) -> dict[str, Any]:
+    """Shake mode - rapid left/right like 'no no no!'."""
+    end_time = asyncio.get_event_loop().time() + duration
+    cycles = 0
+
+    while asyncio.get_event_loop().time() < end_time:
+        # Look left
+        await tool.execute(operation="move", camera_id=camera_name, pan=-0.7, tilt=0, zoom=0, speed=8)
+        await asyncio.sleep(0.15)
+        # Look right
+        await tool.execute(operation="move", camera_id=camera_name, pan=0.7, tilt=0, zoom=0, speed=8)
+        await asyncio.sleep(0.15)
+        cycles += 1
+
+    # Return to center
+    await tool.execute(operation="move", camera_id=camera_name, pan=0, tilt=0, zoom=0, speed=5)
+    return {"mode": "shake", "cycles": cycles}
+
+
+async def _ptz_prank_dizzy(tool: PTZControlTool, camera_name: str, duration: float) -> dict[str, Any]:
+    """Dizzy mode - circular motion like camera is drunk."""
+    end_time = asyncio.get_event_loop().time() + duration
+    cycles = 0
+    angle = 0.0
+
+    while asyncio.get_event_loop().time() < end_time:
+        # Circular motion using sin/cos
+        pan = 0.6 * math.sin(angle)
+        tilt = 0.6 * math.cos(angle)
+        await tool.execute(operation="move", camera_id=camera_name, pan=pan, tilt=tilt, zoom=0, speed=6)
+        angle += 0.5
+        if angle >= 2 * math.pi:
+            angle = 0
+            cycles += 1
+        await asyncio.sleep(0.1)
+
+    # Return to center
+    await tool.execute(operation="move", camera_id=camera_name, pan=0, tilt=0, zoom=0, speed=5)
+    return {"mode": "dizzy", "cycles": cycles}
+
+
+async def _ptz_prank_chaos(tool: PTZControlTool, camera_name: str, duration: float) -> dict[str, Any]:
+    """Chaos mode - random crazy movements."""
+    end_time = asyncio.get_event_loop().time() + duration
+    moves = 0
+
+    while asyncio.get_event_loop().time() < end_time:
+        pan = random.uniform(-1.0, 1.0)
+        tilt = random.uniform(-1.0, 1.0)
+        zoom = random.uniform(0, 0.5)
+        speed = random.randint(5, 8)
+        await tool.execute(operation="move", camera_id=camera_name, pan=pan, tilt=tilt, zoom=zoom, speed=speed)
+        await asyncio.sleep(random.uniform(0.1, 0.3))
+        moves += 1
+
+    # Return to center
+    await tool.execute(operation="move", camera_id=camera_name, pan=0, tilt=0, zoom=0, speed=5)
+    return {"mode": "chaos", "moves": moves}
 
 PTZ_ACTIONS = {
     "move": "Move PTZ camera",
@@ -23,6 +105,7 @@ PTZ_ACTIONS = {
     "list_presets": "List all PTZ presets",
     "delete_preset": "Delete PTZ preset",
     "home": "Move to home position",
+    "prank": "Fun camera movements: nod, shake, dizzy, chaos (max 10 sec)",
 }
 
 
@@ -32,7 +115,7 @@ def register_ptz_management_tool(mcp: FastMCP) -> None:
     @mcp.tool()
     async def ptz_management(
         action: Literal[
-            "move", "position", "stop", "save_preset", "recall_preset", "list_presets", "delete_preset", "home"
+            "move", "position", "stop", "save_preset", "recall_preset", "list_presets", "delete_preset", "home", "prank"
         ],
         camera_name: str | None = None,
         pan: float | None = None,
@@ -41,6 +124,8 @@ def register_ptz_management_tool(mcp: FastMCP) -> None:
         speed: int | None = None,
         preset_name: str | None = None,
         preset_id: int | None = None,
+        prank_mode: Literal["nod", "shake", "dizzy", "chaos"] | None = None,
+        duration: int = 5,
     ) -> dict[str, Any]:
         """
         Comprehensive PTZ (Pan-Tilt-Zoom) management portmanteau tool.
@@ -61,22 +146,31 @@ def register_ptz_management_tool(mcp: FastMCP) -> None:
                 - "list_presets": List all saved presets (requires: camera_name)
                 - "delete_preset": Delete a preset (requires: camera_name, preset_name or preset_id)
                 - "home": Move to home position (requires: camera_name)
-            
+                - "prank": Fun camera movement modes (requires: camera_name, prank_mode, optional: duration)
+
             camera_name (str | None): Camera name/ID. Required for: all operations.
-            
+
             pan (float | None): Pan value (-1.0 to 1.0, left to right). Required for: move operation. Default: 0.0
-            
+
             tilt (float | None): Tilt value (-1.0 to 1.0, down to up). Required for: move operation. Default: 0.0
-            
+
             zoom (float | None): Zoom value (0.0 to 1.0, wide to telephoto). Required for: move operation. Default: 0.0
-            
+
             speed (int | None): Movement speed (1-8, slow to fast). Required for: move operation. Default: 5
-            
+
             preset_name (str | None): Preset name. Required for: save_preset operation.
                 Optional for: recall_preset, delete_preset operations.
-            
+
             preset_id (int | None): Preset ID. Required for: recall_preset, delete_preset operations when
                 preset_name not provided.
+
+            prank_mode (Literal["nod", "shake", "dizzy", "chaos"] | None): Prank mode for fun camera movements:
+                - "nod": Enthusiastic up/down nodding like 'yes yes yes!'
+                - "shake": Rapid left/right like 'no no no!'
+                - "dizzy": Circular motion like camera is drunk
+                - "chaos": Random crazy movements
+
+            duration (int): Duration in seconds for prank mode (1-10, default 5). Max 10 sec for safety.
 
         Returns:
             dict[str, Any]: Dictionary containing:
@@ -136,6 +230,36 @@ def register_ptz_management_tool(mcp: FastMCP) -> None:
                     preset_id=preset_id,
                 )
                 return {"success": True, "action": action, "data": result}
+
+            if action == "prank":
+                if not camera_name:
+                    return {"success": False, "error": "camera_name is required for prank action"}
+                if not prank_mode:
+                    return {"success": False, "error": "prank_mode is required (nod, shake, dizzy, chaos)"}
+
+                # Cap duration at 10 seconds for safety
+                safe_duration = min(max(1, duration), 10)
+
+                logger.info(f"Starting PTZ prank mode '{prank_mode}' on {camera_name} for {safe_duration} seconds")
+
+                tool = PTZControlTool()
+
+                if prank_mode == "nod":
+                    result = await _ptz_prank_nod(tool, camera_name, safe_duration)
+                elif prank_mode == "shake":
+                    result = await _ptz_prank_shake(tool, camera_name, safe_duration)
+                elif prank_mode == "dizzy":
+                    result = await _ptz_prank_dizzy(tool, camera_name, safe_duration)
+                elif prank_mode == "chaos":
+                    result = await _ptz_prank_chaos(tool, camera_name, safe_duration)
+                else:
+                    return {"success": False, "error": f"Unknown prank mode: {prank_mode}"}
+
+                return {
+                    "success": True,
+                    "action": action,
+                    "data": {"camera": camera_name, "duration": safe_duration, **result},
+                }
 
             return {"success": False, "error": f"Action '{action}' not implemented"}
 

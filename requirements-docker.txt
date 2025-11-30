@@ -2,7 +2,7 @@
 # Excludes heavy ML dependencies and dev tools
 
 # Core MCP and camera dependencies
-fastmcp>=2.12.0,<3.0.0
+fastmcp>=2.13.0,<3.0.0
 pytapo>=3.3.48,<4.0.0
 tapo>=0.8.0  # For P115 smart plug ingestion
 pydantic>=2.0.0,<3.0.0

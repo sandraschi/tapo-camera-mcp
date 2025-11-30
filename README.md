@@ -1,11 +1,11 @@
 # 🏠 Home Security MCP Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/releases)
+[![Version](https://img.shields.io/badge/version-1.6.1-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/releases)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![MCP Version](https://img.shields.io/badge/MCP-2.12.0-blue)](https://mcp-standard.org)
-[![FastMCP](https://img.shields.io/badge/FastMCP-2.12.0-green.svg)](https://github.com/jlowin/fastmcp)
+[![FastMCP](https://img.shields.io/badge/FastMCP-2.13.0-green.svg)](https://github.com/jlowin/fastmcp)
 [![Status](https://img.shields.io/badge/status-Production%20Ready-success.svg)](https://github.com/sandraschi/tapo-camera-mcp)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/actions)
 [![Dashboard](https://img.shields.io/badge/Dashboard-Live-green.svg)](http://localhost:7777)
@@ -37,9 +37,23 @@
 
 **The platform serves as the "conductor" that brings together multiple specialized security devices (MCP servers) into a cohesive home surveillance ecosystem.**
 
-## 🏆 **v1.5.0 RELEASE - RING & NEST INTEGRATION**
+## 🏆 **v1.6.1 RELEASE - ALEXA 2 + REAL NEST API**
 
 **✅ LATEST ACHIEVEMENTS:**
+- **🎙️ SOTA Voice Stack**: Faster-Whisper → Vosk → Whisper (STT), Piper → Edge-TTS → pyttsx3 (TTS)
+- **👂 Always-On Wake Word**: OpenWakeWord/Vosk background listener ("hey tapo")
+- **🔐 Real Nest OAuth**: Direct Google Nest API integration (no Home Assistant needed!)
+- **🎉 Prank Modes**: Hue light chaos/wave/disco/sos + PTZ camera nod/shake/dizzy
+- **🔇 Fully Offline**: Zero network traffic for voice - all local processing
+
+**v1.6.0:**
+- **📢 TTS/STT**: speak, announce, listen, voice_command actions
+- **🎵 Alarm Sounds**: 10 built-in types (siren, beep, doorbell, etc.)
+- **📹 PTZ Pranks**: Camera movement fun modes
+
+## 🏆 **v1.5.0 RELEASE - RING & NEST INTEGRATION**
+
+**✅ PREVIOUS:
 - **🔔 Ring Doorbell WebRTC**: Live video streaming + push-to-talk (NO subscription required!)
 - **🚨 Ring Alerts**: Full-screen DING popup + motion toast notifications on dashboard
 - **🔥 Nest Protect Setup**: Home Assistant bridge for smoke/CO detector integration

@@ -5,6 +5,164 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] - 2025-11-29 🔐 **Nest OAuth + SOTA Voice**
+
+### ✨ **NEW FEATURES**
+
+#### **Real Nest Protect API Integration**
+- Added OAuth flow for direct Google Nest API access
+- `nest_oauth_start`: Get Google OAuth URL
+- `nest_oauth_complete`: Exchange code for token (one-time setup)
+- `nest_oauth_status`: Check authentication status
+- Falls back to mock data when not authenticated
+- Token cached in `nest_token.cache` for persistent auth
+
+#### **SOTA Voice Stack (Fully Offline)**
+Upgraded audio engines with automatic fallback chains:
+
+**STT Chain**: Faster-Whisper → Vosk → Whisper
+- `faster-whisper`: 4x faster, CTranslate2 optimized
+- `vosk`: Lightweight streaming fallback
+- `whisper`: Original OpenAI model
+
+**TTS Chain**: Piper → Edge-TTS → pyttsx3
+- `piper`: SOTA local neural TTS
+- `edge-tts`: Microsoft neural voices
+- `pyttsx3`: Offline system SAPI
+
+**Always-On Wake Word** (Alexa-style):
+- `wake_start`: Start background listener
+- `wake_stop`: Stop listener
+- `wake_status`: Check status
+- Uses OpenWakeWord or Vosk keyword spotting
+- Zero network traffic - fully offline
+
+---
+
+## [1.6.0] - 2025-11-29 🎙️ **ALEXA 2 - Voice & Fun Features**
+
+### ✨ **NEW FEATURES**
+
+#### **"Alexa 2" Audio Capabilities**
+Full voice assistant capabilities added to `audio_management`:
+
+- **Text-to-Speech (TTS)**
+  - `speak`: Convert text to spoken audio
+  - `announce`: Play attention chime, then speak
+  - Supports `pyttsx3` (offline) and `edge-tts` (high quality, internet required)
+
+- **Speech-to-Text (STT)**
+  - `listen`: Record and transcribe speech using Whisper
+  - `voice_command`: Wake word detection + command recognition
+  - Built-in wake words: "hey tapo", "ok tapo", "computer", "assistant"
+
+- **Alarm Sounds**
+  - 10 built-in alarm types: `siren`, `beep`, `urgent`, `doorbell`, `chime`, `alarm`, `attention`, `success`, `error`, `alert`
+  - Programmatically generated (no audio files needed)
+  - `repeat` parameter for multiple cycles
+
+- **Audio Recording**
+  - `record`: Record from microphone to WAV file
+  - `list_devices`: List available audio input/output devices
+
+#### **Prank Modes** 🎉
+
+**Lighting Pranks** (`lighting_management action="prank"`):
+| Mode | Effect |
+|------|--------|
+| `chaos` | Random on/off for all lights |
+| `wave` | Sequential room-to-room sweep |
+| `disco` | Rapid brightness changes |
+| `sos` | Morse code ... --- ... |
+
+**PTZ Camera Pranks** (`ptz_management action="prank"`):
+| Mode | Effect |
+|------|--------|
+| `nod` | Enthusiastic yes-yes-yes! |
+| `shake` | Rapid no-no-no! |
+| `dizzy` | Circular drunk motion |
+| `chaos` | Random crazy movements |
+
+All pranks restore original state after completion. Duration 1-10 sec (safety cap).
+
+#### **Hue Bridge Improvements**
+- `rescan` action: Force refresh lights/groups/scenes from bridge
+- Auto-rescan on stale cache detection (fixes "all off" bug on startup)
+
+### 📦 **OPTIONAL DEPENDENCIES**
+
+New `[voice]` optional dependencies:
+```bash
+pip install home-security-mcp-platform[voice]
+```
+
+Installs: `pyttsx3`, `edge-tts`, `openai-whisper`, `sounddevice`, `soundfile`
+
+### 📝 **EXAMPLES**
+
+```python
+# Announce intruder
+audio_management(action="announce", text="Motion detected in backyard!")
+
+# Play alarm
+audio_management(action="play_alarm", alarm_type="siren", repeat=3)
+
+# Voice command
+audio_management(action="voice_command", wake_word="hey tapo", duration=10)
+
+# Disco party!
+lighting_management(action="prank", prank_mode="disco", duration=8)
+
+# Camera says yes
+ptz_management(action="prank", camera_name="Kitchen", prank_mode="nod", duration=5)
+```
+
+---
+
+## [1.5.1] - 2025-11-29 🔧 **MCP PROTOCOL FIX**
+
+### 🐛 **BUG FIXES**
+
+#### **MCP stdio Protocol Corruption Fixed**
+- **Root Cause**: `patch_ring_doorbell.py` was printing to stdout during import, corrupting MCP JSON-RPC
+- **Fix**: Replaced all `print()` statements with proper `logging.getLogger(__name__)` calls
+- **Result**: Clean stdout for MCP, stderr shows initialization logs
+
+#### **Logging Order Fixed**
+- **Issue**: Logging was configured AFTER patch ran, so messages went to /dev/null
+- **Fix**: Reordered `server_v2.py` to configure logging BEFORE running the patch
+- **Result**: All initialization messages now visible in Cursor output tab
+
+#### **Cursor MCP Config Fixed**
+- **Issue**: `cwd` was set to `src/` subdirectory, breaking module imports
+- **Fix**: Changed `cwd` from `D:/Dev/repos/tapo-camera-mcp/src` to `D:/Dev/repos/tapo-camera-mcp`
+- **Removed**: Placeholder env vars (server reads from `config.yaml`)
+
+### 📝 **TECHNICAL DETAILS**
+
+```python
+# Before (broken - stdout pollution)
+print(f"Websockets package found at: {websockets.__file__}")
+
+# After (correct - stderr logging)
+logger.info(f"Websockets found: {websockets.__file__}")
+```
+
+**Cursor `mcp.json` fix:**
+```json
+{
+  "tapo-mcp": {
+    "command": "python",
+    "args": ["-m", "tapo_camera_mcp.server_v2", "--direct"],
+    "cwd": "D:/Dev/repos/tapo-camera-mcp",  // NOT /src!
+    "env": {
+      "PYTHONPATH": "D:/Dev/repos/tapo-camera-mcp/src",
+      "PYTHONUNBUFFERED": "1"
+    }
+  }
+}
+```
+
 ## [1.4.0] - 2025-11-26 🏠 **SMART HOME INTEGRATION**
 
 ### 🚀 **MAJOR FEATURES ADDED**

@@ -355,10 +355,15 @@ class HueManager:
         )
 
     async def get_all_lights(self) -> List[HueLight]:
-        """Get all discovered lights (from cache)."""
+        """Get all discovered lights (from cache, with auto-rescan if stale)."""
         if not self._initialized:
             await self.initialize()
-        # Use cached data - don't re-query bridge (too slow)
+        
+        # Auto-rescan if cache looks stale (all lights off + not reachable = likely stale)
+        if self.lights and all(not l.on and not l.reachable for l in self.lights.values()):
+            logger.info("Cache appears stale (all lights off + unreachable), rescanning...")
+            await self.rescan()
+        
         return list(self.lights.values())
 
     async def get_light(self, light_id: str) -> Optional[HueLight]:
@@ -443,10 +448,15 @@ class HueManager:
             raise
 
     async def get_all_groups(self) -> List[HueGroup]:
-        """Get all groups/rooms (from cache)."""
+        """Get all groups/rooms (from cache, with auto-rescan if stale)."""
         if not self._initialized:
             await self.initialize()
-        # Use cached data - don't re-query bridge
+        
+        # Auto-rescan if cache looks stale (all groups off + 0 reachable = likely stale)
+        if self.groups and all(not g.on and g.reachable_lights == 0 for g in self.groups.values()):
+            logger.info("Cache appears stale (all groups off + 0 reachable), rescanning...")
+            await self.rescan()
+        
         return list(self.groups.values())
 
     async def get_all_scenes(self) -> List[HueScene]:

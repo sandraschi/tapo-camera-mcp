@@ -12,51 +12,38 @@ import warnings
 
 from tapo_camera_mcp.camera.tapo import Tapo
 
-# Suppress warnings before any imports to prevent JSON parsing issues in Claude Desktop
-
-# Set environment variable to suppress warnings globally
+# Suppress warnings to prevent noise in logs
 os.environ["PYTHONWARNINGS"] = "ignore"
-
-# Redirect stderr to avoid warnings interfering with JSON parsing
-original_stderr = sys.stderr
-# SIM115: Intentionally left open for duration of module to suppress warnings
-sys.stderr = open(os.devnull, "w")  # noqa: SIM115
-
-# Apply warning filters
 warnings.filterwarnings("ignore")
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-# Apply patch for ring_doorbell imports first
+# Configure enhanced logging (to stderr - won't corrupt MCP stdout JSON-RPC)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stderr),
+    ],
+)
+
+logger = logging.getLogger(__name__)
+
+# Apply patch for ring_doorbell imports (optional - Ring integration)
+# Done AFTER logging is configured so messages are visible
 try:
     from . import patch_ring_doorbell
-
     patch_ring_doorbell.patch_ring_doorbell()
 except Exception as e:
-    # Use stderr for warnings to avoid JSON parsing issues
-    print(f"Warning: Failed to apply ring_doorbell patch: {e}", file=original_stderr)
-
-# Restore stderr after imports are complete
-sys.stderr = original_stderr
+    logger.warning(f"Ring patch skipped: {e}")
 
 # Re-export Tapo for tests
 # PLW0127: Self-assignment is intentional for re-export pattern
 Tapo = Tapo
 
 # Import and re-export TapoCameraServer for tests
-
-# Configure enhanced logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stderr),  # Ensure logs go to stderr for Claude Desktop
-    ],
-)
-
-logger = logging.getLogger(__name__)
 
 
 def main():

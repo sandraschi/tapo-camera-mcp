@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "home-security-mcp-platform"
-version = "1.3.0"  # LLM integration, Dockerization, Netatmo, CI/CD improvements
+version = "1.6.1"  # Alexa 2 - voice, TTS, STT, alarms, prank modes
 description = "🏠 Production-ready home security MCP platform with unified surveillance dashboard, multi-device support (Tapo, Ring, Nest Protect, USB webcams), and Claude Desktop integration"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -34,7 +34,7 @@ keywords = ["home-security", "surveillance", "mcp", "fastmcp", "tapo", "ring", "
 
 dependencies = [
     # Core dependencies
-    "fastmcp>=2.12.0,<3.0.0",      # MCP 2.12.0 stdio protocol
+    "fastmcp>=2.13.0,<3.0.0",      # MCP 2.13.0 stdio protocol
     "pytapo>=3.3.48,<4.0.0",       # Tapo camera control
     "pydantic>=2.0.0,<3.0.0",      # Data validation and settings management
     "python-dotenv>=1.0.0,<2.0.0", # Environment variable management
@@ -136,6 +136,23 @@ docs = [
     "sphinx-notfound-page>=0.7.0,<1.0.0"
 ]
 
+# Voice/Audio capabilities - "Alexa 2" features with SOTA engines (fully offline)
+voice = [
+    # Wake word detection (Alexa-style, always-on)
+    "openwakeword>=0.6.0,<1.0.0",       # SOTA wake word detection (offline)
+    # STT engines (ordered by preference)
+    "faster-whisper>=1.0.0,<2.0.0",     # SOTA STT - 4x faster than vanilla Whisper
+    "vosk>=0.3.45,<1.0.0",              # Lightweight STT fallback + wake word
+    "openai-whisper>=20231117",         # Vanilla Whisper fallback
+    # TTS engines (ordered by preference)
+    "piper-tts>=1.2.0,<2.0.0",          # SOTA local neural TTS
+    "edge-tts>=6.1.0,<8.0.0",           # Microsoft Edge TTS (needs internet)
+    "pyttsx3>=2.90,<3.0.0",             # Offline system SAPI fallback
+    # Audio I/O
+    "sounddevice>=0.4.6,<1.0.0",        # Audio recording/playback
+    "soundfile>=0.12.0,<1.0.0",         # Audio file I/O
+]
+
 [project.urls]
 Homepage = "https://github.com/yourusername/tapo-camera-mcp"
 Documentation = "https://tapo-camera-mcp.readthedocs.io/"
@@ -212,6 +229,7 @@ ignore = [
     "PLR2004", # magic value used in comparison
     "ARG", # unused function argument
     "RET504", # unnecessary assignment before return
+    "T201", # print statements (intentional for test output)
 ]
 
 [tool.pylint.master]
