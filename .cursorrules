@@ -61,3 +61,42 @@
 
 **When in doubt:** Read the central README and navigate from there.
 
+---
+
+## Rule #2: Always Use Current Date/Time
+
+**NEVER hallucinate or guess dates!**
+
+**When adding timestamps to files (MD, PY, etc.):**
+
+1. **Check user_info for current date:**
+   - User info contains: `Current Date: Tuesday Dec 2, 2025`
+   - Use this exact date, not made-up dates
+
+2. **If writing Python code needing timestamps:**
+   ```python
+   from datetime import datetime
+   current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+   ```
+
+3. **If writing Markdown with timestamps:**
+   - Use format: `**Timestamp**: YYYY-MM-DD`
+   - Use format: `**Last Updated**: YYYY-MM-DD`
+   - Always get from user_info or system
+
+4. **NEVER write dates like:**
+   - ❌ `2025-01-17` (when it's actually December)
+   - ❌ `2024-XX-XX` (placeholder dates)
+   - ❌ Any date not verified from user_info
+
+**Example correct usage:**
+```markdown
+**Timestamp**: 2025-12-02  
+**Last Updated**: 2025-12-02  
+```
+
+**Why this matters:**
+- Hallucinated dates break documentation chronology
+- Users rely on accurate timestamps
+- It's just bloody annoying (eejit behavior!)
+

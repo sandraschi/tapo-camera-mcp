@@ -158,3 +158,36 @@ async def ptz_zoom_out(camera_name: str, speed: float = 0.3):
     """Zoom camera out."""
     return await ptz_move(PTZMoveRequest(camera_name=camera_name, zoom=-speed))
 
+
+class PTZHomeRequest(BaseModel):
+    """Request model for PTZ home."""
+    camera_name: str
+
+
+@router.post("/home")
+async def ptz_home(request: PTZHomeRequest):
+    """Move camera to home position."""
+    camera = await _get_camera(request.camera_name)
+
+    # Try ptz_go_home first, then fall back to preset
+    if hasattr(camera, "ptz_go_home"):
+        try:
+            await camera.ptz_go_home()
+            return {"success": True, "message": "Moving to home position"}
+        except Exception as e:
+            logger.warning(f"ptz_go_home failed: {e}, trying home preset")
+
+    # Try home preset
+    if hasattr(camera, "ptz_go_to_preset"):
+        try:
+            await camera.ptz_go_to_preset("1")  # Preset 1 is typically home
+            return {"success": True, "message": "Moving to home preset"}
+        except Exception:
+            pass
+
+    # Just stop if nothing else works
+    if hasattr(camera, "ptz_stop"):
+        await camera.ptz_stop()
+        return {"success": True, "message": "Stopped PTZ (no home support)"}
+
+    raise HTTPException(status_code=400, detail="Camera does not support PTZ home")

@@ -91,13 +91,23 @@ def register_configuration_management_tool(mcp: FastMCP) -> None:
 
             logger.info(f"Executing configuration management action: {action}")
 
-            if action in ["device_settings", "led_control", "motion_detection"]:
+            if action == "device_settings":
+                # DeviceSettingsTool doesn't support generic device_settings operation
+                # This would need a different tool or implementation
+                return {
+                    "success": False,
+                    "error": "device_settings action requires a specific setting. Use led_control or motion_detection instead.",
+                }
+
+            if action in ["led_control", "motion_detection"]:
                 tool = DeviceSettingsTool()
+                operation_map = {
+                    "led_control": "led",
+                    "motion_detection": "motion_detection",
+                }
                 result = await tool.execute(
-                    operation=action,
+                    operation=operation_map[action],
                     camera_id=camera_name or "",
-                    setting_name=setting_name,
-                    setting_value=setting_value,
                     enabled=enabled,
                 )
                 return {"success": True, "action": action, "data": result}

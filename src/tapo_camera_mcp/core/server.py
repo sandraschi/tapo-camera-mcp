@@ -97,6 +97,22 @@ class TapoCameraServer:
         # Register all tools
         await self._register_tools()
 
+        # Initialize all hardware and test connections
+        from .hardware_init import initialize_all_hardware
+        logger.info("Initializing all hardware components...")
+        hardware_results = await initialize_all_hardware()
+        
+        # Log summary
+        successful = sum(1 for r in hardware_results.values() if r.get("success", False))
+        total = len(hardware_results)
+        logger.info(f"Hardware initialization: {successful}/{total} components ready")
+
+        # Start connection supervisor for device health monitoring
+        from .connection_supervisor import get_supervisor
+        self.supervisor = get_supervisor()
+        await self.supervisor.start()
+        logger.info("Connection supervisor started (60s polling)")
+
         TapoCameraServer._initialized = True  # Set class variable, not instance
         logger.info("Tapo Camera MCP Server initialized successfully")
 

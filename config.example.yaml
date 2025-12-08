@@ -178,3 +178,75 @@ advanced:
   reconnect_interval: 10  # Seconds between reconnection attempts
   timeout: 30             # Default timeout for camera operations (seconds)
   max_retries: 3          # Maximum number of retries for failed operations
+
+# Robotics integration (Added: 2025-12-02)
+robotics:
+  moorebot_scout:
+    enabled: false          # Enable when robot arrives (XMas 2025)
+    ip_address: "192.168.1.100"  # Robot IP address
+    port: 9090              # ROS bridge WebSocket port
+    mock_mode: true         # Use mock data for testing (set false with hardware)
+    
+    # Apartment map (Stroheckgasse 9th District, Vienna)
+    location:
+      home_base:
+        x: 0.0
+        y: 0.0
+      rooms:
+        living_room:
+          x_min: 0
+          x_max: 5
+          y_min: 0
+          y_max: 4
+        bedroom:
+          x_min: 5
+          x_max: 8
+          y_min: 0
+          y_max: 3
+        kitchen:
+          x_min: 0
+          x_max: 3
+          y_min: 4
+          y_max: 7
+    
+    # Patrol routes
+    patrols:
+      default:
+        - {x: 2.0, y: 2.0, room: "living_room"}
+        - {x: 6.0, y: 1.5, room: "bedroom"}
+        - {x: 1.0, y: 5.0, room: "kitchen"}
+        - {x: 0.0, y: 0.0, room: "home_base"}
+      perimeter:
+        - {x: 0.0, y: 0.0, room: "home_base"}
+        - {x: 5.0, y: 0.0, room: "living_room"}
+        - {x: 8.0, y: 0.0, room: "bedroom"}
+        - {x: 8.0, y: 7.0, room: "kitchen"}
+        - {x: 0.0, y: 7.0, room: "living_room"}
+        - {x: 0.0, y: 0.0, room: "home_base"}
+      rooms:
+        - {x: 2.5, y: 2.0, room: "living_room"}
+        - {x: 6.5, y: 1.5, room: "bedroom"}
+        - {x: 1.5, y: 5.5, room: "kitchen"}
+        - {x: 0.0, y: 0.0, room: "home_base"}
+    
+    # Automation settings
+    automation:
+      japan_trip_patrol:
+        enabled: false      # Enable before October trip
+        schedule: ["08:00", "14:00", "20:00", "02:00"]
+        route: "default"
+      
+      benny_follow:         # German Shepherd tracking
+        enabled: false
+        trigger: "motion_detected"
+        follow_distance: 1.0  # meters
+      
+      low_battery_auto_dock: true
+      battery_threshold: 20   # % - return to dock when below this
+    
+    # Camera streaming
+    camera:
+      rtsp_port: 8554
+      resolution: "1080p"
+      fps: 30
+      night_vision: true

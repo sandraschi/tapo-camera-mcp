@@ -5,11 +5,14 @@ This module provides configuration models and utilities for the Tapo Camera MCP 
 """
 
 import json
+import logging
 import shutil
 from pathlib import Path
 from typing import Any, Dict, Optional, Type, TypeVar, Union
 
 import yaml
+
+logger = logging.getLogger(__name__)
 
 from .models import (
     CameraConfig,
@@ -57,7 +60,8 @@ class ConfigManager:
 
         # Search paths in order of preference
         search_paths = [
-            user_config_file,  # User config directory (highest priority)
+            Path("/app/config.yaml"),  # Docker container path (highest priority in container)
+            user_config_file,  # User config directory
             repo_config,  # Repo root config file
             Path("config.yaml"),  # Current directory
             Path("config.yml"),
@@ -66,7 +70,13 @@ class ConfigManager:
 
         for path in search_paths:
             if path.exists():
+                logger.info(f"Found config file at: {path}")
                 return path
+        
+        # Log all searched paths for debugging
+        logger.warning("Config file not found. Searched paths:")
+        for path in search_paths:
+            logger.warning(f"  - {path} (exists: {path.exists()})")
 
         # If no config found, try to create one from the repo template
         if repo_config.exists():

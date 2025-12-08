@@ -96,22 +96,28 @@ def register_system_management_tool(mcp: FastMCP) -> None:
 
             if action == "info":
                 tool = SystemInfoTool()
-                result = await tool.execute()
+                result = await tool.execute(operation="info")
                 return {"success": True, "action": action, "data": result}
 
-            if action in ["status", "reboot", "logs"]:
+            if action == "logs":
+                tool = SystemInfoTool()
+                result = await tool.execute(
+                    operation="logs",
+                    log_level=log_level.lower(),
+                    log_lines=lines,
+                )
+                return {"success": True, "action": action, "data": result}
+
+            if action in ["status", "reboot"]:
                 tool = SystemControlTool()
                 operation_map = {
                     "status": "status",
                     "reboot": "reboot_camera",
-                    "logs": "logs",
                 }
                 result = await tool.execute(
                     operation=operation_map[action],
                     camera_id=camera_name,
                     reboot_type=reboot_type,
-                    log_level=log_level,
-                    lines=lines,
                 )
                 return {"success": True, "action": action, "data": result}
 

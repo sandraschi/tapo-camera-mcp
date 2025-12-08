@@ -61,6 +61,7 @@ class PTZControlTool(BaseTool):
         tilt: Optional[float] = None,
         zoom: Optional[float] = None,
         duration: Optional[float] = None,
+        speed: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Execute PTZ control operation."""
         try:

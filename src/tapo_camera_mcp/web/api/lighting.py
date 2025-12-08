@@ -47,9 +47,17 @@ def _model_dump(model: Any) -> dict[str, Any]:
 
 
 @router.get("/hue/lights", summary="List all Philips Hue lights")
-async def list_hue_lights() -> dict[str, Any]:
-    """Return all Philips Hue lights with current state."""
+async def list_hue_lights(refresh: bool = False) -> dict[str, Any]:
+    """Return all Philips Hue lights with current state.
+    
+    Args:
+        refresh: If True, queries bridge for fresh state before returning.
+    """
     try:
+        # Refresh from bridge if requested
+        if refresh and hue_manager._initialized:
+            await hue_manager._discover_devices()
+        
         lights = await hue_manager.get_all_lights()
         return {
             "lights": [_model_dump(light) for light in lights],
@@ -78,7 +86,7 @@ async def get_hue_light(light_id: str) -> dict[str, Any]:
 
 @router.post("/hue/lights/{light_id}/control", summary="Control a Hue light")
 async def control_hue_light(light_id: str, request: LightControlRequest) -> dict[str, Any]:
-    """Control a Hue light (on/off, brightness, color)."""
+    """Control a Hue light (on/off, brightness, color). Returns immediately for speed."""
     try:
         success = await hue_manager.set_light_state(
             light_id,
@@ -92,16 +100,8 @@ async def control_hue_light(light_id: str, request: LightControlRequest) -> dict
         if not success:
             raise HTTPException(status_code=500, detail="Failed to control light")
 
-        # Wait a moment for bridge to update, then get fresh state
-        import asyncio
-        await asyncio.sleep(0.2)
-
-        # Get updated light state
-        light = await hue_manager.get_light(light_id)
-        return {
-            "success": True,
-            "light": _model_dump(light) if light else None,
-        }
+        # Return immediately - don't wait for bridge or refetch state
+        return {"success": True}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -201,6 +201,10 @@ async def activate_hue_scene(scene_id: str, group_id: str | None = None) -> dict
 @router.get("/hue/status", summary="Get Hue Bridge connection status")
 async def get_hue_status() -> dict[str, Any]:
     """Get Hue Bridge connection status."""
+    # Auto-initialize on first status check
+    if not hue_manager._initialized and not hue_manager._connection_error:
+        await hue_manager.initialize()
+    
     return {
         "connected": hue_manager._initialized,
         "bridge_ip": hue_manager._bridge_ip,

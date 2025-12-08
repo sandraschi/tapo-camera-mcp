@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 import aiohttp
+from aiohttp import resolver
 
 from ..config import get_model
 from ..config.models import WeatherSettings
@@ -150,8 +151,25 @@ class NetatmoService:
             return
 
         try:
-            # Create aiohttp session
-            self._session = aiohttp.ClientSession()
+            # Create aiohttp session with IPv4 preference and timeout
+            # Force IPv4 to avoid IPv6 DNS resolution issues
+            # Python's getaddrinfo can fail on Windows with IPv6/IPv4 conflicts
+            import socket
+            
+            # Use system DNS resolver with IPv4 preference
+            # This avoids aiodns which might not be installed or might have issues
+            dns_resolver = resolver.DefaultResolver()
+            family = socket.AF_INET  # Force IPv4 only
+            connector = aiohttp.TCPConnector(
+                family=family,
+                limit=10,
+                resolver=dns_resolver,
+                use_dns_cache=True,
+                ttl_dns_cache=300,
+                enable_cleanup_closed=True
+            )
+            timeout = aiohttp.ClientTimeout(total=30, connect=10)
+            self._session = aiohttp.ClientSession(connector=connector, timeout=timeout)
 
             # Create auth handler
             auth = NetatmoOAuth2Auth(
@@ -171,12 +189,62 @@ class NetatmoService:
             )
 
         except Exception as e:
-            logger.warning(f"Failed to initialize Netatmo ({e}). Using simulated data.")
+            error_type = type(e).__name__
+            error_msg = str(e)
+            # Log the actual error for debugging
+            logger.error(f"Failed to initialize Netatmo: {error_type}: {error_msg}")
+            
+            # Check if it's a DNS error - if so, try to fix it
+            if "getaddrinfo" in error_msg or "ClientConnectorDNSError" in error_type or "DNS" in error_type:
+                logger.warning(f"Netatmo DNS error detected. Retrying with explicit IPv4 resolution...")
+                # Try again with pre-resolved IP address
+                try:
+                    # Pre-resolve the IP address
+                    import socket
+                    addrinfo = socket.getaddrinfo('api.netatmo.com', 443, socket.AF_INET, socket.SOCK_STREAM)
+                    if addrinfo:
+                        ip_address = addrinfo[0][4][0]
+                        logger.info(f"Resolved api.netatmo.com to {ip_address}, retrying connection...")
+                        # Close old session
+                        if self._session:
+                            await self._session.close()
+                        # Create new session with resolved IP (but we can't easily override pyatmo's URL)
+                        # Instead, ensure our session config is correct
+                        family = socket.AF_INET
+                        dns_resolver = resolver.DefaultResolver()
+                        connector = aiohttp.TCPConnector(
+                            family=family,
+                            resolver=dns_resolver,
+                            use_dns_cache=True,
+                            ttl_dns_cache=300
+                        )
+                        timeout = aiohttp.ClientTimeout(total=30, connect=10)
+                        self._session = aiohttp.ClientSession(connector=connector, timeout=timeout)
+                        auth = NetatmoOAuth2Auth(
+                            websession=self._session,
+                            client_id=self.config.client_id,
+                            client_secret=self.config.client_secret,
+                            refresh_token=self.config.refresh_token,
+                        )
+                        self._account = pyatmo.AsyncAccount(auth)
+                        await self._account.async_update_weather_stations()
+                        self._use_real_api = True
+                        logger.info(f"Netatmo initialized successfully after retry: {len(self._account.homes)} homes")
+                        return
+                except Exception as retry_error:
+                    logger.error(f"Retry also failed: {retry_error}")
+            
+            # If we get here, initialization failed
+            logger.error(f"Netatmo initialization failed. Check network connectivity and credentials.")
             if self._session:
-                await self._session.close()
+                try:
+                    await self._session.close()
+                except Exception:
+                    pass
                 self._session = None
             self._account = None
             self._use_real_api = False
+            raise  # Re-raise the error so caller knows it failed
 
     async def close(self) -> None:
         """Clean up resources."""
@@ -277,6 +345,27 @@ class NetatmoService:
                             else:
                                 data = outdoor
 
+                        # Additional indoor modules (NAModule4) - e.g., Bathroom
+                        elif "NAModule4" in str(
+                            getattr(module, "device_type", "")
+                        ) and module_type in ("indoor_extra", "all"):
+                            module_name = getattr(module, "name", "Extra Indoor Module")
+                            extra_indoor = {
+                                "name": module_name,
+                                "temperature": getattr(module, "temperature", None),
+                                "humidity": getattr(module, "humidity", None),
+                                "co2": getattr(module, "co2", None),
+                                "temp_trend": getattr(module, "temp_trend", "stable"),
+                                "battery_percent": getattr(module, "battery_percent", None),
+                            }
+                            if module_type == "all":
+                                # Store additional modules in a list under "extra_indoor"
+                                if "extra_indoor" not in data:
+                                    data["extra_indoor"] = []
+                                data["extra_indoor"].append(extra_indoor)
+                            else:
+                                data = extra_indoor
+
                 if data:
                     self._store_data(station_id, module_type, data)
                     return data, timestamp
@@ -330,6 +419,21 @@ class NetatmoService:
                         timestamp=timestamp,
                         temperature_c=outdoor_data.get("temperature"),
                         humidity_percent=outdoor_data.get("humidity"),
+                    )
+
+            # Store extra indoor modules (e.g., Bathroom)
+            if module_type == "all" and "extra_indoor" in data:
+                for extra_module in data["extra_indoor"]:
+                    module_name = extra_module.get("name", "unknown")
+                    # Use module name as unique identifier (e.g., "Bathroom")
+                    module_id = f"extra_{module_name.lower().replace(' ', '_')}"
+                    self._db.store_weather_data(
+                        station_id=station_id,
+                        module_type=module_id,  # e.g., "extra_bathroom"
+                        timestamp=timestamp,
+                        temperature_c=extra_module.get("temperature"),
+                        humidity_percent=extra_module.get("humidity"),
+                        co2_ppm=extra_module.get("co2"),
                     )
         except Exception as e:
             logger.warning(f"Failed to store weather data: {e}")

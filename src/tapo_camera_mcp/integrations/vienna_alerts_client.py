@@ -96,11 +96,11 @@ SEVERITY_COLORS = {
 }
 
 SEVERITY_ICONS = {
-    AlertSeverity.UNKNOWN: "❓",
-    AlertSeverity.MINOR: "⚠️",
-    AlertSeverity.MODERATE: "🟠",
-    AlertSeverity.SEVERE: "🔴",
-    AlertSeverity.EXTREME: "🟣",
+    AlertSeverity.UNKNOWN: "?",
+    AlertSeverity.MINOR: "!",
+    AlertSeverity.MODERATE: "!!",
+    AlertSeverity.SEVERE: "!!!",
+    AlertSeverity.EXTREME: "!!!!",
 }
 
 

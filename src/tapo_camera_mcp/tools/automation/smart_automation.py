@@ -1,7 +1,7 @@
 """
 [MOCK/SCAFFOLD] Smart Automation Tool for Tapo Camera MCP
 
-⚠️ WARNING: This is a MOCK implementation that returns simulated data!
+WARNING: This is a MOCK implementation that returns simulated data!
 
 This tool provides intelligent automation capabilities including:
 - Smart scheduling based on patterns
@@ -50,7 +50,7 @@ class AutomationSchedule(BaseModel):
 class SmartAutomationTool(BaseTool):
     """[MOCK] Smart automation and scheduling tool.
 
-    ⚠️ WARNING: This is a MOCK implementation that returns simulated data!
+    WARNING: This is a MOCK implementation that returns simulated data!
 
     Provides intelligent automation capabilities including smart scheduling
     based on patterns, conditional automation rules, integration with external
@@ -289,7 +289,7 @@ class SmartAutomationTool(BaseTool):
 
     async def _analyze_usage_patterns(self) -> Dict[str, Any]:
         """Analyze camera usage patterns."""
-        # ⚠️ MOCK: Simulate usage pattern analysis - returns hardcoded fake data
+        # [MOCK] Simulate usage pattern analysis - returns hardcoded fake data
         return {
             "peak_usage_hours": [9, 10, 11, 14, 15, 16, 19, 20, 21],
             "low_usage_hours": [0, 1, 2, 3, 4, 5, 6],
@@ -337,23 +337,23 @@ class SmartAutomationTool(BaseTool):
 
     async def _check_rule_conditions(self, _conditions: Dict[str, Any]) -> bool:
         """Check if rule conditions are met."""
-        # ⚠️ MOCK: Simplified condition checking - in real implementation this would
+        # [MOCK] Simplified condition checking - in real implementation this would
         # integrate with actual camera and system monitoring
-        return True  # ⚠️ MOCK: Always returns True for simulation
+        return True  # [MOCK] Always returns True for simulation
 
     async def _execute_action(self, action: Dict[str, Any]) -> Dict[str, Any]:
         """Execute a single automation action."""
-        # ⚠️ MOCK: All actions return fake success messages without actually doing anything
+        # [MOCK] All actions return fake success messages without actually doing anything
         action_type = action.get("action")
 
         if action_type == "send_notification":
-            return {"status": "success", "message": "Notification sent"}  # ⚠️ MOCK
+            return {"status": "success", "message": "Notification sent"}  # [MOCK]
         if action_type == "capture_snapshot":
-            return {"status": "success", "message": "Snapshot captured"}  # ⚠️ MOCK
+            return {"status": "success", "message": "Snapshot captured"}  # [MOCK]
         if action_type == "send_alert":
-            return {"status": "success", "message": "Alert sent"}  # ⚠️ MOCK
+            return {"status": "success", "message": "Alert sent"}  # [MOCK]
         if action_type == "optimize_camera_streams":
-            return {"status": "success", "message": "Camera streams optimized"}  # ⚠️ MOCK
+            return {"status": "success", "message": "Camera streams optimized"}  # [MOCK]
         return {"status": "error", "message": f"Unknown action: {action_type}"}
 
     async def _generate_optimization_suggestions(self) -> List[str]:

@@ -1,12 +1,36 @@
-# Ring Doorbell Integration
+# Ring Doorbell & Alarm Integration
 
 ## Overview
 
-The Tapo Camera MCP integrates with Ring doorbells to provide:
-- Live video streaming (WebRTC)
+The Tapo Camera MCP integrates with Ring devices to provide:
+- **Ring Alarm Base Station EU** with full sensor support
+- Live video streaming (WebRTC) for doorbells/cameras
 - Two-way audio communication
 - Motion and doorbell event notifications
-- Alarm system status and control
+- Alarm system arm/disarm control
+- Sensor monitoring (contact, motion, flood/freeze, smoke/CO)
+- Siren control
+
+## Ring Alarm EU Support
+
+### Supported Devices
+| Device Type | Support |
+|-------------|---------|
+| Base Station EU (hub.redsky) | ✅ Full |
+| Contact Sensors | ✅ Full |
+| Motion Sensors | ✅ Full |
+| Keypads | ✅ Full |
+| Range Extenders | ✅ Status |
+| Siren | ✅ Control |
+| Flood/Freeze Sensors | ✅ Full |
+| Smoke/CO Listeners | ✅ Full |
+| Glass Break Sensors | ✅ Full |
+
+### EU Hardware Specs
+- Z-Wave Frequency: 868 MHz (EU/UK)
+- Siren Volume: 104 dB
+- Battery Backup: 24 hours
+- Connectivity: Wi-Fi, Ethernet, Z-Wave
 
 ## Features by Subscription
 
@@ -72,9 +96,18 @@ GET /api/ring/events/{device_id}/video/{recording_id}
 
 ```
 GET /api/ring/alarm
+GET /api/ring/alarm/devices
+GET /api/ring/alarm/events?limit=50
 POST /api/ring/alarm/mode
 Body: {"mode": "disarmed|home|away"}
+POST /api/ring/alarm/siren
+Body: {"activate": true, "duration": 30}
 ```
+
+### Alarm Mode Values
+- `disarmed` (none): System off
+- `home` (some): Perimeter sensors active
+- `away` (all): All sensors active
 
 ### WebRTC Live View
 

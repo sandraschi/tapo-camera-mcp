@@ -95,16 +95,28 @@ def register_weather_management_tool(mcp: FastMCP) -> None:
 
             logger.info(f"Executing weather management action: {action}")
 
-            if action in ["current", "historical", "stations", "alerts", "health"]:
+            if action == "stations":
                 tool = NetatmoWeatherTool()
                 result = await tool.execute(
-                    operation=action,
+                    operation="stations",
                     station_id=station_id,
-                    start_date=start_date,
-                    end_date=end_date,
-                    alert_config=alert_config,
                 )
                 return {"success": True, "action": action, "data": result}
+
+            if action == "current":
+                tool = NetatmoWeatherTool()
+                result = await tool.execute(
+                    operation="data",
+                    station_id=station_id,
+                )
+                return {"success": True, "action": action, "data": result}
+
+            if action in ["historical", "alerts", "health"]:
+                # These operations are not yet implemented in NetatmoWeatherTool
+                return {
+                    "success": False,
+                    "error": f"Action '{action}' is not yet implemented. Available actions: current, stations, analyze",
+                }
 
             if action == "analyze":
                 tool = NetatmoAnalysisTool()

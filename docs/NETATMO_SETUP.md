@@ -1,7 +1,9 @@
-# Netatmo Weather Station Integration (Preparation)
+# Netatmo Weather Station Integration
 
 ## Overview
 Adds a configurable Netatmo integration with graceful fallback to simulated data until credentials are provided. When enabled, the weather API and `/metrics` can source real readings.
+
+**⚠️ Important**: All simulated/mock data is clearly marked with warnings and indicators. When Netatmo is properly configured, you'll see real data from your weather station.
 
 ## Configuration
 Add to your `config.yaml` (example):
@@ -21,9 +23,11 @@ weather:
       home_id: "<optional_home_id>"
 ```
 
-Notes:
-- If `enabled: true` but credentials are missing/invalid, the system falls back to simulated data and logs a warning.
-- When disabled, the weather API continues to serve simulated data for UI/dev.
+**Important Notes:**
+- If `enabled: true` but credentials are missing/invalid, the system falls back to **simulated data** (clearly marked with warnings)
+- When disabled, the weather API continues to serve simulated data for UI/dev
+- **Simulated data indicators**: Station names include "(SIMULATED/MOCK DATA)", responses include `is_simulated: true` flags, and warning banners are displayed
+- The `refresh_token` should be a single string without special characters (no pipes `|` or other separators)
 
 ## Endpoints
 - `GET /api/weather/stations` — lists stations (real or simulated)
@@ -34,13 +38,20 @@ Notes:
 - `/metrics` already publishes Netatmo-style series. Once enabled, these can be backed by real readings.
 
 ## Install Dependency
-When you're ready for live queries:
+
+**Required**: The `pyatmo` package must be installed for real Netatmo data:
 
 ```powershell
-pip install pyatmo
+pip install "pyatmo>=8.0.0,<9.0.0"
 ```
 
-The client wrapper is scaffolded at `src\tapo_camera_mcp\integrations\netatmo_client.py` and will switch to real calls when credentials are present and the library is installed.
+**⚠️ Without pyatmo installed**, the system will use simulated data even if credentials are configured.
+
+The client wrapper is at `src\tapo_camera_mcp\integrations\netatmo_client.py` and will switch to real calls when:
+1. `pyatmo` is installed
+2. `enabled: true` in config
+3. Valid `client_id`, `client_secret`, and `refresh_token` are provided
+4. Token refresh succeeds
 
 ## OAuth Flow (Recommended)
 1. Build an authorization URL and open it:
@@ -58,16 +69,12 @@ The client wrapper is scaffolded at `src\tapo_camera_mcp\integrations\netatmo_cl
    python .\\scripts\\netatmo_oauth_helper.py refresh <CLIENT_ID> <CLIENT_SECRET> <REFRESH_TOKEN>
    ```
 
-## Quick Verification
-- With `enabled: true` and a valid `refresh_token`, run:
-  ```powershell
-  $response = Invoke-WebRequest http://localhost:7777/metrics -UseBasicParsing
-  if ($response.Content -match "netatmo_") {
-      "netatmo metrics present"
-  } else {
       "no netatmo metrics found"
   }
   ```
   You should see: `netatmo_temperature_celsius`, `netatmo_humidity_percent`, `netatmo_co2_ppm`, `netatmo_pressure_mbar` populated from your station.
+
+
+
 
 

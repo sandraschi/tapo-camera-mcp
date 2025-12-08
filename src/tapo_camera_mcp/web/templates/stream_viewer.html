@@ -1,0 +1,786 @@
+{% extends "base.html" %}
+
+{% block title %}{{ camera_name }} Stream - Tapo Camera MCP{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stream-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+    
+    .stream-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+    
+    .stream-header h1 {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+    
+    .stream-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 14px;
+    }
+    
+    .stream-status.live {
+        background: #dcfce7;
+        color: #166534;
+    }
+    
+    .stream-status.loading {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .stream-status.error {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+    
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+    
+    .status-dot.live { background: #22c55e; }
+    .status-dot.loading { background: #f59e0b; }
+    .status-dot.error { background: #ef4444; }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .stream-card {
+        background: #000;
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Fullscreen styles */
+    .stream-card:fullscreen,
+    .stream-card:-webkit-full-screen,
+    .stream-card:-moz-full-screen,
+    .stream-card:-ms-fullscreen {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+    }
+    
+    .stream-card:fullscreen .stream-video,
+    .stream-card:-webkit-full-screen .stream-video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+    
+    .stream-video-container {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16/9;
+        background: #111;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .stream-video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+    
+    .stream-overlay {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        display: flex;
+        gap: 8px;
+    }
+    
+    .stream-badge {
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .stream-badge.live-badge {
+        background: #dc2626;
+    }
+    
+    .stream-loading {
+        color: #9ca3af;
+        text-align: center;
+    }
+    
+    .stream-loading .spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid #333;
+        border-top-color: #f97316;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 16px;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .stream-controls {
+        background: #1a1a1a;
+        padding: 16px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    
+    .control-group {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .ctrl-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        border: none;
+        text-decoration: none;
+    }
+    
+    .ctrl-btn-play {
+        background: #22c55e;
+        color: white;
+    }
+    
+    .ctrl-btn-play:hover {
+        background: #16a34a;
+    }
+    
+    .ctrl-btn-stop {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .ctrl-btn-stop:hover {
+        background: #dc2626;
+    }
+    
+    .ctrl-btn-secondary {
+        background: #374151;
+        color: white;
+    }
+    
+    .ctrl-btn-secondary:hover {
+        background: #4b5563;
+    }
+    
+    .stream-info-bar {
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 16px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #6b7280;
+        font-size: 14px;
+    }
+    
+    .info-item strong {
+        color: #1f2937;
+    }
+    
+    .copy-toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: #10b981;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 500;
+        opacity: 0;
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .copy-toast.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+    
+    .error-banner {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        padding: 16px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    /* PTZ Controls */
+    .ptz-overlay {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.85);
+        border-radius: 12px;
+        padding: 16px;
+        display: none;
+        z-index: 10;
+    }
+    
+    .ptz-overlay.active {
+        display: block;
+    }
+    
+    .ptz-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #374151;
+    }
+    
+    .ptz-title {
+        color: #e5e7eb;
+        font-weight: 600;
+        font-size: 13px;
+    }
+    
+    .ptz-close {
+        background: none;
+        border: none;
+        color: #9ca3af;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+    }
+    
+    .ptz-close:hover {
+        color: white;
+    }
+    
+    .ptz-body {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+    
+    .ptz-dpad {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .ptz-row {
+        display: flex;
+        gap: 4px;
+    }
+    
+    .ptz-btn {
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 8px;
+        background: #3b82f6;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease;
+    }
+    
+    .ptz-btn:hover {
+        background: #2563eb;
+        transform: scale(1.05);
+    }
+    
+    .ptz-btn:active {
+        background: #1d4ed8;
+        transform: scale(0.95);
+    }
+    
+    .ptz-btn.ptz-home {
+        background: #6b7280;
+        font-size: 12px;
+    }
+    
+    .ptz-btn.ptz-home:hover {
+        background: #4b5563;
+    }
+    
+    .ptz-zoom {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .ptz-zoom .ptz-btn {
+        width: 48px;
+        font-size: 14px;
+    }
+    
+    .ctrl-btn-ptz {
+        background: #8b5cf6;
+        color: white;
+    }
+    
+    .ctrl-btn-ptz:hover {
+        background: #7c3aed;
+    }
+    
+    .ctrl-btn-ptz.active {
+        background: #6d28d9;
+        box-shadow: 0 0 0 2px #a78bfa;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stream-container">
+    <div class="stream-header">
+        <h1>🎥 {{ camera_name }}</h1>
+        <div class="stream-status loading" id="stream-status">
+            <span class="status-dot loading"></span>
+            <span id="status-text">Connecting...</span>
+        </div>
+    </div>
+    
+    <div id="error-banner" class="error-banner" style="display: none;">
+        <span>⚠️</span>
+        <span id="error-text"></span>
+    </div>
+    
+    <div class="stream-card">
+        <div class="stream-video-container" id="video-container">
+            <div class="stream-loading" id="stream-loading">
+                <div class="spinner"></div>
+                <p>Starting live stream...</p>
+            </div>
+            <img id="stream-video" class="stream-video" style="display: none;" alt="Live stream">
+            <div class="stream-overlay">
+                <span class="stream-badge live-badge" id="live-badge" style="display: none;">● LIVE</span>
+                <span class="stream-badge" id="camera-badge">{{ camera_name }}</span>
+            </div>
+            
+            <!-- PTZ Overlay -->
+            <div class="ptz-overlay" id="ptz-overlay">
+                <div class="ptz-header">
+                    <span class="ptz-title">🎮 PTZ Controls</span>
+                    <button class="ptz-close" onclick="togglePTZ()">&times;</button>
+                </div>
+                <div class="ptz-body">
+                    <div class="ptz-dpad">
+                        <button class="ptz-btn" onmousedown="ptzMove(0, 0.5, 0)" onmouseup="ptzStop()" onmouseleave="ptzStop()" ontouchstart="ptzMove(0, 0.5, 0)" ontouchend="ptzStop()">▲</button>
+                        <div class="ptz-row">
+                            <button class="ptz-btn" onmousedown="ptzMove(-0.5, 0, 0)" onmouseup="ptzStop()" onmouseleave="ptzStop()" ontouchstart="ptzMove(-0.5, 0, 0)" ontouchend="ptzStop()">◀</button>
+                            <button class="ptz-btn ptz-home" onclick="ptzHome()">⌂</button>
+                            <button class="ptz-btn" onmousedown="ptzMove(0.5, 0, 0)" onmouseup="ptzStop()" onmouseleave="ptzStop()" ontouchstart="ptzMove(0.5, 0, 0)" ontouchend="ptzStop()">▶</button>
+                        </div>
+                        <button class="ptz-btn" onmousedown="ptzMove(0, -0.5, 0)" onmouseup="ptzStop()" onmouseleave="ptzStop()" ontouchstart="ptzMove(0, -0.5, 0)" ontouchend="ptzStop()">▼</button>
+                    </div>
+                    <div class="ptz-zoom">
+                        <button class="ptz-btn" onmousedown="ptzMove(0, 0, 0.3)" onmouseup="ptzStop()" onmouseleave="ptzStop()" ontouchstart="ptzMove(0, 0, 0.3)" ontouchend="ptzStop()">🔍+</button>
+                        <button class="ptz-btn" onmousedown="ptzMove(0, 0, -0.3)" onmouseup="ptzStop()" onmouseleave="ptzStop()" ontouchstart="ptzMove(0, 0, -0.3)" ontouchend="ptzStop()">🔍−</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stream-controls">
+            <div class="control-group">
+                <button onclick="startStream()" class="ctrl-btn ctrl-btn-play" id="btn-play">
+                    ▶ Start Stream
+                </button>
+                <button onclick="stopStream()" class="ctrl-btn ctrl-btn-stop" id="btn-stop" style="display: none;">
+                    ⏹ Stop
+                </button>
+                <button onclick="refreshSnapshot()" class="ctrl-btn ctrl-btn-secondary">
+                    📸 Snapshot
+                </button>
+                <button onclick="togglePTZ()" class="ctrl-btn ctrl-btn-ptz" id="btn-ptz">
+                    🎮 PTZ
+                </button>
+            </div>
+            <div class="control-group">
+                <button id="btn-fullscreen" class="ctrl-btn ctrl-btn-secondary">
+                    ⛶ Fullscreen
+                </button>
+                <button onclick="popoutStream()" class="ctrl-btn ctrl-btn-secondary">
+                    ↗ Pop Out
+                </button>
+                <a href="/cameras" class="ctrl-btn ctrl-btn-secondary">
+                    ← Back
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stream-info-bar">
+        <div class="info-item">
+            <span>📡</span>
+            <strong>Camera:</strong>
+            <span>{{ camera_id }}</span>
+        </div>
+        <div class="info-item">
+            <span>🔗</span>
+            <strong>RTSP:</strong>
+            <span id="rtsp-display">Loading...</span>
+            <button onclick="copyStreamUrl()" class="ctrl-btn ctrl-btn-secondary" style="padding: 6px 12px; font-size: 12px;">
+                📋 Copy
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="copy-toast" id="copy-toast">✅ Copied to clipboard!</div>
+
+<script>
+const cameraId = "{{ camera_id }}";
+let streamUrl = null;
+let isStreaming = false;
+
+async function loadStreamInfo() {
+    try {
+        const response = await fetch(`/api/cameras/${encodeURIComponent(cameraId)}/stream`);
+        const data = await response.json();
+        
+        if (data.stream_url) {
+            streamUrl = data.stream_url;
+            // Show truncated URL
+            const displayUrl = streamUrl.length > 50 ? streamUrl.substring(0, 50) + '...' : streamUrl;
+            document.getElementById('rtsp-display').textContent = displayUrl;
+        }
+    } catch (err) {
+        console.error('Failed to load stream info:', err);
+    }
+}
+
+function startStream() {
+    const video = document.getElementById('stream-video');
+    const loading = document.getElementById('stream-loading');
+    const liveBadge = document.getElementById('live-badge');
+    const btnPlay = document.getElementById('btn-play');
+    const btnStop = document.getElementById('btn-stop');
+    const status = document.getElementById('stream-status');
+    const statusText = document.getElementById('status-text');
+    const statusDot = status.querySelector('.status-dot');
+    
+    // Show loading
+    loading.style.display = 'block';
+    video.style.display = 'none';
+    
+    // Set MJPEG stream source
+    video.src = `/api/cameras/${encodeURIComponent(cameraId)}/mjpeg?t=${Date.now()}`;
+    
+    video.onload = () => {
+        loading.style.display = 'none';
+        video.style.display = 'block';
+        liveBadge.style.display = 'inline';
+        btnPlay.style.display = 'none';
+        btnStop.style.display = 'inline-flex';
+        
+        status.className = 'stream-status live';
+        statusDot.className = 'status-dot live';
+        statusText.textContent = 'Live';
+        isStreaming = true;
+    };
+    
+    video.onerror = () => {
+        showError('Failed to start stream. Make sure the camera is online.');
+        loading.style.display = 'none';
+        status.className = 'stream-status error';
+        statusDot.className = 'status-dot error';
+        statusText.textContent = 'Error';
+    };
+    
+    // For MJPEG, the img will start loading immediately
+    setTimeout(() => {
+        if (video.complete && video.naturalWidth > 0) {
+            video.onload();
+        }
+    }, 500);
+}
+
+function stopStream() {
+    const video = document.getElementById('stream-video');
+    const liveBadge = document.getElementById('live-badge');
+    const btnPlay = document.getElementById('btn-play');
+    const btnStop = document.getElementById('btn-stop');
+    const status = document.getElementById('stream-status');
+    const statusText = document.getElementById('status-text');
+    const statusDot = status.querySelector('.status-dot');
+    
+    video.src = '';
+    video.style.display = 'none';
+    liveBadge.style.display = 'none';
+    btnPlay.style.display = 'inline-flex';
+    btnStop.style.display = 'none';
+    
+    status.className = 'stream-status loading';
+    statusDot.className = 'status-dot loading';
+    statusText.textContent = 'Stopped';
+    isStreaming = false;
+    
+    // Show snapshot instead
+    refreshSnapshot();
+}
+
+function refreshSnapshot() {
+    const video = document.getElementById('stream-video');
+    const loading = document.getElementById('stream-loading');
+    
+    if (isStreaming) return;
+    
+    loading.innerHTML = '<div class="spinner"></div><p>Loading snapshot...</p>';
+    loading.style.display = 'block';
+    video.style.display = 'none';
+    
+    const img = new Image();
+    img.src = `/api/cameras/${encodeURIComponent(cameraId)}/snapshot?t=${Date.now()}`;
+    img.onload = () => {
+        video.src = img.src;
+        video.style.display = 'block';
+        loading.style.display = 'none';
+    };
+    img.onerror = () => {
+        loading.innerHTML = '<p style="color: #9ca3af;">📷 Snapshot unavailable</p>';
+    };
+}
+
+function popoutStream() {
+    const streamUrl = `/api/cameras/${encodeURIComponent(cameraId)}/mjpeg`;
+    const win = window.open('', 'stream_' + cameraId, 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
+    win.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>${cameraId} - Live Stream</title>
+            <style>
+                * { margin: 0; padding: 0; }
+                body { background: #000; display: flex; align-items: center; justify-content: center; height: 100vh; }
+                img { max-width: 100%; max-height: 100%; object-fit: contain; }
+            </style>
+        </head>
+        <body ondblclick="document.documentElement.requestFullscreen()">
+            <img src="${streamUrl}" alt="Live Stream">
+        </body>
+        </html>
+    `);
+}
+
+function toggleStreamFullscreen() {
+    // Try the stream card (parent container) for better fullscreen experience
+    const streamCard = document.querySelector('.stream-card');
+    const video = document.getElementById('stream-video');
+    const target = streamCard || video;
+    
+    if (!target) {
+        console.error('No fullscreen target found');
+        return;
+    }
+    
+    // Check if already in fullscreen
+    const fsElement = document.fullscreenElement || 
+                      document.webkitFullscreenElement || 
+                      document.mozFullScreenElement ||
+                      document.msFullscreenElement;
+    
+    if (fsElement) {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+    } else {
+        // Enter fullscreen
+        if (target.requestFullscreen) {
+            target.requestFullscreen();
+        } else if (target.webkitRequestFullscreen) {
+            target.webkitRequestFullscreen();
+        } else if (target.mozRequestFullScreen) {
+            target.mozRequestFullScreen();
+        } else if (target.msRequestFullscreen) {
+            target.msRequestFullscreen();
+        }
+    }
+}
+
+function copyStreamUrl() {
+    if (!streamUrl) {
+        showToast('No stream URL available');
+        return;
+    }
+    
+    navigator.clipboard.writeText(streamUrl).then(() => {
+        showToast('✅ RTSP URL copied!');
+    }).catch(() => {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = streamUrl;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('✅ RTSP URL copied!');
+    });
+}
+
+function showToast(msg) {
+    const toast = document.getElementById('copy-toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function showError(msg) {
+    const banner = document.getElementById('error-banner');
+    document.getElementById('error-text').textContent = msg;
+    banner.style.display = 'flex';
+}
+
+// PTZ Functions
+let ptzActive = false;
+
+function togglePTZ() {
+    const overlay = document.getElementById('ptz-overlay');
+    const btn = document.getElementById('btn-ptz');
+    ptzActive = !ptzActive;
+    
+    if (ptzActive) {
+        overlay.classList.add('active');
+        btn.classList.add('active');
+    } else {
+        overlay.classList.remove('active');
+        btn.classList.remove('active');
+    }
+}
+
+async function ptzMove(pan, tilt, zoom) {
+    try {
+        const response = await fetch('/api/ptz/move', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                camera_name: cameraId,
+                pan: pan,
+                tilt: tilt,
+                zoom: zoom,
+                speed: 5
+            })
+        });
+        const data = await response.json();
+        if (!data.success) {
+            console.error('PTZ move failed:', data.error);
+        }
+    } catch (err) {
+        console.error('PTZ move error:', err);
+    }
+}
+
+async function ptzStop() {
+    try {
+        await fetch(`/api/ptz/stop/${encodeURIComponent(cameraId)}`, { method: 'POST' });
+    } catch (err) {
+        console.error('PTZ stop error:', err);
+    }
+}
+
+async function ptzHome() {
+    try {
+        const response = await fetch('/api/ptz/home', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ camera_name: cameraId })
+        });
+        const data = await response.json();
+        if (!data.success) {
+            console.error('PTZ home failed:', data.error);
+        }
+    } catch (err) {
+        console.error('PTZ home error:', err);
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    loadStreamInfo();
+    // Auto-start stream
+    setTimeout(startStream, 500);
+    
+    // Fullscreen button handler
+    const fsBtn = document.getElementById('btn-fullscreen');
+    if (fsBtn) {
+        fsBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleStreamFullscreen();
+        });
+    }
+    
+    // Double-click on video to toggle fullscreen
+    const video = document.getElementById('stream-video');
+    if (video) {
+        video.addEventListener('dblclick', toggleStreamFullscreen);
+    }
+    
+    // Also on the container
+    const container = document.getElementById('video-container');
+    if (container) {
+        container.addEventListener('dblclick', toggleStreamFullscreen);
+    }
+});
+</script>
+{% endblock %}
+

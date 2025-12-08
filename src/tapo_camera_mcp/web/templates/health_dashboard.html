@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Connection Health - Tapo Camera MCP{% endblock %}
+
+{% block content %}
+<div style="padding: 20px; max-width: 1400px; margin: 0 auto;">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; border-radius: 12px; margin-bottom: 30px;">
+        <h1 style="margin: 0 0 8px 0; font-size: 28px;">🏥 Connection Health Monitor</h1>
+        <p style="margin: 0; opacity: 0.9;">Real-time device connection status and supervisor monitoring</p>
+    </div>
+    
+    <!-- Overall Health Summary -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid #10b981;">
+            <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Total Devices</div>
+            <div style="font-size: 32px; font-weight: 700; color: #1f2937;" id="total-devices">--</div>
+        </div>
+        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid #10b981;">
+            <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Online</div>
+            <div style="font-size: 32px; font-weight: 700; color: #10b981;" id="online-devices">--</div>
+        </div>
+        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid #ef4444;">
+            <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Offline</div>
+            <div style="font-size: 32px; font-weight: 700; color: #ef4444;" id="offline-devices">--</div>
+        </div>
+        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid #3b82f6;">
+            <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Health Score</div>
+            <div style="font-size: 32px; font-weight: 700; color: #3b82f6;" id="health-percentage">--</div>
+        </div>
+    </div>
+    
+    <!-- Device Type Breakdown -->
+    <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px;">
+        <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #1f2937;">📊 Devices by Type</h2>
+        <div id="type-breakdown" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
+            <!-- Populated via JavaScript -->
+        </div>
+    </div>
+    
+    <!-- Device List -->
+    <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0; font-size: 20px; color: #1f2937;">🔌 All Devices</h2>
+            <button onclick="triggerHealthCheck()" class="btn btn-primary" style="padding: 8px 16px;">
+                <i class="fas fa-sync"></i> Check Now
+            </button>
+        </div>
+        <div id="devices-list">
+            <p style="text-align: center; color: #6b7280; padding: 40px;">Loading device status...</p>
+        </div>
+    </div>
+    
+    <!-- Offline Alerts -->
+    <div id="offline-alerts" style="margin-top: 30px; display: none;">
+        <div style="background: #fef2f2; border: 2px solid #ef4444; padding: 24px; border-radius: 12px;">
+            <h3 style="margin: 0 0 16px 0; color: #dc2626;">🚨 Offline Devices</h3>
+            <div id="offline-list"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+let healthCheckInterval = null;
+
+// Load health data
+async function loadHealthData() {
+    try {
+        const response = await fetch('/api/system/connection-health');
+        const health = await response.json();
+        
+        // Update summary cards
+        document.getElementById('total-devices').textContent = health.total_devices || 0;
+        document.getElementById('online-devices').textContent = health.online || 0;
+        document.getElementById('offline-devices').textContent = health.offline || 0;
+        document.getElementById('health-percentage').textContent = (health.health_percentage || 0) + '%';
+        
+        // Update type breakdown
+        const typeBreakdown = document.getElementById('type-breakdown');
+        const typeIcons = {
+            'camera': '📹',
+            'plug': '🔌',
+            'light': '💡',
+            'weather': '🌤️',
+            'ring': '🔔'
+        };
+        
+        typeBreakdown.innerHTML = Object.entries(health.by_type || {}).map(([type, counts]) => `
+            <div style="padding: 16px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+                <div style="font-size: 24px; margin-bottom: 8px;">${typeIcons[type] || '📦'}</div>
+                <div style="font-size: 14px; color: #6b7280; margin-bottom: 4px;">${type.charAt(0).toUpperCase() + type.slice(1)}</div>
+                <div style="font-size: 18px; font-weight: 600;">
+                    <span style="color: #10b981;">${counts.online}</span> / 
+                    <span style="color: #6b7280;">${counts.online + counts.offline}</span>
+                </div>
+            </div>
+        `).join('');
+        
+        // Update device list
+        const devicesList = document.getElementById('devices-list');
+        if (!health.devices || health.devices.length === 0) {
+            devicesList.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 40px;">No devices monitored yet. Supervisor is initializing...</p>';
+            return;
+        }
+        
+        devicesList.innerHTML = health.devices.map(device => {
+            // Check if camera is in use by another app
+            const inUse = device.details?.in_use_by_another_app === true;
+            const isCamera = device.type === 'camera';
+            
+            let statusColor, statusText, statusIcon, bgColor;
+            if (inUse) {
+                statusColor = '#f59e0b';  // Orange/amber for warning
+                statusText = 'In Use';
+                statusIcon = '⚠️';
+                bgColor = '#fffbeb';  // Light amber background
+            } else if (device.connected) {
+                statusColor = '#10b981';  // Green
+                statusText = 'Online';
+                statusIcon = '✅';
+                bgColor = '#f0fdf4';  // Light green
+            } else {
+                statusColor = '#ef4444';  // Red
+                statusText = 'Offline';
+                statusIcon = '❌';
+                bgColor = '#fef2f2';  // Light red
+            }
+            
+            return `
+                <div style="border: 1px solid #e5e7eb; border-left: 4px solid ${statusColor}; padding: 20px; margin-bottom: 12px; border-radius: 8px; background: ${bgColor};">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                        <div style="flex: 1;">
+                            <div style="font-size: 18px; font-weight: 600; color: #1f2937; margin-bottom: 4px;">
+                                ${statusIcon} ${device.name}
+                            </div>
+                            <div style="font-size: 13px; color: #6b7280;">
+                                Type: ${device.type} | ID: ${device.device_id}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: ${inUse ? '#fef3c7' : (device.connected ? '#d1fae5' : '#fee2e2')}; color: ${inUse ? '#92400e' : (device.connected ? '#065f46' : '#991b1b')};">
+                                ${statusText}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${inUse ? `
+                    <div style="background: #fef3c7; border-left: 3px solid #f59e0b; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: start; gap: 8px;">
+                            <span style="font-size: 20px;">⚠️</span>
+                            <div style="flex: 1;">
+                                <strong style="color: #92400e; display: block; margin-bottom: 4px;">Camera in Use by Another Application</strong>
+                                <div style="color: #78350f; font-size: 13px; line-height: 1.5;">
+                                    ${device.last_error || 'This USB camera is currently locked by another application (e.g., Microsoft Teams, Zoom, Skype).'}
+                                </div>
+                                <div style="margin-top: 8px; padding: 8px; background: #fde68a; border-radius: 4px; font-size: 12px; color: #78350f;">
+                                    <strong>💡 Solution:</strong> Close Microsoft Teams, Zoom, or other video applications that are using the camera, then refresh this page.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${device.last_error && !inUse ? `
+                    <div style="background: #fef2f2; border-left: 3px solid #dc2626; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                        <strong style="color: #dc2626;">Error:</strong> <span style="color: #991b1b;">${device.last_error}</span>
+                        ${device.error_count > 1 ? `<div style="margin-top: 4px; font-size: 12px; color: #6b7280;">Failed ${device.error_count} times</div>` : ''}
+                    </div>
+                    ` : ''}
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; font-size: 13px;">
+                        <div>
+                            <span style="color: #6b7280;">Last Check:</span>
+                            <div style="font-weight: 500; color: #374151;">${new Date(device.last_check).toLocaleTimeString()}</div>
+                        </div>
+                        ${device.last_success ? `
+                        <div>
+                            <span style="color: #6b7280;">Last Success:</span>
+                            <div style="font-weight: 500; color: #10b981;">${new Date(device.last_success).toLocaleTimeString()}</div>
+                        </div>
+                        ` : ''}
+                        ${Object.keys(device.details || {}).length > 0 ? `
+                        <div>
+                            <span style="color: #6b7280;">Details:</span>
+                            <div style="font-weight: 500; color: #374151;">${Object.entries(device.details).map(([k,v]) => `${k}: ${v}`).join(', ')}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        // Show offline alerts if any
+        const offlineDevices = health.devices.filter(d => !d.connected);
+        const offlineSection = document.getElementById('offline-alerts');
+        if (offlineDevices.length > 0) {
+            offlineSection.style.display = 'block';
+            document.getElementById('offline-list').innerHTML = offlineDevices.map(d => `
+                <div style="padding: 12px; background: white; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid #dc2626;">
+                    <strong>${d.name}</strong> (${d.type})
+                    ${d.last_error ? `<div style="font-size: 13px; color: #6b7280; margin-top: 4px;">${d.last_error}</div>` : ''}
+                </div>
+            `).join('');
+        } else {
+            offlineSection.style.display = 'none';
+        }
+        
+    } catch (error) {
+        console.error('Error loading health data:', error);
+        document.getElementById('devices-list').innerHTML = 
+            `<p style="color: #ef4444; text-align: center; padding: 40px;">Error loading health data: ${error.message}</p>`;
+    }
+}
+
+// Trigger manual health check
+async function triggerHealthCheck() {
+    try {
+        const button = event.target.closest('button');
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+        
+        await fetch('/api/system/trigger-health-check', { method: 'POST' });
+        
+        // Wait a moment then reload
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        await loadHealthData();
+        
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-sync"></i> Check Now';
+    } catch (error) {
+        console.error('Error triggering health check:', error);
+        alert('Failed to trigger health check: ' + error.message);
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    loadHealthData();
+    
+    // Auto-refresh every 10 seconds
+    healthCheckInterval = setInterval(loadHealthData, 10000);
+});
+</script>
+
+<style>
+.btn {
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+}
+
+.btn-primary:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+</style>
+{% endblock %}
+

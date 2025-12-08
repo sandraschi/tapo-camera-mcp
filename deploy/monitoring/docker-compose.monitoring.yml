@@ -53,11 +53,23 @@ services:
     ports:
       - "9095:9090"
     volumes:
-      - ../prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml
+      - ../prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     networks:
       - monitoring
       - myhomecontrol
+
+  loki:
+    image: grafana/loki:latest
+    container_name: monitoring-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ../loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - monitoring
 
   alertmanager:
     image: prom/alertmanager:latest
@@ -67,6 +79,20 @@ services:
     volumes:
       - ./config/alertmanager.yml:/etc/alertmanager/alertmanager.yml
       - alertmanager_data:/alertmanager
+    networks:
+      - monitoring
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: monitoring-promtail
+    volumes:
+      - ../promtail/promtail-config.yaml:/etc/promtail/config.yml:ro
+      # Mount host log directory so Promtail can read dashboard logs
+      - D:\Dev\repos\tapo-camera-mcp:/var/log/tapo-camera-mcp:ro
+      - promtail_positions:/tmp
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
     networks:
       - monitoring
 
@@ -82,6 +108,7 @@ services:
       - ./config/grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - prometheus
+      - loki
     networks:
       - monitoring
 
@@ -102,8 +129,10 @@ services:
 volumes:
   elasticsearch_data:
   prometheus_data:
+  loki_data:
   grafana_data:
   alertmanager_data:
+  promtail_positions:
 
 networks:
   monitoring:

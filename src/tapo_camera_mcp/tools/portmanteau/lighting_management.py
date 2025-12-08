@@ -170,6 +170,9 @@ def register_lighting_management_tool(mcp: FastMCP) -> None:
         on: bool | None = None,
         brightness_percent: int | None = None,
         color_temp_kelvin: int | None = None,
+        hue: int | None = None,
+        saturation: int | None = None,
+        rgb: list[int] | None = None,
         prank_mode: Literal["chaos", "wave", "disco", "sos"] | None = None,
         duration: int = 5,
     ) -> dict[str, Any]:
@@ -185,7 +188,7 @@ def register_lighting_management_tool(mcp: FastMCP) -> None:
             action (Literal, required): The operation to perform. Must be one of:
                 - "list_lights": List all Philips Hue lights
                 - "get_light": Get specific light status (requires: light_id)
-                - "control_light": Control a light (requires: light_id, optional: on, brightness_percent, color_temp_kelvin)
+                - "control_light": Control a light (requires: light_id, optional: on, brightness_percent, color_temp_kelvin, hue, saturation, rgb)
                 - "list_groups": List all Hue groups/rooms
                 - "control_group": Control all lights in a group (requires: group_id, optional: on, brightness_percent)
                 - "list_scenes": List all available scenes
@@ -206,6 +209,19 @@ def register_lighting_management_tool(mcp: FastMCP) -> None:
             brightness_percent (int | None): Brightness percentage (0-100). Used by: control_light, control_group operations.
 
             color_temp_kelvin (int | None): Color temperature in Kelvin. Used by: control_light operation.
+                Note: Use color_temp_kelvin for white/color temperature bulbs, or use hue/saturation/rgb for multicolor bulbs.
+
+            hue (int | None): Hue value (0-65535) for multicolor bulbs. Used by: control_light operation.
+                Hue represents the color: 0=red, 21845=yellow, 43690=green, 65535=red (wraps around).
+                Only works with multicolor bulbs (e.g., color bulbs, light strips).
+
+            saturation (int | None): Saturation value (0-254) for multicolor bulbs. Used by: control_light operation.
+                0 = white/desaturated, 254 = fully saturated color.
+                Only works with multicolor bulbs.
+
+            rgb (list[int] | None): RGB color values [R, G, B] where each value is 0-255. Used by: control_light operation.
+                Example: [255, 0, 0] for red, [0, 255, 0] for green, [0, 0, 255] for blue.
+                Only works with multicolor bulbs. RGB is converted to Hue's XY color space internally.
 
             prank_mode (Literal["chaos", "wave", "disco", "sos"] | None): Prank mode for fun light shows:
                 - "chaos": Random on/off for all lights
@@ -231,6 +247,12 @@ def register_lighting_management_tool(mcp: FastMCP) -> None:
 
             # Turn on a light at 80% brightness
             result = await lighting_management(action="control_light", light_id="1", on=True, brightness_percent=80)
+
+            # Set multicolor light to blue (using RGB)
+            result = await lighting_management(action="control_light", light_id="13", on=True, rgb=[0, 0, 255], brightness_percent=100)
+
+            # Set multicolor light to red (using hue/saturation)
+            result = await lighting_management(action="control_light", light_id="13", on=True, hue=0, saturation=254, brightness_percent=80)
 
             # List all groups
             result = await lighting_management(action="list_groups")
@@ -286,11 +308,32 @@ def register_lighting_management_tool(mcp: FastMCP) -> None:
             if action == "control_light":
                 if not light_id:
                     return {"success": False, "error": "light_id is required for control_light action"}
+                
+                # Validate RGB if provided
+                if rgb is not None:
+                    if not isinstance(rgb, list) or len(rgb) != 3:
+                        return {"success": False, "error": "rgb must be a list of 3 integers [R, G, B] where each value is 0-255"}
+                    if not all(isinstance(c, int) and 0 <= c <= 255 for c in rgb):
+                        return {"success": False, "error": "rgb values must be integers between 0 and 255"}
+                
+                # Validate hue if provided
+                if hue is not None:
+                    if not isinstance(hue, int) or not (0 <= hue <= 65535):
+                        return {"success": False, "error": "hue must be an integer between 0 and 65535"}
+                
+                # Validate saturation if provided
+                if saturation is not None:
+                    if not isinstance(saturation, int) or not (0 <= saturation <= 254):
+                        return {"success": False, "error": "saturation must be an integer between 0 and 254"}
+                
                 success = await hue_manager.set_light_state(
                     light_id,
                     on=on,
                     brightness_percent=brightness_percent,
                     color_temp=color_temp_kelvin,
+                    hue=hue,
+                    saturation=saturation,
+                    rgb=rgb,
                 )
                 if success:
                     # Get updated light state

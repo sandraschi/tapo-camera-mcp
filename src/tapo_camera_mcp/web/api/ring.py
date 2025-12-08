@@ -115,7 +115,7 @@ async def get_doorbells():
 
 @router.get("/alarm")
 async def get_alarm_status():
-    """Get Ring alarm status."""
+    """Get Ring alarm status including sensors and base station."""
     client = get_ring_client()
     if not client or not client.is_initialized:
         raise HTTPException(status_code=503, detail="Ring not initialized")
@@ -130,9 +130,42 @@ async def get_alarm_status():
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
+@router.get("/alarm/devices")
+async def get_alarm_devices():
+    """Get all Ring Alarm devices (base station, sensors, keypads, etc.)."""
+    client = get_ring_client()
+    if not client or not client.is_initialized:
+        raise HTTPException(status_code=503, detail="Ring not initialized")
+
+    try:
+        devices = await client.get_alarm_devices()
+        return {
+            "devices": [d.to_dict() for d in devices],
+            "count": len(devices),
+        }
+    except Exception as e:
+        logger.exception("Failed to get Ring alarm devices")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/alarm/events")
+async def get_alarm_events(limit: int = 50):
+    """Get recent Ring Alarm events (arm, disarm, sensor triggers, etc.)."""
+    client = get_ring_client()
+    if not client or not client.is_initialized:
+        raise HTTPException(status_code=503, detail="Ring not initialized")
+
+    try:
+        events = await client.get_alarm_events(limit=limit)
+        return {"events": events, "count": len(events)}
+    except Exception as e:
+        logger.exception("Failed to get Ring alarm events")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
 @router.post("/alarm/mode")
 async def set_alarm_mode(request: RingAlarmModeRequest):
-    """Set Ring alarm mode."""
+    """Set Ring alarm mode (disarm, home, away)."""
     client = get_ring_client()
     if not client or not client.is_initialized:
         raise HTTPException(status_code=503, detail="Ring not initialized")
@@ -154,6 +187,111 @@ async def set_alarm_mode(request: RingAlarmModeRequest):
         return {"success": True, "mode": request.mode}
     except Exception as e:
         logger.exception("Failed to set Ring alarm mode")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+class RingSirenRequest(BaseModel):
+    activate: bool = True
+    duration: int = 30  # seconds
+
+
+@router.post("/alarm/siren")
+async def control_siren(request: RingSirenRequest):
+    """Control Ring alarm siren (activate/deactivate).
+
+    Args:
+        activate: True to sound siren, False to stop
+        duration: Siren duration in seconds (only for activation)
+    """
+    client = get_ring_client()
+    if not client or not client.is_initialized:
+        raise HTTPException(status_code=503, detail="Ring not initialized")
+
+    try:
+        success = await client.trigger_siren(
+            activate=request.activate,
+            duration=request.duration,
+        )
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to control siren")
+
+        action = "activated" if request.activate else "deactivated"
+        return {"success": True, "action": action}
+    except Exception as e:
+        logger.exception("Failed to control Ring siren")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+class RingSirenTestRequest(BaseModel):
+    duration: int = 3  # Short test burst (seconds)
+    countdown: int = 5  # Countdown before siren (seconds) - warn the girlfriend!
+
+
+@router.post("/alarm/siren/test")
+async def test_siren(request: RingSirenTestRequest):
+    """Test Ring alarm siren with countdown warning.
+    
+    WARNING: This WILL be loud (104dB)! 
+    
+    Args:
+        duration: How long siren sounds (default 3 seconds)
+        countdown: Seconds before siren starts (default 5 - RUN!)
+    
+    Returns:
+        Countdown info, then triggers siren after delay
+    """
+    import asyncio
+    
+    client = get_ring_client()
+    if not client or not client.is_initialized:
+        raise HTTPException(status_code=503, detail="Ring not initialized")
+
+    # Sanity limits
+    if request.duration > 10:
+        raise HTTPException(status_code=400, detail="Max test duration is 10 seconds (have mercy)")
+    if request.countdown < 3:
+        raise HTTPException(status_code=400, detail="Min countdown is 3 seconds (warn your girlfriend!)")
+    if request.countdown > 30:
+        raise HTTPException(status_code=400, detail="Max countdown is 30 seconds")
+
+    logger.warning(f"[ALARM] SIREN TEST INITIATED - {request.countdown}s countdown, {request.duration}s duration")
+    
+    # Wait for countdown
+    await asyncio.sleep(request.countdown)
+    
+    try:
+        # FIRE! 🔊
+        success = await client.trigger_siren(
+            activate=True,
+            duration=request.duration,
+        )
+        
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to trigger test siren")
+
+        return {
+            "success": True,
+            "action": "test_complete",
+            "duration": request.duration,
+            "warning": "🔊 SIREN ACTIVATED - Hope she wasn't holding coffee!",
+        }
+    except Exception as e:
+        logger.exception("Failed to test Ring siren")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.post("/alarm/siren/stop")
+async def stop_siren():
+    """Emergency siren stop - silence all sirens immediately."""
+    client = get_ring_client()
+    if not client or not client.is_initialized:
+        raise HTTPException(status_code=503, detail="Ring not initialized")
+
+    try:
+        success = await client.trigger_siren(activate=False, duration=0)
+        return {"success": success, "action": "sirens_silenced"}
+    except Exception as e:
+        logger.exception("Failed to stop Ring siren")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 

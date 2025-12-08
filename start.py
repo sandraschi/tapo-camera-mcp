@@ -33,14 +33,14 @@ def start_mcp_server(debug=False):
     if debug:
         cmd += " --debug"
 
-    logger.info("🔧 Starting MCP Server...")
-    logger.info("📡 MCP Server will be available for Claude Desktop integration")
-    logger.info("🛑 Press Ctrl+C to stop the server")
+    logger.info("Starting MCP Server...")
+    logger.info("MCP Server will be available for Claude Desktop integration")
+    logger.info("Press Ctrl+C to stop the server")
 
     try:
         subprocess.run(cmd, check=False, shell=True)
     except KeyboardInterrupt:
-        logger.info("🛑 MCP Server stopped")
+        logger.info("MCP Server stopped")
 
 
 def start_dual_server():
@@ -61,15 +61,16 @@ def start_dual_server():
 
 def start_web_dashboard(port: int = 7777):
     """Start the web dashboard."""
-    logger.info("🌐 Starting Web Dashboard...")
-    logger.info(f"📺 Dashboard will be available at: http://localhost:{port}")
-    logger.info("🛑 Press Ctrl+C to stop the dashboard")
+    logger.info("Starting Web Dashboard...")
+    logger.info(f"Dashboard will be available at: http://localhost:{port}")
+    logger.info("Press Ctrl+C to stop the dashboard")
 
     try:
+        # Use system Python directly - no venv needed if dependencies are installed
         cmd = f"python -m tapo_camera_mcp.web.server --port {port}"
         subprocess.run(cmd, check=False, shell=True)
     except KeyboardInterrupt:
-        logger.info("🛑 Web Dashboard stopped")
+        logger.info("Web Dashboard stopped")
 
 
 def test_webcam():

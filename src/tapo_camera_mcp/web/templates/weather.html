@@ -508,62 +508,12 @@
             </div>
         </div>
         
-        <!-- Mock Station Card -->
-        <div class="station-card">
-            <div class="station-header">
-                <div>
-                    <div class="station-name">Living Room Weather Station</div>
-                    <div class="station-location">Living Room</div>
-                </div>
-                <div class="station-status">
-                    <div class="status-indicator status-online"></div>
-                    <span>Online</span>
-                </div>
-            </div>
-            
-            <div class="station-modules">
-                <div class="module-card">
-                    <div class="module-name">Main Module (Indoor)</div>
-                    <div class="module-data">
-                        <div class="data-item">
-                            <div class="data-value">22.3°C</div>
-                            <div class="data-label">Temperature</div>
-                        </div>
-                        <div class="data-item">
-                            <div class="data-value">45%</div>
-                            <div class="data-label">Humidity</div>
-                        </div>
-                        <div class="data-item">
-                            <div class="data-value">420ppm</div>
-                            <div class="data-label">CO2</div>
-                        </div>
-                        <div class="data-item">
-                            <div class="data-value">35dB</div>
-                            <div class="data-label">Noise</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="module-card">
-                    <div class="module-name">Outdoor Module</div>
-                    <div class="module-data">
-                        <div class="data-item">
-                            <div class="data-value">18.7°C</div>
-                            <div class="data-label">Temperature</div>
-                        </div>
-                        <div class="data-item">
-                            <div class="data-value">62%</div>
-                            <div class="data-label">Humidity</div>
-                        </div>
-                        <div class="data-item">
-                            <div class="data-value">92%</div>
-                            <div class="data-label">Battery</div>
-                        </div>
-                        <div class="data-item">
-                            <div class="data-value">Good</div>
-                            <div class="data-label">Signal</div>
-                        </div>
-                    </div>
+        <!-- Dynamic Station Cards (populated via JavaScript from real API data) -->
+        <div id="weather-stations-container">
+            <div class="station-card" style="text-align: center; padding: 40px;">
+                <div style="color: #6b7280; font-size: 16px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 12px;"></i>
+                    <p>Loading weather stations...</p>
                 </div>
             </div>
         </div>
@@ -575,6 +525,31 @@
             <div>
                 <h3 class="section-title">📊 Historical Data</h3>
                 <p class="section-subtitle">Track environmental trends over time</p>
+            </div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    <strong style="font-size: 15px;">📊 Multi-Module Comparison</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; color: #6b7280;">
+                        Comparing data from all your Netatmo modules
+                    </p>
+                </div>
+                <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <div style="width: 20px; height: 3px; background: #ef4444; border-radius: 2px;"></div>
+                        <span style="font-size: 13px; color: #374151;">Main Station</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <div style="width: 20px; height: 3px; background: #f97316; border-radius: 2px;"></div>
+                        <span style="font-size: 13px; color: #374151;">Bathroom 🔋 60%</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px; opacity: 0.4;">
+                        <div style="width: 20px; height: 3px; background: #14b8a6; border-radius: 2px;"></div>
+                        <span style="font-size: 13px; color: #9ca3af;">Outdoor (not installed yet)</span>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -657,10 +632,10 @@ let environmentChart = null;
 let currentChartType = 'temperature';
 let currentTimeRange = '24h';
 let chartData = {
-    temperature: { labels: [], values: [] },
-    humidity: { labels: [], values: [] },
-    co2: { labels: [], values: [], alerts: [] },
-    pressure: { labels: [], values: [] }
+    temperature: { labels: [], values: [], values_bathroom: [], values_outdoor: [] },
+    humidity: { labels: [], values: [], values_bathroom: [], values_outdoor: [] },
+    co2: { labels: [], values: [], values_bathroom: [], values_outdoor: [], alerts: [] },
+    pressure: { labels: [], values: [], values_bathroom: [], values_outdoor: [] }
 };
 
 // Initialize chart
@@ -675,10 +650,10 @@ function initChart() {
 // Get chart configuration based on type
 function getChartConfig(chartType) {
     const colors = {
-        temperature: { color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },
-        humidity: { color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
-        co2: { color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
-        pressure: { color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' }
+        temperature: { main: '#ef4444', bathroom: '#f97316', outdoor: '#14b8a6', bg_main: 'rgba(239, 68, 68, 0.1)', bg_bathroom: 'rgba(249, 115, 22, 0.1)', bg_outdoor: 'rgba(20, 184, 166, 0.1)' },
+        humidity: { main: '#3b82f6', bathroom: '#f97316', outdoor: '#06b6d4', bg_main: 'rgba(59, 130, 246, 0.1)', bg_bathroom: 'rgba(249, 115, 22, 0.1)', bg_outdoor: 'rgba(6, 182, 212, 0.1)' },
+        co2: { main: '#10b981', bathroom: '#f97316', outdoor: '#84cc16', bg_main: 'rgba(16, 185, 129, 0.1)', bg_bathroom: 'rgba(249, 115, 22, 0.1)', bg_outdoor: 'rgba(132, 204, 22, 0.1)' },
+        pressure: { main: '#8b5cf6', bathroom: '#f97316', outdoor: '#a855f7', bg_main: 'rgba(139, 92, 246, 0.1)', bg_bathroom: 'rgba(249, 115, 22, 0.1)', bg_outdoor: 'rgba(168, 85, 247, 0.1)' }
     };
     
     const units = {
@@ -699,17 +674,61 @@ function getChartConfig(chartType) {
     const unit = units[chartType] || '';
     const yAxisLabel = yAxisLabels[chartType] || 'Value';
     
-    const datasets = [{
-        label: yAxisLabel,
-        data: chartData[chartType].values || [],
-        borderColor: color.color,
-        backgroundColor: color.bg,
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 2,
-        pointHoverRadius: 5
-    }];
+    // Create datasets for each module
+    const datasets = [];
+    
+    // Main station dataset
+    if (chartData[chartType].values && chartData[chartType].values.length > 0) {
+        datasets.push({
+            label: `Main Station ${yAxisLabel}`,
+            data: chartData[chartType].values || [],
+            borderColor: color.main,
+            backgroundColor: color.bg_main,
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 2,
+            pointHoverRadius: 5
+        });
+    }
+    
+    // Bathroom module dataset (if available)
+    if (chartData[chartType].values_bathroom && chartData[chartType].values_bathroom.length > 0) {
+        datasets.push({
+            label: `Bathroom ${yAxisLabel}`,
+            data: chartData[chartType].values_bathroom || [],
+            borderColor: color.bathroom,
+            backgroundColor: color.bg_bathroom,
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 2,
+            pointHoverRadius: 5
+        });
+    }
+    
+    // Outdoor module dataset (for future outdoor sensor)
+    if (chartData[chartType].values_outdoor && chartData[chartType].values_outdoor.length > 0) {
+        const outdoorColors = {
+            temperature: { color: '#14b8a6', bg: 'rgba(20, 184, 166, 0.1)' },
+            humidity: { color: '#06b6d4', bg: 'rgba(6, 182, 212, 0.1)' },
+            co2: { color: '#84cc16', bg: 'rgba(132, 204, 22, 0.1)' },
+            pressure: { color: '#a855f7', bg: 'rgba(168, 85, 247, 0.1)' }
+        };
+        const outdoorColor = outdoorColors[chartType] || outdoorColors.temperature;
+        
+        datasets.push({
+            label: `Outdoor ${yAxisLabel}`,
+            data: chartData[chartType].values_outdoor || [],
+            borderColor: outdoorColor.color,
+            backgroundColor: outdoorColor.bg,
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 2,
+            pointHoverRadius: 5
+        });
+    }
     
     // Add CO2 alert threshold line
     if (chartType === 'co2') {
@@ -824,26 +843,66 @@ async function loadChartData() {
         const station = stations[0]; // Use first station
         const stationId = station.station_id;
         
-        // Get historical data for all metrics
+        // Get historical data for all metrics FROM BOTH modules
         const timeRange = currentTimeRange === '24h' ? '24h' : currentTimeRange === '7d' ? '7d' : '30d';
         
         const metrics = ['temperature', 'humidity', 'co2', 'pressure'];
-        const dataPromises = metrics.map(metric => 
-            fetch(`/api/weather/stations/${stationId}/historical?data_type=${metric}&time_range=${timeRange}`)
+        
+        // Load data from MAIN station
+        const mainDataPromises = metrics.map(metric => 
+            fetch(`/api/weather/stations/${stationId}/historical?data_type=${metric}&time_range=${timeRange}&module_type=indoor`)
                 .then(r => r.json())
                 .catch(e => {
-                    console.error(`Error loading ${metric} data:`, e);
+                    console.error(`Error loading ${metric} data (main):`, e);
                     return { data_points: [] };
                 })
         );
         
-        const [tempData, humidityData, co2Data, pressureData] = await Promise.all(dataPromises);
+        // Load data from BATHROOM module
+        const bathroomDataPromises = metrics.map(metric => 
+            fetch(`/api/weather/stations/${stationId}/historical?data_type=${metric}&time_range=${timeRange}&module_type=extra_bathroom`)
+                .then(r => r.json())
+                .catch(e => {
+                    console.error(`Error loading ${metric} data (bathroom):`, e);
+                    return { data_points: [] };
+                })
+        );
         
-        // Process data for each metric
-        processMetricData('temperature', tempData.data_points || []);
-        processMetricData('humidity', humidityData.data_points || []);
-        processMetricData('co2', co2Data.data_points || []);
-        processMetricData('pressure', pressureData.data_points || []);
+        // Load data from OUTDOOR module (if you get the sensor)
+        const outdoorDataPromises = metrics.map(metric => 
+            fetch(`/api/weather/stations/${stationId}/historical?data_type=${metric}&time_range=${timeRange}&module_type=outdoor`)
+                .then(r => r.json())
+                .catch(e => {
+                    // Outdoor module not present yet - that's OK
+                    return { data_points: [] };
+                })
+        );
+        
+        const [
+            [mainTempData, mainHumidityData, mainCO2Data, mainPressureData],
+            [bathTempData, bathHumidityData, bathCO2Data, bathPressureData],
+            [outdoorTempData, outdoorHumidityData, outdoorCO2Data, outdoorPressureData]
+        ] = await Promise.all([
+            Promise.all(mainDataPromises),
+            Promise.all(bathroomDataPromises),
+            Promise.all(outdoorDataPromises)
+        ]);
+        
+        // Process MAIN station data
+        processMetricData('temperature', mainTempData.data_points || [], 'main');
+        processMetricData('humidity', mainHumidityData.data_points || [], 'main');
+        processMetricData('co2', mainCO2Data.data_points || [], 'main');
+        processMetricData('pressure', mainPressureData.data_points || [], 'main');
+        
+        // Process BATHROOM data
+        processMetricData('temperature', bathTempData.data_points || [], 'bathroom');
+        processMetricData('humidity', bathHumidityData.data_points || [], 'bathroom');
+        processMetricData('co2', bathCO2Data.data_points || [], 'bathroom');
+        processMetricData('pressure', bathPressureData.data_points || [], 'bathroom');
+        
+        // Process OUTDOOR data (for future outdoor sensor)
+        processMetricData('temperature', outdoorTempData.data_points || [], 'outdoor');
+        processMetricData('humidity', outdoorHumidityData.data_points || [], 'outdoor');
         
         // Update current values in overview cards
         updateOverviewCards(stationId);
@@ -867,10 +926,18 @@ async function loadChartData() {
     }
 }
 
-// Process metric data
-function processMetricData(metric, dataPoints) {
+// Process metric data for specific module
+function processMetricData(metric, dataPoints, module = 'main') {
+    // Initialize metric data structure if needed
+    if (!chartData[metric]) {
+        chartData[metric] = { labels: [], values: [], values_bathroom: [], values_outdoor: [], alerts: [] };
+    }
+    
     if (!dataPoints || dataPoints.length === 0) {
-        chartData[metric] = { labels: [], values: [], alerts: [] };
+        // No data for this module
+        if (module === 'bathroom') chartData[metric].values_bathroom = [];
+        else if (module === 'outdoor') chartData[metric].values_outdoor = [];
+        else chartData[metric].values = [];
         return;
     }
     
@@ -881,25 +948,30 @@ function processMetricData(metric, dataPoints) {
     }));
     const sorted = normalized.sort((a, b) => a.timestamp - b.timestamp);
     
-    chartData[metric].labels = sorted.map(point => {
-        // Handle both Unix timestamp (seconds) and ISO string
-        const timestamp = typeof point.timestamp === 'number' ? point.timestamp * 1000 : new Date(point.timestamp).getTime();
-        const date = new Date(timestamp);
-        if (currentTimeRange === '24h') {
-            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    // For main module, also set labels (all modules use same timeline)
+    if (module === 'main') {
+        chartData[metric].labels = sorted.map(point => {
+            const timestamp = typeof point.timestamp === 'number' ? point.timestamp * 1000 : new Date(point.timestamp).getTime();
+            const date = new Date(timestamp);
+            if (currentTimeRange === '24h') {
+                return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            }
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit' });
+        });
+        chartData[metric].values = sorted.map(point => point.value);
+        
+        // Detect CO2 alerts (main station only)
+        if (metric === 'co2') {
+            chartData.co2.alerts = sorted.filter(point => point.value >= 1000).map(point => ({
+                timestamp: point.timestamp,
+                value: point.value,
+                severity: point.value >= 1000 ? 'danger' : 'warning'
+            }));
         }
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit' });
-    });
-    
-    chartData[metric].values = sorted.map(point => point.value);
-    
-    // Detect CO2 alerts
-    if (metric === 'co2') {
-        chartData.co2.alerts = sorted.filter(point => point.value >= 1000).map(point => ({
-            timestamp: point.timestamp,
-            value: point.value,
-            severity: point.value >= 1000 ? 'danger' : 'warning'
-        }));
+    } else if (module === 'bathroom') {
+        chartData[metric].values_bathroom = sorted.map(point => point.value);
+    } else if (module === 'outdoor') {
+        chartData[metric].values_outdoor = sorted.map(point => point.value);
     }
 }
 
@@ -1048,12 +1120,180 @@ function requestNotificationPermission() {
     }
 }
 
+// Load and render weather stations dynamically
+async function loadWeatherStations() {
+    try {
+        const response = await fetch('/api/weather/stations');
+        const stations = await response.json();
+        
+        const container = document.getElementById('weather-stations-container');
+        
+        if (!stations || stations.length === 0) {
+            container.innerHTML = `
+                <div class="station-card" style="text-align: center; padding: 40px;">
+                    <div style="color: #6b7280; font-size: 16px;">
+                        <i class="fas fa-info-circle" style="font-size: 24px; margin-bottom: 12px; color: #f59e0b;"></i>
+                        <p>No Netatmo weather stations configured</p>
+                        <p style="font-size: 14px; margin-top: 8px;">Configure Netatmo in config.yaml to enable indoor weather monitoring</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        // Render station cards
+        container.innerHTML = '';
+        for (const station of stations) {
+            const stationCard = document.createElement('div');
+            stationCard.className = 'station-card';
+            
+            const statusClass = station.is_online ? 'status-online' : 'status-offline';
+            const statusText = station.is_online ? 'Online' : 'Offline';
+            
+            // Fetch current data for this station
+            const dataResponse = await fetch(`/api/weather/stations/${station.station_id}/data?module_type=all`);
+            const stationData = await dataResponse.json();
+            const allData = stationData.data || {};
+            
+            // Build modules HTML from station.modules list
+            let modulesHTML = '';
+            
+            // Main indoor module (if present in data)
+            if (allData.indoor) {
+                const indoor = allData.indoor;
+                modulesHTML += `
+                    <div class="module-card">
+                        <div class="module-name">Main Station (Indoor)</div>
+                        <div class="module-data">
+                            <div class="data-item">
+                                <div class="data-value">${indoor.temperature.toFixed(1)}°C</div>
+                                <div class="data-label">Temperature</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-value">${indoor.humidity}%</div>
+                                <div class="data-label">Humidity</div>
+                            </div>
+                            ${indoor.co2 ? `
+                            <div class="data-item">
+                                <div class="data-value" style="color: ${indoor.co2 >= 1000 ? '#dc2626' : '#059669'}">${indoor.co2}ppm</div>
+                                <div class="data-label">CO2</div>
+                            </div>
+                            ` : ''}
+                            ${indoor.noise ? `
+                            <div class="data-item">
+                                <div class="data-value">${indoor.noise}dB</div>
+                                <div class="data-label">Noise</div>
+                            </div>
+                            ` : ''}
+                            ${indoor.pressure ? `
+                            <div class="data-item">
+                                <div class="data-value">${indoor.pressure.toFixed(0)}hPa</div>
+                                <div class="data-label">Pressure</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Extra indoor modules (e.g., Bathroom)
+            if (allData.extra_indoor && allData.extra_indoor.length > 0) {
+                for (const extraModule of allData.extra_indoor) {
+                    modulesHTML += `
+                        <div class="module-card" style="border-left: 4px solid #8b5cf6;">
+                            <div class="module-name">${extraModule.name || 'Extra Indoor Module'} 
+                                ${extraModule.battery_percent ? `<span style="font-size: 12px; color: #6b7280;"> 🔋 ${extraModule.battery_percent}%</span>` : ''}
+                            </div>
+                            <div class="module-data">
+                                ${extraModule.temperature ? `
+                                <div class="data-item">
+                                    <div class="data-value">${extraModule.temperature.toFixed(1)}°C</div>
+                                    <div class="data-label">Temperature</div>
+                                </div>
+                                ` : ''}
+                                ${extraModule.humidity ? `
+                                <div class="data-item">
+                                    <div class="data-value">${extraModule.humidity}%</div>
+                                    <div class="data-label">Humidity</div>
+                                </div>
+                                ` : ''}
+                                ${extraModule.co2 ? `
+                                <div class="data-item">
+                                    <div class="data-value" style="color: ${extraModule.co2 >= 1000 ? '#dc2626' : '#059669'}">${extraModule.co2}ppm</div>
+                                    <div class="data-label">CO2</div>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Outdoor modules (if present)
+            if (allData.outdoor) {
+                const outdoor = allData.outdoor;
+                modulesHTML += `
+                    <div class="module-card" style="border-left: 4px solid #10b981;">
+                        <div class="module-name">Outdoor Module</div>
+                        <div class="module-data">
+                            <div class="data-item">
+                                <div class="data-value">${outdoor.temperature.toFixed(1)}°C</div>
+                                <div class="data-label">Temperature</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-value">${outdoor.humidity}%</div>
+                                <div class="data-label">Humidity</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            stationCard.innerHTML = `
+                <div class="station-header">
+                    <div>
+                        <div class="station-name">${station.station_name}</div>
+                        <div class="station-location">${station.location || 'Home'}</div>
+                    </div>
+                    <div class="station-status">
+                        <div class="status-indicator ${statusClass}"></div>
+                        <span>${statusText}</span>
+                    </div>
+                </div>
+                
+                <div class="station-modules">
+                    ${modulesHTML}
+                </div>
+            `;
+            
+            container.appendChild(stationCard);
+        }
+        
+    } catch (error) {
+        console.error('Error loading weather stations:', error);
+        const container = document.getElementById('weather-stations-container');
+        container.innerHTML = `
+            <div class="station-card" style="background: #fef2f2; border-left: 4px solid #dc2626;">
+                <div style="color: #dc2626;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Error loading weather stations</strong>
+                    <p style="margin-top: 8px; font-size: 14px;">${error.message}</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Weather dashboard loaded');
     
     // Request notification permission for CO2 alerts
     requestNotificationPermission();
+    
+    // Load weather stations (NEW!)
+    loadWeatherStations();
+    setInterval(loadWeatherStations, 60000); // Refresh every minute
     
     // Load combined weather data
     loadCombinedWeather();

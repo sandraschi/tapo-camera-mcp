@@ -26,12 +26,47 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from ..config import SecuritySettings, WebUISettings, get_config, get_model
 from ..utils.logging import setup_logging
+from .auth import (
+    AuthMiddleware,
+    is_auth_enabled,
+    validate_credentials,
+    create_session,
+    delete_session,
+    get_current_user,
+    setup_default_user,
+)
 
 # Setup logging
 logger = logging.getLogger(__name__)
 
 AUTO_WEBCAM_RETRY_INTERVAL = timedelta(seconds=10)
 _last_webcam_attempt: Optional[datetime] = None
+
+
+def find_available_port(start_port: int = 7777, max_attempts: int = 10) -> int:
+    """Find the next available port starting from start_port.
+    
+    Args:
+        start_port: Port to start checking from.
+        max_attempts: Maximum number of ports to check.
+        
+    Returns:
+        First available port number.
+        
+    Raises:
+        RuntimeError: If no available port found within max_attempts.
+    """
+    import socket
+    
+    for port in range(start_port, start_port + max_attempts):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.bind(("0.0.0.0", port))
+                return port
+        except OSError:
+            continue
+    
+    raise RuntimeError(f"No available port found in range {start_port}-{start_port + max_attempts - 1}")
 
 
 class WebServer:
@@ -76,24 +111,64 @@ class WebServer:
             }
         )
 
-        # Setup startup event for Ring initialization
+        # Setup startup event for comprehensive hardware initialization
         @self.app.on_event("startup")
-        async def init_ring_on_startup():
-            """Initialize Ring client from config on server startup."""
-            ring_config = self.config.get("ring", {})
-            if ring_config.get("enabled", False):
+        async def init_all_hardware_on_startup():
+            """Initialize all hardware components on server startup."""
+            try:
+                import asyncio
+                from tapo_camera_mcp.core.hardware_init import initialize_all_hardware
+                logger.info("=" * 60)
+                logger.info("WEB SERVER STARTUP - Initializing all hardware...")
+                logger.info("=" * 60)
+                # Add timeout to prevent blocking server startup indefinitely
+                hardware_results = await asyncio.wait_for(initialize_all_hardware(), timeout=60.0)
+                
+                # Log summary
+                successful = sum(1 for r in hardware_results.values() if r.get("success", False))
+                total = len(hardware_results)
+                logger.info(f"Hardware initialization complete: {successful}/{total} components ready")
+                logger.info("=" * 60)
+            except asyncio.TimeoutError:
+                logger.warning("Hardware initialization timed out after 60s - server will start anyway")
+                logger.warning("Hardware will be initialized in background by Connection Supervisor")
+            except Exception as e:
+                logger.exception("Failed to initialize hardware during web server startup")
+                logger.warning("Server will start anyway - hardware can be initialized later")
+
+        # Setup startup event for Shelly temperature sensors
+        @self.app.on_event("startup")
+        async def init_shelly_on_startup():
+            """Initialize Shelly client from config on server startup."""
+            shelly_config = self.config.get("shelly", {})
+            if shelly_config.get("enabled", False):
                 try:
-                    from tapo_camera_mcp.integrations.ring_client import init_ring_client
-                    logger.info("Initializing Ring client from config...")
-                    await init_ring_client(
-                        email=ring_config.get("email", ""),
-                        password=ring_config.get("password"),
-                        token_file=ring_config.get("token_file", "ring_token.cache"),
-                        cache_ttl=ring_config.get("cache_ttl", 60),
+                    from tapo_camera_mcp.integrations.shelly_client import init_shelly_client
+                    logger.info("Initializing Shelly client from config...")
+                    await init_shelly_client(
+                        devices=shelly_config.get("devices", []),
+                        cache_ttl=shelly_config.get("cache_ttl", 30),
                     )
-                    logger.info("Ring client initialized successfully")
+                    logger.info("Shelly client initialized successfully")
                 except Exception as e:
-                    logger.warning(f"Failed to initialize Ring client: {e}")
+                    logger.warning(f"Failed to initialize Shelly client: {e}")
+
+        # Setup startup event for thermal sensors (MLX90640/AMG8833)
+        @self.app.on_event("startup")
+        async def init_thermal_on_startup():
+            """Initialize thermal sensor client from config on server startup."""
+            thermal_config = self.config.get("thermal", {})
+            if thermal_config.get("enabled", False):
+                try:
+                    from tapo_camera_mcp.integrations.thermal_client import init_thermal_client
+                    logger.info("Initializing thermal sensor client from config...")
+                    await init_thermal_client(
+                        sensors=thermal_config.get("sensors", []),
+                        cache_ttl=thermal_config.get("cache_ttl", 5),
+                    )
+                    logger.info("Thermal sensor client initialized successfully")
+                except Exception as e:
+                    logger.warning(f"Failed to initialize thermal client: {e}")
 
     def _setup_middleware(self) -> None:
         """Setup middleware for the FastAPI app."""
@@ -110,17 +185,31 @@ class WebServer:
         # GZip middleware
         self.app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+        # Auth middleware (checks session on protected routes)
+        if is_auth_enabled():
+            self.app.add_middleware(AuthMiddleware)
+            setup_default_user()
+            logger.info("Authentication is ENABLED")
+        else:
+            logger.info("Authentication is DISABLED")
+
         # Security headers middleware
         @self.app.middleware("http")
         async def add_security_headers(request: Request, call_next):
             response = await call_next(request)
             response.headers["X-Content-Type-Options"] = "nosniff"
-            response.headers["X-Frame-Options"] = "DENY"
+            response.headers["X-Frame-Options"] = "SAMEORIGIN"  # Allow same-origin framing for fullscreen
             response.headers["X-XSS-Protection"] = "1; mode=block"
             response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
             response.headers["Content-Security-Policy"] = (
-                "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+                "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
+                "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
+                "img-src 'self' data: blob:;"
             )
+            # Allow fullscreen API
+            response.headers["Permissions-Policy"] = "fullscreen=(self)"
             return response
 
     def _setup_exception_handlers(self) -> None:
@@ -334,6 +423,78 @@ class WebServer:
         # Mount static files
         static_dir = Path(__file__).parent / "static"
         self.app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+        # Auth routes
+        @self.app.get("/login", response_class=HTMLResponse, name="login")
+        async def login_page(request: Request):
+            """Serve the login page."""
+            # If already logged in, redirect to dashboard
+            if is_auth_enabled() and get_current_user(request):
+                return RedirectResponse(url="/", status_code=302)
+            # If auth disabled, redirect to dashboard
+            if not is_auth_enabled():
+                return RedirectResponse(url="/", status_code=302)
+            return self.templates.TemplateResponse("login.html", {"request": request})
+
+        @self.app.post("/api/auth/login")
+        async def api_login(request: Request):
+            """Handle login API request."""
+            try:
+                data = await request.json()
+                username = data.get("username", "")
+                password = data.get("password", "")
+                remember = data.get("remember", False)
+                
+                if validate_credentials(username, password):
+                    session_id = create_session(username)
+                    response = JSONResponse({
+                        "success": True,
+                        "redirect": "/",
+                        "user": username,
+                    })
+                    max_age = 86400 * 30 if remember else 86400  # 30 days or 1 day
+                    response.set_cookie(
+                        key="session_id",
+                        value=session_id,
+                        httponly=True,
+                        secure=False,  # Set True in production with HTTPS
+                        samesite="lax",
+                        max_age=max_age,
+                    )
+                    logger.info(f"User '{username}' logged in successfully")
+                    return response
+                else:
+                    logger.warning(f"Failed login attempt for user '{username}'")
+                    return JSONResponse(
+                        {"success": False, "error": "Invalid username or password"},
+                        status_code=401,
+                    )
+            except Exception as e:
+                logger.exception("Login error")
+                return JSONResponse(
+                    {"success": False, "error": str(e)},
+                    status_code=500,
+                )
+
+        @self.app.post("/api/auth/logout")
+        async def api_logout(request: Request):
+            """Handle logout API request."""
+            session_id = request.cookies.get("session_id")
+            if session_id:
+                delete_session(session_id)
+            response = JSONResponse({"success": True})
+            response.delete_cookie("session_id")
+            return response
+
+        @self.app.get("/api/auth/status")
+        async def api_auth_status(request: Request):
+            """Get current auth status."""
+            user = get_current_user(request) if is_auth_enabled() else "admin"
+            return {
+                "authenticated": bool(user),
+                "user": user,
+                "auth_enabled": is_auth_enabled(),
+            }
 
         # API routes
         @self.app.get("/api/status")
@@ -574,6 +735,51 @@ class WebServer:
                 return {"error": "Camera not found or not supported"}
             except Exception as e:
                 return {"error": str(e)}
+
+        @self.app.get("/api/cameras/{camera_id}/mjpeg")
+        async def get_camera_mjpeg_stream(camera_id: str):
+            """Get camera MJPEG stream for browser viewing."""
+            try:
+                from tapo_camera_mcp.core.server import TapoCameraServer
+
+                server = await TapoCameraServer.get_instance()
+
+                if hasattr(server, "camera_manager") and server.camera_manager:
+                    camera = server.camera_manager.cameras.get(camera_id)
+                    if camera:
+                        camera_type = camera.config.type
+                        if hasattr(camera_type, "value"):
+                            camera_type = camera_type.value
+
+                        # For webcam, use existing webcam stream
+                        if camera_type == "webcam":
+                            return StreamingResponse(
+                                self._generate_webcam_stream(camera),
+                                media_type="multipart/x-mixed-replace; boundary=frame",
+                            )
+                        
+                        # For RTSP/ONVIF cameras, transcode to MJPEG
+                        if camera_type in ("tapo", "onvif"):
+                            stream_url = await camera.get_stream_url()
+                            if stream_url:
+                                # Add auth for ONVIF
+                                if camera_type == "onvif":
+                                    from urllib.parse import urlparse
+                                    parsed = urlparse(stream_url)
+                                    username = camera.config.params.get("username", "")
+                                    password = camera.config.params.get("password", "")
+                                    if username and password:
+                                        stream_url = f"rtsp://{username}:{password}@{parsed.hostname}:{parsed.port or 554}{parsed.path}"
+                                
+                                return StreamingResponse(
+                                    self._generate_rtsp_mjpeg_stream(stream_url),
+                                    media_type="multipart/x-mixed-replace; boundary=frame",
+                                )
+
+                return Response(content="Camera not found", status_code=404)
+            except Exception as e:
+                logger.exception(f"Error starting MJPEG stream: {e}")
+                return Response(content=str(e), status_code=500)
 
         @self.app.get("/api/cameras/{camera_id}/snapshot")
         async def get_camera_snapshot(camera_id: str):
@@ -1100,6 +1306,60 @@ Provide a concise summary:"""
                 metrics_lines.append(f'ring_devices_total {ring_devices_total}')
                 metrics_lines.append(f'nest_protect_devices_total {nest_devices_total}')
 
+                # Device health metrics from Connection Supervisor
+                try:
+                    from ...core.connection_supervisor import get_supervisor
+                    supervisor = get_supervisor()
+                    if supervisor:
+                        devices = supervisor.get_device_status()
+                        for device in devices:
+                            device_id = device.get("device_id", "unknown")
+                            device_type = device.get("type", "unknown")
+                            name = device.get("name", device_id)
+                            connected = 1 if device.get("connected", False) else 0
+                            error_count = device.get("error_count", 0)
+                            last_check_ts = device.get("last_check", 0)
+                            last_success_ts = device.get("last_success", 0) or 0
+                            
+                            # Escape quotes in labels
+                            device_id_escaped = device_id.replace('"', '\\"')
+                            device_type_escaped = device_type.replace('"', '\\"')
+                            name_escaped = name.replace('"', '\\"')
+                            
+                            metrics_lines.append(
+                                f'device_health_status{{device_id="{device_id_escaped}",device_type="{device_type_escaped}",name="{name_escaped}"}} {connected}'
+                            )
+                            metrics_lines.append(
+                                f'device_health_error_count{{device_id="{device_id_escaped}",device_type="{device_type_escaped}",name="{name_escaped}"}} {error_count}'
+                            )
+                            metrics_lines.append(
+                                f'device_health_last_check_timestamp{{device_id="{device_id_escaped}",device_type="{device_type_escaped}",name="{name_escaped}"}} {last_check_ts}'
+                            )
+                            if last_success_ts > 0:
+                                metrics_lines.append(
+                                    f'device_health_last_success_timestamp{{device_id="{device_id_escaped}",device_type="{device_type_escaped}",name="{name_escaped}"}} {last_success_ts}'
+                                )
+                except Exception:
+                    # Best-effort; skip device health metrics if unavailable
+                    pass
+
+                # Message metrics from Messaging Service
+                try:
+                    from ...core.messaging_service import get_messaging_service
+                    messaging = get_messaging_service()
+                    if messaging:
+                        msg_metrics = messaging.get_metrics()
+                        metrics_lines.append(f'messages_total {msg_metrics.get("total_messages", 0)}')
+                        metrics_lines.append(f'messages_info_total {msg_metrics.get("info_total", 0)}')
+                        metrics_lines.append(f'messages_warning_total {msg_metrics.get("warning_total", 0)}')
+                        metrics_lines.append(f'messages_alarm_total {msg_metrics.get("alarm_total", 0)}')
+                        metrics_lines.append(f'messages_alarm_acknowledged_total {msg_metrics.get("alarm_total", 0) - msg_metrics.get("unacknowledged_alarms", 0)}')
+                        metrics_lines.append(f'messages_last_hour {msg_metrics.get("messages_last_hour", 0)}')
+                        metrics_lines.append(f'messages_last_day {msg_metrics.get("messages_last_day", 0)}')
+                except Exception:
+                    # Best-effort; skip message metrics if unavailable
+                    pass
+
                 metrics_text = "\n".join(metrics_lines) + "\n"
                 return Response(content=metrics_text, media_type="text/plain; version=0.0.4")
                 
@@ -1112,7 +1372,13 @@ Provide a concise summary:"""
                 )
 
         # Include API routes
-        from .api.onboarding import router as onboarding_router
+        try:
+            from .api.onboarding import router as onboarding_router
+            onboarding_available = True
+        except ImportError as e:
+            logger.warning(f"Onboarding module not available: {e}")
+            onboarding_router = None
+            onboarding_available = False
         from .api.sensors import router as sensors_router
         from .api.energy import router as energy_router
         from .api.weather import router as weather_router
@@ -1121,8 +1387,14 @@ Provide a concise summary:"""
         from .api.ptz import router as ptz_router
         from .api.audio import router as audio_router
         from .api.motion import router as motion_router
+        from .api.lighting import router as lighting_router
+        from .api.shelly import router as shelly_router
+        from .api.thermal import router as thermal_router
+        from .api.health import router as health_router
+        from .api.messages import router as messages_router
 
-        self.app.include_router(onboarding_router)
+        if onboarding_available and onboarding_router:
+            self.app.include_router(onboarding_router)
         self.app.include_router(sensors_router)
         self.app.include_router(energy_router)
         self.app.include_router(weather_router)
@@ -1131,6 +1403,11 @@ Provide a concise summary:"""
         self.app.include_router(ptz_router)
         self.app.include_router(audio_router)
         self.app.include_router(motion_router)
+        self.app.include_router(lighting_router)
+        self.app.include_router(shelly_router)
+        self.app.include_router(thermal_router)
+        self.app.include_router(health_router)
+        self.app.include_router(messages_router)
         
         # LLM router
         from .api.llm import router as llm_router
@@ -1175,6 +1452,33 @@ Provide a concise summary:"""
                 },
             )
 
+        # Lighting Control route
+        @self.app.get("/lighting", response_class=HTMLResponse, name="lighting")
+        async def lighting_page(request: Request):
+            """Serve the lighting control dashboard page."""
+            return self.templates.TemplateResponse(
+                "lighting.html",
+                {
+                    "request": request,
+                    "title": "Lighting Control - Tapo Camera MCP",
+                    "description": "Control Philips Hue lights, groups, and scenes",
+                },
+            )
+
+        # Stream Viewer route
+        @self.app.get("/stream/{camera_id}", response_class=HTMLResponse, name="stream_viewer")
+        async def stream_viewer_page(request: Request, camera_id: str):
+            """Serve the stream viewer page for a camera."""
+            return self.templates.TemplateResponse(
+                "stream_viewer.html",
+                {
+                    "request": request,
+                    "title": f"{camera_id} Stream - Tapo Camera MCP",
+                    "camera_id": camera_id,
+                    "camera_name": camera_id.replace("_", " ").title(),
+                },
+            )
+
         # Weather Monitoring route
         @self.app.get("/weather", response_class=HTMLResponse, name="weather")
         async def weather_page(request: Request):
@@ -1185,6 +1489,30 @@ Provide a concise summary:"""
                     "request": request,
                     "title": "Weather Monitoring - Tapo Camera MCP",
                     "description": "Monitor Netatmo weather stations with temperature, humidity, CO2, and environmental data",
+                },
+            )
+
+        @self.app.get("/kitchen", response_class=HTMLResponse, name="kitchen")
+        async def kitchen_page(request: Request):
+            """Serve the kitchen appliances dashboard page."""
+            return self.templates.TemplateResponse(
+                "kitchen.html",
+                {
+                    "request": request,
+                    "title": "Kitchen - Tapo Camera MCP",
+                    "description": "Control and monitor kitchen appliances",
+                },
+            )
+
+        @self.app.get("/robots", response_class=HTMLResponse, name="robots")
+        async def robots_page(request: Request):
+            """Serve the robots dashboard page."""
+            return self.templates.TemplateResponse(
+                "robots.html",
+                {
+                    "request": request,
+                    "title": "Robots - Tapo Camera MCP",
+                    "description": "Control and monitor robot vacuums and other robots",
                 },
             )
 
@@ -1202,12 +1530,23 @@ Provide a concise summary:"""
 
             try:
                 # Get real camera data from the MCP server
+                import asyncio
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
-                server = await TapoCameraServer.get_instance()
-
-                # Get camera list from camera manager
-                cameras = await server.camera_manager.list_cameras()
+                # Add timeout to prevent blocking
+                try:
+                    server = await asyncio.wait_for(
+                        TapoCameraServer.get_instance(),
+                        timeout=5.0
+                    )
+                    # Get camera list from camera manager
+                    cameras = await asyncio.wait_for(
+                        server.camera_manager.list_cameras(),
+                        timeout=5.0
+                    )
+                except asyncio.TimeoutError:
+                    logger.warning("Server instance access timed out - using empty camera list")
+                    cameras = []
                 total_cameras = len(cameras)
                 online_cameras = sum(1 for cam in cameras if cam.get("status") == "online")
 
@@ -1667,6 +2006,20 @@ Provide a concise summary:"""
                 "help.html", {"request": request, "active_page": "help"}
             )
 
+        @self.app.get("/health-dashboard", response_class=HTMLResponse, name="health_dashboard")
+        async def health_dashboard_page(request: Request):
+            """Serve the connection health monitoring dashboard."""
+            return self.templates.TemplateResponse(
+                "health_dashboard.html", {"request": request, "active_page": "health"}
+            )
+
+        @self.app.get("/alerts", response_class=HTMLResponse, name="alerts")
+        async def alerts_page(request: Request):
+            """Serve the alerts and messages dashboard."""
+            return self.templates.TemplateResponse(
+                "alerts.html", {"request": request, "active_page": "alerts"}
+            )
+
         # 404 handler
         @self.app.exception_handler(404)
         async def not_found(request: Request, _exc: StarletteHTTPException):
@@ -1799,6 +2152,64 @@ Provide a concise summary:"""
             )
             yield error_frame
 
+    async def _generate_rtsp_mjpeg_stream(self, rtsp_url: str) -> Generator[bytes, None, None]:
+        """Generate MJPEG stream from RTSP URL for browser viewing."""
+        import asyncio
+        import cv2
+        
+        cap = None
+        try:
+            # Open RTSP stream with OpenCV
+            cap = cv2.VideoCapture(rtsp_url)
+            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Minimize buffer for lower latency
+            
+            if not cap.isOpened():
+                logger.error(f"Failed to open RTSP stream: {rtsp_url}")
+                raise Exception("Failed to open RTSP stream")
+            
+            logger.info(f"MJPEG stream started for {rtsp_url[:50]}...")
+            consecutive_failures = 0
+            max_failures = 30  # Stop after 30 consecutive failures
+            
+            while consecutive_failures < max_failures:
+                ret, frame = cap.read()
+                if not ret:
+                    consecutive_failures += 1
+                    await asyncio.sleep(0.1)
+                    continue
+                
+                consecutive_failures = 0  # Reset on success
+                
+                # Resize for bandwidth efficiency (720p max)
+                height, width = frame.shape[:2]
+                if width > 1280:
+                    scale = 1280 / width
+                    new_width = int(width * scale)
+                    new_height = int(height * scale)
+                    frame = cv2.resize(frame, (new_width, new_height))
+                
+                # Encode frame as JPEG
+                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
+                result, encoded_img = cv2.imencode(".jpg", frame, encode_param)
+                
+                if result:
+                    yield (
+                        b"--frame\r\n"
+                        b"Content-Type: image/jpeg\r\n\r\n" + encoded_img.tobytes() + b"\r\n"
+                    )
+                
+                # ~10 FPS
+                await asyncio.sleep(0.1)
+                
+        except GeneratorExit:
+            logger.info("MJPEG stream client disconnected")
+        except Exception as e:
+            logger.exception(f"Error generating RTSP MJPEG stream: {e}")
+        finally:
+            if cap:
+                cap.release()
+                logger.info("RTSP stream released")
+
     def run(self, host: Optional[str] = None, port: Optional[int] = None):
         """Run the web server.
 
@@ -1807,20 +2218,55 @@ Provide a concise summary:"""
             port: Port to bind to. Defaults to config value.
         """
         import uvicorn
+        import socket
 
         host = host or self.web_config.host
         port = port or self.web_config.port
 
+        # Check if port is available before starting
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                sock.bind((host, port))
+        except OSError as e:
+            if e.errno == 10048 or "Address already in use" in str(e):  # Windows: 10048, Linux: 98
+                logger.error(f"[ERROR] PORT CONFLICT: Port {port} is already in use!")
+                logger.error(f"   Another process (possibly Docker container) is using port {port}.")
+                logger.error(f"   Solutions:")
+                logger.error(f"   1. Stop the conflicting process:")
+                logger.error(f"      PowerShell: Get-NetTCPConnection -LocalPort {port} | Select-Object OwningProcess")
+                logger.error(f"      Then: Stop-Process -Id <PID> -Force")
+                logger.error(f"   2. Stop Docker container:")
+                logger.error(f"      docker ps | findstr tapo")
+                logger.error(f"      docker stop <container-id>")
+                logger.error(f"   3. Use a different port:")
+                logger.error(f"      python -m tapo_camera_mcp.web --port 7778")
+                raise RuntimeError(
+                    f"Port {port} is already in use. "
+                    f"Stop the conflicting process or use --port <different_port>"
+                ) from e
+            raise
+
         logger.info(f"Starting web server on http://{host}:{port}")
 
-        uvicorn.run(
-            self.app,
-            host=host,
-            port=port,
-            log_level=self.config.get("log_level", "info").lower(),
-            reload=self.config.get("debug", False),
-            workers=1,  # Running with multiple workers can cause issues with in-memory state
-        )
+        try:
+            uvicorn.run(
+                self.app,
+                host=host,
+                port=port,
+                log_level=self.config.get("log_level", "info").lower(),
+                reload=self.config.get("debug", False),
+                workers=1,  # Running with multiple workers can cause issues with in-memory state
+            )
+        except OSError as e:
+            if "Address already in use" in str(e) or e.errno in (10048, 98):
+                logger.error(f"[ERROR] Failed to start server: Port {port} conflict detected during startup!")
+                logger.error(f"   This can happen if another process grabbed the port between check and start.")
+                raise RuntimeError(
+                    f"Port {port} conflict during startup. "
+                    f"Try again or use --port <different_port>"
+                ) from e
+            raise
 
 
 # For running the server directly

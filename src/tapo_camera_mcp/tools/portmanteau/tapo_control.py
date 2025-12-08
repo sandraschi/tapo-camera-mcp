@@ -249,7 +249,7 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                                 "device_id": device.device_id,
                                 "name": device.name,
                                 "power_state": device.power_state,
-                                "power_watt": device.power_watt,
+                                "power_watt": device.current_power,
                                 "voltage": device.voltage,
                                 "current": device.current,
                             }
@@ -309,7 +309,7 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                                 "device_id": device.device_id,
                                 "name": device.name,
                                 "power_state": device.power_state,
-                                "power_watt": device.power_watt,
+                                "power_watt": device.current_power,
                             }
                             for device in kitchen_devices
                         ],

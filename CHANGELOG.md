@@ -5,6 +5,83 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2025-11-30 🔐 **Authentication System + Lighting Enhancements**
+
+### ✨ **NEW FEATURES**
+
+#### **🔐 Session-Based Authentication** (NEW)
+- **Complete Auth System**: Password hashing with PBKDF2-SHA256 + salt
+- **Session Management**: Secure cookie-based sessions (24h default, 30d with "remember me")
+- **Login Page**: Modern dark-themed login interface with password visibility toggle
+- **User Menu**: Dropdown menu in topbar with Settings link and Sign Out button
+- **Auth Middleware**: Automatic route protection for all dashboard pages
+- **Configurable**: Enable/disable via `config.yaml` (`auth.enabled: true/false`)
+- **Default User**: Auto-creates admin user with random password on first enable
+
+#### **💡 Lighting Dashboard Enhancements**
+- **Color Controls**: Full RGB color picker for color-capable Hue bulbs
+- **Auto-Scan**: Automatic device rescan on page load if no lights found
+- **Periodic Refresh**: Auto-refresh every 15 seconds + full rescan every 2 minutes
+- **Global Controls**: Quick action buttons for all lights:
+  - 💡 **All On** - Turn all lights on instantly
+  - 🌙 **All Off** - Turn all lights off instantly
+  - 🔆 **50%** - Set all lights to 50% brightness
+  - ☀️ **100%** - Set all lights to full brightness
+  - 🪩 **Disco!** - Party mode with random colors (auto-stops after 30s)
+- **Performance**: Near-instant light changes (removed unnecessary delays)
+- **Refresh Button**: Quick refresh without full bridge rescan
+
+#### **⚡ Performance Optimizations**
+- **Removed Full Bridge Scans**: No longer scans all devices on every `get_light()` call
+- **Parallel Requests**: Global controls fire all commands simultaneously
+- **Immediate API Returns**: Control endpoints return instantly without waiting for state refresh
+- **Cache-First Loading**: Periodic updates use cached data (only full Rescan queries bridge)
+
+### 🔧 **TECHNICAL IMPROVEMENTS**
+
+#### **Auth Module** (`web/auth.py`)
+- PBKDF2-SHA256 password hashing with random salt
+- In-memory session storage with expiration
+- Public path whitelist (login, static files, API endpoints)
+- Automatic default user creation on first enable
+
+#### **Security Headers**
+- Updated CSP to allow Font Awesome icons from CDN
+- Fixed icon visibility in topbar navigation
+
+#### **API Changes**
+- `POST /api/auth/login` - User authentication
+- `POST /api/auth/logout` - Session termination
+- `GET /api/auth/status` - Current auth status
+- `GET /login` - Login page (redirects to dashboard if auth disabled)
+
+### 🐛 **BUG FIXES**
+- Fixed slow light control (was doing full bridge discovery on every command)
+- Fixed missing color controls for RGB-capable bulbs
+- Fixed topbar icons not visible (CSP blocking Font Awesome)
+- Fixed initial light scan not running on page load
+- Fixed combined energy calculation (was averaging instead of summing)
+
+### 📝 **CONFIGURATION**
+
+```yaml
+auth:
+  enabled: false  # Set to true to require login
+  users:
+    admin:
+      password: admin123  # Change this! Or use password_hash + salt
+      role: admin
+```
+
+### 🎯 **USER EXPERIENCE**
+- **Login Flow**: Beautiful login page with error handling
+- **Session Persistence**: "Remember me" extends session to 30 days
+- **User Feedback**: Clear error messages for invalid credentials
+- **Auto-Redirect**: Logged-in users redirected away from login page
+- **Responsive Design**: Login page works on mobile devices
+
+---
+
 ## [1.6.1] - 2025-11-29 🔐 **Nest OAuth + SOTA Voice**
 
 ### ✨ **NEW FEATURES**

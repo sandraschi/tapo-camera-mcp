@@ -127,6 +127,7 @@
 
     .camera-actions {
         display: flex;
+        flex-wrap: wrap;
         gap: 0.5rem;
         margin-top: 1rem;
         padding-top: 1rem;
@@ -134,11 +135,13 @@
     }
 
     .action-button {
-        padding: 0.5rem 1rem;
+        padding: 0.4rem 0.75rem;
         border-radius: 0.375rem;
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         font-weight: 500;
         text-decoration: none;
+        white-space: nowrap;
+        flex-shrink: 0;
         transition: all 0.2s ease-in-out;
         border: 1px solid #d1d5db;
         background-color: white;
@@ -233,7 +236,16 @@
         }
 
         .camera-actions {
-            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .action-button {
+            padding: 0.35rem 0.6rem;
+            font-size: 0.75rem;
+        }
+        
+        .action-button svg {
+            display: none;
         }
     }
 
@@ -572,7 +584,7 @@
             <!-- Actions -->
             {% if camera.status == 'online' %}
             <div class="camera-actions">
-                <button onclick="window.open('/api/cameras/{{ camera.name or camera.id }}/stream', 'stream-{{ camera.name or camera.id }}', 'width=800,height=600')" class="action-button action-button-primary">
+                <button onclick="window.open('/stream/{{ camera.name or camera.id }}', 'stream-{{ camera.name or camera.id }}', 'width=900,height=700')" class="action-button action-button-primary">
                     <svg class="w-4 h-4 mr-1 inline" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
                     </svg>

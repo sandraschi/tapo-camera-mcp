@@ -1,7 +1,7 @@
 # 🏠 Home Security MCP Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.6.1-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/releases)
+[![Version](https://img.shields.io/badge/version-1.7.0-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/releases)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![MCP Version](https://img.shields.io/badge/MCP-2.12.0-blue)](https://mcp-standard.org)
@@ -37,9 +37,28 @@
 
 **The platform serves as the "conductor" that brings together multiple specialized security devices (MCP servers) into a cohesive home surveillance ecosystem.**
 
-## 🏆 **v1.6.1 RELEASE - ALEXA 2 + REAL NEST API**
+## 🏆 **v1.8.0 RELEASE - STABILITY & MONITORING SYSTEM** (December 2025)
 
-**✅ LATEST ACHIEVEMENTS:**
+**✅ DEMO-PROOF RELIABILITY:**
+- **🔍 Dependency Validator**: Checks all libraries on EVERY startup - no more "it worked yesterday"!
+- **👁️ Connection Supervisor**: Polls ALL devices every 60s with auto-reconnect
+- **🚨 3-Level Messaging**: Info/Warning/Alarm system with acknowledgement tracking
+- **🏥 Health Dashboard**: Real-time device status at `/health-dashboard`
+- **📢 Alerts Dashboard**: Message center at `/alerts`
+- **📊 Prometheus Integration**: Metrics endpoint for Grafana monitoring
+- **📝 Loki-Compatible Logs**: Structured JSON logging for Promtail/Loki
+- **📈 Dual-Line Weather Graphs**: Compare main station + bathroom + outdoor modules
+- **🔌 Tapo P115 Fixed**: Smart plugs now showing real-time power data
+
+**v1.7.0:**
+- **🔐 Session-Based Auth**: Complete authentication system with secure password hashing
+- **💡 Global Lighting Controls**: All On/Off, 50%, 100%, Disco mode buttons
+- **🎨 Color Controls**: Full RGB color picker for color-capable Hue bulbs
+- **⚡ Performance**: Near-instant light changes (optimized API calls)
+- **🔄 Auto-Refresh**: Periodic device rescan to catch wall switch/remote changes
+- **🎯 User Menu**: Dropdown with Settings and Sign Out in topbar
+
+**v1.6.1:**
 - **🎙️ SOTA Voice Stack**: Faster-Whisper → Vosk → Whisper (STT), Piper → Edge-TTS → pyttsx3 (TTS)
 - **👂 Always-On Wake Word**: OpenWakeWord/Vosk background listener ("hey tapo")
 - **🔐 Real Nest OAuth**: Direct Google Nest API integration (no Home Assistant needed!)
@@ -232,33 +251,67 @@ cameras:
 - **Error Recovery**: Comprehensive error handling with user guidance
 - **API-First Design**: Full programmatic access to onboarding functionality
 
+### 💪 **STABILITY & MONITORING SYSTEM** (NEW - December 2025)
+
+#### 🔍 **Production Reliability**
+- **Dependency Validator**: Checks all 20+ libraries on every startup - prevents "it worked yesterday" failures
+- **Connection Supervisor**: Polls ALL devices every 60s with automatic reconnection
+- **3-Level Alerting**: Info (💬) / Warning (⚠️) / Alarm (🚨) system with escalation
+- **Health Dashboard**: Real-time device status at `/health-dashboard`
+- **Alerts Dashboard**: Message center with acknowledgement at `/alerts`
+- **Demo-Proof**: No silent failures during demonstrations!
+
+#### 📊 **Monitoring Stack Integration**
+- **Prometheus Metrics**: `/api/messages/prometheus` endpoint ready for scraping
+- **Loki Logs**: Structured JSON logging compatible with Promtail ingestion
+- **Grafana Ready**: Dashboards for device uptime, alert timelines, power consumption
+- **Alert Escalation**: 1 failure → WARNING, 3 failures (180s) → ALARM
+- **Auto-Recovery**: Supervisor attempts reconnection on device failures
+
+**Prometheus Scrape Config:**
+```yaml
+scrape_configs:
+  - job_name: 'tapo_home'
+    static_configs:
+      - targets: ['localhost:7777']
+    metrics_path: '/api/messages/prometheus'
+    scrape_interval: 30s
+```
+
 ### ⚡ **ADVANCED FEATURES** (NEW - January 2025)
 
 #### 🔋 **Energy Management Dashboard**
-- **Tapo P115 Smart Plugs**: Energy monitoring and control
+- **Tapo P115 Smart Plugs**: Energy monitoring and control (REAL DATA!)
 - **Real-time Power Consumption**: Live wattage, voltage, and current monitoring
 - **Cost Analysis**: Daily, monthly, and annual energy cost tracking
 - **Smart Scheduling**: Automated power management based on usage patterns
 - **Energy Saving Mode**: Intelligent power optimization
 - **Historical Data**: Limited to current day (P115 limitation) with Home Assistant integration recommended
 
-#### 💡 **Lighting Control Dashboard** (ENHANCED in v1.4.0)
+#### 💡 **Lighting Control Dashboard** (ENHANCED in v1.7.0)
 - **Philips Hue Integration**: Full support for Hue Bridge and lights
 - **Light Discovery**: Automatic discovery (18 lights, 6 groups detected)
 - **Light Control**: On/off toggle and brightness adjustment (instant response)
+- **Color Controls**: Full RGB color picker for color-capable bulbs
+- **Global Controls**: Quick action buttons (All On/Off, 50%, 100%, Disco mode)
 - **Group Management**: Support for Hue groups/rooms with bulk control
 - **Scene Activation**: 11 predefined scenes (Sunset, Aurora, Energize, etc.)
 - **Performance Caching**: Device lists cached on startup for instant page loads
+- **Auto-Refresh**: Periodic rescan every 2 minutes to catch wall switch changes
 - **Rescan Button**: Manual refresh of lights/groups/scenes with last scan timestamp
 - **Settings Integration**: Bridge IP and username configuration via settings page
 
-#### 🌤️ **Weather Dashboard** (NEW in v1.4.0)
-- **Netatmo Indoor Weather**: Real data via pyatmo 8.x OAuth
-- **Vienna External Weather**: Open-Meteo API (free, no API key)
-- **Combined View**: Indoor vs outdoor side-by-side comparison
-- **Temperature Difference**: Shows how much warmer inside
+#### 🌤️ **Weather Dashboard** (ENHANCED v1.8.0)
+- **Multi-Module Netatmo**: Main station + bathroom module (NAModule4 support)
+- **Dual-Line Graphs**: Compare main (red) vs bathroom (orange) vs outdoor (teal)
+- **Real-Time Data**: 26.8°C main, 26.6°C bathroom - see room differences!
+- **Vienna External Weather**: Open-Meteo API (5.5°C, slight rain)
+- **Dynamic Station Cards**: Auto-loads YOUR real devices (70:ee:50:3a:0e:dc @ Stroheckgasse)
 - **5-Day Forecast**: Daily forecast with weather icons
-- **Historical Charts**: Temperature, humidity, CO2, pressure over time
+- **Historical Charts**: 4 metrics × 3 time ranges, auto-refresh every 30s
+- **CO2 Monitoring**: Threshold warnings (800 ppm yellow, 1000 ppm red)
+- **Battery Indicators**: Shows battery level for wireless modules (🔋 60%)
+- **Outdoor Sensor Ready**: Automatic detection when NAModule1 installed
 
 #### 🍳 **Kitchen Dashboard** (NEW in v1.4.0)
 - **Tefal Optigrill**: Smart grill status and control
@@ -429,7 +482,35 @@ open http://localhost:7777/onboarding
      webcam:
        type: webcam
        device_id: 0
+   
+   # Authentication (optional - disabled by default)
+   auth:
+     enabled: false  # Set to true to require login
+     users:
+       admin:
+         password: admin123  # Change this!
+         role: admin
    ```
+
+### 🔐 **Authentication** (NEW in v1.7.0)
+
+The dashboard supports optional session-based authentication:
+
+**Enable Authentication:**
+1. Edit `config.yaml` and set `auth.enabled: true`
+2. Configure users with passwords
+3. Restart the server
+4. Access dashboard at `http://localhost:7777` - you'll be redirected to login
+
+**Features:**
+- **Secure Password Hashing**: PBKDF2-SHA256 with salt
+- **Session Management**: 24-hour sessions (30 days with "remember me")
+- **User Menu**: Dropdown in topbar with Settings and Sign Out
+- **Auto-Redirect**: Logged-in users can't access login page
+- **Public Paths**: Login, static files, and API endpoints remain accessible
+
+**Default User:**
+When auth is first enabled, a default admin user is created with a random password (printed to console). Change it immediately in `config.yaml`!
 
 ## 🚀 Usage
 

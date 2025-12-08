@@ -4,136 +4,775 @@
 
 {% block content %}
 <div class="help-container">
-    <h1>🎥 Tapo Camera MCP Help & Documentation</h1>
+    <h1>🏠 Home Security MCP Platform - Help & Documentation</h1>
     
-    <div class="help-section">
-        <h2>🚀 Getting Started</h2>
-        <p>Welcome to the Tapo Camera MCP system! This comprehensive help guide will get you up and running quickly.</p>
+    <!-- Table of Contents -->
+    <div class="help-section toc-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-left: 4px solid #4c51bf;">
+        <h2 style="color: white; margin-top: 0;">📋 Table of Contents</h2>
+        <div class="toc-grid">
+            <div class="toc-item"><a href="#overview" style="color: #ffd700;">1. System Overview</a></div>
+            <div class="toc-item"><a href="#architecture" style="color: #ffd700;">2. Architecture</a></div>
+            <div class="toc-item"><a href="#hardware" style="color: #ffd700;">3. Supported Hardware</a></div>
+            <div class="toc-item"><a href="#quickstart" style="color: #ffd700;">4. Quick Start Guide</a></div>
+            <div class="toc-item"><a href="#mcp-tools" style="color: #ffd700;">5. MCP Server Tools</a></div>
+            <div class="toc-item"><a href="#dashboard" style="color: #ffd700;">6. Dashboard Features</a></div>
+            <div class="toc-item"><a href="#troubleshooting" style="color: #ffd700;">7. Troubleshooting</a></div>
+            <div class="toc-item"><a href="#configuration" style="color: #ffd700;">8. Configuration</a></div>
+            <div class="toc-item"><a href="#monitoring" style="color: #ffd700;">9. Monitoring & Stability</a></div>
+            <div class="toc-item"><a href="#resources" style="color: #ffd700;">10. Learning Resources</a></div>
+        </div>
+    </div>
+    
+    <!-- System Overview -->
+    <div id="overview" class="help-section">
+        <h2>📋 System Overview</h2>
+        <div class="info-grid">
+            <div class="info-card">
+                <h4>Version</h4>
+                <p><strong>1.8.0</strong> (Production Ready - Stability Enhanced)</p>
+            </div>
+            <div class="info-card">
+                <h4>MCP Server</h4>
+                <p><strong>FastMCP 2.13.0</strong> with 16 portmanteau tools (75% consolidation)</p>
+            </div>
+            <div class="info-card">
+                <h4>Dashboard URL</h4>
+                <p><a href="http://localhost:7777">http://localhost:7777</a></p>
+            </div>
+            <div class="info-card">
+                <h4>Status</h4>
+                <p>✅ All hardware detected and operational</p>
+            </div>
+        </div>
+        <p><strong>Stability:</strong> 🔍 Dependency validation + 👁️ 60s device polling + 🚨 Alert system</p>
+        <p><strong>Monitoring:</strong> 📊 Prometheus metrics + 📝 Loki logs ready for Grafana</p>
+    </div>
+    
+    <!-- Architecture -->
+    <div id="architecture" class="help-section">
+        <h2>🏗️ System Architecture</h2>
         
-        <h3>Quick Start with USB Webcam</h3>
+        <h3>Dual-Role Architecture</h3>
+        <p>This platform serves two complementary roles:</p>
+        
+        <div class="architecture-grid">
+            <div class="arch-card">
+                <h4>🎯 Role 1: Individual MCP Servers</h4>
+                <p>Standalone MCP servers for specific device types:</p>
+                <ul>
+                    <li><strong>Tapo Camera MCP</strong> - TP-Link camera control</li>
+                    <li><strong>USB Webcam MCP</strong> - Direct webcam management</li>
+                    <li><strong>Ring MCP</strong> - Doorbell integration</li>
+                    <li><strong>Nest Protect MCP</strong> - Smoke/CO monitoring</li>
+                </ul>
+            </div>
+            <div class="arch-card">
+                <h4>🎯 Role 2: Unified Dashboard</h4>
+                <p>Multi-MCP orchestration platform:</p>
+                <ul>
+                    <li><strong>Single Interface</strong> - Monitor all devices</li>
+                    <li><strong>Cross-System Integration</strong> - Event correlation</li>
+                    <li><strong>Real-time Monitoring</strong> - Live status updates</li>
+                    <li><strong>Remote Access</strong> - Via Tailscale VPN</li>
+                </ul>
+            </div>
+        </div>
+        
+        <h3>System Components</h3>
+        <div class="component-diagram">
+            <div class="component-layer">
+                <h4>🌐 Web Layer</h4>
+                <ul>
+                    <li><strong>FastAPI Web Server</strong> - Dashboard and API endpoints</li>
+                    <li><strong>WebSocket Support</strong> - Real-time updates</li>
+                    <li><strong>Static Assets</strong> - HTML, CSS, JavaScript</li>
+                </ul>
+            </div>
+            <div class="component-layer">
+                <h4>🔌 MCP Layer</h4>
+                <ul>
+                    <li><strong>FastMCP 2.13.0</strong> - MCP protocol implementation</li>
+                    <li><strong>16 Portmanteau Tools</strong> - Consolidated tool interface</li>
+                    <li><strong>Tool Registry</strong> - Dynamic tool registration</li>
+                </ul>
+            </div>
+            <div class="component-layer">
+                <h4>📡 Device Layer</h4>
+                <ul>
+                    <li><strong>Camera Manager</strong> - Unified camera interface</li>
+                    <li><strong>Device Drivers</strong> - Tapo, Ring, USB, etc.</li>
+                    <li><strong>Connection Supervisor</strong> - Health monitoring</li>
+                </ul>
+            </div>
+            <div class="component-layer">
+                <h4>💾 Data Layer</h4>
+                <ul>
+                    <li><strong>Configuration System</strong> - YAML-based config</li>
+                    <li><strong>State Management</strong> - Device state tracking</li>
+                    <li><strong>Logging System</strong> - Structured JSON logs</li>
+                </ul>
+            </div>
+        </div>
+        
+        <h3>Data Flow</h3>
+        <div class="flow-diagram">
+            <div class="flow-step">
+                <strong>1. User Action</strong> → Dashboard UI or MCP Tool
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-step">
+                <strong>2. Request Processing</strong> → FastAPI Router or MCP Handler
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-step">
+                <strong>3. Device Communication</strong> → Camera Manager → Device Driver
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-step">
+                <strong>4. Response</strong> → JSON Response or MCP Result
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-step">
+                <strong>5. Update</strong> → WebSocket Broadcast or MCP Notification
+            </div>
+        </div>
+    </div>
+    
+    <!-- Supported Hardware -->
+    <div id="hardware" class="help-section">
+        <h2>🎥 Supported Hardware</h2>
+        
+        <h3>📹 Cameras</h3>
+        <div class="hardware-grid">
+            <div class="hardware-card">
+                <h4>🟢 TP-Link Tapo Cameras</h4>
+                <p><strong>Models:</strong> C200, C210, C310, C500, and other ONVIF-compatible models</p>
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li>Pan-Tilt-Zoom (PTZ) control</li>
+                    <li>ONVIF protocol support</li>
+                    <li>Live streaming (MJPEG, RTSP)</li>
+                    <li>Motion detection</li>
+                    <li>Night vision</li>
+                    <li>Two-way audio</li>
+                </ul>
+                <p><strong>Connection:</strong> IP-based (Ethernet or WiFi)</p>
+                <p><strong>Protocol:</strong> ONVIF, Tapo API</p>
+            </div>
+            
+            <div class="hardware-card">
+                <h4>🔔 Ring Doorbells & Cameras</h4>
+                <p><strong>Models:</strong> Video Doorbell, Stick Up Cam, Spotlight Cam, Floodlight Cam</p>
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li>WebRTC live streaming (no subscription required)</li>
+                    <li>Two-way talk</li>
+                    <li>Motion detection alerts</li>
+                    <li>DING notifications</li>
+                    <li>Event history</li>
+                </ul>
+                <p><strong>Connection:</strong> Cloud-based via Ring API</p>
+                <p><strong>Protocol:</strong> Ring API, WebRTC</p>
+            </div>
+            
+            <div class="hardware-card">
+                <h4>📹 USB Webcams</h4>
+                <p><strong>Models:</strong> Any USB video device (UVC-compatible)</p>
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li>Direct USB capture</li>
+                    <li>MJPEG streaming</li>
+                    <li>Resolution auto-detection</li>
+                    <li>Multiple device support</li>
+                </ul>
+                <p><strong>Connection:</strong> USB direct connection</p>
+                <p><strong>Protocol:</strong> UVC (USB Video Class)</p>
+            </div>
+            
+            <div class="hardware-card">
+                <h4>🐕 Furbo Pet Cameras</h4>
+                <p><strong>Models:</strong> Furbo 360°, Furbo Dog Camera</p>
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li>Pet monitoring</li>
+                    <li>Treat tossing</li>
+                    <li>Bark detection</li>
+                    <li>Night vision</li>
+                </ul>
+                <p><strong>Connection:</strong> WiFi, Cloud-based</p>
+                <p><strong>Protocol:</strong> Furbo API</p>
+            </div>
+        </div>
+        
+        <h3>⚡ Smart Plugs & Energy</h3>
+        <div class="hardware-grid">
+            <div class="hardware-card">
+                <h4>🔌 Tapo P115 Smart Plugs</h4>
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li>Real-time power monitoring (watts, voltage, current)</li>
+                    <li>Energy consumption tracking (daily, monthly)</li>
+                    <li>Remote on/off control</li>
+                    <li>Cost calculations</li>
+                    <li>Schedule support</li>
+                </ul>
+                <p><strong>Connection:</strong> WiFi, IP-based</p>
+                <p><strong>Protocol:</strong> Tapo API</p>
+            </div>
+        </div>
+        
+        <h3>💡 Lighting</h3>
+        <div class="hardware-grid">
+            <div class="hardware-card">
+                <h4>🎨 Philips Hue</h4>
+                <p><strong>Components:</strong></p>
+                <ul>
+                    <li><strong>Hue Bridge</strong> - Central hub (required)</li>
+                    <li><strong>Smart Bulbs</strong> - White, White Ambiance, Color</li>
+                    <li><strong>Light Strips</strong> - Gradient, Play, etc.</li>
+                    <li><strong>Smart Switches</strong> - Dimmer, Tap, etc.</li>
+                </ul>
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li>Individual light control</li>
+                    <li>Room/zone grouping</li>
+                    <li>Predefined scenes (11 built-in)</li>
+                    <li>RGB color control</li>
+                    <li>Brightness adjustment (0-100%)</li>
+                </ul>
+                <p><strong>Connection:</strong> Zigbee via Hue Bridge</p>
+                <p><strong>Protocol:</strong> Hue API (REST)</p>
+            </div>
+        </div>
+        
+        <h3>🌤️ Weather & Environment</h3>
+        <div class="hardware-grid">
+            <div class="hardware-card">
+                <h4>📡 Netatmo Weather Station</h4>
+                <p><strong>Components:</strong></p>
+                <ul>
+                    <li><strong>Indoor Module</strong> - Temperature, humidity, CO₂, noise</li>
+                    <li><strong>Outdoor Module</strong> - Temperature, humidity</li>
+                    <li><strong>Rain Gauge</strong> - Precipitation</li>
+                    <li><strong>Wind Gauge</strong> - Wind speed and direction</li>
+                </ul>
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li>Real-time indoor/outdoor data</li>
+                    <li>Air quality monitoring</li>
+                    <li>Historical data</li>
+                    <li>Multi-module support</li>
+                </ul>
+                <p><strong>Connection:</strong> WiFi, Cloud-based</p>
+                <p><strong>Protocol:</strong> Netatmo API (OAuth 2.0)</p>
+            </div>
+        </div>
+        
+        <h3>🚨 Security & Safety</h3>
+        <div class="hardware-grid">
+            <div class="hardware-card">
+                <h4>🔥 Nest Protect</h4>
+                <p><strong>Models:</strong> Nest Protect (1st & 2nd gen)</p>
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li>Smoke detection</li>
+                    <li>CO (carbon monoxide) detection</li>
+                    <li>Pathlight (night light)</li>
+                    <li>Status monitoring</li>
+                </ul>
+                <p><strong>Connection:</strong> WiFi, via Home Assistant bridge</p>
+                <p><strong>Protocol:</strong> Google Nest API (OAuth 2.0)</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Start Guide -->
+    <div id="quickstart" class="help-section">
+        <h2>🚀 Quick Start Guide</h2>
+        
+        <h3>1️⃣ View Live Cameras</h3>
         <ol>
-            <li>Connect your USB webcam to your computer</li>
-            <li>In Claude Desktop, use the <code>add_camera</code> tool:
-                <pre><code>camera_type: webcam
-name: my_webcam
-device_id: 0</code></pre>
-            </li>
-            <li>Test the connection with <code>capture_image</code> tool</li>
-            <li>View live stream in the dashboard at <a href="http://localhost:7777">http://localhost:7777</a></li>
+            <li>Click <strong>Cameras</strong> in the sidebar</li>
+            <li>Select any camera to view live stream</li>
+            <li>Use PTZ controls for Tapo cameras (pan, tilt, zoom)</li>
+            <li>Click <strong>Snapshot</strong> to capture still images</li>
+            <li>Use <strong>Grid View</strong> to see all cameras at once</li>
+        </ol>
+        
+        <h3>2️⃣ Control Lighting</h3>
+        <ol>
+            <li>Click <strong>Lighting</strong> in the sidebar</li>
+            <li>Toggle individual lights on/off</li>
+            <li>Adjust brightness with sliders (0-100%)</li>
+            <li>Use color picker for RGB-capable bulbs</li>
+            <li>Apply predefined scenes (11 available)</li>
+            <li>Use global controls: All On/Off, 50%, 100%, Disco mode</li>
+        </ol>
+        
+        <h3>3️⃣ Monitor Energy Usage</h3>
+        <ol>
+            <li>Click <strong>Energy</strong> in the sidebar</li>
+            <li>View real-time power consumption (watts)</li>
+            <li>See daily/weekly/monthly trends</li>
+            <li>Control smart plugs (turn on/off)</li>
+            <li>View cost calculations</li>
+        </ol>
+        
+        <h3>4️⃣ Check Weather</h3>
+        <ol>
+            <li>Click <strong>Weather</strong> in the sidebar</li>
+            <li>View indoor Netatmo data (temperature, humidity, CO₂)</li>
+            <li>See Vienna external weather (5-day forecast)</li>
+            <li>Compare multiple modules (main station, bathroom, outdoor)</li>
+        </ol>
+        
+        <h3>5️⃣ Use MCP Tools in Claude</h3>
+        <ol>
+            <li>Configure Claude Desktop with MCP server</li>
+            <li>Use natural language commands like "list all cameras"</li>
+            <li>Control devices: "turn on kitchen lights"</li>
+            <li>Get status: "what's the energy usage?"</li>
+            <li>See available tools in Claude's MCP panel</li>
         </ol>
     </div>
     
-    <div class="help-section">
-        <h2>📷 Supported Cameras</h2>
-        <div class="camera-grid">
-            <div class="camera-card">
-                <h4>📹 USB Webcam</h4>
-                <p>✅ Working - Connect any USB webcam</p>
-                <p>Perfect for testing and development</p>
+    <!-- MCP Tools -->
+    <div id="mcp-tools" class="help-section">
+        <h2>🛠️ MCP Server Tools (16 Portmanteau)</h2>
+        <p>FastMCP 2.13.0 server with <strong>16 consolidated portmanteau tools</strong> (75% reduction from 64 individual tools)</p>
+        <p><em>Use these tools in Claude Desktop to control your entire smart home!</em></p>
+        
+        <div class="tool-grid">
+            <div class="tool-card">
+                <h4>📹 camera_management</h4>
+                <p>Complete camera control and configuration</p>
+                <ul>
+                    <li><code>operation: list</code> - List all cameras with status</li>
+                    <li><code>operation: info</code> - Get detailed camera information</li>
+                    <li><code>operation: connect</code> - Connect to IP camera</li>
+                    <li><code>operation: snapshot</code> - Capture image</li>
+                    <li><code>operation: stream</code> - Get stream URL</li>
+                </ul>
             </div>
-            <div class="camera-card">
-                <h4>🏠 Tapo IP Camera</h4>
-                <p>✅ Working - TP-Link Tapo cameras</p>
-                <p>Includes PTZ controls and motion detection</p>
+            
+            <div class="tool-card">
+                <h4>🎮 ptz_management</h4>
+                <p>Pan/Tilt/Zoom controls for Tapo cameras</p>
+                <ul>
+                    <li><code>action: move</code> - Move camera (pan, tilt, zoom, speed)</li>
+                    <li><code>action: position</code> - Get current position</li>
+                    <li><code>action: stop</code> - Stop movement</li>
+                    <li><code>action: save_preset</code> - Save position</li>
+                    <li><code>action: recall_preset</code> - Go to saved position</li>
+                    <li><code>action: home</code> - Return to home position</li>
+                    <li><code>action: prank</code> - Fun modes (nod, shake, dizzy, chaos)</li>
+                </ul>
             </div>
-            <div class="camera-card">
-                <h4>🔔 Ring Doorbell</h4>
-                <p>✅ Working - Ring doorbell cameras</p>
-                <p>Connect via Ring API</p>
+            
+            <div class="tool-card">
+                <h4>💡 lighting_management</h4>
+                <p>Philips Hue lighting management</p>
+                <ul>
+                    <li><code>action: list_lights</code> - Show all lights</li>
+                    <li><code>action: control</code> - Turn on/off, adjust brightness</li>
+                    <li><code>action: scene</code> - Apply predefined scenes</li>
+                    <li><code>action: group</code> - Control light groups</li>
+                    <li><code>action: color</code> - Set RGB color</li>
+                </ul>
+            </div>
+            
+            <div class="tool-card">
+                <h4>⚡ energy_management</h4>
+                <p>Tapo P115 smart plug control and monitoring</p>
+                <ul>
+                    <li><code>operation: status</code> - Get current power usage</li>
+                    <li><code>operation: control</code> - Turn plugs on/off</li>
+                    <li><code>operation: consumption</code> - View usage trends</li>
+                    <li><code>operation: cost</code> - Calculate energy costs</li>
+                </ul>
+            </div>
+            
+            <div class="tool-card">
+                <h4>🔔 ring_management</h4>
+                <p>Ring doorbell WebRTC and alerts</p>
+                <ul>
+                    <li><code>action: live_view</code> - Start WebRTC stream</li>
+                    <li><code>action: talk</code> - Two-way audio</li>
+                    <li><code>action: events</code> - Get motion/ding events</li>
+                    <li><code>action: history</code> - View event history</li>
+                </ul>
+            </div>
+            
+            <div class="tool-card">
+                <h4>🌤️ weather_management</h4>
+                <p>Netatmo and Vienna weather information</p>
+                <ul>
+                    <li><code>action: current</code> - Current weather data</li>
+                    <li><code>action: stations</code> - List weather stations</li>
+                    <li><code>action: analyze</code> - Analyze weather patterns</li>
+                </ul>
+            </div>
+            
+            <div class="tool-card">
+                <h4>🔧 system_management</h4>
+                <p>Dashboard and server control</p>
+                <ul>
+                    <li><code>action: status</code> - System health check</li>
+                    <li><code>action: info</code> - System information</li>
+                    <li><code>action: health</code> - Comprehensive health check</li>
+                    <li><code>action: logs</code> - View system logs</li>
+                    <li><code>action: reboot</code> - Reboot camera</li>
+                </ul>
+            </div>
+            
+            <div class="tool-card">
+                <h4>📸 media_management</h4>
+                <p>Image and video operations</p>
+                <ul>
+                    <li><code>action: capture</code> - Capture image</li>
+                    <li><code>action: analyze</code> - Analyze image with AI</li>
+                    <li><code>action: start_recording</code> - Start video recording</li>
+                    <li><code>action: get_stream_url</code> - Get stream URL</li>
+                </ul>
             </div>
         </div>
+        
+        <p><strong>📚 Full tool list:</strong> 16 portmanteau tools covering cameras, PTZ, lighting, energy, Ring, weather, security, automation, media, onboarding, configuration, analytics, AI, and system management.</p>
     </div>
     
-    <div class="help-section">
-        <h2>🛠️ Available Tools</h2>
-        <p>The system provides <strong>25+ MCP tools</strong> for complete camera control:</p>
-        
-        <h3>Camera Management</h3>
-        <ul>
-            <li><code>add_camera</code> - Add new camera to system</li>
-            <li><code>list_cameras</code> - List all connected cameras</li>
-            <li><code>connect_camera</code> - Connect to IP camera</li>
-            <li><code>get_camera_info</code> - Get detailed camera information</li>
-        </ul>
-        
-        <h3>PTZ Controls</h3>
-        <ul>
-            <li><code>move_ptz</code> - Move camera (up, down, left, right, zoom)</li>
-            <li><code>save_ptz_preset</code> - Save current position</li>
-            <li><code>recall_ptz_preset</code> - Move to saved position</li>
-            <li><code>stop_ptz</code> - Stop all movement</li>
-        </ul>
-        
-        <h3>Media Capture</h3>
-        <ul>
-            <li><code>capture_image</code> - Take snapshot</li>
-            <li><code>get_camera_stream</code> - Get live stream URL</li>
-            <li><code>start_recording</code> - Start video recording</li>
-            <li><code>stop_recording</code> - Stop recording</li>
-        </ul>
-    </div>
-    
-    <div class="help-section">
+    <!-- Dashboard Features -->
+    <div id="dashboard" class="help-section">
         <h2>🌐 Dashboard Features</h2>
-        <p>The web dashboard provides a user-friendly interface for camera management:</p>
+        <p>Comprehensive web dashboard at <strong>http://localhost:7777</strong></p>
         
-        <h3>Current Features</h3>
-        <ul>
-            <li>✅ Live video streaming from all cameras</li>
-            <li>✅ Camera management and configuration</li>
-            <li>✅ Real-time status monitoring</li>
-            <li>✅ Image capture and storage</li>
-            <li>✅ Multi-camera simultaneous viewing</li>
-        </ul>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>📹 Camera Dashboard</h4>
+                <ul>
+                    <li>Live MJPEG streaming</li>
+                    <li>Multi-camera grid view</li>
+                    <li>PTZ controls (Tapo cameras)</li>
+                    <li>Snapshot capture</li>
+                    <li>Camera status monitoring</li>
+                    <li>Preset management</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h4>💡 Lighting Dashboard</h4>
+                <ul>
+                    <li>18 Hue lights control</li>
+                    <li>6 room groups</li>
+                    <li>11 predefined scenes</li>
+                    <li>RGB color picker</li>
+                    <li>Global controls (All On/Off, Disco)</li>
+                    <li>Brightness sliders</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h4>⚡ Energy Dashboard</h4>
+                <ul>
+                    <li>Real-time power monitoring</li>
+                    <li>3 Tapo P115 plugs</li>
+                    <li>Usage trends & graphs</li>
+                    <li>Cost calculations</li>
+                    <li>Device control</li>
+                    <li>Historical data</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h4>🌤️ Weather Dashboard</h4>
+                <ul>
+                    <li>Netatmo indoor data</li>
+                    <li>Vienna 5-day forecast</li>
+                    <li>Temperature & humidity</li>
+                    <li>Air quality monitoring</li>
+                    <li>Multi-module comparison</li>
+                    <li>Dual-line graphs</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h4>🔔 Ring Integration</h4>
+                <ul>
+                    <li>WebRTC live view</li>
+                    <li>Two-way audio</li>
+                    <li>DING alert popups</li>
+                    <li>Motion notifications</li>
+                    <li>Event history</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h4>🏥 Health Dashboard</h4>
+                <ul>
+                    <li>Real-time device status</li>
+                    <li>Online/offline counts</li>
+                    <li>Error details</li>
+                    <li>Auto-refresh (10s)</li>
+                    <li>Connection health</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h4>🚨 Alerts Dashboard</h4>
+                <ul>
+                    <li>Message center</li>
+                    <li>Filter by severity</li>
+                    <li>Acknowledge alerts</li>
+                    <li>Last 24 hours</li>
+                    <li>3-level alerts (info/warning/alarm)</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h4>📊 Monitoring Integration</h4>
+                <ul>
+                    <li>Prometheus metrics endpoint</li>
+                    <li>Loki-compatible logs</li>
+                    <li>Grafana dashboard ready</li>
+                    <li>Alert correlation</li>
+                    <li>Real-time device health</li>
+                </ul>
+            </div>
+        </div>
         
-        <h3>Planned Features</h3>
+        <h3>🎨 UI Features</h3>
         <ul>
-            <li>🔄 PTZ control interface</li>
-            <li>🔄 Preset management</li>
-            <li>🔄 Motion detection configuration</li>
-            <li>🔄 Recording management</li>
-            <li>🔄 Event timeline</li>
+            <li>🌓 Dark/Light theme toggle</li>
+            <li>🔐 Session-based authentication (optional)</li>
+            <li>📱 Mobile-responsive design</li>
+            <li>🔄 Auto-refresh device status</li>
+            <li>🎯 User menu with settings</li>
+            <li>⌨️ Keyboard shortcuts</li>
         </ul>
     </div>
     
-    <div class="help-section">
+    <!-- Troubleshooting -->
+    <div id="troubleshooting" class="help-section">
         <h2>🔧 Troubleshooting</h2>
         
-        <h3>USB Webcam Issues</h3>
+        <h3>🎥 Tapo C200 Cameras</h3>
         <div class="troubleshooting-item">
-            <h4>❌ Camera not detected</h4>
-            <p><strong>Solution:</strong> Try different device_id values (0, 1, 2, 3). Check Windows Camera app.</p>
+            <h4>❌ Camera offline</h4>
+            <p><strong>Check:</strong></p>
+            <ul>
+                <li>Camera powered on (LED indicator)</li>
+                <li>Network cable connected (or WiFi signal strong)</li>
+                <li>Router can reach IP address: <code>ping 192.168.0.164</code></li>
+                <li>Credentials correct in <code>config.yaml</code></li>
+            </ul>
+            <p><strong>Test ONVIF:</strong></p>
+            <pre><code>python scripts/test_onvif_auth.py</code></pre>
         </div>
         
         <div class="troubleshooting-item">
-            <h4>❌ Permission denied</h4>
-            <p><strong>Solution:</strong> Grant camera permissions in Windows Settings > Privacy > Camera.</p>
+            <h4>❌ PTZ not responding</h4>
+            <p><strong>Solutions:</strong></p>
+            <ul>
+                <li>Wait 2-3 seconds between PTZ commands</li>
+                <li>Reset camera position: <code>action: home</code></li>
+                <li>Reboot camera via Tapo app</li>
+                <li>Check firmware: Should be 1.4.4 Build 250922 or newer</li>
+            </ul>
         </div>
         
-        <h3>IP Camera Issues</h3>
+        <h3>📹 USB Webcam</h3>
         <div class="troubleshooting-item">
-            <h4>❌ Connection timeout</h4>
-            <p><strong>Solution:</strong> Verify IP address, username, and password. Check network connectivity.</p>
+            <h4>❌ Webcam not detected</h4>
+            <p><strong>Solutions:</strong></p>
+            <ul>
+                <li>Check Windows Camera app works</li>
+                <li>Grant permissions: Settings > Privacy > Camera</li>
+                <li>Try different USB port</li>
+                <li>Update <code>device_id</code> in <code>config.yaml</code> (try 0, 1, 2)</li>
+            </ul>
         </div>
         
+        <h3>⚡ Tapo P115 Smart Plugs</h3>
         <div class="troubleshooting-item">
-            <h4>❌ PTZ not working</h4>
-            <p><strong>Solution:</strong> Ensure camera supports PTZ. Update firmware. Test in camera's web interface.</p>
+            <h4>❌ Plug not responding</h4>
+            <p><strong>Check IPs:</strong></p>
+            <ul>
+                <li>Aircon: 192.168.0.17</li>
+                <li>Zojirushi: 192.168.0.137</li>
+                <li>Server: 192.168.0.38 (read-only)</li>
+            </ul>
+            <p><strong>Test connection:</strong></p>
+            <pre><code>python scripts/test_both_p115_plugs.py</code></pre>
+        </div>
+        
+        <h3>💡 Philips Hue</h3>
+        <div class="troubleshooting-item">
+            <h4>❌ Lights not responding</h4>
+            <p><strong>Check:</strong></p>
+            <ul>
+                <li>Hue Bridge at 192.168.0.83 is powered on</li>
+                <li>Bridge shows 3 solid lights</li>
+                <li>Username token valid in <code>config.yaml</code></li>
+            </ul>
+            <p><strong>Test connection:</strong></p>
+            <pre><code>python scripts/test_list_lights.py</code></pre>
+        </div>
+        
+        <h3>🔔 Ring Doorbell</h3>
+        <div class="troubleshooting-item">
+            <h4>❌ Ring not initialized</h4>
+            <p><strong>First-time setup requires 2FA:</strong></p>
+            <ol>
+                <li>Run initialization script</li>
+                <li>Enter Ring email/password</li>
+                <li>Complete 2FA on your phone</li>
+                <li>Token saved to <code>ring_token.cache</code></li>
+            </ol>
+        </div>
+        
+        <h3>🌤️ Netatmo Weather</h3>
+        <div class="troubleshooting-item">
+            <h4>❌ Weather data not updating</h4>
+            <p><strong>Check:</strong></p>
+            <ul>
+                <li>Refresh token valid in <code>config.yaml</code></li>
+                <li>Netatmo station powered and connected</li>
+                <li>OAuth credentials not expired</li>
+            </ul>
+            <p><strong>Reauthorize:</strong></p>
+            <pre><code>python scripts/netatmo_oauth_helper.py</code></pre>
+        </div>
+        
+        <h3>🖥️ Dashboard Issues</h3>
+        <div class="troubleshooting-item">
+            <h4>❌ Dashboard won't start</h4>
+            <p><strong>Check port 7777:</strong></p>
+            <pre><code>netstat -ano | findstr "7777"</code></pre>
+            <p><strong>Restart dashboard:</strong></p>
+            <pre><code>cd D:\Dev\repos\tapo-camera-mcp
+.\start_dashboard.ps1</code></pre>
         </div>
     </div>
     
-    <div class="help-section">
-        <h2>📡 Getting Help</h2>
-        <p>For more detailed information, use these MCP tools in Claude Desktop:</p>
+    <!-- Configuration -->
+    <div id="configuration" class="help-section" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-left: 4px solid #e91e63;">
+        <h2 style="color: white;">📡 Configuration & Files</h2>
         
+        <h3 style="color: white;">📁 Important Locations</h3>
+        <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
+            <p><strong>Project Root:</strong></p>
+            <pre><code>D:\Dev\repos\tapo-camera-mcp\</code></pre>
+            
+            <p><strong>Main Configuration:</strong></p>
+            <pre><code>D:\Dev\repos\tapo-camera-mcp\config.yaml</code></pre>
+            
+            <p><strong>Startup Script:</strong></p>
+            <pre><code>D:\Dev\repos\tapo-camera-mcp\start_dashboard.ps1</code></pre>
+            
+            <p><strong>Test Scripts:</strong></p>
+            <pre><code>D:\Dev\repos\tapo-camera-mcp\scripts\</code></pre>
+        </div>
+        
+        <h3 style="color: white;">⚙️ Configuration Keys</h3>
+        <p>Edit <code>config.yaml</code> to modify settings:</p>
         <ul>
-            <li><code>help</code> - Get comprehensive help about all tools</li>
-            <li><code>get_help</code> - Get help for specific tool</li>
-            <li><code>help category=camera</code> - Filter tools by category</li>
+            <li><strong>Cameras:</strong> <code>cameras.kitchen_cam.params</code></li>
+            <li><strong>Smart Plugs:</strong> <code>energy.tapo_p115.devices</code></li>
+            <li><strong>Hue Bridge:</strong> <code>lighting.philips_hue</code></li>
+            <li><strong>Ring Doorbell:</strong> <code>ring.email</code> and <code>ring.password</code></li>
+            <li><strong>Netatmo:</strong> <code>weather.integrations.netatmo</code></li>
+            <li><strong>Authentication:</strong> <code>auth.enabled</code> (currently disabled)</li>
+        </ul>
+    </div>
+    
+    <!-- Monitoring & Stability -->
+    <div id="monitoring" class="help-section" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-left: 4px solid #047857;">
+        <h2 style="color: white;">💪 Monitoring & Stability System (v1.8.0)</h2>
+        
+        <h3 style="color: white;">🔍 No More "It Worked Yesterday" Failures!</h3>
+        <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px; margin: 16px 0;">
+            <p style="margin-bottom: 12px;"><strong>Problem Solved:</strong> Dependencies can disappear when venv is recreated or packages are updated.</p>
+            
+            <p><strong>Solution: Complete Stability System!</strong></p>
+            <ul style="margin-top: 8px;">
+                <li><strong>Startup Validation:</strong> Checks all 20+ libraries before server starts</li>
+                <li><strong>Connection Supervisor:</strong> Polls ALL devices every 60 seconds</li>
+                <li><strong>Auto-Reconnect:</strong> Automatic recovery from device failures</li>
+                <li><strong>3-Level Alerts:</strong> Info (💬) → Warning (⚠️) → Alarm (🚨)</li>
+                <li><strong>Alert Escalation:</strong> 1 failure = warning, 3 failures = alarm</li>
+            </ul>
+        </div>
+        
+        <h3 style="color: white;">🌐 Monitoring Dashboards</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-top: 16px;">
+            <div style="background: rgba(255,255,255,0.15); padding: 16px; border-radius: 8px;">
+                <h4 style="color: white; margin-top: 0;">🏥 Health Dashboard</h4>
+                <p style="font-size: 14px; margin-bottom: 8px;"><strong>URL:</strong> <a href="/health-dashboard" style="color: #ffd700;">/health-dashboard</a></p>
+                <p style="font-size: 13px;">Real-time device status, online/offline counts, error details, auto-refresh 10s</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.15); padding: 16px; border-radius: 8px;">
+                <h4 style="color: white; margin-top: 0;">🚨 Alerts Dashboard</h4>
+                <p style="font-size: 14px; margin-bottom: 8px;"><strong>URL:</strong> <a href="/alerts" style="color: #ffd700;">/alerts</a></p>
+                <p style="font-size: 13px;">Message center, filter by severity, acknowledge alerts, last 24 hours</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.15); padding: 16px; border-radius: 8px;">
+                <h4 style="color: white; margin-top: 0;">📊 Prometheus Metrics</h4>
+                <p style="font-size: 14px; margin-bottom: 8px;"><strong>URL:</strong> <a href="/api/messages/prometheus" style="color: #ffd700;">/api/messages/prometheus</a></p>
+                <p style="font-size: 13px;">Scrape endpoint for Grafana integration, alert counts, uptime metrics</p>
+            </div>
+        </div>
+        
+        <h3 style="color: white; margin-top: 24px;">📊 Monitoring Stack Integration</h3>
+        <p>Ready for Prometheus + Loki + Grafana:</p>
+        <ul>
+            <li><strong>Prometheus:</strong> Scrape metrics from <code>/api/messages/prometheus</code></li>
+            <li><strong>Loki:</strong> Structured JSON logs via Promtail</li>
+            <li><strong>Grafana:</strong> Pre-configured dashboards for device health</li>
+        </ul>
+    </div>
+    
+    <!-- Learning Resources -->
+    <div id="resources" class="help-section">
+        <h2>🎓 Learning Resources</h2>
+        
+        <h3>📚 Claude Desktop Integration</h3>
+        <p>Use MCP tools in Claude to control your smart home:</p>
+        <pre><code>// In Claude Desktop config (claude_desktop_config.json)
+"tapo-camera-mcp": {
+  "command": "python",
+  "args": ["-m", "tapo_camera_mcp.server"],
+  "cwd": "D:/Dev/repos/tapo-camera-mcp",
+  "env": {
+    "PYTHONPATH": "D:/Dev/repos/tapo-camera-mcp/src"
+  }
+}</code></pre>
+        
+        <h3>🧪 Testing Commands</h3>
+        <div style="background: #f8f9fa; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
+            <p><strong>Test all cameras:</strong></p>
+            <pre><code>python scripts/demo.py --list</code></pre>
+            
+            <p><strong>Test kitchen camera with PTZ:</strong></p>
+            <pre><code>python scripts/demo.py --camera kitchen_cam</code></pre>
+            
+            <p><strong>Test smart plugs:</strong></p>
+            <pre><code>python scripts/test_both_p115_plugs.py</code></pre>
+            
+            <p><strong>Test Hue lights:</strong></p>
+            <pre><code>python scripts/test_list_lights.py</code></pre>
+        </div>
+        
+        <h3>📖 Documentation</h3>
+        <ul>
+            <li><strong>Stability System:</strong> <code>STABILITY_SYSTEM_COMPLETE.md</code></li>
+            <li><strong>Monitoring Integration:</strong> <code>MONITORING_INTEGRATION.md</code></li>
+            <li><strong>README:</strong> <code>README.md</code></li>
+            <li><strong>Changelog:</strong> <code>CHANGELOG.md</code></li>
         </ul>
         
-        <p><strong>Dashboard URL:</strong> <a href="http://localhost:7777">http://localhost:7777</a></p>
-        <p><strong>Start Dashboard:</strong> <code>python start.py dashboard</code></p>
+        <h3>📊 System Status</h3>
+        <p><strong>Dashboard:</strong> <a href="http://localhost:7777">http://localhost:7777</a></p>
+        <p><strong>Health Check:</strong> <a href="http://localhost:7777/api/health">http://localhost:7777/api/health</a></p>
+        <p><strong>Camera List:</strong> <a href="http://localhost:7777/api/cameras">http://localhost:7777/api/cameras</a></p>
     </div>
 </div>
 
@@ -150,11 +789,14 @@ device_id: 0</code></pre>
     background: #f8f9fa;
     border-radius: 0.5rem;
     border-left: 4px solid #0d6efd;
+    scroll-margin-top: 80px;
 }
 
 .help-section h2 {
     color: #0d6efd;
     margin-bottom: 1rem;
+    border-bottom: 2px solid #0d6efd;
+    padding-bottom: 0.5rem;
 }
 
 .help-section h3 {
@@ -163,14 +805,53 @@ device_id: 0</code></pre>
     margin-bottom: 0.75rem;
 }
 
-.camera-grid {
+.toc-section {
+    position: sticky;
+    top: 80px;
+    z-index: 10;
+}
+
+.toc-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.toc-item {
+    padding: 0.5rem;
+    background: rgba(255,255,255,0.1);
+    border-radius: 0.25rem;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
     margin: 1rem 0;
 }
 
-.camera-card {
+.info-card {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+}
+
+.info-card h4 {
+    color: #0d6efd;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.architecture-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.arch-card {
     background: white;
     padding: 1.5rem;
     border-radius: 0.5rem;
@@ -178,9 +859,69 @@ device_id: 0</code></pre>
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.camera-card h4 {
+.arch-card h4 {
     color: #0d6efd;
+    margin-bottom: 0.75rem;
+}
+
+.component-diagram {
+    margin: 1.5rem 0;
+}
+
+.component-layer {
+    background: white;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    border-radius: 0.5rem;
+    border-left: 4px solid #10b981;
+}
+
+.component-layer h4 {
+    color: #10b981;
     margin-bottom: 0.5rem;
+}
+
+.flow-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 1.5rem 0;
+}
+
+.flow-step {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 2px solid #0d6efd;
+    margin: 0.5rem 0;
+    min-width: 300px;
+    text-align: center;
+}
+
+.flow-arrow {
+    font-size: 1.5rem;
+    color: #0d6efd;
+    margin: 0.25rem 0;
+}
+
+.hardware-grid, .tool-grid, .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.hardware-card, .tool-card, .feature-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.hardware-card h4, .tool-card h4, .feature-card h4 {
+    color: #0d6efd;
+    margin-bottom: 0.75rem;
 }
 
 .troubleshooting-item {
@@ -201,6 +942,7 @@ code {
     padding: 0.2rem 0.4rem;
     border-radius: 0.25rem;
     font-family: 'Courier New', monospace;
+    font-size: 0.9em;
 }
 
 pre {
@@ -233,6 +975,20 @@ a {
 
 a:hover {
     text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .help-container {
+        padding: 1rem;
+    }
+    
+    .toc-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .architecture-grid, .hardware-grid, .tool-grid, .feature-grid {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 {% endblock %}

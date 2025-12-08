@@ -2,6 +2,17 @@
 Ring Doorbell and Alarm integration client.
 
 Uses the ring_doorbell library for unofficial API access.
+Supports Ring Alarm Base Station EU with sensors.
+
+Ring Alarm Device Kinds (from raw API):
+- hub.redsky: Base Station (Gen 2)
+- security-panel: Security Panel / Alarm Hub
+- sensor.contact: Contact Sensor (door/window)
+- sensor.motion: Motion Sensor
+- security-keypad: Keypad
+- range-extender.zwave: Range Extender
+- adapter.sidewalk: Sidewalk Bridge
+- alarm.*: Various alarm components
 """
 
 import asyncio
@@ -30,11 +41,45 @@ class RingDeviceType(Enum):
     DOORBELL = "doorbell"
     CAMERA = "camera"
     ALARM_BASE = "alarm_base"
+    SECURITY_PANEL = "security_panel"
     CONTACT_SENSOR = "contact_sensor"
     MOTION_SENSOR = "motion_sensor"
     KEYPAD = "keypad"
     RANGE_EXTENDER = "range_extender"
+    SIREN = "siren"
+    SMOKE_CO_LISTENER = "smoke_co_listener"
+    FLOOD_FREEZE_SENSOR = "flood_freeze_sensor"
+    GLASS_BREAK_SENSOR = "glass_break_sensor"
     OTHER = "other"
+
+
+# Ring device kind mappings to our types
+RING_KIND_MAP = {
+    # Base station / hub
+    "hub.redsky": RingDeviceType.ALARM_BASE,
+    "security-panel": RingDeviceType.SECURITY_PANEL,
+    "base_station_v1": RingDeviceType.ALARM_BASE,
+    # Sensors
+    "sensor.contact": RingDeviceType.CONTACT_SENSOR,
+    "security.sensor.contact": RingDeviceType.CONTACT_SENSOR,
+    "sensor.motion": RingDeviceType.MOTION_SENSOR,
+    "security.sensor.motion": RingDeviceType.MOTION_SENSOR,
+    "sensor.flood-freeze": RingDeviceType.FLOOD_FREEZE_SENSOR,
+    "sensor.glassbreak": RingDeviceType.GLASS_BREAK_SENSOR,
+    # Keypad
+    "security-keypad": RingDeviceType.KEYPAD,
+    "keypad": RingDeviceType.KEYPAD,
+    # Range extender
+    "range-extender.zwave": RingDeviceType.RANGE_EXTENDER,
+    "range-extender": RingDeviceType.RANGE_EXTENDER,
+    # Siren
+    "siren": RingDeviceType.SIREN,
+    "siren.outdoor-strobe": RingDeviceType.SIREN,
+    # Smoke/CO
+    "listener.smoke-co": RingDeviceType.SMOKE_CO_LISTENER,
+    "alarm.smoke": RingDeviceType.SMOKE_CO_LISTENER,
+    "alarm.co": RingDeviceType.SMOKE_CO_LISTENER,
+}
 
 
 @dataclass
@@ -47,6 +92,7 @@ class RingDevice:
     battery_level: Optional[int] = None
     is_online: bool = True
     last_activity: Optional[datetime] = None
+    location_id: Optional[str] = None
     extra_data: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
@@ -56,6 +102,7 @@ class RingDevice:
             "device_type": self.device_type.value,
             "battery_level": self.battery_level,
             "is_online": self.is_online,
+            "location_id": self.location_id,
             "last_activity": (
                 self.last_activity.isoformat() if self.last_activity else None
             ),
@@ -69,11 +116,16 @@ class RingSensor:
 
     id: str
     name: str
-    sensor_type: str  # contact, motion
+    sensor_type: str  # contact, motion, flood_freeze, glassbreak, smoke_co
     is_open: Optional[bool] = None  # For contact sensors
     motion_detected: bool = False  # For motion sensors
     battery_level: Optional[int] = None
     is_online: bool = True
+    tamper_status: Optional[str] = None  # ok, tamper
+    fault_status: bool = False
+    location_id: Optional[str] = None
+    zone_id: Optional[str] = None
+    extra_data: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
@@ -84,6 +136,42 @@ class RingSensor:
             "motion_detected": self.motion_detected,
             "battery_level": self.battery_level,
             "is_online": self.is_online,
+            "tamper_status": self.tamper_status,
+            "fault_status": self.fault_status,
+            "location_id": self.location_id,
+            "zone_id": self.zone_id,
+            **self.extra_data,
+        }
+
+
+@dataclass
+class RingBaseStation:
+    """Ring Alarm Base Station data."""
+
+    id: str
+    name: str
+    location_id: str
+    mode: RingAlarmMode
+    is_online: bool = True
+    siren_enabled: bool = True
+    firmware: Optional[str] = None
+    volume: Optional[int] = None  # 0-100
+    brightness: Optional[int] = None  # LED brightness
+    extra_data: dict = field(default_factory=dict)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "location_id": self.location_id,
+            "mode": self.mode.value,
+            "mode_name": self.mode.name.lower(),
+            "is_online": self.is_online,
+            "siren_enabled": self.siren_enabled,
+            "firmware": self.firmware,
+            "volume": self.volume,
+            "brightness": self.brightness,
+            **self.extra_data,
         }
 
 
@@ -93,7 +181,13 @@ class RingAlarmStatus:
 
     mode: RingAlarmMode
     is_armed: bool
+    base_station: Optional[RingBaseStation] = None
     sensors: list[RingSensor] = field(default_factory=list)
+    keypads: list[RingDevice] = field(default_factory=list)
+    all_devices: list[RingDevice] = field(default_factory=list)
+    entry_delay_active: bool = False
+    exit_delay_active: bool = False
+    siren_active: bool = False
     last_updated: datetime = field(default_factory=datetime.now)
 
     def to_dict(self) -> dict:
@@ -101,13 +195,26 @@ class RingAlarmStatus:
             "mode": self.mode.value,
             "mode_name": self.mode.name.lower(),
             "is_armed": self.is_armed,
+            "base_station": self.base_station.to_dict() if self.base_station else None,
             "sensors": [s.to_dict() for s in self.sensors],
+            "keypads": [k.to_dict() for k in self.keypads],
+            "sensor_count": len(self.sensors),
+            "all_device_count": len(self.all_devices),
+            "entry_delay_active": self.entry_delay_active,
+            "exit_delay_active": self.exit_delay_active,
+            "siren_active": self.siren_active,
             "last_updated": self.last_updated.isoformat(),
         }
 
 
 class RingClient:
-    """Ring doorbell and alarm client."""
+    """Ring doorbell and alarm client with full alarm system support."""
+
+    # Ring Alarm API endpoints
+    LOCATIONS_ENDPOINT = "/clients_api/locations"
+    ALARM_DEVICES_ENDPOINT = "/clients_api/ring_devices"
+    ALARM_MODE_ENDPOINT = "/clients_api/locations/{location_id}/devices/{device_id}/mode"
+    SIREN_ENDPOINT = "/clients_api/locations/{location_id}/devices/{device_id}/siren"
 
     def __init__(
         self,
@@ -128,6 +235,10 @@ class RingClient:
         self._2fa_pending = False
         self._initialized = False
 
+        # Raw API data for alarm devices
+        self._raw_devices_data: dict[str, Any] = {}
+        self._locations: list[dict] = []
+
     async def initialize(self) -> bool:
         """Initialize Ring connection."""
         try:
@@ -144,6 +255,9 @@ class RingClient:
                 await asyncio.to_thread(self._ring.update_data)
                 self._initialized = True
                 logger.info("Ring initialized from cached token")
+
+                # Fetch additional alarm data
+                await self._fetch_alarm_data()
                 return True
 
             # Need fresh authentication
@@ -172,6 +286,9 @@ class RingClient:
             await asyncio.to_thread(self._ring.update_data)
             self._initialized = True
             logger.info("Ring initialized successfully")
+
+            # Fetch additional alarm data
+            await self._fetch_alarm_data()
 
         except ImportError:
             logger.warning("ring_doorbell library not installed")
@@ -205,6 +322,9 @@ class RingClient:
             await asyncio.to_thread(self._ring.update_data)
             self._initialized = True
             logger.info("Ring 2FA completed successfully")
+
+            # Fetch additional alarm data
+            await self._fetch_alarm_data()
         except Exception:
             logger.exception("Ring 2FA failed")
             return False
@@ -225,11 +345,183 @@ class RingClient:
         elapsed = (datetime.now() - self._cache_time[key]).total_seconds()
         return elapsed < self.cache_ttl
 
-    async def _update_data(self):
-        """Update Ring data from API."""
+    async def _update_data(self, force: bool = False):
+        """Update Ring data from API.
+        
+        Args:
+            force: If True, bypass cache and force refresh from Ring API.
+                   Use sparingly due to rate limiting and async issues.
+        """
         if not self._initialized or not self._ring:
             return
-        await asyncio.to_thread(self._ring.update_data)
+        
+        # Check if we need to update (use longer interval to avoid async issues)
+        update_cache_key = "_last_update"
+        if not force and self._is_cache_valid(update_cache_key):
+            return  # Data is fresh enough
+        
+        try:
+            # Use synchronous update in executor to avoid nested async issues
+            # The ring_doorbell library has internal async that conflicts with
+            # calling update_data from within an async context
+            await asyncio.to_thread(self._ring.update_data)
+            await self._fetch_alarm_data()
+            
+            # Mark as updated with longer TTL
+            self._cache_time[update_cache_key] = datetime.now()
+        except Exception as e:
+            # Log but don't fail - use stale data
+            logger.warning(f"Ring data refresh failed: {e}, using cached data")
+
+    async def _fetch_alarm_data(self):
+        """Fetch raw alarm device data from Ring API.
+        
+        Ring Alarm uses a separate API structure from doorbells:
+        - Doorbells: /clients_api/ring_devices (video devices)
+        - Alarm: /clients_api/locations/{location_id} (security panel + Z-Wave devices)
+        """
+        if not self._ring:
+            return
+
+        try:
+            # Get raw devices_data which includes doorbells and some alarm devices
+            self._raw_devices_data = self._ring.devices_data.copy()
+            logger.info(f"Ring raw device types available: {list(self._raw_devices_data.keys())}")
+
+            # Log what we found for debugging
+            total_devices = 0
+            alarm_device_count = 0
+            for dev_type, devices in self._raw_devices_data.items():
+                if devices:
+                    total_devices += len(devices)
+                    logger.info(f"Ring: Found {len(devices)} '{dev_type}' devices")
+                    for dev_id, dev_data in devices.items():
+                        kind = dev_data.get("kind", "unknown")
+                        name = dev_data.get("description", "Unknown")
+                        logger.debug(f"  - {name} (kind={kind}, id={dev_id})")
+                        
+                        # Count alarm-related devices
+                        if any(k in kind.lower() for k in ["hub", "base", "panel", "sensor", "keypad", "siren"]):
+                            alarm_device_count += 1
+
+            logger.info(f"Ring: Total {total_devices} devices, {alarm_device_count} alarm-related")
+
+            # CRITICAL: Alarm devices are location-specific and accessed via locations API
+            # The ring_doorbell library's devices_data may not include all alarm devices
+            # We need to query locations endpoint directly
+            await self._fetch_locations_alarm_data()
+
+        except Exception as e:
+            logger.warning(f"Failed to fetch alarm data: {e}")
+
+    async def _fetch_locations_alarm_data(self):
+        """Fetch alarm devices from locations/security panel API.
+        
+        Ring Alarm base station and sensors are under locations, not ring_devices.
+        This is why doorbell works but alarm doesn't - different API endpoints!
+        """
+        if not self._ring or not self._auth:
+            return
+
+        try:
+            # Access locations endpoint directly
+            # Ring Alarm devices are under locations, not ring_devices
+            # Use Ring's internal async_query method (handles auth)
+            endpoint = self.LOCATIONS_ENDPOINT  # "/clients_api/locations"
+            response = await self._ring._async_query(endpoint, method="GET")
+            
+            if response.status_code == 200:
+                locations_data = response.json()
+                self._locations = locations_data if isinstance(locations_data, list) else []
+                
+                logger.info(f"Ring: Found {len(self._locations)} locations")
+                
+                # Each location can have a security_panel with alarm devices
+                for location in self._locations:
+                    location_id = location.get("id")
+                    location_name = location.get("name", "Unknown Location")
+                    
+                    # Check for security panel (base station)
+                    security_panel = location.get("security_panel")
+                    if security_panel:
+                        logger.info(f"Ring: Location '{location_name}' has security panel (alarm system)")
+                        
+                        # Security panel has devices list (sensors, keypads, etc.)
+                        panel_devices = security_panel.get("devices", [])
+                        logger.info(f"Ring: Security panel has {len(panel_devices)} devices")
+                        
+                        # Add security panel as base station to raw devices
+                        if "other" not in self._raw_devices_data:
+                            self._raw_devices_data["other"] = {}
+                        
+                        # Add base station
+                        base_station_id = security_panel.get("id")
+                        if base_station_id:
+                            self._raw_devices_data["other"][str(base_station_id)] = {
+                                "kind": "security-panel",
+                                "description": f"{location_name} Base Station",
+                                "location_id": str(location_id),
+                                "mode": security_panel.get("mode", "none"),
+                                "firmware_version": security_panel.get("firmware_version"),
+                                "status": "online" if security_panel.get("online") else "offline",
+                            }
+                        
+                        # Add all alarm devices from security panel
+                        for device in panel_devices:
+                            device_id = device.get("device_id") or device.get("id")
+                            if device_id:
+                                device_kind = device.get("kind", "unknown")
+                                device_name = device.get("description") or device.get("name", f"Device {device_id}")
+                                
+                                self._raw_devices_data["other"][str(device_id)] = {
+                                    "kind": device_kind,
+                                    "description": device_name,
+                                    "location_id": str(location_id),
+                                    "battery_life": device.get("battery_percentage"),
+                                    "status": device.get("status", "online"),
+                                    "firmware_version": device.get("firmware_version"),
+                                    "zwave_node_id": device.get("zwave_node_id"),
+                                    "zone_id": device.get("zone_id"),
+                                    "tamper_status": device.get("tamper_status"),
+                                    "fault_status": device.get("fault_status"),
+                                    # Sensor-specific fields
+                                    "faulted": device.get("faulted", False),
+                                    "motion_detected": device.get("motion_detected", False),
+                                }
+                                
+                                logger.debug(f"Ring: Added alarm device '{device_name}' ({device_kind}) from location '{location_name}'")
+                    else:
+                        logger.debug(f"Ring: Location '{location_name}' has no security panel (no alarm system)")
+            else:
+                logger.warning(f"Ring: Failed to fetch locations (status {response.status_code})")
+
+        except Exception as e:
+            logger.warning(f"Failed to fetch locations alarm data: {e}")
+            logger.debug(f"Exception details: {type(e).__name__}: {e}", exc_info=True)
+
+    def _get_device_type(self, kind: str) -> RingDeviceType:
+        """Map Ring device kind to our device type."""
+        kind_lower = kind.lower() if kind else ""
+        if kind_lower in RING_KIND_MAP:
+            return RING_KIND_MAP[kind_lower]
+
+        # Fuzzy matching for unknown kinds
+        if "contact" in kind_lower or "door" in kind_lower or "window" in kind_lower:
+            return RingDeviceType.CONTACT_SENSOR
+        if "motion" in kind_lower:
+            return RingDeviceType.MOTION_SENSOR
+        if "keypad" in kind_lower:
+            return RingDeviceType.KEYPAD
+        if "hub" in kind_lower or "base" in kind_lower or "panel" in kind_lower:
+            return RingDeviceType.ALARM_BASE
+        if "range" in kind_lower or "extender" in kind_lower:
+            return RingDeviceType.RANGE_EXTENDER
+        if "siren" in kind_lower:
+            return RingDeviceType.SIREN
+        if "smoke" in kind_lower or "co" in kind_lower:
+            return RingDeviceType.SMOKE_CO_LISTENER
+
+        return RingDeviceType.OTHER
 
     async def get_doorbells(self) -> list[RingDevice]:
         """Get all Ring doorbells."""
@@ -279,8 +571,76 @@ class RingClient:
         else:
             return devices
 
+    async def get_alarm_devices(self) -> list[RingDevice]:
+        """Get all Ring Alarm devices from raw API data."""
+        if not self._initialized:
+            logger.debug("Ring not initialized, returning empty alarm devices")
+            return []
+
+        cache_key = "alarm_devices"
+        if self._is_cache_valid(cache_key):
+            return self._cache[cache_key]
+
+        try:
+            # Don't force refresh - use cached data from initialization
+            # This avoids the nested async event loop issue
+            if not self._raw_devices_data:
+                logger.warning("No raw Ring device data available")
+                return []
+            
+            devices = []
+
+            # Check all device categories for alarm-related devices
+            alarm_kinds = {"hub", "base", "panel", "sensor", "keypad", "siren", "range_extender"}
+            
+            for category, category_devices in self._raw_devices_data.items():
+                for dev_id, dev_data in category_devices.items():
+                    kind = dev_data.get("kind", "").lower()
+                    
+                    # Check if this is an alarm-related device
+                    is_alarm_device = any(ak in kind for ak in alarm_kinds)
+                    
+                    if is_alarm_device:
+                        device_type = self._get_device_type(kind)
+                        name = dev_data.get("description", f"Device {dev_id}")
+                        battery = dev_data.get("battery_life")
+                        location_id = dev_data.get("location_id")
+
+                        # Determine online status
+                        is_online = True
+                        if "status" in dev_data:
+                            is_online = dev_data["status"] not in ["offline", "disconnected"]
+
+                        device = RingDevice(
+                            id=str(dev_id),
+                            name=name,
+                            device_type=device_type,
+                            battery_level=battery,
+                            is_online=is_online,
+                            location_id=location_id,
+                            extra_data={
+                                "kind": kind,
+                                "category": category,
+                                "firmware": dev_data.get("firmware_version"),
+                                "zwave_node_id": dev_data.get("zwave_node_id"),
+                                "serial": dev_data.get("serial_number"),
+                            },
+                        )
+                        devices.append(device)
+                        logger.debug(f"Found alarm device: {name} ({kind})")
+
+            logger.info(f"Ring: Found {len(devices)} alarm devices in raw data")
+            
+            self._cache[cache_key] = devices
+            self._cache_time[cache_key] = datetime.now()
+            return devices
+
+        except Exception:
+            logger.exception("Failed to get Ring alarm devices")
+            return []
+
     async def get_alarm_status(self) -> Optional[RingAlarmStatus]:
-        """Get Ring alarm status."""
+        """Get Ring alarm status including sensors and base station."""
         if not self._initialized:
             return None
 
@@ -291,82 +651,248 @@ class RingClient:
         try:
             await self._update_data()
 
-            # Get alarm from groups
-            alarm_groups = (
-                self._ring.groups() if hasattr(self._ring, "groups") else {}
-            )
-
             mode = RingAlarmMode.DISARMED
-            sensors = []
+            base_station: Optional[RingBaseStation] = None
+            sensors: list[RingSensor] = []
+            keypads: list[RingDevice] = []
+            all_devices: list[RingDevice] = []
+            siren_active = False
+            entry_delay = False
+            exit_delay = False
 
-            # Try to get alarm mode from devices
-            for _group_name, group_devices in alarm_groups.items():
-                for device in group_devices:
-                    if hasattr(device, "mode"):
-                        mode_str = device.mode
-                        if mode_str == "all":
-                            mode = RingAlarmMode.AWAY
-                        elif mode_str == "some":
-                            mode = RingAlarmMode.HOME
-                        else:
-                            mode = RingAlarmMode.DISARMED
-                        break
+            # Process raw 'other' devices (alarm devices are here)
+            other_devices = self._raw_devices_data.get("other", {})
 
-            # Get sensors
-            all_devices = self._ring.devices()
-            if "other" in all_devices:
-                for device in all_devices["other"]:
-                    device_type = (
-                        str(device.kind).lower()
-                        if hasattr(device, "kind")
-                        else ""
+            for dev_id, dev_data in other_devices.items():
+                kind = dev_data.get("kind", "")
+                device_type = self._get_device_type(kind)
+                name = dev_data.get("description", f"Device {dev_id}")
+                location_id = dev_data.get("location_id")
+
+                # Extract common fields
+                battery = dev_data.get("battery_life")
+                is_online = dev_data.get("status") not in ["offline", "disconnected", None] \
+                    if "status" in dev_data else True
+
+                # Create base device
+                device = RingDevice(
+                    id=str(dev_id),
+                    name=name,
+                    device_type=device_type,
+                    battery_level=battery,
+                    is_online=is_online,
+                    location_id=location_id,
+                    extra_data={"kind": kind},
+                )
+                all_devices.append(device)
+
+                # Handle specific device types
+                if device_type in (RingDeviceType.ALARM_BASE, RingDeviceType.SECURITY_PANEL):
+                    # Extract mode from base station
+                    mode_str = dev_data.get("mode", "none")
+                    if mode_str == "all":
+                        mode = RingAlarmMode.AWAY
+                    elif mode_str == "some":
+                        mode = RingAlarmMode.HOME
+                    else:
+                        mode = RingAlarmMode.DISARMED
+
+                    siren_active = dev_data.get("siren_status", {}).get("state") == "active"
+
+                    base_station = RingBaseStation(
+                        id=str(dev_id),
+                        name=name,
+                        location_id=location_id or "",
+                        mode=mode,
+                        is_online=is_online,
+                        firmware=dev_data.get("firmware_version"),
+                        volume=dev_data.get("volume"),
+                        brightness=dev_data.get("brightness"),
+                        extra_data={
+                            "kind": kind,
+                            "alarm_state": dev_data.get("alarm_state"),
+                        },
                     )
 
-                    if "contact" in device_type or "sensor" in device_type:
-                        is_open = (
-                            device.is_open
-                            if hasattr(device, "is_open")
-                            else None
-                        )
-                        motion = (
-                            device.motion_detected
-                            if hasattr(device, "motion_detected")
-                            else False
-                        )
-                        battery = (
-                            device.battery_life
-                            if hasattr(device, "battery_life")
-                            else None
-                        )
-                        sensor = RingSensor(
-                            id=str(device.id),
-                            name=device.name,
-                            sensor_type=(
-                                "contact" if "contact" in device_type else "motion"
-                            ),
-                            is_open=is_open,
-                            motion_detected=motion,
-                            battery_level=battery,
-                            is_online=True,
-                        )
-                        sensors.append(sensor)
+                elif device_type == RingDeviceType.CONTACT_SENSOR:
+                    # Contact sensor (door/window)
+                    faulted = dev_data.get("faulted", False)
+                    tamper = dev_data.get("tamper_status")
+
+                    sensor = RingSensor(
+                        id=str(dev_id),
+                        name=name,
+                        sensor_type="contact",
+                        is_open=faulted,  # faulted = open
+                        battery_level=battery,
+                        is_online=is_online,
+                        tamper_status=tamper,
+                        fault_status=faulted,
+                        location_id=location_id,
+                        zone_id=dev_data.get("zone_id"),
+                        extra_data={"kind": kind},
+                    )
+                    sensors.append(sensor)
+
+                elif device_type == RingDeviceType.MOTION_SENSOR:
+                    # Motion sensor
+                    motion = dev_data.get("motion_detected", False)
+                    tamper = dev_data.get("tamper_status")
+
+                    sensor = RingSensor(
+                        id=str(dev_id),
+                        name=name,
+                        sensor_type="motion",
+                        motion_detected=motion,
+                        battery_level=battery,
+                        is_online=is_online,
+                        tamper_status=tamper,
+                        location_id=location_id,
+                        zone_id=dev_data.get("zone_id"),
+                        extra_data={"kind": kind},
+                    )
+                    sensors.append(sensor)
+
+                elif device_type == RingDeviceType.KEYPAD:
+                    keypads.append(device)
+
+                elif device_type == RingDeviceType.FLOOD_FREEZE_SENSOR:
+                    # Flood/freeze sensor
+                    flood = dev_data.get("flood", {}).get("faulted", False)
+                    freeze = dev_data.get("freeze", {}).get("faulted", False)
+
+                    sensor = RingSensor(
+                        id=str(dev_id),
+                        name=name,
+                        sensor_type="flood_freeze",
+                        fault_status=flood or freeze,
+                        battery_level=battery,
+                        is_online=is_online,
+                        location_id=location_id,
+                        extra_data={
+                            "kind": kind,
+                            "flood_detected": flood,
+                            "freeze_detected": freeze,
+                        },
+                    )
+                    sensors.append(sensor)
+
+                elif device_type == RingDeviceType.SMOKE_CO_LISTENER:
+                    # Smoke/CO listener
+                    smoke = dev_data.get("smoke", {}).get("alarm_status") == "active"
+                    co = dev_data.get("co", {}).get("alarm_status") == "active"
+
+                    sensor = RingSensor(
+                        id=str(dev_id),
+                        name=name,
+                        sensor_type="smoke_co",
+                        fault_status=smoke or co,
+                        battery_level=battery,
+                        is_online=is_online,
+                        location_id=location_id,
+                        extra_data={
+                            "kind": kind,
+                            "smoke_detected": smoke,
+                            "co_detected": co,
+                        },
+                    )
+                    sensors.append(sensor)
+
+            # Check for entry/exit delay from alarm state
+            if base_station and base_station.extra_data.get("alarm_state"):
+                alarm_state = base_station.extra_data["alarm_state"]
+                entry_delay = "entry" in str(alarm_state).lower()
+                exit_delay = "exit" in str(alarm_state).lower()
 
             status = RingAlarmStatus(
                 mode=mode,
                 is_armed=mode != RingAlarmMode.DISARMED,
+                base_station=base_station,
                 sensors=sensors,
+                keypads=keypads,
+                all_devices=all_devices,
+                entry_delay_active=entry_delay,
+                exit_delay_active=exit_delay,
+                siren_active=siren_active,
             )
 
             self._cache[cache_key] = status
             self._cache_time[cache_key] = datetime.now()
+            return status
+
         except Exception:
             logger.exception("Failed to get Ring alarm status")
             return None
-        else:
-            return status
 
     async def set_alarm_mode(self, mode: RingAlarmMode) -> bool:
-        """Set Ring alarm mode."""
+        """Set Ring alarm mode (arm/disarm)."""
+        if not self._initialized:
+            return False
+
+        try:
+            # Clear cache
+            self._cache.pop("alarm_status", None)
+            self._cache.pop("alarm_devices", None)
+
+            # Find base station or security panel from raw data
+            other_devices = self._raw_devices_data.get("other", {})
+            base_station_id = None
+            location_id = None
+
+            for dev_id, dev_data in other_devices.items():
+                kind = dev_data.get("kind", "")
+                device_type = self._get_device_type(kind)
+
+                if device_type in (RingDeviceType.ALARM_BASE, RingDeviceType.SECURITY_PANEL):
+                    base_station_id = dev_id
+                    location_id = dev_data.get("location_id")
+                    break
+
+            if not base_station_id or not location_id:
+                logger.warning("No Ring alarm base station found")
+                return False
+
+            # Set mode via Ring API
+            # The ring_doorbell library's Ring.groups() doesn't expose alarm mode setting
+            # We need to use the raw API directly
+            endpoint = f"/clients_api/locations/{location_id}/devices/{base_station_id}/mode"
+            try:
+                response = await self._ring.async_query(
+                    endpoint,
+                    method="PUT",
+                    json={"mode": mode.value},
+                )
+                logger.info(f"Ring alarm mode set to {mode.name} via API")
+                return True
+            except AttributeError:
+                # Fallback: Try using groups() method
+                alarm_groups = (
+                    self._ring.groups() if hasattr(self._ring, "groups") else {}
+                )
+                for _group_name, group_devices in alarm_groups.items():
+                    for device in group_devices:
+                        if hasattr(device, "set_mode"):
+                            await asyncio.to_thread(device.set_mode, mode.value)
+                            logger.info(f"Ring alarm mode set to {mode.name} via groups")
+                            return True
+
+            logger.warning("Could not set Ring alarm mode")
+            return False
+
+        except Exception:
+            logger.exception("Failed to set Ring alarm mode")
+            return False
+
+    async def trigger_siren(self, activate: bool = True, duration: int = 30) -> bool:
+        """Trigger or stop the Ring alarm siren.
+
+        Args:
+            activate: True to activate siren, False to deactivate
+            duration: Siren duration in seconds (only for activation)
+
+        Returns:
+            True if successful
+        """
         if not self._initialized:
             return False
 
@@ -374,24 +900,102 @@ class RingClient:
             # Clear cache
             self._cache.pop("alarm_status", None)
 
-            # Find alarm device and set mode
-            alarm_groups = (
-                self._ring.groups() if hasattr(self._ring, "groups") else {}
-            )
+            # Find base station
+            other_devices = self._raw_devices_data.get("other", {})
+            base_station_id = None
+            location_id = None
 
-            for _group_name, group_devices in alarm_groups.items():
-                for device in group_devices:
-                    if hasattr(device, "set_mode"):
-                        await asyncio.to_thread(device.set_mode, mode.value)
-                        logger.info(f"Ring alarm mode set to {mode.name}")
-                        return True
+            for dev_id, dev_data in other_devices.items():
+                kind = dev_data.get("kind", "")
+                device_type = self._get_device_type(kind)
 
-            logger.warning("No Ring alarm device found to set mode")
+                if device_type in (RingDeviceType.ALARM_BASE, RingDeviceType.SECURITY_PANEL):
+                    base_station_id = dev_id
+                    location_id = dev_data.get("location_id")
+                    break
+
+            if not base_station_id or not location_id:
+                logger.warning("No Ring alarm base station found for siren control")
+                return False
+
+            # Siren control via API
+            endpoint = f"/clients_api/locations/{location_id}/devices/{base_station_id}/siren"
+            state = "on" if activate else "off"
+
+            try:
+                response = await self._ring.async_query(
+                    endpoint,
+                    method="PUT",
+                    json={"state": state, "duration": duration},
+                )
+                action = "activated" if activate else "deactivated"
+                logger.info(f"Ring alarm siren {action}")
+                return True
+            except Exception as e:
+                logger.error(f"Failed to control siren: {e}")
+                return False
+
         except Exception:
-            logger.exception("Failed to set Ring alarm mode")
+            logger.exception("Failed to control Ring siren")
             return False
-        else:
-            return False
+
+    async def get_alarm_events(self, limit: int = 50) -> list[dict]:
+        """Get recent Ring Alarm events (entry, exit, arm, disarm, etc.)."""
+        if not self._initialized:
+            return []
+
+        cache_key = f"alarm_events_{limit}"
+        if self._is_cache_valid(cache_key):
+            return self._cache[cache_key]
+
+        try:
+            events = []
+
+            # Get location IDs from alarm devices
+            location_ids = set()
+            other_devices = self._raw_devices_data.get("other", {})
+            for dev_data in other_devices.values():
+                if loc := dev_data.get("location_id"):
+                    location_ids.add(loc)
+
+            # Query alarm history for each location
+            for location_id in location_ids:
+                try:
+                    endpoint = f"/clients_api/locations/{location_id}/history"
+                    response = await self._ring.async_query(
+                        endpoint,
+                        method="GET",
+                        extra_params={"limit": limit},
+                    )
+                    if hasattr(response, "json"):
+                        history = response.json()
+                        for event in history:
+                            events.append({
+                                "id": event.get("id"),
+                                "event_type": event.get("kind", "unknown"),
+                                "device_id": event.get("device_id"),
+                                "device_name": event.get("device_description", "Unknown"),
+                                "timestamp": event.get("created_at"),
+                                "location_id": location_id,
+                                "extra": {
+                                    "mode": event.get("mode"),
+                                    "actor": event.get("actor"),
+                                },
+                            })
+                except Exception as e:
+                    logger.debug(f"Could not fetch alarm history for {location_id}: {e}")
+
+            # Sort by timestamp
+            events.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+            events = events[:limit]
+
+            self._cache[cache_key] = events
+            self._cache_time[cache_key] = datetime.now()
+            return events
+
+        except Exception:
+            logger.exception("Failed to get Ring alarm events")
+            return []
 
     async def get_doorbell_snapshot(self, device_id: str) -> Optional[bytes]:
         """Get a snapshot from a Ring doorbell."""
@@ -465,7 +1069,17 @@ class RingClient:
         """Get a summary of Ring status for dashboard."""
         doorbells = await self.get_doorbells()
         alarm_status = await self.get_alarm_status()
-        events = await self.get_recent_events(limit=5)
+        doorbell_events = await self.get_recent_events(limit=5)
+        alarm_events = await self.get_alarm_events(limit=5)
+
+        # Combine and sort all events
+        all_events = doorbell_events + alarm_events
+        all_events.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+
+        # Alarm device summary
+        alarm_devices = await self.get_alarm_devices()
+        contact_sensors = [d for d in alarm_devices if d.device_type == RingDeviceType.CONTACT_SENSOR]
+        motion_sensors = [d for d in alarm_devices if d.device_type == RingDeviceType.MOTION_SENSOR]
 
         return {
             "initialized": self._initialized,
@@ -473,8 +1087,16 @@ class RingClient:
             "doorbells": [d.to_dict() for d in doorbells],
             "doorbell_count": len(doorbells),
             "alarm": alarm_status.to_dict() if alarm_status else None,
-            "recent_events": events,
-            "last_event": events[0] if events else None,
+            "alarm_devices": {
+                "total": len(alarm_devices),
+                "contact_sensors": len(contact_sensors),
+                "motion_sensors": len(motion_sensors),
+                "base_station": alarm_status.base_station.to_dict() if alarm_status and alarm_status.base_station else None,
+            },
+            "recent_events": all_events[:10],
+            "doorbell_events": doorbell_events,
+            "alarm_events": alarm_events,
+            "last_event": all_events[0] if all_events else None,
         }
 
 

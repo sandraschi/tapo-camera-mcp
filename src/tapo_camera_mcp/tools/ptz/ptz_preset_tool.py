@@ -48,7 +48,7 @@ class PTZPresetTool(BaseTool):
                 ..., description="Preset operation: 'list', 'save', 'recall', 'home'"
             )
             camera_id: str = Field(..., description="Camera ID to control")
-            preset_name: Optional[str] = Field(None, description="Preset name for save operations")
+            preset_name: Optional[str] = Field(None, description="Preset name for save/recall operations")
             preset_id: Optional[int] = Field(None, description="Preset ID for recall operations")
 
     async def execute(
@@ -67,7 +67,7 @@ class PTZPresetTool(BaseTool):
             if operation == "save":
                 return await self._save_preset(camera_id, preset_name)
             if operation == "recall":
-                return await self._recall_preset(camera_id, preset_id)
+                return await self._recall_preset(camera_id, preset_id, preset_name)
             if operation == "home":
                 return await self._go_home(camera_id)
             return {
@@ -137,12 +137,22 @@ class PTZPresetTool(BaseTool):
             "timestamp": time.time(),
         }
 
-    async def _recall_preset(self, camera_id: str, preset_id: Optional[int]) -> Dict[str, Any]:
-        """Recall PTZ preset by ID."""
+    async def _recall_preset(self, camera_id: str, preset_id: Optional[int], preset_name: Optional[str] = None) -> Dict[str, Any]:
+        """Recall PTZ preset by ID or name."""
+        # If preset_id is not provided but preset_name is, try to find the ID
+        if preset_id is None and preset_name:
+            # Get list of presets to find ID by name
+            presets_list = await self._list_presets(camera_id)
+            if presets_list.get("success") and presets_list.get("presets"):
+                for preset in presets_list["presets"]:
+                    if preset.get("name") == preset_name:
+                        preset_id = preset.get("id")
+                        break
+        
         if preset_id is None:
             return {
                 "success": False,
-                "error": "Preset ID is required for recall operation",
+                "error": "Preset ID or preset_name is required for recall operation",
                 "timestamp": time.time(),
             }
 

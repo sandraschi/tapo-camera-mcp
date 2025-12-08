@@ -6,13 +6,6 @@ services:
       context: ../..
       dockerfile: Dockerfile
     container_name: myhomecontrol-app
-    environment:
-      - PYTHONUNBUFFERED=1
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=myhomecontrol
-      - POSTGRES_USER=myhomecontrol
-      - POSTGRES_PASSWORD=myhomecontrol
     ports:
       - "7777:7777"
     volumes:
@@ -31,6 +24,17 @@ services:
       retries: 10
     networks:
       - myhomecontrol
+    # On Windows, add extra_hosts to access devices on host network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CONTAINER=yes
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=myhomecontrol
+      - POSTGRES_USER=myhomecontrol
+      - POSTGRES_PASSWORD=myhomecontrol
     # For Linux USB webcam access, uncomment and adjust:
     # devices:
     #   - "/dev/video0:/dev/video0"
@@ -61,6 +65,7 @@ volumes:
 
 networks:
   myhomecontrol:
-    external: true
+    driver: bridge
+    # external: true  # Commented out - create network if it doesn't exist
 
 

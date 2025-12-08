@@ -30,6 +30,8 @@ class WebCamera(BaseCamera):
         self._frame = None
         self._frame_lock = asyncio.Lock()
         self._mock_webcam = mock_webcam
+        self._in_use_by_another_app = False
+        self._in_use_error_message = None
 
     async def _capture_loop(self):
         """Background task to capture frames."""
@@ -48,6 +50,9 @@ class WebCamera(BaseCamera):
 
     async def connect(self) -> bool:
         """Initialize connection to the webcam."""
+        self._in_use_by_another_app = False
+        self._in_use_error_message = None
+        
         try:
             if self._mock_webcam:
                 # Use mock webcam for testing
@@ -56,14 +61,80 @@ class WebCamera(BaseCamera):
             else:
                 # Use real webcam for production
                 self._cap = cv2.VideoCapture(self._device_id)
+                
+                # Check if camera opened successfully
                 if not self._cap.isOpened():
-                    raise RuntimeError(f"Could not open webcam device {self._device_id}")
+                    # Try to detect if camera is in use by another application
+                    # On Windows, this often happens with Teams, Zoom, etc.
+                    import platform
+                    if platform.system() == "Windows":
+                        # Try to read a frame to see if we get a specific error
+                        try:
+                            ret, frame = self._cap.read()
+                            if not ret:
+                                # Camera exists but can't read - likely in use
+                                self._in_use_by_another_app = True
+                                self._in_use_error_message = f"USB camera device {self._device_id} is in use by another application (e.g., Microsoft Teams, Zoom, Skype). Close the other application and try again."
+                                logger.warning(self._in_use_error_message)
+                                raise RuntimeError(self._in_use_error_message)
+                        except Exception as read_error:
+                            # Check error message for common patterns
+                            error_str = str(read_error).lower()
+                            if "access" in error_str or "busy" in error_str or "in use" in error_str:
+                                self._in_use_by_another_app = True
+                                self._in_use_error_message = f"USB camera device {self._device_id} is locked by another application. Close Microsoft Teams, Zoom, or other video apps and try again."
+                                logger.warning(self._in_use_error_message)
+                                raise RuntimeError(self._in_use_error_message) from read_error
+                    
+                    # Generic error if we can't determine the cause
+                    raise RuntimeError(f"Could not open webcam device {self._device_id}. Camera may be in use by another application or not available.")
+                
+                # Test if we can actually read frames (camera might be "opened" but locked)
+                try:
+                    ret, frame = self._cap.read()
+                    if not ret:
+                        self._in_use_by_another_app = True
+                        self._in_use_error_message = f"USB camera device {self._device_id} is in use by another application. Close Microsoft Teams, Zoom, or other video apps."
+                        logger.warning(self._in_use_error_message)
+                        self._cap.release()
+                        self._cap = None
+                        raise RuntimeError(self._in_use_error_message)
+                except RuntimeError:
+                    # Re-raise our custom error
+                    raise
+                except Exception as test_error:
+                    # Other errors during frame read test
+                    error_str = str(test_error).lower()
+                    if "access" in error_str or "busy" in error_str:
+                        self._in_use_by_another_app = True
+                        self._in_use_error_message = f"USB camera device {self._device_id} is locked by another application."
+                        logger.warning(self._in_use_error_message)
+                        if self._cap:
+                            self._cap.release()
+                            self._cap = None
+                        raise RuntimeError(self._in_use_error_message) from test_error
 
+        except RuntimeError as e:
+            # Re-raise RuntimeError (our custom errors)
+            self._is_connected = False
+            if self._cap and not self._mock_webcam:
+                self._cap.release()
+                self._cap = None
+            raise ConnectionError(str(e)) from e
         except Exception as e:
             self._is_connected = False
             if self._cap and not self._mock_webcam:
                 self._cap.release()
                 self._cap = None
+            
+            # Check if error suggests camera is in use
+            error_str = str(e).lower()
+            if any(keyword in error_str for keyword in ["access", "busy", "in use", "locked", "exclusive"]):
+                self._in_use_by_another_app = True
+                self._in_use_error_message = f"USB camera device {self._device_id} appears to be in use by another application (Microsoft Teams, Zoom, etc.). Close the other application and try again."
+                logger.warning(self._in_use_error_message)
+                raise ConnectionError(self._in_use_error_message) from e
+            
             raise ConnectionError(f"Failed to connect to webcam: {e}") from e
         else:
             self._is_connected = True
@@ -128,7 +199,7 @@ class WebCamera(BaseCamera):
             except Exception as exc:
                 logger.debug("Failed to get webcam resolution: %s", exc)
 
-        return {
+        status = {
             "connected": connected,
             "model": f"Webcam Device {self._device_id}",
             "firmware": "N/A",
@@ -140,6 +211,16 @@ class WebCamera(BaseCamera):
             "streaming_capable": True,  # Webcams can stream
             "capture_capable": True,  # Webcams can capture
         }
+        
+        # Add in-use detection status
+        if self._in_use_by_another_app:
+            status["in_use_by_another_app"] = True
+            status["in_use_error"] = self._in_use_error_message or f"USB camera device {self._device_id} is in use by another application"
+            status["warning"] = "Camera is locked by another application (e.g., Microsoft Teams, Zoom). Close the other app to use this camera."
+        else:
+            status["in_use_by_another_app"] = False
+        
+        return status
 
     async def get_info(self) -> Dict:
         """Get comprehensive webcam information."""

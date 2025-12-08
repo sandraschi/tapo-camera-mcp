@@ -81,10 +81,12 @@ class HealthCheckTool(BaseTool):
 
             # Determine overall status
             critical_issues = [
-                name for name, check in all_checks.items() if check.get("status") == "critical"
+                name for name, check in all_checks.items() 
+                if isinstance(check, dict) and check.get("status") == "critical"
             ]
             warning_issues = [
-                name for name, check in all_checks.items() if check.get("status") == "warning"
+                name for name, check in all_checks.items() 
+                if isinstance(check, dict) and check.get("status") == "warning"
             ]
 
             if critical_issues:

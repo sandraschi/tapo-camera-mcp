@@ -739,8 +739,8 @@
     <div class="devices-section" id="ring-section">
         <div class="section-header">
             <div>
-                <h2 class="section-title">🔔 Ring Devices</h2>
-                <p class="section-subtitle">Doorbells, cameras, alarm, and sensors</p>
+                <h2 class="section-title">🔔 Ring Alarm System</h2>
+                <p class="section-subtitle">Base Station EU, doorbells, sensors, and keypads</p>
             </div>
             <span class="section-badge disconnected" id="ring-connection-badge">Disconnected</span>
         </div>
@@ -898,10 +898,22 @@ function renderRingStatus(data) {
     // Render devices
     let devicesHtml = '';
 
+    // Render base station first (if available)
+    if (data.alarm && data.alarm.base_station) {
+        devicesHtml += renderBaseStationCard(data.alarm.base_station);
+    }
+
     // Render doorbells
     if (data.doorbells && data.doorbells.length > 0) {
         data.doorbells.forEach(doorbell => {
             devicesHtml += renderDoorbellCard(doorbell);
+        });
+    }
+
+    // Render keypads
+    if (data.alarm && data.alarm.keypads && data.alarm.keypads.length > 0) {
+        data.alarm.keypads.forEach(keypad => {
+            devicesHtml += renderKeypadCard(keypad);
         });
     }
 
@@ -978,10 +990,17 @@ function updateOverviewCards(data) {
     // Devices count
     const devicesOnline = document.getElementById('devices-online');
     const devicesStatusText = document.getElementById('devices-status-text');
-    const totalDevices = (data.doorbells?.length || 0) + (data.alarm?.sensors?.length || 0);
-    devicesOnline.textContent = `${totalDevices}/${totalDevices}`;
+    const sensorCount = data.alarm?.sensor_count || data.alarm?.sensors?.length || 0;
+    const doorbellCount = data.doorbells?.length || 0;
+    const keypadCount = data.alarm?.keypads?.length || 0;
+    const totalDevices = doorbellCount + sensorCount + keypadCount + (data.alarm?.base_station ? 1 : 0);
+    devicesOnline.textContent = `${totalDevices}`;
+    const deviceBreakdown = [];
+    if (sensorCount > 0) deviceBreakdown.push(`${sensorCount} sensors`);
+    if (doorbellCount > 0) deviceBreakdown.push(`${doorbellCount} doorbells`);
+    if (keypadCount > 0) deviceBreakdown.push(`${keypadCount} keypads`);
     devicesStatusText.innerHTML = totalDevices > 0
-        ? '<i class="fas fa-check-circle"></i> <span>All devices online</span>'
+        ? `<i class="fas fa-check-circle"></i> <span>${deviceBreakdown.join(', ') || 'All online'}</span>`
         : '<span>No devices</span>';
     devicesStatusText.className = 'security-status ' + (totalDevices > 0 ? 'status-secure' : '');
 
@@ -1063,12 +1082,54 @@ function renderDoorbellCard(doorbell) {
 }
 
 function renderSensorCard(sensor) {
-    const isContact = sensor.sensor_type === 'contact';
-    const icon = isContact ? '🚪' : '👁️';
-    const statusText = isContact
-        ? (sensor.is_open ? 'Open' : 'Closed')
-        : (sensor.motion_detected ? 'Motion!' : 'Clear');
-    const statusClass = (isContact && sensor.is_open) || sensor.motion_detected ? 'status-warning' : 'status-online';
+    const sensorType = sensor.sensor_type || 'unknown';
+    let icon, statusText, statusClass, typeName;
+
+    switch(sensorType) {
+        case 'contact':
+            icon = '🚪';
+            typeName = 'Contact Sensor';
+            statusText = sensor.is_open ? 'Open' : 'Closed';
+            statusClass = sensor.is_open ? 'status-warning' : 'status-online';
+            break;
+        case 'motion':
+            icon = '👁️';
+            typeName = 'Motion Sensor';
+            statusText = sensor.motion_detected ? 'Motion!' : 'Clear';
+            statusClass = sensor.motion_detected ? 'status-warning' : 'status-online';
+            break;
+        case 'flood_freeze':
+            icon = '💧';
+            typeName = 'Flood/Freeze Sensor';
+            const floodDetected = sensor.extra_data?.flood_detected;
+            const freezeDetected = sensor.extra_data?.freeze_detected;
+            statusText = floodDetected ? 'Flood!' : freezeDetected ? 'Freeze!' : 'OK';
+            statusClass = (floodDetected || freezeDetected) ? 'status-warning' : 'status-online';
+            break;
+        case 'smoke_co':
+            icon = '🔥';
+            typeName = 'Smoke/CO Listener';
+            const smokeDetected = sensor.extra_data?.smoke_detected;
+            const coDetected = sensor.extra_data?.co_detected;
+            statusText = smokeDetected ? 'Smoke!' : coDetected ? 'CO!' : 'OK';
+            statusClass = (smokeDetected || coDetected) ? 'status-warning' : 'status-online';
+            break;
+        case 'glassbreak':
+            icon = '🪟';
+            typeName = 'Glass Break Sensor';
+            statusText = sensor.fault_status ? 'Alert!' : 'OK';
+            statusClass = sensor.fault_status ? 'status-warning' : 'status-online';
+            break;
+        default:
+            icon = '📡';
+            typeName = sensorType.charAt(0).toUpperCase() + sensorType.slice(1);
+            statusText = sensor.is_online ? 'Online' : 'Offline';
+            statusClass = sensor.is_online ? 'status-online' : 'status-offline';
+    }
+
+    // Tamper check
+    const tamperWarning = sensor.tamper_status === 'tamper' ?
+        '<div style="color: #f59e0b; font-size: 11px; margin-top: 4px;">⚠️ Tamper detected</div>' : '';
 
     return `
         <div class="device-card">
@@ -1077,7 +1138,7 @@ function renderSensorCard(sensor) {
                     <span class="device-icon">${icon}</span>
                     <div>
                         <div class="device-name">${escapeHtml(sensor.name)}</div>
-                        <div class="device-location">${isContact ? 'Contact Sensor' : 'Motion Sensor'}</div>
+                        <div class="device-location">${typeName}</div>
                     </div>
                 </div>
                 <div class="device-status">
@@ -1085,6 +1146,7 @@ function renderSensorCard(sensor) {
                     <span>${statusText}</span>
                 </div>
             </div>
+            ${tamperWarning}
             <div class="device-metrics">
                 <div class="metric">
                     <div class="metric-value">${sensor.battery_level ? sensor.battery_level + '%' : '--'}</div>
@@ -1097,6 +1159,263 @@ function renderSensorCard(sensor) {
             </div>
         </div>
     `;
+}
+
+function renderBaseStationCard(baseStation) {
+    if (!baseStation) return '';
+
+    const modeColors = {
+        'none': 'secure',
+        'some': 'warning',
+        'all': 'alert'
+    };
+    const modeNames = {
+        'none': 'Disarmed',
+        'some': 'Home',
+        'all': 'Away'
+    };
+
+    const modeColor = modeColors[baseStation.mode] || 'neutral';
+    const modeName = modeNames[baseStation.mode] || baseStation.mode;
+
+    return `
+        <div class="device-card" style="border: 2px solid rgba(99, 102, 241, 0.4); background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));">
+            <div class="device-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="device-icon">🏠</span>
+                    <div>
+                        <div class="device-name">${escapeHtml(baseStation.name)}</div>
+                        <div class="device-location">Ring Alarm Base Station EU</div>
+                    </div>
+                </div>
+                <div class="device-status">
+                    <div class="status-indicator ${baseStation.is_online ? 'status-online' : 'status-offline'}"></div>
+                    <span>${baseStation.is_online ? 'Online' : 'Offline'}</span>
+                </div>
+            </div>
+            <div class="device-metrics" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="metric">
+                    <div class="metric-value security-value ${modeColor}">${modeName}</div>
+                    <div class="metric-label">Mode</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${baseStation.siren_enabled !== false ? '🔔 On' : '🔕 Off'}</div>
+                    <div class="metric-label">Siren</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${baseStation.firmware || '--'}</div>
+                    <div class="metric-label">Firmware</div>
+                </div>
+            </div>
+            <div class="device-controls" style="margin-top: 12px;">
+                <button class="btn btn-warning" onclick="testSirenWithCountdown()" title="Test siren with 5-second countdown">
+                    <i class="fas fa-bell"></i> 🔊 Test Siren
+                </button>
+                <button class="btn btn-danger" onclick="triggerSiren(true)" title="Immediate siren (3 sec)">
+                    <i class="fas fa-exclamation-triangle"></i> NOW!
+                </button>
+                <button class="btn btn-secondary" onclick="stopSiren()" title="Emergency stop">
+                    <i class="fas fa-bell-slash"></i> STOP
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function renderKeypadCard(keypad) {
+    return `
+        <div class="device-card">
+            <div class="device-header">
+                <div style="display: flex; align-items: center;">
+                    <span class="device-icon">🔢</span>
+                    <div>
+                        <div class="device-name">${escapeHtml(keypad.name)}</div>
+                        <div class="device-location">Keypad</div>
+                    </div>
+                </div>
+                <div class="device-status">
+                    <div class="status-indicator ${keypad.is_online ? 'status-online' : 'status-offline'}"></div>
+                    <span>${keypad.is_online ? 'Online' : 'Offline'}</span>
+                </div>
+            </div>
+            <div class="device-metrics">
+                <div class="metric">
+                    <div class="metric-value">${keypad.battery_level ? keypad.battery_level + '%' : '--'}</div>
+                    <div class="metric-label">Battery</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${keypad.is_online ? '✓' : '✗'}</div>
+                    <div class="metric-label">Status</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Countdown modal for siren test
+let countdownInterval = null;
+
+async function testSirenWithCountdown() {
+    const countdown = 5;
+    const duration = 3;
+    
+    if (!confirm(`⚠️ SIREN TEST\n\nThis will:\n1. Count down ${countdown} seconds (WARN EVERYONE!)\n2. Sound 104dB siren for ${duration} seconds\n\nProceed?`)) {
+        return;
+    }
+
+    // Show countdown overlay
+    showCountdownOverlay(countdown);
+    
+    try {
+        const response = await fetch('/api/ring/alarm/siren/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ countdown: countdown, duration: duration })
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.detail || 'Failed to test siren');
+        }
+
+        // Update overlay to show siren active
+        updateCountdownOverlay('🔊 SIREN ACTIVE!', 'danger');
+        setTimeout(hideCountdownOverlay, (duration + 1) * 1000);
+        
+    } catch (error) {
+        console.error('Siren test error:', error);
+        hideCountdownOverlay();
+        alert('Failed to test siren: ' + error.message);
+    }
+}
+
+function showCountdownOverlay(seconds) {
+    // Create overlay if doesn't exist
+    let overlay = document.getElementById('siren-countdown-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'siren-countdown-overlay';
+        overlay.innerHTML = `
+            <div class="countdown-content">
+                <div class="countdown-icon">🔔</div>
+                <div class="countdown-text">SIREN TEST IN</div>
+                <div class="countdown-number" id="countdown-number">${seconds}</div>
+                <div class="countdown-warning">⚠️ COVER YOUR EARS! ⚠️</div>
+                <button class="btn btn-danger" onclick="cancelSirenTest()">CANCEL</button>
+            </div>
+        `;
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 10000;
+            display: flex; align-items: center; justify-content: center;
+            animation: pulse 0.5s infinite alternate;
+        `;
+        document.body.appendChild(overlay);
+        
+        // Add CSS animation
+        if (!document.getElementById('countdown-styles')) {
+            const style = document.createElement('style');
+            style.id = 'countdown-styles';
+            style.textContent = `
+                @keyframes pulse { from { background: rgba(220,53,69,0.9); } to { background: rgba(0,0,0,0.9); } }
+                .countdown-content { text-align: center; color: white; }
+                .countdown-icon { font-size: 80px; margin-bottom: 20px; }
+                .countdown-text { font-size: 24px; margin-bottom: 10px; }
+                .countdown-number { font-size: 120px; font-weight: bold; color: #ffc107; }
+                .countdown-warning { font-size: 18px; margin: 20px 0; color: #ffc107; }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+    overlay.style.display = 'flex';
+    
+    // Start countdown
+    let remaining = seconds;
+    const numberEl = document.getElementById('countdown-number');
+    countdownInterval = setInterval(() => {
+        remaining--;
+        if (remaining > 0) {
+            numberEl.textContent = remaining;
+        } else {
+            clearInterval(countdownInterval);
+            updateCountdownOverlay('🔊 SIREN!', 'active');
+        }
+    }, 1000);
+}
+
+function updateCountdownOverlay(text, state) {
+    const overlay = document.getElementById('siren-countdown-overlay');
+    if (overlay) {
+        const content = overlay.querySelector('.countdown-content');
+        if (state === 'active') {
+            content.innerHTML = `
+                <div class="countdown-icon">🔊</div>
+                <div class="countdown-number" style="color: #dc3545;">${text}</div>
+                <div class="countdown-warning">SIREN ACTIVE - ${new Date().toLocaleTimeString()}</div>
+            `;
+        }
+    }
+}
+
+function hideCountdownOverlay() {
+    const overlay = document.getElementById('siren-countdown-overlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
+}
+
+async function cancelSirenTest() {
+    hideCountdownOverlay();
+    await stopSiren();
+}
+
+async function triggerSiren(activate) {
+    if (activate && !confirm('⚠️ IMMEDIATE SIREN!\n\nNo countdown - siren sounds NOW for 3 seconds.\n\nSure?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/ring/alarm/siren', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ activate: activate, duration: 3 })
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.detail || 'Failed to control siren');
+        }
+
+        const action = activate ? '🔊 Siren activated!' : '🔕 Siren stopped';
+        alert(action);
+    } catch (error) {
+        console.error('Siren control error:', error);
+        alert('Failed to control siren: ' + error.message);
+    }
+}
+
+async function stopSiren() {
+    try {
+        const response = await fetch('/api/ring/alarm/siren/stop', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.detail || 'Failed to stop siren');
+        }
+
+        hideCountdownOverlay();
+        alert('🔕 All sirens silenced');
+    } catch (error) {
+        console.error('Siren stop error:', error);
+        alert('Failed to stop siren: ' + error.message);
+    }
 }
 
 function renderRingEvents(events) {

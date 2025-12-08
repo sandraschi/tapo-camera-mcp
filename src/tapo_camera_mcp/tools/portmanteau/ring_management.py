@@ -269,3 +269,8 @@ def register_ring_management_tool(mcp: FastMCP) -> None:
             logger.exception(f"Error in Ring management action '{action}'")
             return {"success": False, "action": action, "error": str(e)}
 
+
+
+
+
+

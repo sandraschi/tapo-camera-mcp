@@ -331,10 +331,26 @@
     <!-- Energy Chart -->
     <div class="chart-container">
         <h3>📊 Energy Consumption Over Time</h3>
-        <div style="margin-bottom: 16px;">
-            <button class="btn btn-secondary" onclick="changeTimeRange('24h')" id="btn-24h" style="margin-right: 8px;">24 Hours</button>
-            <button class="btn btn-secondary" onclick="changeTimeRange('7d')" id="btn-7d" style="margin-right: 8px;">7 Days</button>
-            <button class="btn btn-secondary" onclick="changeTimeRange('30d')" id="btn-30d">30 Days</button>
+        <div style="margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label for="device-selector" style="font-weight: 500; color: #374151;">Device:</label>
+                <select id="device-selector" onchange="changeDevice(this.value)" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #d1d5db; background: white; font-size: 14px; min-width: 180px;">
+                    <option value="all">📊 All Devices (Combined)</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary" onclick="changeTimeRange('24h')" id="btn-24h">24 Hours</button>
+                <button class="btn btn-secondary" onclick="changeTimeRange('7d')" id="btn-7d">7 Days</button>
+                <button class="btn btn-secondary" onclick="changeTimeRange('30d')" id="btn-30d">30 Days</button>
+            </div>
+            <div style="display: flex; gap: 8px; margin-left: auto;">
+                <button class="btn btn-secondary" onclick="zoomIn()" title="Zoom In">🔍+</button>
+                <button class="btn btn-secondary" onclick="zoomOut()" title="Zoom Out">🔍−</button>
+                <button class="btn btn-secondary" onclick="resetZoom()" title="Reset Zoom">↺ Reset</button>
+            </div>
+        </div>
+        <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">
+            💡 Drag to pan, scroll to zoom, or use buttons above
         </div>
         <div style="position: relative; height: 400px;">
             <canvas id="powerChart"></canvas>
@@ -355,17 +371,67 @@
     </div>
 </div>
 
-<!-- Chart.js Library -->
+<!-- Chart.js Library + Zoom Plugin -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 <script>
 // Global variables
 let powerChart = null;
 let currentTimeRange = '24h';
+let selectedDevice = 'all';
+let availableDevices = [];
 let chartData = {
     labels: [],
     power: [],
     alerts: []
 };
+
+// Change selected device
+function changeDevice(deviceId) {
+    selectedDevice = deviceId;
+    loadChartData();
+}
+
+// Zoom controls
+function zoomIn() {
+    if (powerChart) {
+        powerChart.zoom(1.2);
+    }
+}
+
+function zoomOut() {
+    if (powerChart) {
+        powerChart.zoom(0.8);
+    }
+}
+
+function resetZoom() {
+    if (powerChart) {
+        powerChart.resetZoom();
+    }
+}
+
+// Populate device selector
+function populateDeviceSelector(devices) {
+    const selector = document.getElementById('device-selector');
+    if (!selector) return;
+    
+    // Keep "All Devices" option
+    selector.innerHTML = '<option value="all">📊 All Devices (Combined)</option>';
+    
+    devices.forEach(device => {
+        const option = document.createElement('option');
+        option.value = device.device_id;
+        option.textContent = `${device.power_state ? '🟢' : '⚪'} ${device.name || device.device_id}`;
+        selector.appendChild(option);
+    });
+    
+    // Restore selection if still valid
+    if (selectedDevice !== 'all' && devices.some(d => d.device_id === selectedDevice)) {
+        selector.value = selectedDevice;
+    }
+}
 
 // Initialize chart
 function initChart() {
@@ -441,6 +507,29 @@ function initChart() {
                             return label;
                         }
                     }
+                },
+                zoom: {
+                    pan: {
+                        enabled: true,
+                        mode: 'x',
+                        modifierKey: null
+                    },
+                    zoom: {
+                        wheel: {
+                            enabled: true,
+                            modifierKey: null
+                        },
+                        pinch: {
+                            enabled: true
+                        },
+                        drag: {
+                            enabled: false
+                        },
+                        mode: 'x'
+                    },
+                    limits: {
+                        x: { min: 'original', max: 'original' }
+                    }
                 }
             },
             scales: {
@@ -481,12 +570,26 @@ async function loadChartData() {
             return;
         }
         
-        // Get history for all devices or selected device
+        // Update device selector and store available devices
+        availableDevices = devices;
+        populateDeviceSelector(devices);
+        
+        // Filter devices based on selection
+        const devicesToQuery = selectedDevice === 'all' 
+            ? devices 
+            : devices.filter(d => d.device_id === selectedDevice);
+        
+        if (devicesToQuery.length === 0) {
+            updateChartPlaceholder('Selected device not found');
+            return;
+        }
+        
+        // Get history for selected device(s)
         const hours = currentTimeRange === '24h' ? 24 : currentTimeRange === '7d' ? 168 : 720;
         
-        // Aggregate data from all devices
+        // Aggregate data from selected devices
         const allHistoryData = [];
-        for (const device of devices) {
+        for (const device of devicesToQuery) {
             try {
                 const history = await fetch(`/api/sensors/tapo-p115/${device.device_id}/history?hours=${hours}`)
                     .then(r => r.json())
@@ -519,8 +622,10 @@ async function loadChartData() {
         });
         
         // Sort by timestamp (already normalized to Unix seconds)
+        // For "All Devices" - SUM the power values (total consumption)
+        // For single device - use raw values (no averaging needed)
         const sortedData = Object.values(aggregated)
-            .map(d => ({ ...d, power: d.power / d.count })) // Average power
+            .map(d => ({ ...d, power: selectedDevice === 'all' ? d.power : d.power / d.count }))
             .sort((a, b) => a.timestamp - b.timestamp);
         
         // Prepare chart data
@@ -553,8 +658,14 @@ async function loadChartData() {
             return;
         }
         
+        // Get label for selected device
+        const deviceLabel = selectedDevice === 'all' 
+            ? 'Power (All Devices)' 
+            : `Power (${devicesToQuery[0]?.name || selectedDevice})`;
+        
         if (powerChart) {
             powerChart.data.labels = chartData.labels;
+            powerChart.data.datasets[0].label = deviceLabel;
             powerChart.data.datasets[0].data = chartData.power;
             powerChart.data.datasets[1].data = chartData.power.map(() => 500);
             powerChart.data.datasets[2].data = chartData.power.map(() => 800);
@@ -654,7 +765,7 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadDevices() {
     try {
         console.log('Loading Tapo P115 devices...');
-        const response = await fetch('/api/sensors/tapo-p115');
+        const response = await fetch('/api/energy/devices');
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

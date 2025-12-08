@@ -13,18 +13,36 @@ alerting:
             - 127.0.0.1:9093
 
 scrape_configs:
-  - job_name: tapo-camera-mcp
+  # General system metrics (P115 power, device status, etc.)
+  - job_name: tapo-camera-mcp-system
     metrics_path: /metrics
     static_configs:
       - targets:
-          - localhost:7777
+          # Use host.docker.internal to reach host from Docker (Windows/Mac)
+          - host.docker.internal:7777
         labels:
           service: tapo-camera-mcp
           role: control-plane
+          location: stroheckgasse
     relabel_configs:
       - source_labels: [__address__]
         target_label: instance
-        replacement: tapo-camera-mcp-local
+        replacement: tapo-camera-mcp-host
+
+  # Messaging/alerting metrics (info/warning/alarm counts)
+  - job_name: tapo-camera-mcp-messages
+    metrics_path: /api/messages/prometheus
+    static_configs:
+      - targets:
+          - host.docker.internal:7777
+        labels:
+          service: tapo-camera-mcp
+          role: alerting
+          location: stroheckgasse
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: tapo-camera-mcp-messages
 
   - job_name: edge-agent
     metrics_path: /metrics

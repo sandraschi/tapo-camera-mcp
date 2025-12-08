@@ -3,14 +3,23 @@ server:
   port: 7777
   debug: false
   log_level: INFO
+
+# Authentication settings
+auth:
+  enabled: false  # Set to true to require login
+  users:
+    admin:
+      password: admin123  # Change this! Or use password_hash + salt for security
+      role: admin
+
 cameras:
-  # test_webcam disabled - uncomment if USB webcam connected
-  # test_webcam:
-  #   type: webcam
-  #   params:
-  #     device_id: 0
-  #     resolution: 1920x1080
-  #     fps: 30
+  # USB Webcam
+  test_webcam:
+    type: webcam
+    params:
+      device_id: 0
+      resolution: 1920x1080
+      fps: 30
   kitchen_cam:
     type: onvif
     params:
@@ -117,6 +126,38 @@ ring:
   password: "Sec1000ri#"
   token_file: ring_token.cache
   cache_ttl: 60
+
+# Shelly Temperature Sensors (DS18B20 probes for freezer/fridge monitoring)
+shelly:
+  enabled: false  # Set to true when you have Shelly devices
+  cache_ttl: 30
+  devices:
+    # Example: Shelly Plus 1 with Add-On and DS18B20 probe
+    # - ip: 192.168.0.200
+    #   name: Freezer
+    #   thresholds:
+    #     high_c: -10   # Alert if warmer than -10°C (freezer failure)
+    #     low_c: -25    # Alert if colder than -25°C
+    # - ip: 192.168.0.201
+    #   name: Fridge
+    #   thresholds:
+    #     high_c: 8
+    #     low_c: 2
+
+# Thermal Cameras (MLX90640/AMG8833 via ESP32 for hot spot detection)
+thermal:
+  enabled: false  # Set to true when you have thermal sensors
+  cache_ttl: 5
+  sensors:
+    # Example: MLX90640 sensor on ESP32
+    # - ip: 192.168.0.210
+    #   name: Kitchen Thermal
+    #   threshold_c: 150   # Alert if anything above 150°C (oven left on)
+    #   location: Kitchen
+    # - ip: 192.168.0.211
+    #   name: Server Rack
+    #   threshold_c: 50    # Alert if above 50°C
+    #   location: Server Room
 
 # Security Systems
 security:

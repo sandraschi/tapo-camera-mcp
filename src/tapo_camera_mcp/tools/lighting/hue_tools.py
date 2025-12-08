@@ -225,7 +225,8 @@ class HueManager:
             xy_value = light.xy
             if xy_value:
                 xy = list(xy_value) if isinstance(xy_value, (list, tuple)) else []
-                rgb = [255, 255, 255]  # Default to white (proper conversion would need color space math)
+                # Convert XY to RGB for display
+                rgb = self._xy_to_rgb(xy[0], xy[1], brightness) if len(xy) >= 2 else [255, 255, 255]
         except Exception:
             pass  # White-only bulbs don't support xy
 
@@ -367,10 +368,10 @@ class HueManager:
         return list(self.lights.values())
 
     async def get_light(self, light_id: str) -> Optional[HueLight]:
-        """Get a specific light by ID."""
+        """Get a specific light by ID (from cache, fast)."""
         if not self._initialized:
             await self.initialize()
-        await self._discover_devices()
+        # Return from cache - don't do full discovery on every get
         return self.lights.get(light_id)
 
     def _get_light_by_id(self, light_id: int):
@@ -379,6 +380,99 @@ class HueManager:
             if light.light_id == light_id:
                 return light
         return None
+
+    def _xy_to_rgb(self, x: float, y: float, brightness: int = 254) -> List[int]:
+        """Convert CIE 1931 XY color space to RGB for Hue lights.
+        
+        Converts XY coordinates back to RGB for display purposes.
+        Uses sRGB color space with D65 white point.
+        """
+        try:
+            # Normalize brightness (0-254 to 0-1)
+            brightness_norm = brightness / 254.0 if brightness > 0 else 1.0
+            
+            # Convert xy to XYZ (using Y as brightness)
+            # We need to reconstruct Z from x, y, and Y
+            # x = X / (X + Y + Z), y = Y / (X + Y + Z)
+            # If we set Y = brightness_norm, we can solve for X and Z
+            if y == 0:
+                return [255, 255, 255]  # Avoid division by zero
+            
+            Y = brightness_norm
+            X = (x / y) * Y
+            Z = ((1 - x - y) / y) * Y
+            
+            # Convert XYZ to linear RGB (inverse of sRGB to XYZ matrix)
+            r_linear = X * 3.2404542 + Y * -1.5371385 + Z * -0.4985314
+            g_linear = X * -0.9692660 + Y * 1.8760108 + Z * 0.0415560
+            b_linear = X * 0.0556434 + Y * -0.2040259 + Z * 1.0572252
+            
+            # Apply inverse gamma correction (sRGB)
+            def inv_gamma_correct(val):
+                if val > 0.0031308:
+                    return 1.055 * (val ** (1.0 / 2.4)) - 0.055
+                else:
+                    return 12.92 * val
+            
+            r_norm = max(0.0, min(1.0, inv_gamma_correct(r_linear)))
+            g_norm = max(0.0, min(1.0, inv_gamma_correct(g_linear)))
+            b_norm = max(0.0, min(1.0, inv_gamma_correct(b_linear)))
+            
+            # Convert to 0-255 RGB
+            r = int(round(r_norm * 255))
+            g = int(round(g_norm * 255))
+            b = int(round(b_norm * 255))
+            
+            return [r, g, b]
+        except Exception:
+            logger.exception("Failed to convert XY to RGB")
+            return [255, 255, 255]  # Default to white on error
+
+    def _rgb_to_xy(self, r: int, g: int, b: int) -> List[float] | None:
+        """Convert RGB (0-255) to CIE 1931 XY color space for Hue lights.
+        
+        Based on Philips Hue API specification for RGB to XY conversion.
+        Uses sRGB color space with D65 white point.
+        """
+        try:
+            # Normalize RGB values to 0-1
+            r_norm = r / 255.0
+            g_norm = g / 255.0
+            b_norm = b / 255.0
+            
+            # Apply gamma correction (sRGB gamma)
+            def gamma_correct(val):
+                if val > 0.04045:
+                    return ((val + 0.055) / 1.055) ** 2.4
+                else:
+                    return val / 12.92
+            
+            r_gamma = gamma_correct(r_norm)
+            g_gamma = gamma_correct(g_norm)
+            b_gamma = gamma_correct(b_norm)
+            
+            # Convert to XYZ color space (sRGB to XYZ matrix, D65 white point)
+            x = r_gamma * 0.4124564 + g_gamma * 0.3575761 + b_gamma * 0.1804375
+            y = r_gamma * 0.2126729 + g_gamma * 0.7151522 + b_gamma * 0.0721750
+            z = r_gamma * 0.0193339 + g_gamma * 0.1191920 + b_gamma * 0.9503041
+            
+            # Convert XYZ to xy (chromaticity coordinates)
+            total = x + y + z
+            if total == 0:
+                return None
+            
+            x_xy = x / total
+            y_xy = y / total
+            
+            # Hue lights use a specific color gamut (most use Gamut B)
+            # Clamp to valid range for Hue lights (approximate)
+            x_xy = max(0.0, min(1.0, x_xy))
+            y_xy = max(0.0, min(1.0, y_xy))
+            
+            return [round(x_xy, 4), round(y_xy, 4)]
+        except Exception:
+            logger.exception("Failed to convert RGB to XY")
+            return None
 
     def _get_group_by_id(self, group_id: int):
         """Get a group object by ID (phue doesn't have groups_by_id)."""
@@ -429,17 +523,39 @@ class HueManager:
 
             # Set RGB (convert to XY)
             if rgb and len(rgb) == 3:
-                # Simplified RGB to XY conversion
-                # In production, use proper color space conversion
-                light.xy = [0.3, 0.3]  # Placeholder
+                # Convert RGB to XY color space (CIE 1931)
+                # This is the color space that Hue lights use
+                xy = self._rgb_to_xy(rgb[0], rgb[1], rgb[2])
+                if xy:
+                    light.xy = xy
+                    # Also set colormode to 'xy' for color bulbs
+                    try:
+                        light.colormode = 'xy'
+                    except Exception:
+                        pass  # Some lights may not support setting colormode
 
             # Update local cache instead of re-querying entire bridge
             # The phue library sends the command directly, we just update our cache
-            if on is not None and light_id in self.lights:
-                self.lights[light_id].on = on
-            if brightness is not None and light_id in self.lights:
-                self.lights[light_id].brightness = brightness
-                self.lights[light_id].brightness_percent = int((brightness / 254) * 100)
+            if light_id in self.lights:
+                if on is not None:
+                    self.lights[light_id].on = on
+                if brightness is not None:
+                    self.lights[light_id].brightness = brightness
+                    self.lights[light_id].brightness_percent = int((brightness / 254) * 100)
+                elif brightness_percent is not None:
+                    self.lights[light_id].brightness = int((brightness_percent / 100) * 254)
+                    self.lights[light_id].brightness_percent = brightness_percent
+                if hue is not None:
+                    self.lights[light_id].hue = hue
+                if saturation is not None:
+                    self.lights[light_id].saturation = saturation
+                if rgb and len(rgb) == 3:
+                    self.lights[light_id].rgb = rgb
+                    # Update XY coordinates in cache
+                    xy = self._rgb_to_xy(rgb[0], rgb[1], rgb[2])
+                    if xy:
+                        self.lights[light_id].xy = xy
+                        self.lights[light_id].color_mode = 'xy'
 
             return True
 

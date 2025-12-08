@@ -14,9 +14,11 @@ numpy>=1.24.0,<2.0.0
 
 # Camera-specific dependencies
 opencv-python>=4.8.0,<5.0.0
+onvif-zeep>=0.2.12,<1.0.0  # ONVIF protocol support
 ring-doorbell>=0.7.0,<1.0.0
 oauthlib>=3.2.0,<4.0.0
 requests-oauthlib>=1.3.0,<2.0.0
+phue>=1.1,<2.0.0  # Philips Hue support
 
 # Web dashboard dependencies
 fastapi>=0.100.0,<1.0.0

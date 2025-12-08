@@ -1,7 +1,7 @@
 # Smart Kitchen & Robotics Integration Plan
 
-**Timestamp**: 2025-01-17  
-**Status**: PLANNING - Research Complete  
+**Timestamp**: 2025-12-02  
+**Status**: PLANNING - Moorebot Scout Added (XMas 2025)  
 **Tags**: smart-kitchen, robotics, roomba, unitree, butlerbot, zojirushi, samsung-fridge
 
 ## Overview
@@ -227,7 +227,250 @@ robotics:
         times: ["09:00", "15:00"]  # Daily cleaning times
 ```
 
-### 2. Unitree Go2 Dogbot (Planned 2025)
+### 2. Moorebot Scout (Planned XMas 2025)
+
+#### Specifications
+
+**Moorebot Scout (Original - Mecanum Wheels):**
+- **Type**: Mobile indoor security robot
+- **Dimensions**: 11.5cm × 10cm × 8cm (4.53" × 3.94" × 3.15")
+- **Weight**: 350g (0.77 lbs) - travel kit friendly!
+- **Mobility**: 4× Mecanum wheels (omnidirectional)
+- **Max Speed**: 2 km/h (1.2 mph)
+- **Battery**: Over 2 hours (1 hour with night vision)
+- **Charging**: 3 hours, auto-dock (sometimes wonky)
+- **Connectivity**: Wi-Fi 2.4/5GHz (802.11 a/b/g/n)
+- **Price**: ~€200-300
+
+**Camera:**
+- 2MP CMOS sensor, 1080p @ 30fps
+- 120° wide-angle lens
+- Infrared night vision (3-5m range)
+- 2-way audio (1W speaker + mic)
+
+**Processing:**
+- Quad-Core ARM A7 @ 1.2 GHz
+- 512MB LPDDR III RAM
+- 16GB eMMC storage
+- Linux + ROS 1.4
+
+**Sensors:**
+- 6DoF IMU (gyro + accelerometer)
+- Time-of-Flight (ToF) sensor
+- Light sensor
+
+**Surface Compatibility:**
+- ✅ Wood floors (excellent)
+- ✅ Short carpet (good)
+- ❌ Shag carpet (gets stuck)
+- ❌ Stairs (cannot climb)
+
+**Two Models Available:**
+- **Scout (Original)**: Mecanum wheels, indoor only, ~€200 👈 RECOMMENDED for apartment
+- **Scout E**: Tracks, indoor+outdoor, IPX4 water-resistant, ~€400
+
+#### Integration Capabilities
+
+**Potential Use Cases:**
+1. **Benny Cam**: Follow/monitor German Shepherd when out
+2. **Japan Trip Monitor**: Scheduled patrols during October trips
+3. **Room Patrol**: Autonomous security rounds
+4. **Mobile Camera**: Remote-controlled surveillance
+5. **Package Detection**: Monitor deliveries at door
+6. **Partner Check-In**: Two-way audio communication
+
+**Integration Options:**
+
+**Option 1: Official SDK (RECOMMENDED!)**
+- **GitHub**: https://github.com/Pilot-Labs-Dev/Scout-open-source
+- **Language**: Python, C++, ROS
+- **Features**: 
+  - Video/audio streaming
+  - Sensor data access
+  - Movement control
+  - Custom automation
+- **Complexity**: Moderate (ROS knowledge helpful)
+- **Status**: Active, maintained by Pilot Labs
+
+**Option 2: ROS Integration**
+- **Framework**: ROS 1.4 (Melodic)
+- **Benefits**: Standard robotics framework, extensive packages
+- **Integration**: Bridge ROS to MCP via rosbridge_suite
+- **Topics**: /camera/image_raw, /cmd_vel, /odom, /imu, /tof
+- **Services**: /start_patrol, /return_home, /get_status
+
+**Option 3: MQTT Bridge**
+- **Method**: Create MQTT bridge from ROS topics
+- **Benefits**: Easy integration with Home Assistant/Node-RED
+- **Topics**: 
+  - moorebot/scout/status
+  - moorebot/scout/camera/stream
+  - moorebot/scout/control/move
+  - moorebot/scout/battery
+  - moorebot/scout/location
+- **Complexity**: Low-Medium
+
+**Option 4: REST API Wrapper**
+- **Method**: Build REST API over SDK
+- **Endpoints**: 
+  - GET /api/moorebot/status
+  - POST /api/moorebot/move
+  - GET /api/moorebot/camera/snapshot
+  - POST /api/moorebot/patrol/start
+- **Benefits**: HTTP integration, easy dashboard control
+
+#### Recommended Integration
+
+```yaml
+robotics:
+  moorebot_scout:
+    enabled: false  # Enable when purchased (XMas 2025)
+    integration_type: "sdk_ros"  # Official SDK + ROS bridge
+    model: "scout_original"  # mecanum wheels version
+    
+    connection:
+      wifi_ssid: "HomeNetwork5G"
+      wifi_password: ""  # From secrets
+      ip_address: ""  # Auto-discovered or static
+      port: 8080  # SDK default
+    
+    sdk:
+      github_repo: "https://github.com/Pilot-Labs-Dev/Scout-open-source"
+      ros_version: "1.4"  # Melodic
+      rosbridge_port: 9090
+      video_stream_port: 8554  # RTSP
+    
+    features:
+      camera:
+        resolution: "1080p"
+        fps: 30
+        night_vision: true
+        two_way_audio: true
+        stream_url: "rtsp://{ip}:8554/stream"
+      
+      navigation:
+        mecanum_wheels: true
+        max_speed: 2.0  # km/h
+        obstacle_avoidance: true  # ToF sensor
+        auto_dock: true  # charging station
+      
+      monitoring:
+        battery_alerts: true
+        wifi_status: true
+        position_tracking: true
+        sensor_data: true
+    
+    automation:
+      # Benny monitoring
+      benny_follow:
+        enabled: false
+        trigger: "motion_detected"
+        follow_distance: 1.0  # meters
+      
+      # Japan trip patrols
+      security_patrol:
+        enabled: false  # Enable before Oct trip
+        schedule: 
+          - "08:00"  # Morning check
+          - "14:00"  # Afternoon check
+          - "20:00"  # Evening check
+          - "02:00"  # Night patrol
+        route: "apartment_perimeter"
+        duration_minutes: 15
+        return_to_dock: true
+      
+      # Low battery handling
+      battery_management:
+        auto_return_threshold: 20  # % battery
+        charging_notification: true
+        manual_override: false
+      
+      # Alerts
+      alerts:
+        motion_detected: true
+        door_activity: true
+        bark_detected: true  # For Benny
+        low_battery: true
+        offline: true
+    
+    # Stroheckgasse apartment map
+    location:
+      home_base: {x: 0.0, y: 0.0}  # Charging dock location
+      rooms:
+        - name: "living_room"
+          bounds: {x_min: 0, x_max: 5, y_min: 0, y_max: 4}
+        - name: "bedroom"
+          bounds: {x_min: 5, x_max: 8, y_min: 0, y_max: 3}
+        - name: "kitchen"
+          bounds: {x_min: 0, x_max: 3, y_min: 4, y_max: 7}
+      
+      patrol_waypoints:
+        - {x: 2.0, y: 2.0, room: "living_room"}
+        - {x: 1.0, y: 5.0, room: "kitchen"}
+        - {x: 6.0, y: 1.5, room: "bedroom"}
+        - {x: 0.5, y: 0.5, room: "home_base"}
+```
+
+#### API Integration Example
+
+```python
+from moorebot_scout import ScoutSDK
+import rospy
+from sensor_msgs.msg import Image
+from geometry_msgs.msg import Twist
+
+class MoorebotScoutIntegration:
+    """MCP integration for Moorebot Scout"""
+    
+    def __init__(self, ip_address: str):
+        self.sdk = ScoutSDK(ip_address)
+        self.ros_node = None
+        
+    async def initialize(self):
+        """Initialize SDK and ROS node"""
+        await self.sdk.connect()
+        self.ros_node = rospy.init_node('moorebot_scout_mcp')
+        
+    async def get_status(self) -> Dict:
+        """Get robot status"""
+        return {
+            "battery": await self.sdk.get_battery_level(),
+            "position": await self.sdk.get_position(),
+            "wifi_signal": await self.sdk.get_wifi_strength(),
+            "charging": await self.sdk.is_charging(),
+            "sensors": {
+                "tof_distance": await self.sdk.get_tof_reading(),
+                "imu": await self.sdk.get_imu_data(),
+                "light_level": await self.sdk.get_light_sensor()
+            }
+        }
+    
+    async def start_patrol(self, route: str):
+        """Start security patrol"""
+        waypoints = self.get_patrol_waypoints(route)
+        for wp in waypoints:
+            await self.sdk.navigate_to(wp['x'], wp['y'])
+            await self.sdk.rotate(360)  # Scan area
+            await asyncio.sleep(5)  # Wait at waypoint
+        await self.sdk.return_to_dock()
+    
+    async def get_camera_snapshot(self) -> bytes:
+        """Get current camera frame"""
+        return await self.sdk.get_snapshot()
+    
+    async def get_video_stream(self) -> str:
+        """Get RTSP stream URL"""
+        return f"rtsp://{self.sdk.ip_address}:8554/stream"
+    
+    async def move(self, linear: float, angular: float):
+        """Move robot (mecanum wheels)"""
+        twist = Twist()
+        twist.linear.x = linear
+        twist.angular.z = angular
+        await self.sdk.publish_twist(twist)
+```
+
+### 3. Unitree Go2 Dogbot (Planned 2025)
 
 #### Specifications
 
@@ -379,9 +622,9 @@ CREATE TABLE robots (
     id SERIAL PRIMARY KEY,
     robot_id VARCHAR(255) UNIQUE,
     name VARCHAR(255),
-    robot_type VARCHAR(50), -- 'vacuum', 'quadruped', 'humanoid', 'butler'
-    brand VARCHAR(100), -- 'irobot', 'unitree', 'custom'
-    model VARCHAR(100), -- 'roomba_j7', 'go2', 'g1'
+    robot_type VARCHAR(50), -- 'vacuum', 'quadruped', 'humanoid', 'butler', 'mobile_security'
+    brand VARCHAR(100), -- 'irobot', 'unitree', 'moorebot', 'custom'
+    model VARCHAR(100), -- 'roomba_j7', 'go2', 'g1', 'scout', 'scout_e'
     integration_type VARCHAR(50), -- 'api', 'sdk', 'mqtt', 'ros'
     integration_config JSONB,
     enabled BOOLEAN DEFAULT TRUE,
@@ -476,6 +719,32 @@ kitchen:
 
 robotics:
   enabled: true
+  
+  moorebot_scout:
+    enabled: false  # Enable XMas 2025
+    robot_type: "mobile_security"
+    brand: "moorebot"
+    model: "scout_original"
+    integration_type: "sdk_ros"
+    sdk:
+      github_repo: "https://github.com/Pilot-Labs-Dev/Scout-open-source"
+      ros_version: "1.4"
+      rosbridge_port: 9090
+      video_stream_port: 8554
+    connection:
+      ip_address: ""
+      port: 8080
+    features:
+      camera: true
+      navigation: true
+      obstacle_avoidance: true
+      auto_dock: true
+    automation:
+      security_patrol:
+        enabled: false
+        schedule: ["08:00", "14:00", "20:00", "02:00"]
+      benny_follow:
+        enabled: false
   
   roomba:
     enabled: true
@@ -577,6 +846,15 @@ POST /api/robotics/roomba/clean-room - Clean specific room
 GET /api/robotics/roomba/map - Get cleaning map
 GET /api/robotics/roomba/history - Get cleaning history
 
+# Moorebot Scout specific
+POST /api/robotics/moorebot/patrol - Start security patrol
+POST /api/robotics/moorebot/navigate - Navigate to waypoint
+GET /api/robotics/moorebot/camera/snapshot - Get camera snapshot
+GET /api/robotics/moorebot/camera/stream - Get RTSP stream URL
+GET /api/robotics/moorebot/sensors - Get sensor data (ToF, IMU, light)
+POST /api/robotics/moorebot/dock - Return to charging dock
+POST /api/robotics/moorebot/move - Control movement (mecanum wheels)
+
 # Unitree specific
 POST /api/robotics/unitree/patrol - Start patrol route
 POST /api/robotics/unitree/navigate - Navigate to location
@@ -599,11 +877,22 @@ GET /api/robotics/unitree/sensors - Get sensor data (LiDAR, cameras)
 
 **Features:**
 - Robot status overview (all robots)
+- **Moorebot Scout**: Live camera feed, patrol status, battery, position, controls
 - Roomba: Cleaning status, map, schedule
 - Unitree Go2: Status, battery, current task, position
 - Robot controls (start/stop tasks)
 - Task history and logs
 - Live robot positions (if mapped)
+
+**Moorebot Scout Panel:**
+- Live 1080p camera stream (RTSP)
+- Manual controls (joystick, rotate)
+- Battery level and charging status
+- Sensor readings (ToF distance, IMU, light)
+- Quick actions: Start patrol, Return to dock, Benny follow
+- Patrol schedule editor
+- Position on apartment map
+- Event log (motion detected, bark detected, etc.)
 
 ## Integration Services
 
@@ -708,19 +997,24 @@ class UnitreeIntegrationService:
 - Week 3: Samsung fridge integration (if API available)
 - Week 4: Tefal grill integration
 
-### Phase 2: Roomba Integration (Weeks 5-6)
-- Week 5: iRobot API integration
-- Week 6: Roomba dashboard and controls
+### Phase 2: Moorebot Scout Integration (Weeks 5-7)
+- Week 5: SDK setup and ROS bridge
+- Week 6: Camera streaming and controls
+- Week 7: Patrol automation and Benny follow mode
 
-### Phase 3: Robotics Dashboard (Weeks 7-8)
-- Week 7: Robotics dashboard UI
-- Week 8: Robot status and controls
+### Phase 3: Roomba Integration (Weeks 8-9)
+- Week 8: iRobot API integration
+- Week 9: Roomba dashboard and controls
 
-### Phase 4: Unitree Preparation (Weeks 9-10)
-- Week 9: Unitree SDK research and setup
-- Week 10: Unitree integration framework (ready for when purchased)
+### Phase 4: Robotics Dashboard (Weeks 10-11)
+- Week 10: Robotics dashboard UI
+- Week 11: Robot status and controls
 
-**Total Estimated Time**: 10 weeks (2.5 months)
+### Phase 5: Unitree Preparation (Weeks 12-13)
+- Week 12: Unitree SDK research and setup
+- Week 13: Unitree integration framework (ready for when purchased)
+
+**Total Estimated Time**: 13 weeks (3.25 months)
 
 ## Cost Analysis
 
@@ -730,6 +1024,7 @@ class UnitreeIntegrationService:
 - **Tefal Grill**: Already owned
 
 ### Robotics
+- **Moorebot Scout**: ~€200-300 (XMas 2025 purchase)
 - **Roomba**: Already owned
 - **Unitree Go2**: ~$1,600-2,000 (planned purchase)
 - **Unitree G1**: ~$16,000-20,000 (future consideration)
@@ -754,6 +1049,9 @@ class UnitreeIntegrationService:
 
 ## References
 
+- [Moorebot Scout Open Source SDK](https://github.com/Pilot-Labs-Dev/Scout-open-source)
+- [Moorebot Official Website](https://www.moorebot.com/)
+- [ROS Melodic Documentation](http://wiki.ros.org/melodic)
 - [iRobot API Documentation](https://developer.irobot.com/)
 - [Unitree Go2 Specifications](https://www.unitree.com/mobile/go2/)
 - [Unitree G1 Humanoid](https://www.unitree.com/)
@@ -768,6 +1066,6 @@ class UnitreeIntegrationService:
 
 ---
 
-**Last Updated**: 2025-01-17  
-**Next Review**: When Unitree Go2 is purchased
+**Last Updated**: 2025-12-02  
+**Next Review**: When Moorebot Scout arrives (post-XMas 2025)
 

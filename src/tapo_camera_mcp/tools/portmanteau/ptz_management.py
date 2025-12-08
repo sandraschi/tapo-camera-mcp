@@ -204,14 +204,19 @@ def register_ptz_management_tool(mcp: FastMCP) -> None:
             if action in ["move", "position", "stop"]:
                 tool = PTZControlTool()
                 operation_map = {"move": "move", "position": "position", "stop": "stop"}
-                result = await tool.execute(
-                    operation=operation_map[action],
-                    camera_id=camera_name or "",
-                    pan=pan or 0.0,
-                    tilt=tilt or 0.0,
-                    zoom=zoom or 0.0,
-                    speed=speed or 5,
-                )
+                # Only pass speed for move operation
+                execute_params = {
+                    "operation": operation_map[action],
+                    "camera_id": camera_name or "",
+                }
+                if action == "move":
+                    execute_params.update({
+                        "pan": pan or 0.0,
+                        "tilt": tilt or 0.0,
+                        "zoom": zoom or 0.0,
+                        "speed": speed or 5,
+                    })
+                result = await tool.execute(**execute_params)
                 return {"success": True, "action": action, "data": result}
 
             if action in ["save_preset", "recall_preset", "list_presets", "delete_preset", "home"]:

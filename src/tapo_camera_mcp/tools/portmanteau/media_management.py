@@ -21,6 +21,7 @@ MEDIA_ACTIONS = {
     "start_recording": "Start video recording",
     "stop_recording": "Stop video recording",
     "get_stream_url": "Get stream URL",
+    "capabilities": "Get media capabilities",
 }
 
 
@@ -29,7 +30,7 @@ def register_media_management_tool(mcp: FastMCP) -> None:
 
     @mcp.tool()
     async def media_management(
-        action: Literal["capture", "capture_still", "analyze", "start_recording", "stop_recording", "get_stream_url"],
+        action: Literal["capture", "capture_still", "analyze", "start_recording", "stop_recording", "get_stream_url", "capabilities"],
         camera_name: str | None = None,
         quality: str | None = None,
         save_to_temp: bool = False,
@@ -133,6 +134,19 @@ def register_media_management_tool(mcp: FastMCP) -> None:
                     output_dir=output_dir,
                 )
                 return {"success": True, "action": action, "data": result}
+
+            if action == "capabilities":
+                return {
+                    "success": True,
+                    "action": action,
+                    "data": {
+                        "supported_actions": list(MEDIA_ACTIONS.keys()),
+                        "image_formats": ["jpeg", "png", "raw"],
+                        "resolutions": ["720p", "1080p", "4k"],
+                        "quality_range": "1-100",
+                        "analysis_types": ["objects", "faces", "motion"],
+                    },
+                }
 
             return {"success": False, "error": f"Action '{action}' not implemented"}
 

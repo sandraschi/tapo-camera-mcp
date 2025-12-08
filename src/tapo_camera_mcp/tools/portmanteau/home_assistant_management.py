@@ -105,10 +105,9 @@ def register_home_assistant_management_tool(mcp: FastMCP) -> None:
             # Get HA configuration
             import httpx
 
-            from tapo_camera_mcp.core.server import TapoCameraServer
+            from tapo_camera_mcp.config import get_config
 
-            server = await TapoCameraServer.get_instance()
-            config = server.config
+            config = get_config() or {}
 
             # Get HA settings from config
             ha_config = config.get("security", {}).get("integrations", {}).get("homeassistant", {})
@@ -301,4 +300,9 @@ def register_home_assistant_management_tool(mcp: FastMCP) -> None:
         except Exception as e:
             logger.exception(f"Error in Home Assistant management action '{action}'")
             return {"success": False, "action": action, "error": str(e)}
+
+
+
+
+
 

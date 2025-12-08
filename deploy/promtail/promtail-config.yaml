@@ -6,7 +6,8 @@ positions:
   filename: /var/lib/promtail/positions.yaml
 
 clients:
-  - url: http://10.0.0.10:3100/loki/api/v1/push
+  # Use Docker service name when Promtail is in Docker
+  - url: http://loki:3100/loki/api/v1/push
     tenant_id: home-security
 
 scrape_configs:

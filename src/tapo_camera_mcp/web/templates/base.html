@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Tapo Camera MCP{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/chatbot.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plq7G5tGm0rU+1SPhVotteLpBERwTkw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}?v=20251203">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/chatbot.css') }}?v=20251203">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
     <style>
         [data-theme="dark"] {
             --bg-color: #1f2937;
@@ -179,6 +179,127 @@
 
         [data-theme="dark"] .icon-button:hover i {
             color: #f9fafb !important;
+        }
+
+        /* User profile dropdown */
+        .user-profile {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .user-profile:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] .user-profile:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .user-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        [data-theme="dark"] .user-dropdown {
+            background: #1e293b;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .user-dropdown-header {
+            padding: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        [data-theme="dark"] .user-dropdown-header {
+            border-color: #334155;
+        }
+
+        .user-dropdown-header strong {
+            display: block;
+            color: #111827;
+            font-size: 14px;
+        }
+
+        [data-theme="dark"] .user-dropdown-header strong {
+            color: #f1f5f9;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        [data-theme="dark"] .user-role {
+            color: #94a3b8;
+        }
+
+        .user-dropdown-divider {
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        [data-theme="dark"] .user-dropdown-divider {
+            background: #334155;
+        }
+
+        .user-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            color: #374151;
+            font-size: 14px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+
+        .user-dropdown-item:hover {
+            background: #f3f4f6;
+        }
+
+        [data-theme="dark"] .user-dropdown-item {
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .user-dropdown-item:hover {
+            background: #334155;
+        }
+
+        .user-dropdown-item i {
+            width: 16px;
+            color: #6b7280;
+        }
+
+        [data-theme="dark"] .user-dropdown-item i {
+            color: #94a3b8;
         }
 
         .theme-toggle {
@@ -837,6 +958,18 @@
                         <span>Health</span>
                     </a>
                 </li>
+                <li class="nav-item {% if request.url.path == '/health-dashboard' %}active{% endif %}">
+                    <a href="/health-dashboard">
+                        <i class="fas fa-stethoscope"></i>
+                        <span>Connection Health</span>
+                    </a>
+                </li>
+                <li class="nav-item {% if request.url.path == '/alerts' %}active{% endif %}">
+                    <a href="/alerts">
+                        <i class="fas fa-bell"></i>
+                        <span>Alerts</span>
+                    </a>
+                </li>
                 <li class="nav-item {% if request.url.path == '/settings' %}active{% endif %}">
                     <a href="{{ url_for('settings') }}">
                         <i class="fas fa-cog"></i>
@@ -881,10 +1014,26 @@
                         <i class="fas fa-sun theme-icon theme-icon-sun"></i>
                         <i class="fas fa-moon theme-icon theme-icon-moon"></i>
                     </button>
-                    <div class="user-profile">
+                    <div class="user-profile" id="user-menu-trigger">
                         <img src="{{ url_for('static', path='/img/placeholder.svg') }}"
                         alt="User" class="avatar">
-                        <span>Admin</span>
+                        <span id="username-display">Admin</span>
+                        <i class="fas fa-chevron-down" style="margin-left: 4px; font-size: 10px; opacity: 0.7;"></i>
+                        
+                        <!-- User dropdown menu -->
+                        <div class="user-dropdown" id="user-dropdown">
+                            <div class="user-dropdown-header">
+                                <strong id="dropdown-username">Admin</strong>
+                                <span class="user-role">Administrator</span>
+                            </div>
+                            <div class="user-dropdown-divider"></div>
+                            <a href="/settings" class="user-dropdown-item">
+                                <i class="fas fa-cog"></i> Settings
+                            </a>
+                            <button class="user-dropdown-item" onclick="handleLogout()">
+                                <i class="fas fa-sign-out-alt"></i> Sign Out
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -1121,7 +1270,7 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/main.js') }}?v=20251203"></script>
     <script>
         // Hamburger menu toggle
         const hamburgerBtn = document.getElementById('hamburger-btn');
@@ -1612,8 +1761,60 @@
                 if (section) section.classList.add('active');
             });
         });
+
+        // User dropdown menu
+        const userMenuTrigger = document.getElementById('user-menu-trigger');
+        const userDropdown = document.getElementById('user-dropdown');
+
+        if (userMenuTrigger && userDropdown) {
+            userMenuTrigger.addEventListener('click', function(e) {
+                e.stopPropagation();
+                userDropdown.classList.toggle('show');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!userMenuTrigger.contains(e.target)) {
+                    userDropdown.classList.remove('show');
+                }
+            });
+        }
+
+        // Load auth status and update UI
+        async function loadAuthStatus() {
+            try {
+                const response = await fetch('/api/auth/status');
+                const data = await response.json();
+                
+                const usernameDisplay = document.getElementById('username-display');
+                const dropdownUsername = document.getElementById('dropdown-username');
+                
+                if (usernameDisplay && data.user) {
+                    usernameDisplay.textContent = data.user;
+                }
+                if (dropdownUsername && data.user) {
+                    dropdownUsername.textContent = data.user;
+                }
+            } catch (e) {
+                console.warn('Failed to load auth status:', e);
+            }
+        }
+
+        // Logout handler
+        async function handleLogout() {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                window.location.href = '/login';
+            } catch (e) {
+                console.error('Logout error:', e);
+                window.location.href = '/login';
+            }
+        }
+
+        // Load auth status on page load
+        loadAuthStatus();
     </script>
-    <script src="{{ url_for('static', path='/js/chatbot.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/chatbot.js') }}?v=20251203"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

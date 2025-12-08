@@ -161,6 +161,92 @@
         color: #1f2937;
     }
     
+    .color-controls {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .color-picker-wrapper {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .color-picker-input {
+        width: 60px;
+        height: 40px;
+        border: 2px solid #e5e7eb;
+        border-radius: 6px;
+        cursor: pointer;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background: none;
+    }
+    
+    .color-picker-input::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+    
+    .color-picker-input::-webkit-color-swatch {
+        border: none;
+        border-radius: 4px;
+    }
+    
+    .color-picker-input::-moz-color-swatch {
+        border: none;
+        border-radius: 4px;
+    }
+    
+    .rgb-inputs {
+        display: flex;
+        gap: 8px;
+        flex: 1;
+    }
+    
+    .rgb-input {
+        flex: 1;
+        padding: 6px 8px;
+        border: 1px solid #e5e7eb;
+        border-radius: 4px;
+        font-size: 12px;
+        text-align: center;
+        min-width: 50px;
+    }
+    
+    .color-label {
+        font-size: 12px;
+        color: #6b7280;
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+    
+    .color-mode-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        margin-left: 8px;
+    }
+    
+    .color-mode-xy {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .color-mode-ct {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .color-mode-hs {
+        background-color: #fce7f3;
+        color: #9f1239;
+    }
+    
     .btn {
         padding: 10px 20px;
         border: none;
@@ -259,12 +345,41 @@
     <div class="page-header">
         <h1>💡 Lighting Control</h1>
         <p>Control your Philips Hue lights, groups, and scenes</p>
-        <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
+        <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px; flex-wrap: wrap;">
             <span id="connection-status" class="connection-status status-disconnected">Disconnected</span>
-            <button id="rescan-btn" class="btn btn-sm" onclick="rescanDevices()" title="Rescan all devices from bridge">🔄 Rescan</button>
+            <button id="rescan-btn" class="btn btn-sm" onclick="rescanDevices()" title="Full rescan - re-discovers all devices from bridge">🔄 Rescan</button>
+            <button id="refresh-btn" class="btn btn-sm btn-secondary" onclick="loadData()" title="Quick refresh - updates light states">↻ Refresh</button>
             <span id="last-scan" style="font-size: 12px; color: #6b7280;"></span>
+            <span style="font-size: 11px; color: #9ca3af;">Auto-refresh: 15s • Full rescan: 2min</span>
         </div>
     </div>
+    
+    <!-- Global Controls -->
+    <div class="global-controls" id="global-controls" style="margin-top: 16px; padding: 16px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-radius: 12px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+        <span style="color: #94a3b8; font-weight: 500; margin-right: 8px;">⚡ Quick Actions:</span>
+        <button class="btn btn-success" onclick="globalLightControl('on')" title="Turn all lights on">
+            💡 All On
+        </button>
+        <button class="btn btn-danger" onclick="globalLightControl('off')" title="Turn all lights off">
+            🌙 All Off
+        </button>
+        <button class="btn btn-secondary" onclick="globalBrightness(50)" title="Set all lights to 50%">
+            🔆 50%
+        </button>
+        <button class="btn btn-secondary" onclick="globalBrightness(100)" title="Set all lights to 100%">
+            ☀️ 100%
+        </button>
+        <button class="btn" style="background: linear-gradient(45deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444); color: white; animation: disco-btn 2s linear infinite;" onclick="discoMode()" title="Party time! 🎉">
+            🪩 Disco!
+        </button>
+    </div>
+    
+    <style>
+        @keyframes disco-btn {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+    </style>
     
     <!-- Setup Notice -->
     <div class="setup-notice" id="setup-notice" style="display: none;">
@@ -377,8 +492,138 @@ async function rescanDevices() {
     }
 }
 
+// Track if we've done initial scan
+let initialScanDone = false;
+
+// Global light control - turn all on/off (fire all requests in parallel, don't wait)
+async function globalLightControl(state) {
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳...';
+    
+    const turnOn = state === 'on';
+    const reachableLights = lights.filter(l => l.reachable);
+    
+    // Fire all requests immediately without waiting
+    reachableLights.forEach(light => {
+        fetch('/api/lighting/hue/lights/' + light.light_id + '/control', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ on: turnOn })
+        }).catch(e => console.warn('Light control failed:', light.light_id, e));
+    });
+    
+    console.log(`Sent ${state} command to ${reachableLights.length} lights`);
+    
+    // Re-enable button quickly
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }, 300);
+    
+    // Refresh UI after a moment
+    setTimeout(() => loadData(), 1500);
+}
+
+// Global brightness control (fire all requests in parallel)
+async function globalBrightness(percent) {
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳...';
+    
+    const reachableLights = lights.filter(l => l.reachable);
+    
+    // Fire all requests immediately without waiting
+    reachableLights.forEach(light => {
+        fetch('/api/lighting/hue/lights/' + light.light_id + '/control', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ on: true, brightness_percent: percent })
+        }).catch(e => console.warn('Brightness control failed:', light.light_id, e));
+    });
+    
+    console.log(`Sent ${percent}% brightness to ${reachableLights.length} lights`);
+    
+    // Re-enable button quickly
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }, 300);
+    
+    // Refresh UI after a moment
+    setTimeout(() => loadData(), 1500);
+}
+
+// Disco mode - party lights!
+let discoInterval = null;
+async function discoMode() {
+    const btn = event.target;
+    
+    // Toggle disco mode
+    if (discoInterval) {
+        clearInterval(discoInterval);
+        discoInterval = null;
+        btn.textContent = '🪩 Disco!';
+        btn.style.boxShadow = '';
+        
+        // Reset lights to normal
+        await globalBrightness(50);
+        return;
+    }
+    
+    btn.textContent = '🛑 Stop Disco';
+    btn.style.boxShadow = '0 0 20px rgba(236, 72, 153, 0.8)';
+    
+    // Get color-capable lights
+    const colorLights = lights.filter(l => l.reachable && (l.hue !== undefined || l.xy || l.color_mode === 'xy' || l.color_mode === 'hs'));
+    
+    if (colorLights.length === 0) {
+        alert('No color-capable lights found! Disco mode requires RGB bulbs.');
+        btn.textContent = '🪩 Disco!';
+        btn.style.boxShadow = '';
+        return;
+    }
+    
+    console.log(`Starting disco with ${colorLights.length} color lights`);
+    
+    // Disco loop
+    discoInterval = setInterval(async () => {
+        const randomLight = colorLights[Math.floor(Math.random() * colorLights.length)];
+        const randomHue = Math.floor(Math.random() * 65535);
+        const randomBri = 50 + Math.floor(Math.random() * 50); // 50-100%
+        
+        try {
+            await fetch('/api/lighting/hue/lights/' + randomLight.light_id + '/control', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    on: true, 
+                    hue: randomHue,
+                    saturation: 254,
+                    brightness_percent: randomBri
+                })
+            });
+        } catch (e) {
+            console.warn('Disco light change failed:', e);
+        }
+    }, 300); // Change a light every 300ms
+    
+    // Auto-stop after 30 seconds
+    setTimeout(() => {
+        if (discoInterval) {
+            clearInterval(discoInterval);
+            discoInterval = null;
+            btn.textContent = '🪩 Disco!';
+            btn.style.boxShadow = '';
+            console.log('Disco auto-stopped after 30s');
+        }
+    }, 30000);
+}
+
 // Load all data (from cache - fast)
-async function loadData() {
+async function loadData(forceRescan = false) {
     try {
         // Check connection status
         const statusResponse = await fetch('/api/lighting/hue/status');
@@ -398,6 +643,15 @@ async function loadData() {
                 const scanDate = new Date(status.last_scan);
                 lastScanEl.textContent = `Last scan: ${scanDate.toLocaleTimeString()}`;
             }
+            
+            // Auto-rescan if no lights found on first load or if forced
+            if ((!initialScanDone && status.lights_count === 0) || forceRescan) {
+                console.log('Triggering initial rescan...');
+                await rescanDevices();
+                initialScanDone = true;
+                return; // rescanDevices will reload data
+            }
+            initialScanDone = true;
         } else {
             statusEl.textContent = 'Disconnected';
             statusEl.className = 'connection-status status-disconnected';
@@ -406,7 +660,7 @@ async function loadData() {
             }
         }
         
-        // Load lights
+        // Load lights from cache (fast)
         const lightsResponse = await fetch('/api/lighting/hue/lights');
         const lightsData = await lightsResponse.json();
         lights = lightsData.lights || [];
@@ -541,11 +795,31 @@ function renderLights() {
         return;
     }
     
-    container.innerHTML = lights.map(light => `
+    container.innerHTML = lights.map(light => {
+        // Check if light supports color (multicolor bulbs)
+        // Color is supported if: colormode is xy/hs, OR if hue/saturation values exist, OR model suggests color
+        const hasColorMode = light.color_mode && (light.color_mode === 'xy' || light.color_mode === 'hs');
+        const hasHueSat = (light.hue !== undefined && light.hue !== null) || 
+                          (light.saturation !== undefined && light.saturation !== null);
+        const hasXY = light.xy && light.xy.length === 2;
+        const supportsColor = hasColorMode || hasHueSat || hasXY;
+        
+        // Get current RGB values, default to white if not set
+        const currentRgb = light.rgb && light.rgb.length === 3 ? light.rgb : [255, 255, 255];
+        const rgbHex = '#' + currentRgb.map(c => {
+            const hex = Math.max(0, Math.min(255, Math.round(c))).toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        }).join('');
+        
+        // Color mode badge
+        const colorModeBadge = light.color_mode ? 
+            `<span class="color-mode-badge color-mode-${light.color_mode}">${light.color_mode.toUpperCase()}</span>` : '';
+        
+        return `
         <div class="light-card" data-light-id="${light.light_id}">
             <div class="light-header">
                 <div>
-                    <div class="light-name">${light.name}</div>
+                    <div class="light-name">${light.name}${colorModeBadge}</div>
                     <div class="light-room">${light.room || 'Unassigned'} • ${light.model || 'Unknown Model'}</div>
                 </div>
                 <div class="light-status">
@@ -565,8 +839,48 @@ function renderLights() {
                     <div class="brightness-value">${light.brightness_percent || 0}%</div>
                 </div>
             </div>
+            ${supportsColor ? `
+            <div class="color-controls">
+                <div class="color-label">Color (RGB)</div>
+                <div class="color-picker-wrapper">
+                    <input type="color" 
+                           class="color-picker-input" 
+                           value="${rgbHex}"
+                           onchange="setLightColor('${light.light_id}', this.value)"
+                           ${!light.reachable || !light.on ? 'disabled' : ''}
+                           title="Pick a color">
+                    <div class="rgb-inputs">
+                        <input type="number" 
+                               class="rgb-input" 
+                               min="0" 
+                               max="255" 
+                               value="${currentRgb[0]}"
+                               placeholder="R"
+                               onchange="setLightColorRGB('${light.light_id}', 'r', this.value)"
+                               ${!light.reachable || !light.on ? 'disabled' : ''}>
+                        <input type="number" 
+                               class="rgb-input" 
+                               min="0" 
+                               max="255" 
+                               value="${currentRgb[1]}"
+                               placeholder="G"
+                               onchange="setLightColorRGB('${light.light_id}', 'g', this.value)"
+                               ${!light.reachable || !light.on ? 'disabled' : ''}>
+                        <input type="number" 
+                               class="rgb-input" 
+                               min="0" 
+                               max="255" 
+                               value="${currentRgb[2]}"
+                               placeholder="B"
+                               onchange="setLightColorRGB('${light.light_id}', 'b', this.value)"
+                               ${!light.reachable || !light.on ? 'disabled' : ''}>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 async function toggleLight(lightId, turnOn) {
@@ -677,6 +991,91 @@ async function setBrightness(lightId, brightnessPercent) {
     }
 }
 
+// Convert hex color to RGB array
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16)
+    ] : [255, 255, 255];
+}
+
+// Set light color from color picker
+async function setLightColor(lightId, hexColor) {
+    const rgb = hexToRgb(hexColor);
+    await setLightColorRGB(lightId, 'all', rgb);
+}
+
+// Set light color from RGB inputs
+async function setLightColorRGB(lightId, channel, value) {
+    try {
+        const light = lights.find(l => l.light_id === lightId);
+        if (!light) {
+            throw new Error('Light not found');
+        }
+        
+        // Get current RGB or default to white
+        let rgb = light.rgb && light.rgb.length === 3 ? [...light.rgb] : [255, 255, 255];
+        
+        // Update the specific channel
+        if (channel === 'r') {
+            rgb[0] = Math.max(0, Math.min(255, parseInt(value) || 0));
+        } else if (channel === 'g') {
+            rgb[1] = Math.max(0, Math.min(255, parseInt(value) || 0));
+        } else if (channel === 'b') {
+            rgb[2] = Math.max(0, Math.min(255, parseInt(value) || 0));
+        } else if (channel === 'all' && Array.isArray(value)) {
+            rgb = value;
+        }
+        
+        const response = await fetch(`/api/lighting/hue/lights/${lightId}/control`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                on: true,  // Turn on if setting color
+                rgb: rgb
+            }),
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to set color');
+        }
+        
+        // Update UI immediately
+        if (light) {
+            light.rgb = rgb;
+            light.on = true;
+            // Update color picker to match
+            const hexColor = '#' + rgb.map(c => {
+                const hex = c.toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }).join('');
+            const colorPicker = document.querySelector(`[data-light-id="${lightId}"] .color-picker-input`);
+            if (colorPicker) {
+                colorPicker.value = hexColor;
+            }
+            // Update RGB inputs
+            const rgbInputs = document.querySelectorAll(`[data-light-id="${lightId}"] .rgb-input`);
+            if (rgbInputs.length === 3) {
+                rgbInputs[0].value = rgb[0];
+                rgbInputs[1].value = rgb[1];
+                rgbInputs[2].value = rgb[2];
+            }
+        }
+        
+        // Reload to get updated state from bridge
+        await new Promise(resolve => setTimeout(resolve, 300));
+        await loadData();
+    } catch (error) {
+        console.error('Error setting color:', error);
+        alert('Error: ' + error.message);
+    }
+}
+
 async function toggleGroup(groupId, turnOn) {
     try {
         const response = await fetch(`/api/lighting/hue/groups/${groupId}/control`, {
@@ -764,10 +1163,17 @@ async function activateScene(sceneId, groupId) {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
+    // Initial load
     loadData();
     
-    // Refresh every 30 seconds
-    setInterval(loadData, 30000);
+    // Refresh every 15 seconds (lights can be toggled externally)
+    setInterval(loadData, 15000);
+    
+    // Full rescan every 2 minutes to catch wall switch/remote changes
+    setInterval(() => {
+        console.log('Periodic rescan...');
+        rescanDevices();
+    }, 120000);
 });
 </script>
 {% endblock %}
