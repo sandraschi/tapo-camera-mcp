@@ -108,17 +108,7 @@ class OpenMeteoClient:
             params = {
                 "latitude": latitude,
                 "longitude": longitude,
-                "current": [
-                    "temperature_2m",
-                    "relative_humidity_2m",
-                    "surface_pressure",
-                    "wind_speed_10m",
-                    "wind_direction_10m",
-                    "weather_code",
-                    "cloud_cover",
-                    "precipitation",
-                    "is_day",
-                ],
+                "current": "temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_direction_10m,weather_code,cloud_cover,precipitation,is_day",
                 "timezone": "Europe/Vienna",
             }
 
@@ -169,13 +159,7 @@ class OpenMeteoClient:
             params = {
                 "latitude": latitude,
                 "longitude": longitude,
-                "daily": [
-                    "temperature_2m_max",
-                    "temperature_2m_min",
-                    "precipitation_sum",
-                    "weather_code",
-                    "wind_speed_10m_max",
-                ],
+                "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code,wind_speed_10m_max",
                 "timezone": "Europe/Vienna",
                 "forecast_days": days,
             }

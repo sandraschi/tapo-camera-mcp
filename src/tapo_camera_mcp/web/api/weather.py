@@ -708,8 +708,10 @@ async def get_combined_weather() -> Dict[str, Any]:
         # Get external Vienna weather
         external_data = None
         try:
+            logger.info("Fetching external Vienna weather from Open-Meteo...")
             weather = await openmeteo_client.get_current_weather()
             if weather:
+                logger.info(f"Successfully fetched Vienna weather: {weather.temperature}°C, {weather.humidity}% humidity")
                 external_data = {
                     "location": weather.location,
                     "temperature": weather.temperature,
@@ -721,8 +723,10 @@ async def get_combined_weather() -> Dict[str, Any]:
                     "is_day": weather.is_day,
                     "timestamp": weather.timestamp,
                 }
+            else:
+                logger.warning("Open-Meteo returned None - weather data unavailable")
         except Exception as e:
-            logger.warning(f"Failed to get external weather: {e}")
+            logger.exception(f"Failed to get external weather: {e}")
 
         # Get forecast
         forecast = await openmeteo_client.get_forecast(days=5)

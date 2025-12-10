@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2025-12-10 🔧 **Netatmo Token Refresh Fix + Weather Page**
+
+### 🐛 **BUG FIXES**
+
+#### **Netatmo Token Refresh**
+- **Fixed 403 errors after token refresh**: System was using cached/stale access tokens after refresh
+- **Proper token cache clearing**: Now clears both `_access_token` AND `_token_expiry` when 403 errors occur
+- **Automatic retry**: System automatically refreshes token and retries API calls on 403 errors
+- **Added 403 handling**: Both `list_stations()` and `current_data()` now properly handle 403 errors with token refresh
+
+#### **Weather Page**
+- **Fixed missing `active_page` parameter**: Weather page route now includes `active_page: "weather"` for proper navigation highlighting
+
+### 📝 **DOCUMENTATION**
+
+- **Updated NETATMO_TOKEN_GUIDE.md**: Added troubleshooting section for 403 errors after token refresh
+- **Documented token refresh fix**: Explained how automatic refresh works and what was fixed
+- **Added recent changes section**: Documented the 2025-12-10 token refresh improvements
+
+### 🔧 **TECHNICAL IMPROVEMENTS**
+
+- **Token refresh logic**: Improved error handling in `netatmo_client.py` to force complete token refresh on 403 errors
+- **Code quality**: Fixed 178 ruff linting issues (imports, whitespace, formatting)
+
 ## [1.7.0] - 2025-11-30 🔐 **Authentication System + Lighting Enhancements**
 
 ### ✨ **NEW FEATURES**

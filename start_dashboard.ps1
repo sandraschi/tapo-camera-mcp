@@ -30,9 +30,11 @@ Write-Host ""
 
 # Check for port conflicts
 $port = 7777
-Write-Host "🔍 Checking port $port availability..." -ForegroundColor Cyan
+Write-Host "🔍 Checking port 7777 availability..." -ForegroundColor Cyan
 # Add timeout to port check (max 1 second)
-$portCheckJob = Start-Job -ScriptBlock { param($p) Get-NetTCPConnection -LocalPort $p -ErrorAction SilentlyContinue } -ArgumentList $port
+$portCheckJob = Start-Job -ScriptBlock { 
+    Get-NetTCPConnection -LocalPort 7777 -ErrorAction SilentlyContinue 
+}
 $portInUse = $null
 if (Wait-Job -Job $portCheckJob -Timeout 1) {
     $portInUse = Receive-Job -Job $portCheckJob
@@ -49,7 +51,7 @@ if ($portInUse) {
     $processPath = if ($process) { $process.Path } else { "N/A" }
     
     Write-Host "`n❌ PORT CONFLICT DETECTED!" -ForegroundColor Red
-    Write-Host "   Port $port is already in use by:" -ForegroundColor Yellow
+    Write-Host "   Port 7777 is already in use by:" -ForegroundColor Yellow
     Write-Host "   • Process: $processName (PID: $processId)" -ForegroundColor White
     Write-Host "   • Path: $processPath" -ForegroundColor Gray
     Write-Host ""
@@ -67,14 +69,14 @@ if ($portInUse) {
     exit 1
 }
 
-Write-Host "✅ Port $port is available!" -ForegroundColor Green
+Write-Host "✅ Port 7777 is available!" -ForegroundColor Green
 Write-Host ""
 
 # Start dashboard
-Write-Host "🚀 Starting dashboard on http://localhost:$port..." -ForegroundColor Yellow
+Write-Host "🚀 Starting dashboard on http://localhost:7777..." -ForegroundColor Yellow
 Write-Host "   Connection supervisor will monitor all devices" -ForegroundColor Gray
-Write-Host "   Health dashboard: http://localhost:$port/health-dashboard" -ForegroundColor Gray
-Write-Host "   Alerts dashboard: http://localhost:$port/alerts`n" -ForegroundColor Gray
+Write-Host "   Health dashboard: http://localhost:7777/health-dashboard" -ForegroundColor Gray
+Write-Host "   Alerts dashboard: http://localhost:7777/alerts`n" -ForegroundColor Gray
 
-python -m tapo_camera_mcp.web --host 0.0.0.0 --port $port
+python -m tapo_camera_mcp.web --host 0.0.0.0 --port 7777
 

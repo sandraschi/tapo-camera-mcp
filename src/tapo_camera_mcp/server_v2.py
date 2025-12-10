@@ -90,13 +90,16 @@ def main():
                 logger.info("TapoCameraServer initialized successfully")
 
                 logger.info("Starting server in direct stdio mode...")
+                # run_stdio_async() blocks indefinitely - this should never return
                 await server.run(host=args.host, port=args.port, stdio=args.stdio, direct=True)
-                logger.info("Server started successfully in direct mode")
+                # This line should never be reached - if it is, something went wrong
+                logger.error("ERROR: run_stdio_async() returned unexpectedly!")
 
-            # Run in direct mode
+            # Run in direct mode - this blocks until server exits
             logger.info("Calling asyncio.run(direct_main())...")
             asyncio.run(direct_main())
-            logger.info("Direct mode completed")
+            # Only reached if server exits (should not happen normally)
+            logger.warning("Server exited - this should not happen in normal operation")
         else:
             # Standard async mode
             logger.info("=== USING STANDARD ASYNC MODE ===")

@@ -36,11 +36,19 @@ def start_mcp_server(debug=False):
     logger.info("Starting MCP Server...")
     logger.info("MCP Server will be available for Claude Desktop integration")
     logger.info("Press Ctrl+C to stop the server")
+    logger.info("Note: Server runs until stopped - this is normal behavior")
 
     try:
-        subprocess.run(cmd, check=False, shell=True)
+        # Run the server - this blocks until server exits
+        result = subprocess.run(cmd, check=False, shell=True)
+        if result.returncode != 0:
+            logger.error(f"MCP Server exited with code {result.returncode}")
+        else:
+            logger.info("MCP Server exited normally")
     except KeyboardInterrupt:
-        logger.info("MCP Server stopped")
+        logger.info("MCP Server stopped by user")
+    except Exception as e:
+        logger.error(f"Error starting MCP Server: {e}", exc_info=True)
 
 
 def start_dual_server():

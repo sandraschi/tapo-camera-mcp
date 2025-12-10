@@ -7,15 +7,14 @@ Falls back to simulated data if not configured or on error.
 
 from __future__ import annotations
 
+import asyncio
 import time
-import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import aiohttp
-import asyncio
 
 from ..config import get_model
 from ..config.models import WeatherSettings
@@ -29,11 +28,13 @@ logger = get_logger(__name__)
 try:
     import pyatmo
     from pyatmo.auth import AbstractAsyncAuth
+    from pyatmo.exceptions import ApiError as PyatmoApiError
 
     PYATMO_AVAILABLE = True
 except ImportError:
     PYATMO_AVAILABLE = False
     AbstractAsyncAuth = object  # type: ignore[misc,assignment]
+    PyatmoApiError = Exception  # type: ignore[misc,assignment]
 
 
 @dataclass
@@ -102,18 +103,17 @@ class NetatmoOAuth2Auth(AbstractAsyncAuth):
                     error_text = await resp.text()
                     error_msg = f"Token refresh failed: {resp.status} - {error_text}"
                     logger.error(f"Netatmo OAuth token refresh failed: {error_msg}")
-                    
+
                     # Check for specific error types
                     if "invalid" in error_text.lower() or "invalid_token" in error_text.lower():
                         raise RuntimeError(f"Invalid refresh token. Please re-authenticate with Netatmo. Error: {error_text}")
-                    elif "expired" in error_text.lower():
+                    if "expired" in error_text.lower():
                         raise RuntimeError(f"Refresh token expired. Please re-authenticate with Netatmo. Error: {error_text}")
-                    elif resp.status == 401:
+                    if resp.status == 401:
                         raise RuntimeError(f"Authentication failed (401). Invalid credentials or token. Error: {error_text}")
-                    elif resp.status == 403:
+                    if resp.status == 403:
                         raise RuntimeError(f"Access forbidden (403). Check API permissions. Error: {error_text}")
-                    else:
-                        raise RuntimeError(error_msg)
+                    raise RuntimeError(error_msg)
 
                 try:
                     tokens = await resp.json()
@@ -182,10 +182,45 @@ class NetatmoService:
         # Load refresh token from cache if available (overrides config)
         self._load_token_cache()
 
+    @staticmethod
+    def _adjust_token_path(token_file: str) -> Path:
+        """Adjust token file path for Docker vs native environments."""
+        import os
+        token_path = Path(token_file)
+        # In Docker, store tokens in /app/tokens (mounted volume)
+        # In native, store in project root
+        if os.getenv("CONTAINER") == "yes" or Path("/.dockerenv").exists():
+            tokens_dir = Path("/app/tokens")
+            tokens_dir.mkdir(parents=True, exist_ok=True)
+            return tokens_dir / token_path.name
+        return Path.cwd() / token_path.name
+
+    def _load_token_cache(self) -> None:
+        """Load refresh token from cache file if it exists (overrides config)."""
+        if self.token_file.exists():
+            try:
+                with open(self.token_file) as f:
+                    cached_token = f.read().strip()
+                    if cached_token:
+                        logger.info(f"Loaded Netatmo refresh token from cache: {self.token_file}")
+                        self.config.refresh_token = cached_token
+            except Exception as e:
+                logger.warning(f"Failed to load Netatmo token cache: {e}")
+
+    def _save_token_cache(self, refresh_token: str) -> None:
+        """Save refresh token to cache file for persistence across restarts."""
+        try:
+            self.token_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.token_file, "w") as f:
+                f.write(refresh_token)
+            logger.info(f"Saved Netatmo refresh token to cache: {self.token_file}")
+        except Exception as e:
+            logger.error(f"Failed to save Netatmo token cache: {e}")
+
     async def initialize(self) -> None:
         """Initialize Netatmo client if enabled and credentials provided."""
         import asyncio
-        
+
         if self._initialized:
             return
         self._initialized = True
@@ -218,9 +253,10 @@ class NetatmoService:
             # Create aiohttp session with IPv4-only connector to fix Windows DNS issues
             # Windows async DNS can fail with IPv6/IPv4 conflicts - force IPv4
             import socket
+
             from aiohttp import TCPConnector
             from aiohttp.resolver import DefaultResolver
-            
+
             # Custom resolver that uses sync socket.getaddrinfo (works on Windows)
             class SyncDNSResolver(DefaultResolver):
                 """Resolver that uses sync socket.getaddrinfo to bypass Windows async DNS bug."""
@@ -228,13 +264,13 @@ class NetatmoService:
                     loop = asyncio.get_event_loop()
                     # Use sync getaddrinfo in thread pool (works on Windows when async fails)
                     addrinfo = await loop.run_in_executor(
-                        None, 
-                        socket.getaddrinfo, 
+                        None,
+                        socket.getaddrinfo,
                         host, port, family, socket.SOCK_STREAM
                     )
-                    return [{'hostname': host, 'host': addr[4][0], 'port': port, 'family': family, 'proto': 0, 'flags': 0} 
+                    return [{'hostname': host, 'host': addr[4][0], 'port': port, 'family': family, 'proto': 0, 'flags': 0}
                            for addr in addrinfo]
-            
+
             # Force IPv4 + sync DNS resolver to avoid Windows async DNS issues
             connector = TCPConnector(
                 family=socket.AF_INET,  # Force IPv4 only
@@ -336,7 +372,7 @@ class NetatmoService:
             error_msg = str(e)
             # Log the actual error for debugging
             logger.error(f"Failed to initialize Netatmo: {error_type}: {error_msg}")
-            
+
             # Check if it's a DNS error - should already be using sync resolver, but log it
             if "getaddrinfo" in error_msg or "ClientConnectorDNSError" in error_type or "DNS" in error_type:
                 logger.error(f"Netatmo DNS error persists even with sync DNS resolver: {error_type}: {error_msg}")
@@ -346,7 +382,7 @@ class NetatmoService:
                 logger.error(f"Netatmo/pyatmo exception during initialization: {error_type}: {error_msg}")
             else:
                 logger.exception(f"Unexpected error during Netatmo initialization: {error_type}: {error_msg}")
-            
+
             # Clean up and return - no simulated data
             if self._session:
                 try:
@@ -368,13 +404,8 @@ class NetatmoService:
         await self.initialize()
 
         if self._use_real_api and self._account:
-            try:
-                # Refresh data with timeout to prevent hanging
-                await asyncio.wait_for(
-                    self._account.async_update_weather_stations(),
-                    timeout=10.0
-                )
-
+            # Helper function to process stations after successful API call
+            def _process_stations():
                 stations = []
                 for home_id, home in self._account.homes.items():
                     # Find weather station modules in this home
@@ -403,19 +434,81 @@ class NetatmoService:
                                     station["modules"].append(mod_info)
 
                             stations.append(station)
+                return stations
 
+            try:
+                # Force token refresh before API call to ensure we have a valid token
+                if hasattr(self._account, 'auth') and hasattr(self._account.auth, 'async_get_access_token'):
+                    try:
+                        await self._account.auth.async_get_access_token()
+                    except RuntimeError as token_error:
+                        error_msg = str(token_error)
+                        if "Invalid refresh token" in error_msg or "expired" in error_msg.lower():
+                            logger.error("Netatmo refresh token is invalid or expired. Please re-authenticate.")
+                            logger.error("Run: python scripts/netatmo_oauth_helper.py auth-url <client_id> <redirect_uri>")
+                            return []
+                        raise
+
+                # Refresh data with timeout to prevent hanging
+                await asyncio.wait_for(
+                    self._account.async_update_weather_stations(),
+                    timeout=10.0
+                )
+
+                # Process stations after successful API call
+                stations = _process_stations()
                 if stations:
                     return stations
 
             except asyncio.TimeoutError:
                 logger.warning("Netatmo list_stations: async_update_weather_stations timed out")
+            except PyatmoApiError as e:
+                # Handle pyatmo API errors (403 Invalid access token, etc.)
+                error_msg = str(e)
+                if "403" in error_msg or "Invalid access token" in error_msg:
+                    logger.warning("Netatmo access token invalid (403). Attempting token refresh...")
+                    # Try to force token refresh and retry once
+                    try:
+                        if hasattr(self._account, 'auth') and hasattr(self._account.auth, 'async_get_access_token'):
+                            # Clear cached token AND expiry to force refresh
+                            if hasattr(self._account.auth, '_access_token'):
+                                self._account.auth._access_token = None
+                            if hasattr(self._account.auth, '_token_expiry'):
+                                self._account.auth._token_expiry = 0  # Force expiry check to fail
+                            # Force token refresh
+                            await self._account.auth.async_get_access_token()
+                            logger.info("Netatmo access token refreshed, retrying API call...")
+                            # Retry the API call
+                            await asyncio.wait_for(
+                                self._account.async_update_weather_stations(),
+                                timeout=10.0
+                            )
+                            # If retry succeeds, process stations
+                            logger.info("Netatmo token refreshed successfully, processing stations")
+                            stations = _process_stations()
+                            if stations:
+                                return stations
+                        else:
+                            raise RuntimeError("Cannot refresh token - auth object missing")
+                    except (RuntimeError, PyatmoApiError) as refresh_error:
+                        refresh_msg = str(refresh_error)
+                        if "Invalid refresh token" in refresh_msg or "expired" in refresh_msg.lower():
+                            logger.error("Netatmo refresh token is invalid or expired. Please re-authenticate.")
+                            logger.error("Run: python scripts/netatmo_oauth_helper.py auth-url <client_id> <redirect_uri>")
+                            return []
+                        logger.error(f"Netatmo token refresh failed: {refresh_error}")
+                        return []
+                else:
+                    logger.error(f"Netatmo API error: {error_msg}")
+                    return []
             except RuntimeError as e:
                 # OAuth token refresh errors
                 error_msg = str(e)
-                if "Token refresh failed" in error_msg:
+                if "Token refresh failed" in error_msg or "Invalid refresh token" in error_msg:
                     logger.error(f"Netatmo authentication failed: {error_msg}")
-                else:
-                    logger.exception(f"Netatmo runtime error in list_stations: {e}")
+                    logger.error("Please re-authenticate: python scripts/netatmo_oauth_helper.py auth-url <client_id> <redirect_uri>")
+                    return []
+                logger.exception(f"Netatmo runtime error in list_stations: {e}")
             except AttributeError as e:
                 # pyatmo API changes or missing attributes
                 logger.error(f"Netatmo API attribute error (pyatmo version mismatch?): {e}")
@@ -468,6 +561,42 @@ class NetatmoService:
                     # Missing expected data in pyatmo response
                     logger.error(f"Netatmo API data structure error in current_data: {e}")
                     return {}, time.time()
+                except PyatmoApiError as e:
+                    # Handle pyatmo API errors (403 Invalid access token, etc.)
+                    error_msg = str(e)
+                    if "403" in error_msg or "Invalid access token" in error_msg:
+                        logger.warning("Netatmo access token invalid (403) in current_data. Attempting token refresh...")
+                        # Try to force token refresh and retry once
+                        try:
+                            if hasattr(self._account, 'auth') and hasattr(self._account.auth, 'async_get_access_token'):
+                                # Clear cached token AND expiry to force refresh
+                                if hasattr(self._account.auth, '_access_token'):
+                                    self._account.auth._access_token = None
+                                if hasattr(self._account.auth, '_token_expiry'):
+                                    self._account.auth._token_expiry = 0  # Force expiry check to fail
+                                # Force token refresh
+                                await self._account.auth.async_get_access_token()
+                                logger.info("Netatmo access token refreshed in current_data, retrying API call...")
+                                # Retry the API call
+                                await asyncio.wait_for(
+                                    self._account.async_update_weather_stations(),
+                                    timeout=10.0
+                                )
+                                logger.info("Netatmo token refreshed successfully in current_data, continuing...")
+                                # Continue processing - don't return empty data yet
+                            else:
+                                logger.error("Cannot refresh token in current_data - auth object missing")
+                                return {}, time.time()
+                        except (RuntimeError, PyatmoApiError) as refresh_error:
+                            refresh_msg = str(refresh_error)
+                            if "Invalid refresh token" in refresh_msg or "expired" in refresh_msg.lower():
+                                logger.error("Netatmo refresh token is invalid or expired in current_data. Please re-authenticate.")
+                            else:
+                                logger.error(f"Netatmo token refresh failed in current_data: {refresh_error}")
+                            return {}, time.time()
+                    else:
+                        logger.error(f"Netatmo API error in current_data: {error_msg}")
+                        return {}, time.time()
                 except aiohttp.ClientError as e:
                     # Network/HTTP errors
                     error_msg = str(e)
@@ -492,65 +621,80 @@ class NetatmoService:
                 data = {}
                 timestamp = time.time()
 
-                # Find the station and its modules
-                for _home_id, home in self._account.homes.items():
-                    for _mod_id, module in home.modules.items():
-                        # Main indoor module (NAMain)
-                        if "NAMain" in str(getattr(module, "device_type", "")):
-                            if module_type in ("indoor", "all"):
-                                indoor = {
-                                    "temperature": getattr(module, "temperature", None),
-                                    "humidity": getattr(module, "humidity", None),
-                                    "co2": getattr(module, "co2", None),
-                                    "noise": getattr(module, "noise", None),
-                                    "pressure": getattr(module, "pressure", None),
-                                    "temp_trend": getattr(module, "temp_trend", "stable"),
-                                    "pressure_trend": getattr(module, "pressure_trend", "stable"),
-                                }
-                                if module_type == "all":
-                                    data["indoor"] = indoor
-                                else:
-                                    data = indoor
-                                timestamp = getattr(module, "last_seen", time.time())
+                # Find the station by station_id first
+                target_home = None
+                target_station_module = None
 
-                        # Outdoor module (NAModule1)
-                        elif "NAModule1" in str(
-                            getattr(module, "device_type", "")
-                        ) and module_type in ("outdoor", "all"):
-                            outdoor = {
-                                "temperature": getattr(module, "temperature", None),
-                                "humidity": getattr(module, "humidity", None),
-                                "temp_trend": getattr(module, "temp_trend", "stable"),
-                            }
-                            if module_type == "all":
-                                data["outdoor"] = outdoor
-                            else:
-                                data = outdoor
+                for home_id, home in self._account.homes.items():
+                    for mod_id, module in home.modules.items():
+                        # Check if this is the station we're looking for
+                        if mod_id == station_id and "NAMain" in str(getattr(module, "device_type", "")):
+                            target_home = home
+                            target_station_module = module
+                            break
+                    if target_station_module:
+                        break
 
-                        # Additional indoor modules (NAModule4) - e.g., Bathroom
-                        elif "NAModule4" in str(
-                            getattr(module, "device_type", "")
-                        ) and module_type in ("indoor_extra", "all"):
-                            module_name = getattr(module, "name", "Extra Indoor Module")
-                            extra_indoor = {
-                                "name": module_name,
+                if not target_station_module or not target_home:
+                    logger.warning(f"Station {station_id} not found in Netatmo account")
+                    return {}, time.time()
+
+                # Now process modules from the correct station/home
+                for mod_id, module in target_home.modules.items():
+                    # Main indoor module (NAMain) - this is the station itself
+                    if mod_id == station_id and "NAMain" in str(getattr(module, "device_type", "")):
+                        if module_type in ("indoor", "all"):
+                            indoor = {
                                 "temperature": getattr(module, "temperature", None),
                                 "humidity": getattr(module, "humidity", None),
                                 "co2": getattr(module, "co2", None),
+                                "noise": getattr(module, "noise", None),
+                                "pressure": getattr(module, "pressure", None),
                                 "temp_trend": getattr(module, "temp_trend", "stable"),
-                                "battery_percent": getattr(module, "battery_percent", None),
+                                "pressure_trend": getattr(module, "pressure_trend", "stable"),
                             }
                             if module_type == "all":
-                                # Store additional modules in a list under "extra_indoor"
-                                if "extra_indoor" not in data:
-                                    data["extra_indoor"] = []
-                                data["extra_indoor"].append(extra_indoor)
+                                data["indoor"] = indoor
                             else:
-                                data = extra_indoor
+                                data = indoor
+                            timestamp = getattr(module, "last_seen", time.time())
+
+                    # Outdoor module (NAModule1) - belongs to this station
+                    elif "NAModule1" in str(getattr(module, "device_type", "")) and module_type in ("outdoor", "all"):
+                        outdoor = {
+                            "temperature": getattr(module, "temperature", None),
+                            "humidity": getattr(module, "humidity", None),
+                            "temp_trend": getattr(module, "temp_trend", "stable"),
+                        }
+                        if module_type == "all":
+                            data["outdoor"] = outdoor
+                        else:
+                            data = outdoor
+
+                    # Additional indoor modules (NAModule4) - e.g., Bathroom - belongs to this station
+                    elif "NAModule4" in str(getattr(module, "device_type", "")) and module_type in ("indoor_extra", "all"):
+                        module_name = getattr(module, "name", "Extra Indoor Module")
+                        extra_indoor = {
+                            "name": module_name,
+                            "temperature": getattr(module, "temperature", None),
+                            "humidity": getattr(module, "humidity", None),
+                            "co2": getattr(module, "co2", None),
+                            "temp_trend": getattr(module, "temp_trend", "stable"),
+                            "battery_percent": getattr(module, "battery_percent", None),
+                        }
+                        if module_type == "all":
+                            # Store additional modules in a list under "extra_indoor"
+                            if "extra_indoor" not in data:
+                                data["extra_indoor"] = []
+                            data["extra_indoor"].append(extra_indoor)
+                        else:
+                            data = extra_indoor
 
                 if data:
                     self._store_data(station_id, module_type, data)
                     return data, timestamp
+                logger.warning(f"No data found for station {station_id} with module_type {module_type}")
+                return {}, time.time()
 
             except Exception as e:
                 # This catch-all should not be reached due to specific handlers above,

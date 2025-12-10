@@ -1151,41 +1151,54 @@ async function loadWeatherStations() {
             const statusText = station.is_online ? 'Online' : 'Offline';
             
             // Fetch current data for this station
-            const dataResponse = await fetch(`/api/weather/stations/${station.station_id}/data?module_type=all`);
-            const stationData = await dataResponse.json();
-            const allData = stationData.data || {};
+            let allData = {};
+            try {
+                const dataResponse = await fetch(`/api/weather/stations/${station.station_id}/data?module_type=all`);
+                if (!dataResponse.ok) {
+                    throw new Error(`HTTP ${dataResponse.status}: ${dataResponse.statusText}`);
+                }
+                const stationData = await dataResponse.json();
+                allData = stationData.data || {};
+            } catch (error) {
+                console.error(`Failed to fetch data for station ${station.station_id}:`, error);
+                // Continue with empty data - will show station card without data
+            }
             
             // Build modules HTML from station.modules list
             let modulesHTML = '';
             
             // Main indoor module (if present in data)
-            if (allData.indoor) {
+            if (allData.indoor && allData.indoor.temperature != null) {
                 const indoor = allData.indoor;
                 modulesHTML += `
                     <div class="module-card">
                         <div class="module-name">Main Station (Indoor)</div>
                         <div class="module-data">
+                            ${indoor.temperature != null ? `
                             <div class="data-item">
                                 <div class="data-value">${indoor.temperature.toFixed(1)}°C</div>
                                 <div class="data-label">Temperature</div>
                             </div>
+                            ` : ''}
+                            ${indoor.humidity != null ? `
                             <div class="data-item">
                                 <div class="data-value">${indoor.humidity}%</div>
                                 <div class="data-label">Humidity</div>
                             </div>
-                            ${indoor.co2 ? `
+                            ` : ''}
+                            ${indoor.co2 != null ? `
                             <div class="data-item">
                                 <div class="data-value" style="color: ${indoor.co2 >= 1000 ? '#dc2626' : '#059669'}">${indoor.co2}ppm</div>
                                 <div class="data-label">CO2</div>
                             </div>
                             ` : ''}
-                            ${indoor.noise ? `
+                            ${indoor.noise != null ? `
                             <div class="data-item">
                                 <div class="data-value">${indoor.noise}dB</div>
                                 <div class="data-label">Noise</div>
                             </div>
                             ` : ''}
-                            ${indoor.pressure ? `
+                            ${indoor.pressure != null ? `
                             <div class="data-item">
                                 <div class="data-value">${indoor.pressure.toFixed(0)}hPa</div>
                                 <div class="data-label">Pressure</div>
@@ -1197,27 +1210,30 @@ async function loadWeatherStations() {
             }
             
             // Extra indoor modules (e.g., Bathroom)
-            if (allData.extra_indoor && allData.extra_indoor.length > 0) {
+            if (allData.extra_indoor && Array.isArray(allData.extra_indoor) && allData.extra_indoor.length > 0) {
                 for (const extraModule of allData.extra_indoor) {
+                    if (!extraModule || (extraModule.temperature == null && extraModule.humidity == null)) {
+                        continue; // Skip modules with no data
+                    }
                     modulesHTML += `
                         <div class="module-card" style="border-left: 4px solid #8b5cf6;">
                             <div class="module-name">${extraModule.name || 'Extra Indoor Module'} 
-                                ${extraModule.battery_percent ? `<span style="font-size: 12px; color: #6b7280;"> 🔋 ${extraModule.battery_percent}%</span>` : ''}
+                                ${extraModule.battery_percent != null ? `<span style="font-size: 12px; color: #6b7280;"> 🔋 ${extraModule.battery_percent}%</span>` : ''}
                             </div>
                             <div class="module-data">
-                                ${extraModule.temperature ? `
+                                ${extraModule.temperature != null ? `
                                 <div class="data-item">
                                     <div class="data-value">${extraModule.temperature.toFixed(1)}°C</div>
                                     <div class="data-label">Temperature</div>
                                 </div>
                                 ` : ''}
-                                ${extraModule.humidity ? `
+                                ${extraModule.humidity != null ? `
                                 <div class="data-item">
                                     <div class="data-value">${extraModule.humidity}%</div>
                                     <div class="data-label">Humidity</div>
                                 </div>
                                 ` : ''}
-                                ${extraModule.co2 ? `
+                                ${extraModule.co2 != null ? `
                                 <div class="data-item">
                                     <div class="data-value" style="color: ${extraModule.co2 >= 1000 ? '#dc2626' : '#059669'}">${extraModule.co2}ppm</div>
                                     <div class="data-label">CO2</div>
@@ -1230,21 +1246,36 @@ async function loadWeatherStations() {
             }
             
             // Outdoor modules (if present)
-            if (allData.outdoor) {
+            if (allData.outdoor && allData.outdoor.temperature != null) {
                 const outdoor = allData.outdoor;
                 modulesHTML += `
                     <div class="module-card" style="border-left: 4px solid #10b981;">
                         <div class="module-name">Outdoor Module</div>
                         <div class="module-data">
+                            ${outdoor.temperature != null ? `
                             <div class="data-item">
                                 <div class="data-value">${outdoor.temperature.toFixed(1)}°C</div>
                                 <div class="data-label">Temperature</div>
                             </div>
+                            ` : ''}
+                            ${outdoor.humidity != null ? `
                             <div class="data-item">
                                 <div class="data-value">${outdoor.humidity}%</div>
                                 <div class="data-label">Humidity</div>
                             </div>
+                            ` : ''}
                         </div>
+                    </div>
+                `;
+            }
+            
+            // Show message if no data available
+            if (!modulesHTML) {
+                modulesHTML = `
+                    <div class="module-card" style="text-align: center; padding: 20px; color: #6b7280;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 8px; color: #f59e0b;"></i>
+                        <p>No sensor data available for this station</p>
+                        <p style="font-size: 12px; margin-top: 4px;">The station may be offline or data is not yet available</p>
                     </div>
                 `;
             }
@@ -1315,30 +1346,38 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadCombinedWeather() {
     try {
         const response = await fetch('/api/weather/combined');
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
         const data = await response.json();
+        
+        // Log for debugging
+        if (!data.external) {
+            console.warn('No external weather data received');
+        }
         
         // Update internal weather (Netatmo)
         if (data.internal && data.internal.data) {
             const indoor = data.internal.data.indoor || {};
             document.getElementById('internal-location').textContent = data.internal.location || 'Home';
-            document.getElementById('internal-temp').textContent = `${indoor.temperature?.toFixed(1) || '--'}°`;
-            document.getElementById('internal-humidity').textContent = `${indoor.humidity || '--'}%`;
-            document.getElementById('internal-co2').textContent = `${indoor.co2 || '--'} ppm`;
-            document.getElementById('internal-pressure').textContent = `${indoor.pressure?.toFixed(0) || '--'} hPa`;
-            document.getElementById('internal-noise').textContent = indoor.noise || '--';
+            document.getElementById('internal-temp').textContent = `${indoor.temperature != null ? indoor.temperature.toFixed(1) : '--'}°`;
+            document.getElementById('internal-humidity').textContent = `${indoor.humidity != null ? indoor.humidity : '--'}%`;
+            document.getElementById('internal-co2').textContent = `${indoor.co2 != null ? indoor.co2 : '--'} ppm`;
+            document.getElementById('internal-pressure').textContent = `${indoor.pressure != null ? indoor.pressure.toFixed(0) : '--'} hPa`;
+            document.getElementById('internal-noise').textContent = indoor.noise != null ? indoor.noise : '--';
             document.getElementById('internal-trend').textContent = `📈 ${indoor.temp_trend || 'Stable'}`;
             
             // Update detail cards
-            document.getElementById('card-temp').textContent = `${indoor.temperature?.toFixed(1) || '--'}°`;
-            document.getElementById('card-humidity').textContent = `${indoor.humidity || '--'}%`;
-            document.getElementById('card-co2').textContent = indoor.co2 || '--';
-            document.getElementById('card-noise').textContent = indoor.noise || '--';
-            document.getElementById('card-pressure').textContent = indoor.pressure?.toFixed(0) || '--';
+            document.getElementById('card-temp').textContent = `${indoor.temperature != null ? indoor.temperature.toFixed(1) : '--'}°`;
+            document.getElementById('card-humidity').textContent = `${indoor.humidity != null ? indoor.humidity : '--'}%`;
+            document.getElementById('card-co2').textContent = indoor.co2 != null ? indoor.co2 : '--';
+            document.getElementById('card-noise').textContent = indoor.noise != null ? indoor.noise : '--';
+            document.getElementById('card-pressure').textContent = indoor.pressure != null ? indoor.pressure.toFixed(0) : '--';
             document.getElementById('card-temp-trend').innerHTML = `<span>${indoor.temp_trend || 'Stable'}</span>`;
             document.getElementById('card-pressure-trend').innerHTML = `<span>${indoor.pressure_trend || '--'}</span>`;
             
             // CO2 status
-            const co2 = indoor.co2 || 0;
+            const co2 = indoor.co2 != null ? indoor.co2 : 0;
             const co2Status = document.getElementById('card-co2-status');
             if (co2 < 600) {
                 co2Status.className = 'health-indicator health-excellent';
@@ -1355,31 +1394,49 @@ async function loadCombinedWeather() {
             }
             
             // Temperature difference
-            if (data.external) {
+            if (data.external && indoor.temperature != null && data.external.temperature != null) {
                 const diff = indoor.temperature - data.external.temperature;
                 document.getElementById('card-temp-diff').textContent = `${diff > 0 ? '+' : ''}${diff.toFixed(1)}°`;
+            } else {
+                document.getElementById('card-temp-diff').textContent = '--°';
             }
         }
         
         // Update external weather (Vienna)
         if (data.external) {
             const ext = data.external;
-            document.getElementById('external-temp').textContent = `${ext.temperature?.toFixed(1) || '--'}°`;
-            document.getElementById('external-humidity').textContent = `${ext.humidity || '--'}%`;
-            document.getElementById('external-wind').textContent = `${ext.wind_speed?.toFixed(0) || '--'} km/h`;
-            document.getElementById('external-clouds').textContent = `${ext.cloud_cover || '--'}%`;
-            document.getElementById('external-pressure').textContent = ext.pressure?.toFixed(0) || '--';
+            document.getElementById('external-temp').textContent = `${ext.temperature != null ? ext.temperature.toFixed(1) : '--'}°`;
+            document.getElementById('external-humidity').textContent = `${ext.humidity != null ? ext.humidity : '--'}%`;
+            document.getElementById('external-wind').textContent = `${ext.wind_speed != null ? ext.wind_speed.toFixed(0) : '--'} km/h`;
+            document.getElementById('external-clouds').textContent = `${ext.cloud_cover != null ? ext.cloud_cover : '--'}%`;
+            document.getElementById('external-pressure').textContent = ext.pressure != null ? ext.pressure.toFixed(0) : '--';
             document.getElementById('external-description').textContent = ext.weather_description || 'Unknown';
             document.getElementById('external-daynight').textContent = ext.is_day ? '☀️ Day' : '🌙 Night';
             
             // Change card color based on weather
             const card = document.getElementById('external-card');
-            if (!ext.is_day) {
-                card.style.background = 'linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%)';
-            } else if (ext.cloud_cover > 70) {
-                card.style.background = 'linear-gradient(135deg, #606c88 0%, #3f4c6b 100%)';
-            } else {
-                card.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+            if (card) {
+                if (!ext.is_day) {
+                    card.style.background = 'linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%)';
+                } else if (ext.cloud_cover != null && ext.cloud_cover > 70) {
+                    card.style.background = 'linear-gradient(135deg, #606c88 0%, #3f4c6b 100%)';
+                } else {
+                    card.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+                }
+            }
+        } else {
+            // Show error message if external weather is not available
+            const card = document.getElementById('external-card');
+            if (card) {
+                card.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="color: rgba(255,255,255,0.9); font-size: 16px;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 8px;"></i>
+                            <p style="margin: 8px 0;">Vienna weather data unavailable</p>
+                            <p style="font-size: 12px; opacity: 0.8; margin-top: 4px;">Check network connection and try refreshing</p>
+                        </div>
+                    </div>
+                `;
             }
         }
         

@@ -32,96 +32,154 @@ class TapoCameraServer:
 
     _instance = None
     _initialized = False
+    _initializing = False
+    _init_lock = None  # Will be initialized on first use
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
+            # Initialize lock on first instance creation
+            if cls._init_lock is None:
+                cls._init_lock = asyncio.Lock()
         return cls._instance
 
     @classmethod
     async def get_instance(cls):
         """Get or create the singleton instance."""
+        # Early return if already initialized (before lock)
+        if cls._initialized:
+            return cls._instance if cls._instance else cls()
+        
         if cls._instance is None:
             cls._instance = cls()
-        if not cls._initialized:
-            await cls._instance.initialize()
+        
+        # Use lock to prevent concurrent initialization
+        if cls._init_lock is None:
+            cls._init_lock = asyncio.Lock()
+        
+        async with cls._init_lock:
+            # Double-check after acquiring lock
+            if cls._initialized:
+                return cls._instance
+            
+            if not cls._initializing:
+                cls._initializing = True
+                try:
+                    await cls._instance.initialize()
+                finally:
+                    cls._initializing = False
+            else:
+                # Wait for initialization to complete (with timeout to prevent infinite loop)
+                timeout = 60.0  # 60 second timeout
+                elapsed = 0.0
+                while cls._initializing and not cls._initialized:
+                    await asyncio.sleep(0.1)
+                    elapsed += 0.1
+                    if elapsed >= timeout:
+                        logger.error(f"Initialization timeout after {timeout}s - returning uninitialized instance")
+                        break
+        
         return cls._instance
 
     async def initialize(self):
         """Initialize the server."""
+        # Double-check initialization status
         if TapoCameraServer._initialized:  # Use class variable, not instance
+            logger.debug("Server already initialized, skipping")
             return
 
-        # Suppress FastMCP internal logging to prevent INFO logs from appearing as errors in Cursor
-        # FastMCP writes to stderr, and Cursor interprets stderr as errors
-        for logger_name in [
-            "mcp",
-            "mcp.server",
-            "mcp.server.lowlevel",
-            "mcp.server.lowlevel.server",
-            "fastmcp",
-        ]:
-            logging.getLogger(logger_name).setLevel(logging.WARNING)
+        # Set initializing flag EARLY to prevent concurrent initialization
+        TapoCameraServer._initializing = True
 
-        logger.info("Initializing Tapo Camera MCP Server...")
-
-        # Initialize FastMCP server
-        self.mcp = FastMCP("tapo-camera-mcp")
-
-        # Initialize camera manager
-        self.camera_manager = CameraManager()
-
-        # Load cameras from config
-        from ..config import get_config
-
-        config = get_config()
-        camera_configs = config.get("cameras", {})
-
-        # Convert config format to camera configs
-        if camera_configs:
-            logger.info(f"Loading {len(camera_configs)} cameras from configuration...")
-            for camera_name, camera_config in camera_configs.items():
-                try:
-                    # Add name to config if not present
-                    if "name" not in camera_config:
-                        camera_config["name"] = camera_name
-
-                    success = await self.camera_manager.add_camera(camera_config)
-                    if success:
-                        logger.info(f"Loaded camera: {camera_name}")
-                    else:
-                        logger.warning(f"Failed to load camera: {camera_name}")
-                except Exception:
-                    logger.exception(f"Error loading camera {camera_name}")
-
-        # Register all tools
-        await self._register_tools()
-
-        # Initialize all hardware and test connections (with timeout to prevent blocking)
-        from .hardware_init import initialize_all_hardware
-        logger.info("Initializing all hardware components...")
         try:
-            hardware_results = await asyncio.wait_for(initialize_all_hardware(), timeout=30.0)
-            # Log summary
-            successful = sum(1 for r in hardware_results.values() if r.get("success", False))
-            total = len(hardware_results)
-            logger.info(f"Hardware initialization: {successful}/{total} components ready")
-        except asyncio.TimeoutError:
-            logger.warning("Hardware initialization timed out after 30s - continuing anyway")
+            # Suppress FastMCP internal logging to prevent INFO logs from appearing as errors in Cursor
+            # FastMCP writes to stderr, and Cursor interprets stderr as errors
+            for logger_name in [
+                "mcp",
+                "mcp.server",
+                "mcp.server.lowlevel",
+                "mcp.server.lowlevel.server",
+                "fastmcp",
+            ]:
+                logging.getLogger(logger_name).setLevel(logging.WARNING)
+
+            logger.info("Initializing Tapo Camera MCP Server...")
+
+            # Initialize FastMCP server (only if not already initialized)
+            if not hasattr(self, 'mcp') or self.mcp is None:
+                self.mcp = FastMCP("tapo-camera-mcp")
+            else:
+                logger.debug("FastMCP instance already exists, reusing")
+
+            # Initialize camera manager (only if not already initialized)
+            if not hasattr(self, 'camera_manager') or self.camera_manager is None:
+                self.camera_manager = CameraManager()
+            else:
+                logger.debug("Camera manager already exists, reusing")
+
+            # Load cameras from config
+            from ..config import get_config
+
+            config = get_config()
+            camera_configs = config.get("cameras", {})
+
+            # Convert config format to camera configs
+            if camera_configs:
+                logger.info(f"Loading {len(camera_configs)} cameras from configuration...")
+                for camera_name, camera_config in camera_configs.items():
+                    try:
+                        # Add name to config if not present
+                        if "name" not in camera_config:
+                            camera_config["name"] = camera_name
+
+                        success = await self.camera_manager.add_camera(camera_config)
+                        if success:
+                            logger.info(f"Loaded camera: {camera_name}")
+                        else:
+                            logger.warning(f"Failed to load camera: {camera_name}")
+                    except Exception:
+                        logger.exception(f"Error loading camera {camera_name}")
+
+            # Register all tools
+            await self._register_tools()
+
+            # Initialize all hardware and test connections (with timeout to prevent blocking)
+            from .hardware_init import initialize_all_hardware
+            logger.info("Initializing all hardware components...")
+            try:
+                hardware_results = await asyncio.wait_for(initialize_all_hardware(), timeout=30.0)
+                # Log summary
+                successful = sum(1 for r in hardware_results.values() if r.get("success", False))
+                total = len(hardware_results)
+                logger.info(f"Hardware initialization: {successful}/{total} components ready")
+            except asyncio.TimeoutError:
+                logger.warning("Hardware initialization timed out after 30s - continuing anyway")
+            except Exception as e:
+                logger.warning(f"Hardware initialization failed: {e} - continuing anyway")
+
+            # Start connection supervisor for device health monitoring
+            from .connection_supervisor import get_supervisor
+            self.supervisor = get_supervisor()
+            await self.supervisor.start()
+            logger.info("Connection supervisor started (60s polling)")
+
+            # Set initialized flag BEFORE logging success (prevents race conditions)
+            TapoCameraServer._initialized = True  # Set class variable, not instance
+            TapoCameraServer._initializing = False  # Clear initializing flag
+            logger.info("Tapo Camera MCP Server initialized successfully")
         except Exception as e:
-            logger.warning(f"Hardware initialization failed: {e} - continuing anyway")
-
-        # Start connection supervisor for device health monitoring
-        from .connection_supervisor import get_supervisor
-        self.supervisor = get_supervisor()
-        await self.supervisor.start()
-        logger.info("Connection supervisor started (60s polling)")
-
-        TapoCameraServer._initialized = True  # Set class variable, not instance
-        logger.info("Tapo Camera MCP Server initialized successfully")
+            # On error, clear initializing flag but don't set initialized
+            TapoCameraServer._initializing = False
+            logger.error(f"Failed to initialize server: {e}", exc_info=True)
+            raise
 
     async def _register_tools(self):
         """Register all tools with the MCP server using FastMCP 2.12 patterns."""
+        # Check if tools are already registered (prevent duplicate registration)
+        if hasattr(self, '_tools_registered') and self._tools_registered:
+            logger.debug("Tools already registered, skipping")
+            return
+        
         # Use portmanteau tools registration (cleaner, more maintainable)
         # Get tool mode from environment or config (default: production)
         import os
@@ -131,6 +189,7 @@ class TapoCameraServer:
 
         # Register all tools (portmanteau tools by default)
         register_all_tools(self.mcp, tool_mode=tool_mode)
+        self._tools_registered = True
         logger.info(f"Tools registered successfully (mode: {tool_mode})")
 
     async def _analyze_image(self, image_data, prompt: Optional[str] = None) -> dict:
@@ -371,19 +430,26 @@ class TapoCameraServer:
         """Run the MCP server."""
         logger.info(f"Starting Tapo Camera MCP Server on {host}:{port}")
 
-        if direct:
-            # Direct mode for Claude Desktop
-            logger.info("Running in direct mode for Claude Desktop")
-            await self.mcp.run_stdio_async()
-        elif stdio:
-            # Standard stdio mode
-            logger.info("Running in stdio mode")
-            await self.mcp.run_stdio_async()
-        else:
-            # HTTP mode
-            logger.info("Running in HTTP mode")
-            # Note: HTTP mode would need additional implementation
-            await self.mcp.run_stdio_async()  # Fallback to stdio for now
+        try:
+            if direct:
+                # Direct mode for Claude Desktop
+                logger.info("Running in direct mode for Claude Desktop")
+                await self.mcp.run_stdio_async()
+            elif stdio:
+                # Standard stdio mode
+                logger.info("Running in stdio mode")
+                await self.mcp.run_stdio_async()
+            else:
+                # HTTP mode
+                logger.info("Running in HTTP mode")
+                # Note: HTTP mode would need additional implementation
+                await self.mcp.run_stdio_async()  # Fallback to stdio for now
+        except KeyboardInterrupt:
+            logger.info("Server shutdown requested via KeyboardInterrupt")
+            raise
+        except Exception as e:
+            logger.error(f"Error in run_stdio_async(): {e}", exc_info=True)
+            raise
 
 
 # Convenience function for getting server instance

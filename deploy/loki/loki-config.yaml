@@ -30,6 +30,8 @@ limits_config:
   ingestion_burst_size_mb: 20
   max_query_length: 721h
   max_query_parallelism: 32
+  reject_old_samples: false  # Allow future timestamps (clock skew tolerance)
+  reject_old_samples_max_age: 168h  # Allow timestamps up to 7 days in future
 
 table_manager:
   retention_deletes_enabled: true

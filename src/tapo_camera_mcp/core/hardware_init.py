@@ -11,6 +11,9 @@ from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+# Global singleton instance (will be initialized after class definition)
+_hardware_initializer: Optional["HardwareInitializer"] = None
+
 
 class HardwareInitializer:
     """Initialize and test all hardware connections at startup."""
@@ -565,16 +568,21 @@ class HardwareInitializer:
             logger.error(f"  [NETWORK] Check: docker-compose.yml network configuration, Windows Firewall, router settings")
 
 
-# Global instance
-_hardware_initializer: Optional[HardwareInitializer] = None
-
+# Lock to prevent concurrent initialization
+_init_lock = asyncio.Lock()
 
 async def initialize_all_hardware() -> Dict[str, Dict]:
     """Initialize all hardware components at startup."""
     global _hardware_initializer
-    if _hardware_initializer is None:
-        _hardware_initializer = HardwareInitializer()
-    return await _hardware_initializer.initialize_all()
+    
+    # Use lock to prevent concurrent initialization
+    async with _init_lock:
+        if _hardware_initializer is None:
+            _hardware_initializer = HardwareInitializer()
+        elif _hardware_initializer._initialized:
+            # Already initialized, return cached results
+            return _hardware_initializer.initialization_results
+        return await _hardware_initializer.initialize_all()
 
 
 def get_initialization_results() -> Dict[str, Dict]:

@@ -110,10 +110,10 @@ weather:
   integrations:
     netatmo:
       enabled: true
-      client_id: '6827631abc073747f105a0e4'
-      client_secret: 'Uge1m7YrypuK2Wz7QjqfhduhEQlPJYWC4uKSEH'
+      client_id: '6939e5b98080806f1c003668'
+      client_secret: 'IyWYPAE9cq28N6HQNHWp3XDdbz'
       redirect_uri: 'https://localhost/callback'
-      refresh_token: '5ca3ae420ec7040a008b57dd|1c0ea7462250f34a19d52556b7e61a99'
+      refresh_token: '5ca3ae420ec7040a008b57dd|a289c1f0899232016582aa5cf52940f9'
       username: ''
       password: ''
       home_id: ''

@@ -8,7 +8,7 @@ import logging
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Generator, Optional
+from typing import Dict, Generator, List, Optional
 
 from fastapi import Body, FastAPI, Form, Query, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -29,12 +29,12 @@ from ..config import SecuritySettings, WebUISettings, get_config, get_model
 from ..utils.logging import setup_logging
 from .auth import (
     AuthMiddleware,
-    is_auth_enabled,
-    validate_credentials,
     create_session,
     delete_session,
     get_current_user,
+    is_auth_enabled,
     setup_default_user,
+    validate_credentials,
 )
 
 # Setup logging
@@ -58,7 +58,7 @@ def find_available_port(start_port: int = 7777, max_attempts: int = 10) -> int:
         RuntimeError: If no available port found within max_attempts.
     """
     import socket
-    
+
     for port in range(start_port, start_port + max_attempts):
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -66,7 +66,7 @@ def find_available_port(start_port: int = 7777, max_attempts: int = 10) -> int:
                 return port
         except OSError:
             continue
-    
+
     raise RuntimeError(f"No available port found in range {start_port}-{start_port + max_attempts - 1}")
 
 
@@ -205,7 +205,7 @@ class WebServer:
         async def general_exception_handler(request: Request, exc: Exception):
             """Catch all unhandled exceptions with actionable error messages."""
             error_info = self._categorize_error(exc, request)
-            
+
             # Log with full context
             logger.error(
                 f"Unhandled exception in {request.method} {request.url.path}: "
@@ -219,7 +219,7 @@ class WebServer:
                     "request_method": request.method,
                 }
             )
-            
+
             if request.url.path.startswith("/api/"):
                 return JSONResponse(
                     status_code=error_info["status_code"],
@@ -231,7 +231,7 @@ class WebServer:
                         "debug_info": str(exc) if self.config.get("debug", False) else None,
                     },
                 )
-            
+
             # For non-API routes, show error page
             try:
                 return self.templates.TemplateResponse(
@@ -252,13 +252,13 @@ class WebServer:
                     status_code=error_info["status_code"],
                     media_type="text/plain",
                 )
-    
+
     def _categorize_error(self, exc: Exception, request: Request) -> dict:
         """Categorize error and provide actionable error messages."""
         error_type = type(exc).__name__
         error_msg = str(exc).lower()
         path = request.url.path
-        
+
         # Network/Connection errors
         if any(keyword in error_msg for keyword in ["connection", "connect", "network", "unreachable", "refused"]):
             return {
@@ -271,10 +271,10 @@ class WebServer:
                     f"Check: 1) Device is powered on and connected to network, "
                     f"2) Firewall isn't blocking connections, "
                     f"3) Network connectivity is working. "
-                    f"Error: {str(exc)}"
+                    f"Error: {exc!s}"
                 ),
             }
-        
+
         # Timeout errors
         if "timeout" in error_msg or "timed out" in error_msg or error_type == "TimeoutError":
             return {
@@ -287,10 +287,10 @@ class WebServer:
                     f"Check: 1) Device is responding (ping/check status), "
                     f"2) Network latency is normal, "
                     f"3) Device isn't overloaded. "
-                    f"Try again or increase timeout. Error: {str(exc)}"
+                    f"Try again or increase timeout. Error: {exc!s}"
                 ),
             }
-        
+
         # Authentication/Authorization errors
         if any(keyword in error_msg for keyword in ["auth", "unauthorized", "forbidden", "401", "403", "credential", "password", "login"]):
             return {
@@ -303,10 +303,10 @@ class WebServer:
                     f"Check: 1) Username/password in config.yaml is correct, "
                     f"2) Device credentials haven't changed, "
                     f"3) Authentication is enabled on device. "
-                    f"Error: {str(exc)}"
+                    f"Error: {exc!s}"
                 ),
             }
-        
+
         # DNS errors
         if "dns" in error_msg or "getaddrinfo" in error_msg or "name resolution" in error_msg:
             return {
@@ -319,10 +319,10 @@ class WebServer:
                     f"Check: 1) Hostname/IP address is correct in config, "
                     f"2) DNS server is reachable, "
                     f"3) Try using IP address instead of hostname. "
-                    f"Error: {str(exc)}"
+                    f"Error: {exc!s}"
                 ),
             }
-        
+
         # File/IO errors
         if any(keyword in error_msg for keyword in ["file", "directory", "permission", "access denied", "not found", "enoent"]):
             return {
@@ -335,10 +335,10 @@ class WebServer:
                     f"Check: 1) File/directory exists and is readable, "
                     f"2) Permissions are correct, "
                     f"3) Disk space is available. "
-                    f"Error: {str(exc)}"
+                    f"Error: {exc!s}"
                 ),
             }
-        
+
         # Configuration errors
         if any(keyword in error_msg for keyword in ["config", "configuration", "missing", "required", "invalid"]):
             return {
@@ -351,10 +351,10 @@ class WebServer:
                     f"Check: 1) config.yaml is valid YAML, "
                     f"2) All required fields are present, "
                     f"3) Values are correct format. "
-                    f"Error: {str(exc)}"
+                    f"Error: {exc!s}"
                 ),
             }
-        
+
         # Camera/Device specific errors
         if "/api/cameras" in path or "/cameras" in path:
             return {
@@ -367,10 +367,10 @@ class WebServer:
                     f"Check: 1) Camera is online and accessible, "
                     f"2) ONVIF/RTSP credentials are correct, "
                     f"3) Camera supports requested feature. "
-                    f"Error: {str(exc)}"
+                    f"Error: {exc!s}"
                 ),
             }
-        
+
         # Weather/Netatmo errors
         if "/api/weather" in path or "netatmo" in error_msg:
             return {
@@ -383,10 +383,10 @@ class WebServer:
                     f"Check: 1) Netatmo credentials in config.yaml, "
                     f"2) Internet connection is working, "
                     f"3) Netatmo API is accessible. "
-                    f"Error: {str(exc)}"
+                    f"Error: {exc!s}"
                 ),
             }
-        
+
         # Generic error with context
         return {
             "category": "internal_error",
@@ -397,7 +397,7 @@ class WebServer:
                 f"Unexpected error occurred. "
                 f"Error type: {error_type}. "
                 f"Check server logs for details. "
-                f"Error: {str(exc)}"
+                f"Error: {exc!s}"
             ),
         }
 
@@ -407,6 +407,7 @@ class WebServer:
 
         try:
             import asyncio
+
             from tapo_camera_mcp.core.server import TapoCameraServer
 
             # Add timeout to prevent hanging
@@ -421,7 +422,7 @@ class WebServer:
             # Enhance each camera with additional details
             for camera in cameras_list:
                 camera_info = dict(camera)  # Copy base info
-                
+
                 # Extract status - camera_manager.list_cameras() returns status as a dict
                 status_dict = camera.get("status", {})
                 if isinstance(status_dict, dict):
@@ -447,7 +448,7 @@ class WebServer:
                 else:
                     # Fallback if status is already a string
                     camera_info["status"] = str(status_dict) if status_dict else "offline"
-                
+
                 # Ensure status is always a string, never a dict
                 if not isinstance(camera_info.get("status"), str):
                     camera_info["status"] = "offline"
@@ -460,14 +461,14 @@ class WebServer:
                         detailed_status = {}
                         try:
                             camera_obj = await asyncio.wait_for(
-                                server.camera_manager.get_camera(camera["name"]), 
+                                server.camera_manager.get_camera(camera["name"]),
                                 timeout=3.0
                             )
                             if camera_obj:
                                 # Get detailed status including capabilities (with timeout)
                                 try:
                                     detailed_status = await asyncio.wait_for(
-                                        camera_obj.get_status(), 
+                                        camera_obj.get_status(),
                                         timeout=3.0
                                     )
                                 except asyncio.TimeoutError:
@@ -555,7 +556,7 @@ class WebServer:
         except Exception as e:
             error_type = type(e).__name__
             error_msg = str(e).lower()
-            
+
             # Provide specific actionable messages based on error type
             if "connection" in error_msg or "network" in error_msg:
                 actionable = "Network error accessing cameras. Check camera connectivity and network settings."
@@ -565,7 +566,7 @@ class WebServer:
                 actionable = "Authentication failed. Check camera credentials in config.yaml."
             else:
                 actionable = f"Unexpected error: {error_type}. Check server logs for details."
-            
+
             logger.exception(
                 f"Error getting cameras data: {error_type}: {e}",
                 extra={
@@ -662,7 +663,7 @@ class WebServer:
                 username = data.get("username", "")
                 password = data.get("password", "")
                 remember = data.get("remember", False)
-                
+
                 if validate_credentials(username, password):
                     session_id = create_session(username)
                     response = JSONResponse({
@@ -681,12 +682,11 @@ class WebServer:
                     )
                     logger.info(f"User '{username}' logged in successfully")
                     return response
-                else:
-                    logger.warning(f"Failed login attempt for user '{username}'")
-                    return JSONResponse(
-                        {"success": False, "error": "Invalid username or password"},
-                        status_code=401,
-                    )
+                logger.warning(f"Failed login attempt for user '{username}'")
+                return JSONResponse(
+                    {"success": False, "error": "Invalid username or password"},
+                    status_code=401,
+                )
             except Exception as e:
                 logger.exception("Login error")
                 return JSONResponse(
@@ -728,10 +728,11 @@ class WebServer:
         async def get_health():
             """Get comprehensive system health metrics including disk, CPU, memory, uptime, and services."""
             try:
-                import psutil
+                import asyncio
                 import time
                 from pathlib import Path
-                import asyncio
+
+                import psutil
 
                 # System resources (with error handling)
                 try:
@@ -746,16 +747,16 @@ class WebServer:
                     disk = psutil.disk_usage("/")
                 except Exception:
                     disk = None
-                
+
                 # System uptime
                 boot_time = psutil.boot_time()
                 uptime_seconds = time.time() - boot_time
-                
+
                 # Process info
                 process = psutil.Process()
                 process_memory = process.memory_info()
                 process_cpu = process.cpu_percent(interval=0.1)
-                
+
                 # Network stats
                 try:
                     net_io = psutil.net_io_counters()
@@ -767,7 +768,7 @@ class WebServer:
                     }
                 except Exception:
                     network = None
-                
+
                 # Database status
                 db_status = {}
                 try:
@@ -785,7 +786,7 @@ class WebServer:
                         db_status["timeseries"] = {"status": "not_found"}
                 except Exception as e:
                     db_status["timeseries"] = {"status": "error", "error": str(e)}
-                
+
                 # Check PostgreSQL
                 postgres_status = {"status": "unknown"}
                 try:
@@ -805,13 +806,14 @@ class WebServer:
                         postgres_status = {"status": "not_configured"}
                 except Exception as e:
                     postgres_status = {"status": "error", "error": str(e)}
-                
+
                 db_status["postgres"] = postgres_status
-                
+
                 # Camera status (with timeout to prevent hanging)
                 camera_status = {"total": 0, "online": 0, "offline": 0}
                 try:
                     import asyncio
+
                     from tapo_camera_mcp.core.server import TapoCameraServer
                     server = await asyncio.wait_for(TapoCameraServer.get_instance(), timeout=3.0)
                     cameras = await asyncio.wait_for(server.camera_manager.list_cameras(), timeout=3.0)
@@ -832,32 +834,32 @@ class WebServer:
                     camera_status = {"total": 0, "online": 0, "offline": 0, "error": "timeout"}
                 except Exception:
                     pass
-                
+
                 # Determine overall health status
                 issues = []
                 if cpu_percent > 90:
                     issues.append("critical_cpu")
                 elif cpu_percent > 80:
                     issues.append("high_cpu")
-                
+
                 if memory and memory.percent > 95:
                     issues.append("critical_memory")
                 elif memory and memory.percent > 85:
                     issues.append("high_memory")
-                
+
                 if disk and disk.percent > 95:
                     issues.append("critical_disk")
                 elif disk and disk.percent > 90:
                     issues.append("high_disk")
-                
+
                 if camera_status["total"] > 0 and camera_status["online"] == 0:
                     issues.append("no_cameras_online")
-                
+
                 if postgres_status.get("status") == "unreachable":
                     issues.append("postgres_unreachable")
-                
+
                 overall_status = "critical" if any("critical" in issue for issue in issues) else "warning" if issues else "healthy"
-                
+
                 # Build response with safe defaults if metrics failed
                 memory_data = {
                     "total_gb": round(memory.total / (1024**3), 2) if memory else 0,
@@ -866,14 +868,14 @@ class WebServer:
                     "percent": round(memory.percent, 1) if memory else 0,
                     "process_mb": round(process_memory.rss / (1024**2), 2) if memory else 0,
                 } if memory else {"error": "Unable to read memory stats"}
-                
+
                 disk_data = {
                     "total_gb": round(disk.total / (1024**3), 2) if disk else 0,
                     "used_gb": round(disk.used / (1024**3), 2) if disk else 0,
                     "free_gb": round(disk.free / (1024**3), 2) if disk else 0,
                     "percent": round(disk.percent, 1) if disk else 0,
                 } if disk else {"error": "Unable to read disk stats"}
-                
+
                 return {
                     "status": overall_status,
                     "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -910,6 +912,7 @@ class WebServer:
             """Get list of cameras."""
             try:
                 import asyncio
+
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
                 # Add timeouts to prevent hanging
@@ -952,7 +955,7 @@ class WebServer:
                     {"error": "Invalid camera_id format"},
                     status_code=400
                 )
-            
+
             try:
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
@@ -1005,7 +1008,7 @@ class WebServer:
                     content="Invalid camera_id format",
                     status_code=400
                 )
-            
+
             try:
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
@@ -1024,7 +1027,7 @@ class WebServer:
                                 self._generate_webcam_stream(camera),
                                 media_type="multipart/x-mixed-replace; boundary=frame",
                             )
-                        
+
                         # For RTSP/ONVIF cameras, transcode to MJPEG
                         if camera_type in ("tapo", "onvif"):
                             try:
@@ -1033,7 +1036,7 @@ class WebServer:
                                 if not stream_url:
                                     logger.error(f"Failed to get stream URL for {camera_id}")
                                     return Response(content=f"Failed to get stream URL for camera {camera_id}", status_code=500)
-                                
+
                                 # Add auth for ONVIF (Tapo cameras need credentials in RTSP URL)
                                 if camera_type == "onvif":
                                     from urllib.parse import urlparse
@@ -1044,7 +1047,7 @@ class WebServer:
                                         # Rebuild RTSP URL with credentials
                                         stream_url = f"rtsp://{username}:{password}@{parsed.hostname}:{parsed.port or 554}{parsed.path}"
                                         logger.info(f"ONVIF MJPEG stream: Added auth to RTSP URL for {camera_id}")
-                                
+
                                 logger.info(f"Starting MJPEG stream for {camera_id} (ONVIF)")
                                 return StreamingResponse(
                                     self._generate_rtsp_mjpeg_stream(stream_url),
@@ -1072,7 +1075,7 @@ class WebServer:
                     content="Invalid camera_id format",
                     status_code=400
                 )
-            
+
             try:
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
@@ -1107,7 +1110,7 @@ class WebServer:
                     {"error": "Invalid camera_id format"},
                     status_code=400
                 )
-            
+
             # Validate action parameter
             valid_actions = ["start_stream", "stop_stream", "start_audio", "stop_audio"]
             if action not in valid_actions:
@@ -1115,7 +1118,7 @@ class WebServer:
                     {"error": f"Invalid action. Must be one of: {', '.join(valid_actions)}"},
                     status_code=400
                 )
-            
+
             try:
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
@@ -1167,8 +1170,10 @@ class WebServer:
         async def get_system_status():
             """Get system status."""
             try:
-                import psutil
                 import asyncio
+
+                import psutil
+
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
                 # Get REAL camera data
@@ -1354,7 +1359,7 @@ class WebServer:
 
         @self.app.post("/api/logs/analyze")
         async def analyze_logs(
-            logs: list[dict],
+            logs: List[Dict],
             enable_clustering: bool = False,
             enable_anomaly_detection: bool = False,
             enable_ai_synopsis: bool = False,
@@ -1379,11 +1384,11 @@ class WebServer:
                         normalized = re.sub(r'\d+', 'N', normalized)
                         normalized = re.sub(r'[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}', 'UUID', normalized)
                         normalized = re.sub(r'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}', 'IP', normalized)
-                        
+
                         if normalized not in clusters:
                             clusters[normalized] = []
                         clusters[normalized].append(log_entry)
-                    
+
                     # Convert clusters to grouped format
                     clustered_logs = []
                     for cluster_key, cluster_entries in clusters.items():
@@ -1396,19 +1401,19 @@ class WebServer:
                             })
                         else:
                             clustered_logs.extend(cluster_entries)
-                    
+
                     result["clustered"] = clustered_logs
 
                 # Anomaly detection: Find unusual patterns
                 if enable_anomaly_detection:
                     anomalies = []
-                    
+
                     # Count log levels
                     level_counts = {}
                     for log_entry in logs:
                         level = log_entry.get("level", "INFO")
                         level_counts[level] = level_counts.get(level, 0) + 1
-                    
+
                     # Detect high error rate
                     total_logs = len(logs)
                     if total_logs > 0:
@@ -1420,7 +1425,7 @@ class WebServer:
                                 "message": f"High error rate detected: {error_rate*100:.1f}% of logs are errors",
                                 "count": level_counts.get("ERROR", 0),
                             })
-                        
+
                         # Detect sudden spike in warnings
                         if level_counts.get("WARNING", 0) > total_logs * 0.2:
                             anomalies.append({
@@ -1429,14 +1434,14 @@ class WebServer:
                                 "message": f"Warning spike detected: {level_counts.get('WARNING', 0)} warnings in recent logs",
                                 "count": level_counts.get("WARNING", 0),
                             })
-                    
+
                     # Detect repeated errors (same message multiple times)
                     error_messages = {}
                     for log_entry in logs:
                         if log_entry.get("level") == "ERROR":
                             msg = log_entry.get("message", "")
                             error_messages[msg] = error_messages.get(msg, 0) + 1
-                    
+
                     for msg, count in error_messages.items():
                         if count >= 5:  # Same error 5+ times
                             anomalies.append({
@@ -1446,19 +1451,19 @@ class WebServer:
                                 "count": count,
                                 "pattern": msg,
                             })
-                    
+
                     result["anomalies"] = anomalies
 
                 # AI Synopsis: Generate summary using LLM
                 if enable_ai_synopsis:
                     try:
                         from ...llm.manager import get_llm_manager
-                        
+
                         # Prepare log summary for LLM
                         log_summary = f"Recent log entries ({len(logs)} total):\n\n"
                         for i, log_entry in enumerate(logs[:50]):  # Limit to first 50 for context
                             log_summary += f"[{log_entry.get('level', 'INFO')}] {log_entry.get('message', '')}\n"
-                        
+
                         prompt = f"""Analyze these application logs and provide a brief synopsis (2-3 sentences):
                         
 {log_summary}
@@ -1474,7 +1479,7 @@ Provide a concise summary:"""
                         messages = [
                             {"role": "user", "content": prompt}
                         ]
-                        
+
                         # Try to get synopsis (non-blocking, fallback if LLM unavailable)
                         try:
                             synopsis = await manager.chat(messages, stream=False)
@@ -1486,12 +1491,12 @@ Provide a concise summary:"""
                                 result["synopsis"] = "AI synopsis unavailable - LLM provider not configured"
                         except Exception as e:
                             logger.warning(f"AI synopsis generation failed: {e}")
-                            result["synopsis"] = f"AI synopsis unavailable: {str(e)}"
+                            result["synopsis"] = f"AI synopsis unavailable: {e!s}"
                     except ImportError:
                         result["synopsis"] = "AI synopsis unavailable - LLM module not available"
                     except Exception as e:
                         logger.exception("Error generating AI synopsis")
-                        result["synopsis"] = f"AI synopsis error: {str(e)}"
+                        result["synopsis"] = f"AI synopsis error: {e!s}"
 
                 return result
             except Exception as e:
@@ -1513,7 +1518,10 @@ Provide a concise summary:"""
                 from ...tools.energy.tapo_plug_tools import tapo_plug_manager
                 # Lazy import weather API helpers for environment metrics (simulated/real)
                 try:
-                    from .api.weather import get_weather_stations, get_station_weather_data  # type: ignore
+                    from .api.weather import (  # type: ignore
+                        get_station_weather_data,
+                        get_weather_stations,
+                    )
                 except Exception:
                     get_weather_stations = None  # type: ignore[assignment]
                     get_station_weather_data = None  # type: ignore[assignment]
@@ -1527,49 +1535,49 @@ Provide a concise summary:"""
                     host = tapo_plug_manager.get_device_host(device_id) or "unknown"
                     name = device.name or device_id
                     location = getattr(device, "location", "unknown")
-                    
+
                     # Power consumption in watts
                     power_watts = device.current_power
                     metrics_lines.append(
                         f'tapo_p115_power_watts{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {power_watts}'
                     )
-                    
+
                     # Voltage
                     voltage = getattr(device, "voltage", 0.0)
                     metrics_lines.append(
                         f'tapo_p115_voltage_volts{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {voltage}'
                     )
-                    
+
                     # Current
                     current = getattr(device, "current", 0.0)
                     metrics_lines.append(
                         f'tapo_p115_current_amps{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {current}'
                     )
-                    
+
                     # Daily energy in kWh
                     daily_energy = device.daily_energy
                     metrics_lines.append(
                         f'tapo_p115_daily_energy_kwh{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {daily_energy}'
                     )
-                    
+
                     # Monthly energy in kWh
                     monthly_energy = device.monthly_energy
                     metrics_lines.append(
                         f'tapo_p115_monthly_energy_kwh{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {monthly_energy}'
                     )
-                    
+
                     # Daily cost in USD
                     daily_cost = getattr(device, "daily_cost", 0.0)
                     metrics_lines.append(
                         f'tapo_p115_daily_cost_usd{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {daily_cost}'
                     )
-                    
+
                     # Power state (1=ON, 0=OFF)
                     power_state = 1 if device.power_state else 0
                     metrics_lines.append(
                         f'tapo_p115_power_state{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {power_state}'
                     )
-                
+
                 # Environment metrics (Netatmo-style). Use weather API if available.
                 try:
                     if get_weather_stations and get_station_weather_data:
@@ -1604,7 +1612,10 @@ Provide a concise summary:"""
 
                 # Ring and Nest Protect basic health metrics (stubs that can be backed by real integrations)
                 try:
-                    from .api.security import _compute_ring_status, _compute_nest_status  # type: ignore
+                    from .api.security import (  # type: ignore
+                        _compute_nest_status,
+                        _compute_ring_status,
+                    )
                     ring_status = _compute_ring_status()
                     nest_status = _compute_nest_status()
                     ring_enabled = bool(ring_status.get("enabled", False))
@@ -1637,12 +1648,12 @@ Provide a concise summary:"""
                             error_count = device.get("error_count", 0)
                             last_check_ts = device.get("last_check", 0)
                             last_success_ts = device.get("last_success", 0) or 0
-                            
+
                             # Escape quotes in labels
                             device_id_escaped = device_id.replace('"', '\\"')
                             device_type_escaped = device_type.replace('"', '\\"')
                             name_escaped = name.replace('"', '\\"')
-                            
+
                             metrics_lines.append(
                                 f'device_health_status{{device_id="{device_id_escaped}",device_type="{device_type_escaped}",name="{name_escaped}"}} {connected}'
                             )
@@ -1679,7 +1690,7 @@ Provide a concise summary:"""
 
                 metrics_text = "\n".join(metrics_lines) + "\n"
                 return Response(content=metrics_text, media_type="text/plain; version=0.0.4")
-                
+
             except Exception as e:
                 logger.exception("Error generating Prometheus metrics")
                 return Response(
@@ -1696,19 +1707,19 @@ Provide a concise summary:"""
             logger.warning(f"Onboarding module not available: {e}")
             onboarding_router = None
             onboarding_available = False
-        from .api.sensors import router as sensors_router
-        from .api.energy import router as energy_router
-        from .api.weather import router as weather_router
-        from .api.security import router as security_router
-        from .api.ring import router as ring_router
-        from .api.ptz import router as ptz_router
         from .api.audio import router as audio_router
-        from .api.motion import router as motion_router
+        from .api.energy import router as energy_router
+        from .api.health import router as health_router
         from .api.lighting import router as lighting_router
+        from .api.messages import router as messages_router
+        from .api.motion import router as motion_router
+        from .api.ptz import router as ptz_router
+        from .api.ring import router as ring_router
+        from .api.security import router as security_router
+        from .api.sensors import router as sensors_router
         from .api.shelly import router as shelly_router
         from .api.thermal import router as thermal_router
-        from .api.health import router as health_router
-        from .api.messages import router as messages_router
+        from .api.weather import router as weather_router
 
         if onboarding_available and onboarding_router:
             self.app.include_router(onboarding_router)
@@ -1725,7 +1736,7 @@ Provide a concise summary:"""
         self.app.include_router(thermal_router)
         self.app.include_router(health_router)
         self.app.include_router(messages_router)
-        
+
         # LLM router
         from .api.llm import router as llm_router
         self.app.include_router(llm_router)
@@ -1804,6 +1815,7 @@ Provide a concise summary:"""
                 "weather.html",
                 {
                     "request": request,
+                    "active_page": "weather",
                     "title": "Weather Monitoring - Tapo Camera MCP",
                     "description": "Monitor Netatmo weather stations with temperature, humidity, CO2, and environmental data",
                 },
@@ -1849,20 +1861,21 @@ Provide a concise summary:"""
             try:
                 # Get real camera data from the MCP server
                 import asyncio
+
                 from tapo_camera_mcp.core.server import TapoCameraServer
-                
+
                 try:
                     server = await asyncio.wait_for(
                         TapoCameraServer.get_instance(),
                         timeout=5.0
                     )
-                    
+
                     # Load camera list and security data in parallel
                     camera_task = asyncio.wait_for(
                         server.camera_manager.list_cameras(),
                         timeout=5.0
                     )
-                    
+
                     # Prepare security data loading task
                     security_task = None
                     try:
@@ -1877,7 +1890,7 @@ Provide a concise summary:"""
                                 timeout=5.0
                             )
                             security_manager._initialized = True
-                        
+
                         # Create security data loading task with timeout
                         security_task = asyncio.wait_for(
                             asyncio.gather(
@@ -1894,10 +1907,10 @@ Provide a concise summary:"""
                     except Exception as e:
                         logger.warning(f"Failed to prepare security data loading: {e}")
                         security_task = None
-                    
+
                     # Wait for camera data
                     cameras = await camera_task
-                    
+
                     # Wait for security data if task was created
                     if security_task:
                         try:
@@ -1915,7 +1928,7 @@ Provide a concise summary:"""
                             security_devices = []
                             security_alerts = []
                             security_overview = {}
-                    
+
                 except asyncio.TimeoutError:
                     logger.warning("Server instance access timed out - using empty camera list")
                     cameras = []
@@ -1977,7 +1990,7 @@ Provide a concise summary:"""
                 storage_used = round(disk.percent, 1)
             except Exception:
                 storage_used = 0
-            
+
             # Get system status for template - ensure all fields have defaults
             system_status = {
                 "cpu_usage": 0,
@@ -2006,19 +2019,18 @@ Provide a concise summary:"""
             except Exception as e:
                 logger.debug(f"Could not get system stats: {e}")
                 # Keep defaults
-            
+
             # Safely serialize security devices and alerts
             def safe_serialize(obj):
                 """Safely convert object to dict."""
                 if hasattr(obj, '__dict__'):
                     return obj.__dict__
-                elif hasattr(obj, 'dict'):
+                if hasattr(obj, 'dict'):
                     return obj.dict()
-                elif isinstance(obj, dict):
+                if isinstance(obj, dict):
                     return obj
-                else:
-                    return str(obj)
-            
+                return str(obj)
+
             return self.templates.TemplateResponse(
                 "simple_dashboard.html",
                 {
@@ -2180,7 +2192,7 @@ Provide a concise summary:"""
 
                 config = get_config()
                 storage_cfg = get_model(StorageSettings)
-                
+
                 # Update policies
                 if video_recordings is not None:
                     storage_cfg.retention_policies["video_recordings"] = video_recordings
@@ -2188,13 +2200,13 @@ Provide a concise summary:"""
                     storage_cfg.retention_policies["snapshots"] = snapshots
                 if environment_data is not None:
                     storage_cfg.retention_policies["environment_data"] = environment_data
-                
+
                 # Save to config
                 if "storage" not in config:
                     config["storage"] = {}
                 config["storage"]["retention_policies"] = storage_cfg.retention_policies
                 save_config(config)
-                
+
                 return {
                     "success": True,
                     "policies": storage_cfg.retention_policies,
@@ -2215,17 +2227,17 @@ Provide a concise summary:"""
                     "success": False,
                     "error": "Confirmation required. Set 'confirm' to true to proceed.",
                 }
-            
+
             try:
+                from datetime import timedelta
+
                 from ...config import get_model
                 from ...config.models import StorageSettings
                 from ...db import MediaMetadataDB, TimeSeriesDB
-                from ...utils.storage import RecordingStore
-                from datetime import timedelta
 
                 storage_cfg = get_model(StorageSettings)
                 policies = storage_cfg.retention_policies
-                
+
                 results = {
                     "videos_deleted": 0,
                     "snapshots_deleted": 0,
@@ -2233,9 +2245,9 @@ Provide a concise summary:"""
                     "files_deleted": 0,
                     "space_freed_mb": 0,
                 }
-                
+
                 cutoff_time = datetime.now() - timedelta(days=max(policies.values()))
-                
+
                 # Scrub video recordings
                 db = MediaMetadataDB()
                 video_cutoff = datetime.now(timezone.utc) - timedelta(days=policies["video_recordings"])
@@ -2248,7 +2260,7 @@ Provide a concise summary:"""
                             rec_timestamp = datetime.fromisoformat(rec_timestamp.replace("Z", "+00:00"))
                         elif not isinstance(rec_timestamp, datetime):
                             continue
-                        
+
                         if rec_timestamp < video_cutoff:
                             if not dry_run:
                                 file_path = recording.get("file_path")
@@ -2264,7 +2276,7 @@ Provide a concise summary:"""
                 except Exception as e:
                     logger.exception("Error scrubbing videos")
                     results["error"] = str(e)
-                
+
                 # Scrub snapshots
                 snapshot_cutoff = datetime.now(timezone.utc) - timedelta(days=policies["snapshots"])
                 try:
@@ -2276,7 +2288,7 @@ Provide a concise summary:"""
                             snap_timestamp = datetime.fromisoformat(snap_timestamp.replace("Z", "+00:00"))
                         elif not isinstance(snap_timestamp, datetime):
                             continue
-                        
+
                         if snap_timestamp < snapshot_cutoff:
                             if not dry_run:
                                 file_path = snapshot.get("file_path")
@@ -2289,9 +2301,9 @@ Provide a concise summary:"""
                                         pass
                                 db.delete_snapshot(snapshot.get("snapshot_id"))
                             results["snapshots_deleted"] += 1
-                except Exception as e:
+                except Exception:
                     logger.exception("Error scrubbing snapshots")
-                
+
                 # Scrub environment data (time series)
                 env_cutoff = datetime.now(timezone.utc) - timedelta(days=policies["environment_data"])
                 try:
@@ -2302,9 +2314,9 @@ Provide a concise summary:"""
                     results["environment_records_deleted"] = 0
                     if not dry_run:
                         logger.info(f"Environment data cleanup not yet implemented - cutoff: {env_cutoff}")
-                except Exception as e:
+                except Exception:
                     logger.exception("Error scrubbing environment data")
-                
+
                 return {
                     "success": True,
                     "dry_run": dry_run,
@@ -2562,30 +2574,31 @@ Provide a concise summary:"""
     async def _generate_rtsp_mjpeg_stream(self, rtsp_url: str) -> Generator[bytes, None, None]:
         """Generate MJPEG stream from RTSP URL for browser viewing - CRITICAL for ONVIF cameras."""
         import asyncio
+
         import cv2
-        
+
         cap = None
         try:
             # Open RTSP stream with OpenCV - CRITICAL: This must work for ONVIF
             logger.info(f"Opening RTSP stream for ONVIF: {rtsp_url[:60]}...")
             cap = cv2.VideoCapture(rtsp_url)
-            
+
             # Configure for low latency streaming
             cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Minimize buffer for lower latency
             cap.set(cv2.CAP_PROP_FPS, 30)  # Request 30 FPS
-            
+
             # Give it a moment to connect (ONVIF can take a second)
             await asyncio.sleep(0.5)
-            
+
             if not cap.isOpened():
                 error_msg = f"Failed to open RTSP stream: {rtsp_url[:60]}..."
                 logger.error(error_msg)
                 raise Exception(error_msg)
-            
+
             logger.info(f"ONVIF MJPEG stream started successfully: {rtsp_url[:50]}...")
             consecutive_failures = 0
             max_failures = 30  # Stop after 30 consecutive failures
-            
+
             while consecutive_failures < max_failures:
                 ret, frame = cap.read()
                 if not ret:
@@ -2594,9 +2607,9 @@ Provide a concise summary:"""
                         logger.warning(f"ONVIF RTSP stream read failures: {consecutive_failures}/{max_failures}")
                     await asyncio.sleep(0.1)
                     continue
-                
+
                 consecutive_failures = 0  # Reset on success
-                
+
                 # Resize for bandwidth efficiency (720p max)
                 height, width = frame.shape[:2]
                 if width > 1280:
@@ -2604,20 +2617,20 @@ Provide a concise summary:"""
                     new_width = int(width * scale)
                     new_height = int(height * scale)
                     frame = cv2.resize(frame, (new_width, new_height))
-                
+
                 # Encode frame as JPEG
                 encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
                 result, encoded_img = cv2.imencode(".jpg", frame, encode_param)
-                
+
                 if result:
                     yield (
                         b"--frame\r\n"
                         b"Content-Type: image/jpeg\r\n\r\n" + encoded_img.tobytes() + b"\r\n"
                     )
-                
+
                 # ~10 FPS for browser streaming
                 await asyncio.sleep(0.1)
-                
+
         except GeneratorExit:
             logger.info("ONVIF MJPEG stream client disconnected")
         except Exception as e:
@@ -2634,8 +2647,9 @@ Provide a concise summary:"""
             host: Host to bind to. Defaults to config value.
             port: Port to bind to. Defaults to config value.
         """
-        import uvicorn
         import socket
+
+        import uvicorn
 
         host = host or self.web_config.host
         port = port or self.web_config.port
@@ -2649,15 +2663,15 @@ Provide a concise summary:"""
             if e.errno == 10048 or "Address already in use" in str(e):  # Windows: 10048, Linux: 98
                 logger.error(f"[ERROR] PORT CONFLICT: Port {port} is already in use!")
                 logger.error(f"   Another process (possibly Docker container) is using port {port}.")
-                logger.error(f"   Solutions:")
-                logger.error(f"   1. Stop the conflicting process:")
+                logger.error("   Solutions:")
+                logger.error("   1. Stop the conflicting process:")
                 logger.error(f"      PowerShell: Get-NetTCPConnection -LocalPort {port} | Select-Object OwningProcess")
-                logger.error(f"      Then: Stop-Process -Id <PID> -Force")
-                logger.error(f"   2. Stop Docker container:")
-                logger.error(f"      docker ps | findstr tapo")
-                logger.error(f"      docker stop <container-id>")
-                logger.error(f"   3. Use a different port:")
-                logger.error(f"      python -m tapo_camera_mcp.web --port 7778")
+                logger.error("      Then: Stop-Process -Id <PID> -Force")
+                logger.error("   2. Stop Docker container:")
+                logger.error("      docker ps | findstr tapo")
+                logger.error("      docker stop <container-id>")
+                logger.error("   3. Use a different port:")
+                logger.error("      python -m tapo_camera_mcp.web --port 7778")
                 raise RuntimeError(
                     f"Port {port} is already in use. "
                     f"Stop the conflicting process or use --port <different_port>"
@@ -2685,7 +2699,7 @@ Provide a concise summary:"""
         except OSError as e:
             if "Address already in use" in str(e) or e.errno in (10048, 98):
                 logger.error(f"[ERROR] Failed to start server: Port {port} conflict detected during startup!")
-                logger.error(f"   This can happen if another process grabbed the port between check and start.")
+                logger.error("   This can happen if another process grabbed the port between check and start.")
                 raise RuntimeError(
                     f"Port {port} conflict during startup. "
                     f"Try again or use --port <different_port>"
