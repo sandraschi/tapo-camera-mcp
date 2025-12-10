@@ -84,7 +84,8 @@ class NestClient:
         cache_ttl: int = 60,
     ):
         self.refresh_token = refresh_token
-        self.token_file = Path(token_file)
+        # Adjust token file path for Docker (use mounted volume)
+        self.token_file = self._adjust_token_path(token_file)
         self.cache_ttl = cache_ttl
 
         self._session: Optional[aiohttp.ClientSession] = None
@@ -94,6 +95,24 @@ class NestClient:
         self._devices: dict[str, NestProtectDevice] = {}
         self._cache_time: Optional[datetime] = None
         self._initialized = False
+    
+    @staticmethod
+    def _adjust_token_path(token_file: str) -> Path:
+        """Adjust token file path for Docker environment."""
+        import os
+        token_path = Path(token_file)
+        
+        # In Docker, use mounted volume for token persistence
+        if os.getenv("CONTAINER") == "yes":
+            # If token file is in current directory, move to /app/tokens
+            if not token_path.is_absolute():
+                tokens_dir = Path("/app/tokens")
+                tokens_dir.mkdir(parents=True, exist_ok=True)
+                return tokens_dir / token_path.name
+            # If absolute path, ensure parent directory exists
+            token_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        return token_path
 
     async def initialize(self) -> bool:
         """Initialize the Nest client."""

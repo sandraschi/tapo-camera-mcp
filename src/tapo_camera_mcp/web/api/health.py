@@ -23,9 +23,20 @@ async def get_connection_health() -> Dict[str, Any]:
     
     Returns health for all devices: cameras, plugs, lights, weather, ring.
     Shows which devices are online/offline and error details.
+    Triggers a fresh health check before returning data.
     """
     try:
+        import asyncio
         supervisor = get_supervisor()
+        # Trigger a fresh health check first (with timeout)
+        try:
+            await asyncio.wait_for(supervisor._check_all_devices(), timeout=10.0)
+        except asyncio.TimeoutError:
+            logger.warning("Health check timed out, returning cached data")
+        except Exception as e:
+            logger.warning(f"Health check failed: {e}, returning cached data")
+        
+        # Now return current health data
         return supervisor.get_health_summary()
     except Exception as e:
         logger.exception("Error getting connection health")
@@ -67,9 +78,14 @@ async def get_offline_devices() -> Dict[str, Any]:
 async def trigger_health_check() -> Dict[str, Any]:
     """Manually trigger an immediate health check of all devices."""
     try:
+        import asyncio
         supervisor = get_supervisor()
-        await supervisor._check_all_devices()
+        # Add timeout to prevent hanging
+        await asyncio.wait_for(supervisor._check_all_devices(), timeout=10.0)
         return {"success": True, "message": "Health check completed"}
+    except asyncio.TimeoutError:
+        logger.warning("Health check trigger timed out")
+        return {"success": False, "error": "Health check timed out"}
     except Exception as e:
         logger.exception("Error triggering health check")
         return {"success": False, "error": str(e)}

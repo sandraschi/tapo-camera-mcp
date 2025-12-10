@@ -31,7 +31,16 @@ Write-Host ""
 # Check for port conflicts
 $port = 7777
 Write-Host "🔍 Checking port $port availability..." -ForegroundColor Cyan
-$portInUse = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
+# Add timeout to port check (max 1 second)
+$portCheckJob = Start-Job -ScriptBlock { param($p) Get-NetTCPConnection -LocalPort $p -ErrorAction SilentlyContinue } -ArgumentList $port
+$portInUse = $null
+if (Wait-Job -Job $portCheckJob -Timeout 1) {
+    $portInUse = Receive-Job -Job $portCheckJob
+    Remove-Job -Job $portCheckJob
+} else {
+    Remove-Job -Job $portCheckJob -Force
+    Write-Host "⚠️  Port check timed out, assuming port is available" -ForegroundColor Yellow
+}
 
 if ($portInUse) {
     $processId = $portInUse.OwningProcess

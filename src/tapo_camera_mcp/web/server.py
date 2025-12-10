@@ -5,6 +5,7 @@ This module provides the web server implementation using FastAPI.
 """
 
 import logging
+import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Generator, Optional
@@ -111,64 +112,16 @@ class WebServer:
             }
         )
 
-        # Setup startup event for comprehensive hardware initialization
-        @self.app.on_event("startup")
-        async def init_all_hardware_on_startup():
-            """Initialize all hardware components on server startup."""
-            try:
-                import asyncio
-                from tapo_camera_mcp.core.hardware_init import initialize_all_hardware
-                logger.info("=" * 60)
-                logger.info("WEB SERVER STARTUP - Initializing all hardware...")
-                logger.info("=" * 60)
-                # Add timeout to prevent blocking server startup indefinitely
-                hardware_results = await asyncio.wait_for(initialize_all_hardware(), timeout=60.0)
-                
-                # Log summary
-                successful = sum(1 for r in hardware_results.values() if r.get("success", False))
-                total = len(hardware_results)
-                logger.info(f"Hardware initialization complete: {successful}/{total} components ready")
-                logger.info("=" * 60)
-            except asyncio.TimeoutError:
-                logger.warning("Hardware initialization timed out after 60s - server will start anyway")
-                logger.warning("Hardware will be initialized in background by Connection Supervisor")
-            except Exception as e:
-                logger.exception("Failed to initialize hardware during web server startup")
-                logger.warning("Server will start anyway - hardware can be initialized later")
+        # Hardware initialization is OPTIONAL and happens lazily when needed
+        # Don't block server startup - hardware will initialize on first use
+        # Connection Supervisor will handle device monitoring in background
+        logger.info("Server starting - hardware will initialize on-demand (no DNS required for startup)")
 
-        # Setup startup event for Shelly temperature sensors
-        @self.app.on_event("startup")
-        async def init_shelly_on_startup():
-            """Initialize Shelly client from config on server startup."""
-            shelly_config = self.config.get("shelly", {})
-            if shelly_config.get("enabled", False):
-                try:
-                    from tapo_camera_mcp.integrations.shelly_client import init_shelly_client
-                    logger.info("Initializing Shelly client from config...")
-                    await init_shelly_client(
-                        devices=shelly_config.get("devices", []),
-                        cache_ttl=shelly_config.get("cache_ttl", 30),
-                    )
-                    logger.info("Shelly client initialized successfully")
-                except Exception as e:
-                    logger.warning(f"Failed to initialize Shelly client: {e}")
+        # Shelly initialization happens on-demand when needed
+        # No blocking startup initialization required
 
-        # Setup startup event for thermal sensors (MLX90640/AMG8833)
-        @self.app.on_event("startup")
-        async def init_thermal_on_startup():
-            """Initialize thermal sensor client from config on server startup."""
-            thermal_config = self.config.get("thermal", {})
-            if thermal_config.get("enabled", False):
-                try:
-                    from tapo_camera_mcp.integrations.thermal_client import init_thermal_client
-                    logger.info("Initializing thermal sensor client from config...")
-                    await init_thermal_client(
-                        sensors=thermal_config.get("sensors", []),
-                        cache_ttl=thermal_config.get("cache_ttl", 5),
-                    )
-                    logger.info("Thermal sensor client initialized successfully")
-                except Exception as e:
-                    logger.warning(f"Failed to initialize thermal client: {e}")
+        # Thermal sensor initialization happens on-demand when needed
+        # No blocking startup initialization required
 
     def _setup_middleware(self) -> None:
         """Setup middleware for the FastAPI app."""
@@ -247,17 +200,223 @@ class WebServer:
                 url="/?error=invalid_request", status_code=status.HTTP_303_SEE_OTHER
             )
 
+        # CRITICAL: Catch-all exception handler with actionable error messages
+        @self.app.exception_handler(Exception)
+        async def general_exception_handler(request: Request, exc: Exception):
+            """Catch all unhandled exceptions with actionable error messages."""
+            error_info = self._categorize_error(exc, request)
+            
+            # Log with full context
+            logger.error(
+                f"Unhandled exception in {request.method} {request.url.path}: "
+                f"{error_info['category']} - {error_info['message']}",
+                exc_info=True,
+                extra={
+                    "error_category": error_info["category"],
+                    "error_type": error_info["type"],
+                    "actionable": error_info["actionable"],
+                    "request_path": request.url.path,
+                    "request_method": request.method,
+                }
+            )
+            
+            if request.url.path.startswith("/api/"):
+                return JSONResponse(
+                    status_code=error_info["status_code"],
+                    content={
+                        "detail": error_info["message"],
+                        "error_category": error_info["category"],
+                        "error_type": error_info["type"],
+                        "actionable": error_info["actionable"],
+                        "debug_info": str(exc) if self.config.get("debug", False) else None,
+                    },
+                )
+            
+            # For non-API routes, show error page
+            try:
+                return self.templates.TemplateResponse(
+                    "error.html",
+                    {
+                        "request": request,
+                        "status_code": error_info["status_code"],
+                        "detail": error_info["message"],
+                        "actionable": error_info["actionable"],
+                    },
+                    status_code=error_info["status_code"],
+                )
+            except Exception as template_error:
+                # Even template rendering failed - return plain text
+                logger.exception(f"Failed to render error template: {template_error}")
+                return Response(
+                    content=f"Error {error_info['status_code']}: {error_info['message']}\n\n{error_info['actionable']}",
+                    status_code=error_info["status_code"],
+                    media_type="text/plain",
+                )
+    
+    def _categorize_error(self, exc: Exception, request: Request) -> dict:
+        """Categorize error and provide actionable error messages."""
+        error_type = type(exc).__name__
+        error_msg = str(exc).lower()
+        path = request.url.path
+        
+        # Network/Connection errors
+        if any(keyword in error_msg for keyword in ["connection", "connect", "network", "unreachable", "refused"]):
+            return {
+                "category": "network_error",
+                "type": error_type,
+                "status_code": 503,
+                "message": "Network connection failed",
+                "actionable": (
+                    f"Failed to connect to device/service. "
+                    f"Check: 1) Device is powered on and connected to network, "
+                    f"2) Firewall isn't blocking connections, "
+                    f"3) Network connectivity is working. "
+                    f"Error: {str(exc)}"
+                ),
+            }
+        
+        # Timeout errors
+        if "timeout" in error_msg or "timed out" in error_msg or error_type == "TimeoutError":
+            return {
+                "category": "timeout_error",
+                "type": error_type,
+                "status_code": 504,
+                "message": "Request timed out",
+                "actionable": (
+                    f"Operation took too long. "
+                    f"Check: 1) Device is responding (ping/check status), "
+                    f"2) Network latency is normal, "
+                    f"3) Device isn't overloaded. "
+                    f"Try again or increase timeout. Error: {str(exc)}"
+                ),
+            }
+        
+        # Authentication/Authorization errors
+        if any(keyword in error_msg for keyword in ["auth", "unauthorized", "forbidden", "401", "403", "credential", "password", "login"]):
+            return {
+                "category": "authentication_error",
+                "type": error_type,
+                "status_code": 401,
+                "message": "Authentication failed",
+                "actionable": (
+                    f"Invalid credentials or missing authentication. "
+                    f"Check: 1) Username/password in config.yaml is correct, "
+                    f"2) Device credentials haven't changed, "
+                    f"3) Authentication is enabled on device. "
+                    f"Error: {str(exc)}"
+                ),
+            }
+        
+        # DNS errors
+        if "dns" in error_msg or "getaddrinfo" in error_msg or "name resolution" in error_msg:
+            return {
+                "category": "dns_error",
+                "type": error_type,
+                "status_code": 503,
+                "message": "DNS resolution failed",
+                "actionable": (
+                    f"Failed to resolve hostname. "
+                    f"Check: 1) Hostname/IP address is correct in config, "
+                    f"2) DNS server is reachable, "
+                    f"3) Try using IP address instead of hostname. "
+                    f"Error: {str(exc)}"
+                ),
+            }
+        
+        # File/IO errors
+        if any(keyword in error_msg for keyword in ["file", "directory", "permission", "access denied", "not found", "enoent"]):
+            return {
+                "category": "file_error",
+                "type": error_type,
+                "status_code": 500,
+                "message": "File operation failed",
+                "actionable": (
+                    f"File access error. "
+                    f"Check: 1) File/directory exists and is readable, "
+                    f"2) Permissions are correct, "
+                    f"3) Disk space is available. "
+                    f"Error: {str(exc)}"
+                ),
+            }
+        
+        # Configuration errors
+        if any(keyword in error_msg for keyword in ["config", "configuration", "missing", "required", "invalid"]):
+            return {
+                "category": "configuration_error",
+                "type": error_type,
+                "status_code": 500,
+                "message": "Configuration error",
+                "actionable": (
+                    f"Configuration issue detected. "
+                    f"Check: 1) config.yaml is valid YAML, "
+                    f"2) All required fields are present, "
+                    f"3) Values are correct format. "
+                    f"Error: {str(exc)}"
+                ),
+            }
+        
+        # Camera/Device specific errors
+        if "/api/cameras" in path or "/cameras" in path:
+            return {
+                "category": "camera_error",
+                "type": error_type,
+                "status_code": 500,
+                "message": "Camera operation failed",
+                "actionable": (
+                    f"Camera operation failed. "
+                    f"Check: 1) Camera is online and accessible, "
+                    f"2) ONVIF/RTSP credentials are correct, "
+                    f"3) Camera supports requested feature. "
+                    f"Error: {str(exc)}"
+                ),
+            }
+        
+        # Weather/Netatmo errors
+        if "/api/weather" in path or "netatmo" in error_msg:
+            return {
+                "category": "weather_service_error",
+                "type": error_type,
+                "status_code": 503,
+                "message": "Weather service error",
+                "actionable": (
+                    f"Weather service unavailable. "
+                    f"Check: 1) Netatmo credentials in config.yaml, "
+                    f"2) Internet connection is working, "
+                    f"3) Netatmo API is accessible. "
+                    f"Error: {str(exc)}"
+                ),
+            }
+        
+        # Generic error with context
+        return {
+            "category": "internal_error",
+            "type": error_type,
+            "status_code": 500,
+            "message": f"Internal server error: {error_type}",
+            "actionable": (
+                f"Unexpected error occurred. "
+                f"Error type: {error_type}. "
+                f"Check server logs for details. "
+                f"Error: {str(exc)}"
+            ),
+        }
+
     async def cameras_page(self, request: Request):
         """Serve the cameras page with detailed camera information."""
         cameras_data = []
 
         try:
+            import asyncio
             from tapo_camera_mcp.core.server import TapoCameraServer
 
-            server = await TapoCameraServer.get_instance()
-
-            # Get cameras list with detailed information
-            cameras_list = await server.camera_manager.list_cameras()
+            # Add timeout to prevent hanging
+            try:
+                server = await asyncio.wait_for(TapoCameraServer.get_instance(), timeout=5.0)
+                # Get cameras list with detailed information (with timeout)
+                cameras_list = await asyncio.wait_for(server.camera_manager.list_cameras(), timeout=5.0)
+            except asyncio.TimeoutError:
+                logger.warning("Camera list request timed out - returning empty list")
+                cameras_list = []
 
             # Enhance each camera with additional details
             for camera in cameras_list:
@@ -277,6 +436,14 @@ class WebServer:
                         "audio_capable": status_dict.get("audio_capable", False),
                         "streaming_capable": status_dict.get("streaming_capable", False),
                     })
+                    # Check for Teams/webcam blocking
+                    if status_dict.get("warning"):
+                        camera_info["warning"] = status_dict.get("warning")
+                    if status_dict.get("error"):
+                        error_msg = str(status_dict.get("error", ""))
+                        if "teams" in error_msg.lower() or "in use" in error_msg.lower() or "locked" in error_msg.lower():
+                            camera_info["teams_blocked"] = True
+                            camera_info["error_message"] = error_msg
                 else:
                     # Fallback if status is already a string
                     camera_info["status"] = str(status_dict) if status_dict else "offline"
@@ -285,35 +452,59 @@ class WebServer:
                 if not isinstance(camera_info.get("status"), str):
                     camera_info["status"] = "offline"
 
-                # Try to get detailed camera information
+                # Try to get detailed camera information (with timeout)
                 try:
                     if camera_info.get("status") == "online":
-                        # Get detailed camera info if available
-                        camera_obj = await server.camera_manager.get_camera(camera["name"])
-                        if camera_obj:
-                            # Get detailed status including capabilities
-                            detailed_status = await camera_obj.get_status()
+                        # Get detailed camera info if available (with timeout to prevent hanging)
+                        camera_obj = None
+                        detailed_status = {}
+                        try:
+                            camera_obj = await asyncio.wait_for(
+                                server.camera_manager.get_camera(camera["name"]), 
+                                timeout=3.0
+                            )
+                            if camera_obj:
+                                # Get detailed status including capabilities (with timeout)
+                                try:
+                                    detailed_status = await asyncio.wait_for(
+                                        camera_obj.get_status(), 
+                                        timeout=3.0
+                                    )
+                                except asyncio.TimeoutError:
+                                    logger.warning(
+                                        f"Camera {camera['name']} status check timed out",
+                                        extra={
+                                            "camera": camera['name'],
+                                            "actionable": f"Camera {camera['name']} is not responding. Check if camera is online and accessible."
+                                        }
+                                    )
+                                    detailed_status = {}
+                        except asyncio.TimeoutError:
+                            logger.warning(
+                                f"Camera {camera['name']} get_camera timed out",
+                                extra={
+                                    "camera": camera['name'],
+                                    "actionable": f"Failed to retrieve camera {camera['name']} object. Camera may be offline or unreachable."
+                                }
+                            )
+                            camera_obj = None
+                            detailed_status = {}
 
-                            # Add resolution info (mock for now, would come from camera)
+                        # Use detailed_status if we got it, otherwise use defaults
+                        if detailed_status:
+                            # Add resolution info
                             camera_info["resolution"] = detailed_status.get("resolution", "Unknown")
-
                             # Add PTZ capability
                             camera_info["ptz_capable"] = detailed_status.get("ptz_capable", False)
-
                             # Add audio capability
-                            camera_info["audio_capable"] = detailed_status.get(
-                                "audio_capable", False
-                            )
-
+                            camera_info["audio_capable"] = detailed_status.get("audio_capable", False)
                             # Add model and firmware
                             camera_info["model"] = detailed_status.get("model", "Unknown")
                             camera_info["firmware"] = detailed_status.get("firmware", "Unknown")
-
                             # Add streaming capability
-                            camera_info["streaming_capable"] = detailed_status.get(
-                                "streaming", False
-                            )
+                            camera_info["streaming_capable"] = detailed_status.get("streaming", False)
                         else:
+                            # No detailed status - use defaults
                             camera_info.update(
                                 {
                                     "resolution": "Unknown",
@@ -353,8 +544,35 @@ class WebServer:
 
                 cameras_data.append(camera_info)
 
-        except Exception:
-            logger.exception("Error getting cameras data")
+        except asyncio.TimeoutError:
+            logger.warning(
+                "Cameras page timed out - returning empty list",
+                extra={
+                    "actionable": "Camera page load timed out. Check camera server status and network connectivity."
+                }
+            )
+            cameras_data = []
+        except Exception as e:
+            error_type = type(e).__name__
+            error_msg = str(e).lower()
+            
+            # Provide specific actionable messages based on error type
+            if "connection" in error_msg or "network" in error_msg:
+                actionable = "Network error accessing cameras. Check camera connectivity and network settings."
+            elif "timeout" in error_msg:
+                actionable = "Camera operation timed out. Cameras may be slow or unreachable."
+            elif "auth" in error_msg or "credential" in error_msg:
+                actionable = "Authentication failed. Check camera credentials in config.yaml."
+            else:
+                actionable = f"Unexpected error: {error_type}. Check server logs for details."
+            
+            logger.exception(
+                f"Error getting cameras data: {error_type}: {e}",
+                extra={
+                    "error_type": error_type,
+                    "actionable": actionable
+                }
+            )
             cameras_data = []
 
         # Sort cameras for UI: USB webcam first, then Tapo, then doorcam/Ring, then Petcube, then others.
@@ -513,11 +731,21 @@ class WebServer:
                 import psutil
                 import time
                 from pathlib import Path
+                import asyncio
 
-                # System resources
-                cpu_percent = psutil.cpu_percent(interval=0.1)
-                memory = psutil.virtual_memory()
-                disk = psutil.disk_usage("/")
+                # System resources (with error handling)
+                try:
+                    cpu_percent = psutil.cpu_percent(interval=0.1)
+                except Exception:
+                    cpu_percent = 0
+                try:
+                    memory = psutil.virtual_memory()
+                except Exception:
+                    memory = None
+                try:
+                    disk = psutil.disk_usage("/")
+                except Exception:
+                    disk = None
                 
                 # System uptime
                 boot_time = psutil.boot_time()
@@ -580,15 +808,28 @@ class WebServer:
                 
                 db_status["postgres"] = postgres_status
                 
-                # Camera status
+                # Camera status (with timeout to prevent hanging)
                 camera_status = {"total": 0, "online": 0, "offline": 0}
                 try:
+                    import asyncio
                     from tapo_camera_mcp.core.server import TapoCameraServer
-                    server = await TapoCameraServer.get_instance()
-                    cameras = await server.camera_manager.list_cameras()
+                    server = await asyncio.wait_for(TapoCameraServer.get_instance(), timeout=3.0)
+                    cameras = await asyncio.wait_for(server.camera_manager.list_cameras(), timeout=3.0)
                     camera_status["total"] = len(cameras)
-                    camera_status["online"] = sum(1 for cam in cameras if cam.get("status") == "online")
+                    # Check status - can be dict or string
+                    online_count = 0
+                    for cam in cameras:
+                        status_val = cam.get("status", {})
+                        if isinstance(status_val, dict):
+                            if status_val.get("connected", False):
+                                online_count += 1
+                        elif isinstance(status_val, str) and status_val == "online":
+                            online_count += 1
+                    camera_status["online"] = online_count
                     camera_status["offline"] = camera_status["total"] - camera_status["online"]
+                except asyncio.TimeoutError:
+                    logger.warning("Camera status check timed out in health endpoint")
+                    camera_status = {"total": 0, "online": 0, "offline": 0, "error": "timeout"}
                 except Exception:
                     pass
                 
@@ -599,14 +840,14 @@ class WebServer:
                 elif cpu_percent > 80:
                     issues.append("high_cpu")
                 
-                if memory.percent > 95:
+                if memory and memory.percent > 95:
                     issues.append("critical_memory")
-                elif memory.percent > 85:
+                elif memory and memory.percent > 85:
                     issues.append("high_memory")
                 
-                if disk.percent > 95:
+                if disk and disk.percent > 95:
                     issues.append("critical_disk")
-                elif disk.percent > 90:
+                elif disk and disk.percent > 90:
                     issues.append("high_disk")
                 
                 if camera_status["total"] > 0 and camera_status["online"] == 0:
@@ -617,6 +858,22 @@ class WebServer:
                 
                 overall_status = "critical" if any("critical" in issue for issue in issues) else "warning" if issues else "healthy"
                 
+                # Build response with safe defaults if metrics failed
+                memory_data = {
+                    "total_gb": round(memory.total / (1024**3), 2) if memory else 0,
+                    "available_gb": round(memory.available / (1024**3), 2) if memory else 0,
+                    "used_gb": round(memory.used / (1024**3), 2) if memory else 0,
+                    "percent": round(memory.percent, 1) if memory else 0,
+                    "process_mb": round(process_memory.rss / (1024**2), 2) if memory else 0,
+                } if memory else {"error": "Unable to read memory stats"}
+                
+                disk_data = {
+                    "total_gb": round(disk.total / (1024**3), 2) if disk else 0,
+                    "used_gb": round(disk.used / (1024**3), 2) if disk else 0,
+                    "free_gb": round(disk.free / (1024**3), 2) if disk else 0,
+                    "percent": round(disk.percent, 1) if disk else 0,
+                } if disk else {"error": "Unable to read disk stats"}
+                
                 return {
                     "status": overall_status,
                     "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -626,19 +883,8 @@ class WebServer:
                             "count": psutil.cpu_count(),
                             "process_percent": round(process_cpu, 1),
                         },
-                        "memory": {
-                            "total_gb": round(memory.total / (1024**3), 2),
-                            "available_gb": round(memory.available / (1024**3), 2),
-                            "used_gb": round(memory.used / (1024**3), 2),
-                            "percent": round(memory.percent, 1),
-                            "process_mb": round(process_memory.rss / (1024**2), 2),
-                        },
-                        "disk": {
-                            "total_gb": round(disk.total / (1024**3), 2),
-                            "used_gb": round(disk.used / (1024**3), 2),
-                            "free_gb": round(disk.free / (1024**3), 2),
-                            "percent": round(disk.percent, 1),
-                        },
+                        "memory": memory_data,
+                        "disk": disk_data,
                         "uptime": {
                             "seconds": int(uptime_seconds),
                             "days": int(uptime_seconds / 86400),
@@ -663,11 +909,16 @@ class WebServer:
         async def get_cameras():
             """Get list of cameras."""
             try:
+                import asyncio
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
-                server = await TapoCameraServer.get_instance()
-                cameras = await server.camera_manager.list_cameras()
+                # Add timeouts to prevent hanging
+                server = await asyncio.wait_for(TapoCameraServer.get_instance(), timeout=5.0)
+                cameras = await asyncio.wait_for(server.camera_manager.list_cameras(), timeout=5.0)
                 return {"success": True, "cameras": cameras}
+            except asyncio.TimeoutError:
+                logger.warning("Camera list request timed out")
+                return {"success": False, "error": "Request timed out", "cameras": []}
             except Exception as e:
                 logger.exception("Error getting cameras list")
                 return {"success": False, "error": str(e), "cameras": []}
@@ -694,6 +945,14 @@ class WebServer:
         @self.app.get("/api/cameras/{camera_id}/stream")
         async def get_camera_stream(camera_id: str):
             """Get camera video stream."""
+            # Validate camera_id format (alphanumeric, dashes, underscores, max 100 chars)
+            import re
+            if not re.match(r'^[a-zA-Z0-9_-]{1,100}$', camera_id):
+                return JSONResponse(
+                    {"error": "Invalid camera_id format"},
+                    status_code=400
+                )
+            
             try:
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
@@ -739,6 +998,14 @@ class WebServer:
         @self.app.get("/api/cameras/{camera_id}/mjpeg")
         async def get_camera_mjpeg_stream(camera_id: str):
             """Get camera MJPEG stream for browser viewing."""
+            # Validate camera_id format
+            import re
+            if not re.match(r'^[a-zA-Z0-9_-]{1,100}$', camera_id):
+                return Response(
+                    content="Invalid camera_id format",
+                    status_code=400
+                )
+            
             try:
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
@@ -760,21 +1027,35 @@ class WebServer:
                         
                         # For RTSP/ONVIF cameras, transcode to MJPEG
                         if camera_type in ("tapo", "onvif"):
-                            stream_url = await camera.get_stream_url()
-                            if stream_url:
-                                # Add auth for ONVIF
+                            try:
+                                # Get stream URL - CRITICAL for ONVIF streaming
+                                stream_url = await asyncio.wait_for(camera.get_stream_url(), timeout=15.0)
+                                if not stream_url:
+                                    logger.error(f"Failed to get stream URL for {camera_id}")
+                                    return Response(content=f"Failed to get stream URL for camera {camera_id}", status_code=500)
+                                
+                                # Add auth for ONVIF (Tapo cameras need credentials in RTSP URL)
                                 if camera_type == "onvif":
                                     from urllib.parse import urlparse
                                     parsed = urlparse(stream_url)
                                     username = camera.config.params.get("username", "")
                                     password = camera.config.params.get("password", "")
                                     if username and password:
+                                        # Rebuild RTSP URL with credentials
                                         stream_url = f"rtsp://{username}:{password}@{parsed.hostname}:{parsed.port or 554}{parsed.path}"
+                                        logger.info(f"ONVIF MJPEG stream: Added auth to RTSP URL for {camera_id}")
                                 
+                                logger.info(f"Starting MJPEG stream for {camera_id} (ONVIF)")
                                 return StreamingResponse(
                                     self._generate_rtsp_mjpeg_stream(stream_url),
                                     media_type="multipart/x-mixed-replace; boundary=frame",
                                 )
+                            except asyncio.TimeoutError:
+                                logger.error(f"Timeout getting stream URL for {camera_id}")
+                                return Response(content=f"Timeout getting stream URL for camera {camera_id}", status_code=500)
+                            except Exception as e:
+                                logger.exception(f"Error getting stream URL for {camera_id}: {e}")
+                                return Response(content=f"Error getting stream URL: {e}", status_code=500)
 
                 return Response(content="Camera not found", status_code=404)
             except Exception as e:
@@ -784,6 +1065,14 @@ class WebServer:
         @self.app.get("/api/cameras/{camera_id}/snapshot")
         async def get_camera_snapshot(camera_id: str):
             """Get camera snapshot."""
+            # Validate camera_id format
+            import re
+            if not re.match(r'^[a-zA-Z0-9_-]{1,100}$', camera_id):
+                return Response(
+                    content="Invalid camera_id format",
+                    status_code=400
+                )
+            
             try:
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
@@ -811,6 +1100,22 @@ class WebServer:
         @self.app.post("/api/cameras/{camera_id}/control")
         async def control_camera(camera_id: str, action: str = Form(...)):
             """Control camera actions (start_stream, stop_stream, start_audio, stop_audio)."""
+            # Validate camera_id format
+            import re
+            if not re.match(r'^[a-zA-Z0-9_-]{1,100}$', camera_id):
+                return JSONResponse(
+                    {"error": "Invalid camera_id format"},
+                    status_code=400
+                )
+            
+            # Validate action parameter
+            valid_actions = ["start_stream", "stop_stream", "start_audio", "stop_audio"]
+            if action not in valid_actions:
+                return JSONResponse(
+                    {"error": f"Invalid action. Must be one of: {', '.join(valid_actions)}"},
+                    status_code=400
+                )
+            
             try:
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
@@ -862,12 +1167,22 @@ class WebServer:
         async def get_system_status():
             """Get system status."""
             try:
+                import psutil
+                import asyncio
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
-                server = await TapoCameraServer.get_instance()
-                cameras = await server.camera_manager.list_cameras()
+                # Get REAL camera data
+                server = await asyncio.wait_for(TapoCameraServer.get_instance(), timeout=3.0)
+                cameras = await asyncio.wait_for(server.camera_manager.list_cameras(), timeout=3.0)
                 total_cameras = len(cameras)
-                online_cameras = sum(1 for cam in cameras if cam.get("status") == "online")
+                online_cameras = sum(1 for cam in cameras if cam.get("status") == "online" or (isinstance(cam.get("status"), dict) and cam.get("status", {}).get("connected", False)))
+
+                # Get REAL storage data
+                try:
+                    disk = psutil.disk_usage("/")
+                    storage_used_percent = round(disk.percent, 1)
+                except Exception:
+                    storage_used_percent = 0
 
                 return {
                     "status": "ok",
@@ -878,10 +1193,12 @@ class WebServer:
                         "offline": total_cameras - online_cameras,
                     },
                     "storage": {
-                        "used_percent": 45,  # Mock data for now
+                        "used_percent": storage_used_percent
                     },
                     "uptime": "N/A",  # Could be calculated from server start time
                 }
+            except asyncio.TimeoutError:
+                return {"status": "error", "error": "Request timed out"}
             except Exception as e:
                 return {"status": "error", "error": str(e)}
 
@@ -1528,22 +1845,77 @@ Provide a concise summary:"""
             security_alerts = []
             security_overview = {}
 
+            server = None  # Initialize to avoid undefined variable errors
             try:
                 # Get real camera data from the MCP server
                 import asyncio
                 from tapo_camera_mcp.core.server import TapoCameraServer
-
-                # Add timeout to prevent blocking
+                
                 try:
                     server = await asyncio.wait_for(
                         TapoCameraServer.get_instance(),
                         timeout=5.0
                     )
-                    # Get camera list from camera manager
-                    cameras = await asyncio.wait_for(
+                    
+                    # Load camera list and security data in parallel
+                    camera_task = asyncio.wait_for(
                         server.camera_manager.list_cameras(),
                         timeout=5.0
                     )
+                    
+                    # Prepare security data loading task
+                    security_task = None
+                    try:
+                        from tapo_camera_mcp.security import security_manager
+                        if not hasattr(security_manager, "_initialized"):
+                            security_config = (
+                                self.security_config.integrations.dict() if self.security_config else {}
+                            )
+                            # Add timeout to prevent hanging
+                            await asyncio.wait_for(
+                                security_manager.initialize(security_config),
+                                timeout=5.0
+                            )
+                            security_manager._initialized = True
+                        
+                        # Create security data loading task with timeout
+                        security_task = asyncio.wait_for(
+                            asyncio.gather(
+                                security_manager.get_all_devices(),
+                                security_manager.get_all_alerts(),
+                                security_manager.get_system_overview(),
+                                return_exceptions=True
+                            ),
+                            timeout=5.0
+                        )
+                    except asyncio.TimeoutError:
+                        logger.warning("Security manager initialization or data loading timed out")
+                        security_task = None
+                    except Exception as e:
+                        logger.warning(f"Failed to prepare security data loading: {e}")
+                        security_task = None
+                    
+                    # Wait for camera data
+                    cameras = await camera_task
+                    
+                    # Wait for security data if task was created
+                    if security_task:
+                        try:
+                            sec_devices, sec_alerts, sec_overview = await security_task
+                            security_devices = sec_devices if not isinstance(sec_devices, Exception) else []
+                            security_alerts = sec_alerts if not isinstance(sec_alerts, Exception) else []
+                            security_overview = sec_overview if not isinstance(sec_overview, Exception) else {}
+                        except asyncio.TimeoutError:
+                            logger.warning("Security data loading timed out - using empty data")
+                            security_devices = []
+                            security_alerts = []
+                            security_overview = {}
+                        except Exception as e:
+                            logger.warning(f"Failed to load security data: {e}")
+                            security_devices = []
+                            security_alerts = []
+                            security_overview = {}
+                    
                 except asyncio.TimeoutError:
                     logger.warning("Server instance access timed out - using empty camera list")
                     cameras = []
@@ -1551,7 +1923,7 @@ Provide a concise summary:"""
                 online_cameras = sum(1 for cam in cameras if cam.get("status") == "online")
 
                 # If no cameras configured, try to auto-add USB webcam
-                if total_cameras == 0:
+                if total_cameras == 0 and server:
                     try:
                         global _last_webcam_attempt
                         now = datetime.utcnow()
@@ -1568,11 +1940,18 @@ Provide a concise summary:"""
                                 "type": "webcam",
                                 "params": {"device_id": 0},
                             }
-                            success = await server.camera_manager.add_camera(config)
+                            # Add timeout to prevent hanging
+                            success = await asyncio.wait_for(
+                                server.camera_manager.add_camera(config),
+                                timeout=5.0
+                            )
                             if success:
                                 logger.info("Successfully auto-added USB webcam")
-                                # Refresh camera list
-                                cameras = await server.camera_manager.list_cameras()
+                                # Refresh camera list with timeout
+                                cameras = await asyncio.wait_for(
+                                    server.camera_manager.list_cameras(),
+                                    timeout=5.0
+                                )
                                 total_cameras = len(cameras)
                                 online_cameras = sum(
                                     1 for cam in cameras if cam.get("status") == "online"
@@ -1581,38 +1960,65 @@ Provide a concise summary:"""
                                 logger.warning(
                                     "Failed to auto-add webcam: camera manager returned False"
                                 )
+                    except asyncio.TimeoutError:
+                        logger.warning("Auto-add webcam timed out - skipping")
                     except Exception as e:
                         logger.warning(f"Error auto-adding webcam: {e}")
 
-                # Get security system data
-                security_devices = []
-                security_alerts = []
-                security_overview = {}
-
-                try:
-                    from tapo_camera_mcp.security import security_manager
-
-                    # Initialize security integrations if not already done
-                    if not hasattr(security_manager, "_initialized"):
-                        security_config = (
-                            self.security_config.integrations.dict() if self.security_config else {}
-                        )
-                        await security_manager.initialize(security_config)
-                        security_manager._initialized = True
-
-                    # Get security data
-                    security_devices = await security_manager.get_all_devices()
-                    security_alerts = await security_manager.get_all_alerts()
-                    security_overview = await security_manager.get_system_overview()
-
-                except Exception as e:
-                    logger.warning(f"Failed to get security data for dashboard: {e}")
-                    # Variables already initialized above, just log the error
-
             except Exception as e:
-                logger.warning(f"Failed to get camera data for dashboard: {e}")
+                logger.exception(f"Failed to get camera data for dashboard: {e}")
                 # Variables already initialized above
 
+            # Calculate actual storage usage
+            storage_used = 0
+            try:
+                import psutil
+                disk = psutil.disk_usage("/")
+                storage_used = round(disk.percent, 1)
+            except Exception:
+                storage_used = 0
+            
+            # Get system status for template - ensure all fields have defaults
+            system_status = {
+                "cpu_usage": 0,
+                "memory_usage": 0,
+                "disk_usage": storage_used,
+                "network": {
+                    "upload": 0.0,
+                    "download": 0.0,
+                }
+            }
+            try:
+                import psutil
+                system_status["cpu_usage"] = round(psutil.cpu_percent(interval=0.1), 1)
+                memory = psutil.virtual_memory()
+                system_status["memory_usage"] = round(memory.percent, 1)
+                try:
+                    net_io = psutil.net_io_counters()
+                    # Note: These are cumulative bytes, not rates
+                    # For rates, we'd need to track previous values and time delta
+                    # For dashboard display, showing cumulative is acceptable
+                    system_status["network"]["upload"] = round(net_io.bytes_sent / (1024 * 1024), 2)
+                    system_status["network"]["download"] = round(net_io.bytes_recv / (1024 * 1024), 2)
+                except Exception as e:
+                    logger.debug(f"Could not get network stats: {e}")
+                    # Keep defaults
+            except Exception as e:
+                logger.debug(f"Could not get system stats: {e}")
+                # Keep defaults
+            
+            # Safely serialize security devices and alerts
+            def safe_serialize(obj):
+                """Safely convert object to dict."""
+                if hasattr(obj, '__dict__'):
+                    return obj.__dict__
+                elif hasattr(obj, 'dict'):
+                    return obj.dict()
+                elif isinstance(obj, dict):
+                    return obj
+                else:
+                    return str(obj)
+            
             return self.templates.TemplateResponse(
                 "simple_dashboard.html",
                 {
@@ -1620,13 +2026,14 @@ Provide a concise summary:"""
                     "active_page": "dashboard",
                     "online_cameras": online_cameras,
                     "total_cameras": total_cameras,
-                    "storage_used": 45,  # Mock data for now
+                    "storage_used": storage_used,
                     "active_alerts": len(security_alerts),
                     "active_recordings": 0,
                     "cameras": cameras,
-                    "security_devices": [device.__dict__ for device in security_devices],
-                    "security_alerts": [alert.__dict__ for alert in security_alerts],
-                    "security_overview": security_overview,
+                    "security_devices": [safe_serialize(device) for device in security_devices],
+                    "security_alerts": [safe_serialize(alert) for alert in security_alerts],
+                    "security_overview": security_overview or {},
+                    "system_status": system_status,
                 },
             )
 
@@ -2153,21 +2560,29 @@ Provide a concise summary:"""
             yield error_frame
 
     async def _generate_rtsp_mjpeg_stream(self, rtsp_url: str) -> Generator[bytes, None, None]:
-        """Generate MJPEG stream from RTSP URL for browser viewing."""
+        """Generate MJPEG stream from RTSP URL for browser viewing - CRITICAL for ONVIF cameras."""
         import asyncio
         import cv2
         
         cap = None
         try:
-            # Open RTSP stream with OpenCV
+            # Open RTSP stream with OpenCV - CRITICAL: This must work for ONVIF
+            logger.info(f"Opening RTSP stream for ONVIF: {rtsp_url[:60]}...")
             cap = cv2.VideoCapture(rtsp_url)
+            
+            # Configure for low latency streaming
             cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Minimize buffer for lower latency
+            cap.set(cv2.CAP_PROP_FPS, 30)  # Request 30 FPS
+            
+            # Give it a moment to connect (ONVIF can take a second)
+            await asyncio.sleep(0.5)
             
             if not cap.isOpened():
-                logger.error(f"Failed to open RTSP stream: {rtsp_url}")
-                raise Exception("Failed to open RTSP stream")
+                error_msg = f"Failed to open RTSP stream: {rtsp_url[:60]}..."
+                logger.error(error_msg)
+                raise Exception(error_msg)
             
-            logger.info(f"MJPEG stream started for {rtsp_url[:50]}...")
+            logger.info(f"ONVIF MJPEG stream started successfully: {rtsp_url[:50]}...")
             consecutive_failures = 0
             max_failures = 30  # Stop after 30 consecutive failures
             
@@ -2175,6 +2590,8 @@ Provide a concise summary:"""
                 ret, frame = cap.read()
                 if not ret:
                     consecutive_failures += 1
+                    if consecutive_failures % 10 == 0:
+                        logger.warning(f"ONVIF RTSP stream read failures: {consecutive_failures}/{max_failures}")
                     await asyncio.sleep(0.1)
                     continue
                 
@@ -2198,17 +2615,17 @@ Provide a concise summary:"""
                         b"Content-Type: image/jpeg\r\n\r\n" + encoded_img.tobytes() + b"\r\n"
                     )
                 
-                # ~10 FPS
+                # ~10 FPS for browser streaming
                 await asyncio.sleep(0.1)
                 
         except GeneratorExit:
-            logger.info("MJPEG stream client disconnected")
+            logger.info("ONVIF MJPEG stream client disconnected")
         except Exception as e:
-            logger.exception(f"Error generating RTSP MJPEG stream: {e}")
+            logger.exception(f"Error generating ONVIF RTSP MJPEG stream for {rtsp_url[:50]}...: {e}")
         finally:
             if cap:
                 cap.release()
-                logger.info("RTSP stream released")
+                logger.info("ONVIF RTSP stream released")
 
     def run(self, host: Optional[str] = None, port: Optional[int] = None):
         """Run the web server.
@@ -2248,6 +2665,8 @@ Provide a concise summary:"""
             raise
 
         logger.info(f"Starting web server on http://{host}:{port}")
+        logger.info(f"Server configuration: host={host}, port={port}, debug={self.config.get('debug', False)}")
+        logger.info(f"Uvicorn log level: {self.config.get('log_level', 'info')}")
 
         try:
             uvicorn.run(
@@ -2258,6 +2677,11 @@ Provide a concise summary:"""
                 reload=self.config.get("debug", False),
                 workers=1,  # Running with multiple workers can cause issues with in-memory state
             )
+        except KeyboardInterrupt:
+            logger.info("=" * 80)
+            logger.info("Server stopped by user (KeyboardInterrupt)")
+            logger.info("=" * 80)
+            raise
         except OSError as e:
             if "Address already in use" in str(e) or e.errno in (10048, 98):
                 logger.error(f"[ERROR] Failed to start server: Port {port} conflict detected during startup!")
@@ -2266,6 +2690,10 @@ Provide a concise summary:"""
                     f"Port {port} conflict during startup. "
                     f"Try again or use --port <different_port>"
                 ) from e
+            logger.exception(f"OSError starting server: {e}")
+            raise
+        except Exception as e:
+            logger.exception(f"Fatal error starting server: {e}")
             raise
 
 
@@ -2287,8 +2715,24 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Setup logging
-    setup_logging()
+    # Setup logging - handles both Docker and native environments
+    import os
+    is_docker = os.getenv("CONTAINER") == "yes" or os.path.exists("/.dockerenv")
+    if is_docker:
+        # In Docker: Log to stdout (Docker json-file driver) and mounted volume
+        # Promtail reads from /app/logs/tapo_mcp.log (mounted to host)
+        setup_logging(log_file="/app/logs/tapo_mcp.log")
+    else:
+        # Native: Log to project root
+        log_file = Path(__file__).parent.parent.parent.parent / "tapo_mcp.log"
+        setup_logging(log_file=str(log_file))
+    logger.info("=" * 80)
+    logger.info("Tapo Camera MCP Web Server - Starting")
+    logger.info(f"Python: {sys.version.split()[0]}")
+    logger.info(f"Platform: {sys.platform}")
+    logger.info(f"Working directory: {Path.cwd()}")
+    logger.info(f"Log file: {log_file}")
+    logger.info("=" * 80)
 
     # Create and run the server
     server = WebServer()

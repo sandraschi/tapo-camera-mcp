@@ -67,11 +67,19 @@ from ...integrations.netatmo_client import NetatmoService
 _netatmo_service = None  # Will be initialized on first use
 
 
-def _get_netatmo_service() -> NetatmoService:
-    """Get or create Netatmo service instance."""
+async def _get_netatmo_service() -> NetatmoService:
+    """Get or create Netatmo service instance (with timeout on initialization)."""
+    import asyncio
     global _netatmo_service
     if _netatmo_service is None:
         _netatmo_service = NetatmoService()
+        # Initialize with timeout to prevent hanging
+        try:
+            await asyncio.wait_for(_netatmo_service.initialize(), timeout=10.0)
+        except asyncio.TimeoutError:
+            logger.warning("Netatmo initialization timed out - will return empty data")
+        except Exception as e:
+            logger.warning(f"Netatmo initialization failed: {e} - will return empty data")
     return _netatmo_service
 
 
@@ -87,7 +95,16 @@ async def get_weather_stations(
         use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
 
         if use_netatmo:
-            raw = await _get_netatmo_service().list_stations()
+            import asyncio
+            try:
+                service = await _get_netatmo_service()
+                raw = await asyncio.wait_for(service.list_stations(), timeout=10.0)
+            except asyncio.TimeoutError:
+                logger.warning("Netatmo list_stations timed out")
+                raw = []
+            except Exception as e:
+                logger.warning(f"Netatmo list_stations failed: {e}")
+                raw = []
             stations = [
                 WeatherStationResponse(
                     station_id=s["station_id"],
@@ -112,7 +129,8 @@ async def get_weather_stations(
 
     except Exception as e:
         logger.exception("Failed to get weather stations")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        # Return empty list instead of raising - prevents NetworkError in frontend
+        return []
 
 
 @router.get("/stations/{station_id}/data", response_model=WeatherDataResponse)
@@ -128,7 +146,16 @@ async def get_station_weather_data(
         use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
 
         if use_netatmo:
-            data, ts = await _get_netatmo_service().current_data(station_id, module_type)
+            import asyncio
+            try:
+                service = await _get_netatmo_service()
+                data, ts = await asyncio.wait_for(service.current_data(station_id, module_type), timeout=10.0)
+            except asyncio.TimeoutError:
+                logger.warning(f"Netatmo current_data timed out for {station_id}")
+                raise HTTPException(status_code=503, detail="Weather data request timed out")
+            except Exception as e:
+                logger.warning(f"Netatmo current_data failed: {e}")
+                raise HTTPException(status_code=503, detail=f"Weather data unavailable: {str(e)}")
             return WeatherDataResponse(
                 station_id=station_id, module_type=module_type, data=data, timestamp=ts
             )
@@ -298,25 +325,96 @@ async def get_station_health_report(
     try:
         logger.info(f"Generating health report for {station_id}")
 
-        # Simulate health analysis
+        # Get REAL data from Netatmo
+        cfg = get_model(WeatherSettings)
+        use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
+        
+        if not use_netatmo:
+            raise HTTPException(status_code=503, detail="Netatmo not enabled - cannot generate health report")
+        
+        import asyncio
+        service = await _get_netatmo_service()
+        data, _ = await asyncio.wait_for(service.current_data(station_id, "all"), timeout=10.0)
+        
+        # Calculate REAL health scores from actual data
+        indoor = data.get("indoor", {})
+        temp = indoor.get("temperature")
+        humidity = indoor.get("humidity")
+        co2 = indoor.get("co2")
+        noise = indoor.get("noise")
+        
+        scores = {}
         recommendations = []
-        if include_recommendations:
-            recommendations = [
-                "Temperature is within optimal range (20-24°C)",
-                "CO2 levels are excellent - no ventilation needed",
-                "Humidity is comfortable - no action required",
-                "Monitor outdoor module battery when it drops below 20%",
-            ]
-
+        
+        # Temperature score (optimal: 20-24°C)
+        if temp is not None:
+            if 20 <= temp <= 24:
+                scores["temperature"] = 100
+            elif 18 <= temp < 20 or 24 < temp <= 26:
+                scores["temperature"] = 80
+                recommendations.append(f"Temperature ({temp}°C) slightly outside optimal range (20-24°C)")
+            else:
+                scores["temperature"] = 50
+                recommendations.append(f"Temperature ({temp}°C) outside comfortable range (20-24°C)")
+        else:
+            scores["temperature"] = 0
+        
+        # Humidity score (optimal: 40-60%)
+        if humidity is not None:
+            if 40 <= humidity <= 60:
+                scores["humidity"] = 100
+            elif 30 <= humidity < 40 or 60 < humidity <= 70:
+                scores["humidity"] = 80
+                recommendations.append(f"Humidity ({humidity}%) slightly outside optimal range (40-60%)")
+            else:
+                scores["humidity"] = 50
+                recommendations.append(f"Humidity ({humidity}%) outside comfortable range (40-60%)")
+        else:
+            scores["humidity"] = 0
+        
+        # CO2 score (excellent: <600, good: 600-1000, fair: 1000-1500, poor: >1500)
+        if co2 is not None:
+            if co2 < 600:
+                scores["co2"] = 100
+            elif co2 < 1000:
+                scores["co2"] = 85
+            elif co2 < 1500:
+                scores["co2"] = 60
+                recommendations.append(f"CO2 level ({co2} ppm) is elevated - consider ventilation")
+            else:
+                scores["co2"] = 30
+                recommendations.append(f"CO2 level ({co2} ppm) is high - ventilate immediately")
+        else:
+            scores["co2"] = 0
+        
+        # Noise score (optimal: <40 dB)
+        if noise is not None:
+            if noise < 40:
+                scores["noise"] = 100
+            elif noise < 50:
+                scores["noise"] = 80
+            else:
+                scores["noise"] = 60
+                recommendations.append(f"Noise level ({noise} dB) is elevated")
+        else:
+            scores["noise"] = 0
+        
+        # Calculate overall score
+        overall_score = int(sum(scores.values()) / len(scores)) if scores else 0
+        status = "Excellent" if overall_score >= 90 else "Good" if overall_score >= 70 else "Fair" if overall_score >= 50 else "Poor"
+        
+        import time
         return HealthReportResponse(
             station_id=station_id,
-            overall_score=85,
-            status="Good",
-            scores={"temperature": 95, "humidity": 85, "co2": 90, "noise": 80},
-            recommendations=recommendations,
-            timestamp=1234567890.0,
+            overall_score=overall_score,
+            status=status,
+            scores=scores,
+            recommendations=recommendations if include_recommendations else [],
+            timestamp=time.time(),
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception("Failed to generate health report")
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -334,17 +432,12 @@ async def configure_station_alerts(station_id: str, alert_config: Dict[str, Any]
             if field not in alert_config:
                 raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
 
-        # Simulate alert configuration
-        alert_id = f"alert_{station_id}_{alert_config['alert_type']}_{int(time.time())}"
-
-        return {
-            "success": True,
-            "alert_id": alert_id,
-            "station_id": station_id,
-            "alert_config": alert_config,
-            "message": "Alert configured successfully",
-            "timestamp": time.time(),
-        }
+        # TODO: Implement real alert configuration storage (database)
+        # For now, return error - no mock data
+        raise HTTPException(
+            status_code=501,
+            detail="Alert configuration not yet implemented. This feature requires database storage."
+        )
 
     except HTTPException:
         raise
@@ -359,39 +452,41 @@ async def get_station_modules(station_id: str) -> Dict[str, Any]:
     try:
         logger.info(f"Getting modules for station {station_id}")
 
-        # Simulate module data
-        modules = [
-            {
-                "module_id": "main_001",
-                "module_name": "Living Room Station",
-                "module_type": "indoor",
-                "location": "Living Room",
-                "is_online": True,
-                "last_update": 1234567890.0,
-                "wifi_signal": 85,
-                "battery_percent": None,
-            },
-            {
-                "module_id": "outdoor_001",
-                "module_name": "Balcony Sensor",
-                "module_type": "outdoor",
-                "location": "Balcony",
-                "is_online": True,
-                "last_update": 1234567890.0,
-                "battery_percent": 92,
-                "rf_signal": 78,
-            },
-        ]
-
+        # Get REAL modules from Netatmo
+        cfg = get_model(WeatherSettings)
+        use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
+        
+        if not use_netatmo:
+            raise HTTPException(status_code=503, detail="Netatmo not enabled - cannot get modules")
+        
+        import asyncio
+        service = await _get_netatmo_service()
+        stations = await asyncio.wait_for(service.list_stations(), timeout=10.0)
+        
+        # Find the station
+        station = None
+        for s in stations:
+            if s["station_id"] == station_id:
+                station = s
+                break
+        
+        if not station:
+            raise HTTPException(status_code=404, detail=f"Station {station_id} not found")
+        
+        # Return REAL modules from the station
+        modules = station.get("modules", [])
+        
         return {
             "success": True,
             "station_id": station_id,
             "modules": modules,
             "total_modules": len(modules),
-            "online_modules": len([m for m in modules if m["is_online"]]),
+            "online_modules": len([m for m in modules if m.get("is_online", False)]),
             "timestamp": time.time(),
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception("Failed to get modules")
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -408,8 +503,10 @@ async def get_weather_overview() -> Dict[str, Any]:
 
         if use_netatmo:
             try:
+                import asyncio
                 # Get real data from Netatmo
-                stations = await _get_netatmo_service().list_stations()
+                service = await _get_netatmo_service()
+                stations = await asyncio.wait_for(service.list_stations(), timeout=10.0)
                 
                 if stations:
                     total_stations = len(stations)
@@ -417,7 +514,7 @@ async def get_weather_overview() -> Dict[str, Any]:
                     
                     # Get data from first station
                     station_id = stations[0]["station_id"]
-                    data, ts = await _get_netatmo_service().current_data(station_id, "all")
+                    data, ts = await asyncio.wait_for(service.current_data(station_id, "all"), timeout=10.0)
                     
                     # Count total modules across all stations
                     total_modules = sum(len(s.get("modules", [])) for s in stations)
@@ -443,8 +540,8 @@ async def get_weather_overview() -> Dict[str, Any]:
             except Exception as e:
                 logger.warning(f"Failed to get real Netatmo data: {e}")
         
-        # No Netatmo or failed to fetch - return minimal data
-        logger.info("Netatmo not enabled or unavailable - returning placeholder data")
+        # No Netatmo or failed to fetch - return empty data (NO placeholder/mock data)
+        logger.warning("Netatmo not enabled or unavailable - returning empty data (no placeholder/mock data)")
         return {
             "total_stations": 0,
             "online_stations": 0,
@@ -511,7 +608,12 @@ async def get_external_weather(
     try:
         logger.info(f"Getting external weather for {location} ({lat}, {lon})")
 
-        weather = await openmeteo_client.get_current_weather(lat, lon, location)
+        import asyncio
+        try:
+            weather = await asyncio.wait_for(openmeteo_client.get_current_weather(lat, lon, location), timeout=10.0)
+        except asyncio.TimeoutError:
+            logger.warning("Open-Meteo weather request timed out")
+            raise HTTPException(status_code=503, detail="Weather service timeout")
 
         if not weather:
             raise HTTPException(status_code=503, detail="Failed to fetch external weather")
@@ -550,7 +652,12 @@ async def get_external_forecast(
     try:
         logger.info(f"Getting {days}-day forecast for ({lat}, {lon})")
 
-        forecast = await openmeteo_client.get_forecast(lat, lon, days)
+        import asyncio
+        try:
+            forecast = await asyncio.wait_for(openmeteo_client.get_forecast(lat, lon, days), timeout=10.0)
+        except asyncio.TimeoutError:
+            logger.warning("Open-Meteo forecast request timed out")
+            return []
 
         return [
             ForecastDayResponse(
@@ -583,10 +690,12 @@ async def get_combined_weather() -> Dict[str, Any]:
         internal_data = None
         if use_netatmo:
             try:
-                stations = await _get_netatmo_service().list_stations()
+                import asyncio
+                service = await _get_netatmo_service()
+                stations = await asyncio.wait_for(service.list_stations(), timeout=10.0)
                 if stations:
                     station_id = stations[0]["station_id"]
-                    data, ts = await _get_netatmo_service().current_data(station_id, "all")
+                    data, ts = await asyncio.wait_for(service.current_data(station_id, "all"), timeout=10.0)
                     internal_data = {
                         "station_name": stations[0].get("station_name", "Netatmo"),
                         "location": stations[0].get("location", "Home"),

@@ -497,6 +497,22 @@
                 </span>
             </div>
 
+            <!-- Teams/Webcam Blocking Warning -->
+            {% if camera.teams_blocked or (camera.warning and ('teams' in camera.warning.lower() or 'in use' in camera.warning.lower() or 'locked' in camera.warning.lower())) %}
+            <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <span style="font-size: 1.25rem;">⚠️</span>
+                    <strong style="color: #92400e;">Camera Blocked by Another Application</strong>
+                </div>
+                <p style="color: #78350f; margin: 0.5rem 0; font-size: 0.9rem;">
+                    {{ camera.error_message or camera.warning or 'This USB camera is currently locked by Microsoft Teams, Zoom, Skype, or another video application.' }}
+                </p>
+                <p style="color: #78350f; margin: 0.5rem 0 0 0; font-size: 0.85rem;">
+                    <strong>💡 Solution:</strong> Close Microsoft Teams, Zoom, or other video applications that are using the camera, then refresh this page.
+                </p>
+            </div>
+            {% endif %}
+
             <!-- Camera Details + Thumbnail -->
             <div class="camera-details">
                 <div class="detail-item">

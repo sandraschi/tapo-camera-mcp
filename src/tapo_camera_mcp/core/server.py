@@ -97,15 +97,19 @@ class TapoCameraServer:
         # Register all tools
         await self._register_tools()
 
-        # Initialize all hardware and test connections
+        # Initialize all hardware and test connections (with timeout to prevent blocking)
         from .hardware_init import initialize_all_hardware
         logger.info("Initializing all hardware components...")
-        hardware_results = await initialize_all_hardware()
-        
-        # Log summary
-        successful = sum(1 for r in hardware_results.values() if r.get("success", False))
-        total = len(hardware_results)
-        logger.info(f"Hardware initialization: {successful}/{total} components ready")
+        try:
+            hardware_results = await asyncio.wait_for(initialize_all_hardware(), timeout=30.0)
+            # Log summary
+            successful = sum(1 for r in hardware_results.values() if r.get("success", False))
+            total = len(hardware_results)
+            logger.info(f"Hardware initialization: {successful}/{total} components ready")
+        except asyncio.TimeoutError:
+            logger.warning("Hardware initialization timed out after 30s - continuing anyway")
+        except Exception as e:
+            logger.warning(f"Hardware initialization failed: {e} - continuing anyway")
 
         # Start connection supervisor for device health monitoring
         from .connection_supervisor import get_supervisor

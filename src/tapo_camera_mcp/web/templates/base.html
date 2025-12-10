@@ -759,12 +759,13 @@
             padding-right: 0.75rem;
         }
 
-        .help-section {
+        /* Only hide help sections in the logger modal, not on the help page */
+        #logger-modal .help-section {
             display: none;
             animation: fadeIn 0.25s ease;
         }
 
-        .help-section.active {
+        #logger-modal .help-section.active {
             display: block;
         }
 

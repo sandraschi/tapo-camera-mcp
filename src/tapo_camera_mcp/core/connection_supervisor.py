@@ -330,13 +330,15 @@ class ConnectionSupervisor:
             service = None
             try:
                 service = NetatmoService()
-                await service.initialize()
+                # Add timeout to prevent DNS hangs
+                await asyncio.wait_for(service.initialize(), timeout=5.0)
                 
                 connected = service._use_real_api and service._account is not None
                 
                 if connected:
                     try:
-                        stations = await service.list_stations()
+                        # Add timeout to prevent DNS hangs
+                        stations = await asyncio.wait_for(service.list_stations(), timeout=5.0)
                         station_count = len(stations)
                         module_count = sum(len(s.get('modules', [])) for s in stations)
                         
@@ -351,15 +353,18 @@ class ConnectionSupervisor:
                                 'modules': module_count
                             }
                         )
+                    except asyncio.TimeoutError:
+                        error_msg = "Connection timeout (DNS/network issue)"
+                        error_type = "TimeoutError"
                     except Exception as e:
                         error_msg = str(e)
                         error_type = type(e).__name__
                         
                         # Handle DNS/network errors with specific messages
                         if "getaddrinfo failed" in error_msg or "ClientConnectorDNSError" in error_type:
-                            error_msg = "DNS resolution failed (Python/aiohttp resolver issue - may be IPv6/IPv4 conflict)"
+                            error_msg = "DNS resolution failed (network issue)"
                         elif "Cannot connect to host" in error_msg:
-                            error_msg = f"Cannot connect to api.netatmo.com (firewall/proxy blocking or IPv6 issue)"
+                            error_msg = f"Cannot connect to api.netatmo.com (network/firewall issue)"
                         elif "timeout" in error_msg.lower():
                             error_msg = "Connection timeout to Netatmo API"
                         elif "SSL" in error_type or "certificate" in error_msg.lower():

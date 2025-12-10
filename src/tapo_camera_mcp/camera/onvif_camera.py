@@ -29,13 +29,21 @@ class ONVIFCameraWrapper:
         self._profiles = None
 
     def connect(self) -> bool:
-        """Connect to ONVIF camera."""
+        """Connect to ONVIF camera - clears cached connection state."""
         try:
             from onvif import ONVIFCamera
 
+            # Clear any cached connection state to force fresh auth
+            self._camera = None
+            self._ptz = None
+            self._media = None
+            self._profiles = None
+            
+            # Create fresh connection (no caching - always re-authenticate)
             self._camera = ONVIFCamera(
                 self.host, self.port, self.username, self.password
             )
+            logger.info(f"ONVIF camera connected at {self.host}:{self.port} (fresh connection)")
             return True
         except Exception as e:
             logger.exception("Failed to connect to ONVIF camera at %s:%s", self.host, self.port)
@@ -185,6 +193,10 @@ class ONVIFBasedCamera(BaseCamera):
 
     async def connect(self) -> bool:
         """Initialize connection to the ONVIF camera."""
+        # If already connected, return True
+        if self._is_connected and self._camera:
+            return True
+            
         try:
             if self._mock_camera:
                 self._camera = self._mock_camera
@@ -194,7 +206,9 @@ class ONVIFBasedCamera(BaseCamera):
                 username = self.config.params["username"]
                 password = self.config.params["password"]
 
-                self._camera = ONVIFCameraWrapper(host, port, username, password)
+                # Create wrapper (reuse if already exists and valid)
+                if not self._camera:
+                    self._camera = ONVIFCameraWrapper(host, port, username, password)
 
                 # Connect in thread pool to avoid blocking
                 loop = asyncio.get_event_loop()
@@ -207,6 +221,7 @@ class ONVIFBasedCamera(BaseCamera):
 
         except Exception as e:
             self._is_connected = False
+            self._camera = None
             host = self.config.params.get("host", "unknown")
             error_msg = str(e)
             logger.exception("Failed to connect to ONVIF camera at %s", host)
@@ -276,21 +291,51 @@ class ONVIFBasedCamera(BaseCamera):
             raise RuntimeError(f"Failed to capture image: {e}") from e
 
     async def get_stream_url(self) -> Optional[str]:
-        """Get the RTSP stream URL for the camera."""
+        """Get the RTSP stream URL for the camera - CRITICAL: Must work for streaming."""
+        # Ensure we're connected
         if not await self.is_connected():
-            await self.connect()
-
-        if not self._stream_url:
             try:
-                loop = asyncio.get_event_loop()
-                self._stream_url = await loop.run_in_executor(
-                    None, self._camera.get_stream_uri
-                )
+                logger.info(f"Connecting to {self.config.name} to get stream URL...")
+                await asyncio.wait_for(self.connect(), timeout=15.0)
+            except asyncio.TimeoutError:
+                logger.error(f"Camera {self.config.name} connection timed out when getting stream URL")
+                return None
             except Exception as e:
-                logger.exception("Failed to get ONVIF stream URL")
-                raise RuntimeError(f"Failed to get stream URL: {e}") from e
+                logger.error(f"Camera {self.config.name} connection failed when getting stream URL: {e}")
+                return None
 
-        return self._stream_url
+        # Use cached URL if available and we're connected (stream URLs don't change frequently)
+        if self._stream_url and await self.is_connected() and self._camera:
+            logger.debug(f"Using cached stream URL for {self.config.name}")
+            return self._stream_url
+
+        # Get fresh stream URL - this is critical for streaming
+        if not self._camera:
+            logger.error(f"Camera {self.config.name} wrapper is None - cannot get stream URL")
+            return None
+            
+        try:
+            loop = asyncio.get_event_loop()
+            stream_url = await asyncio.wait_for(
+                loop.run_in_executor(None, self._camera.get_stream_uri),
+                timeout=10.0
+            )
+            if stream_url:
+                logger.info(f"Got stream URL for {self.config.name}: {stream_url[:50]}...")
+                self._stream_url = stream_url
+                return stream_url
+            else:
+                logger.error(f"Camera {self.config.name} returned None stream URL")
+                return None
+        except asyncio.TimeoutError:
+            logger.error(f"Failed to get ONVIF stream URI for {self.config.name} - timed out")
+            self._stream_url = None
+            return None
+        except Exception as e:
+            logger.exception(f"Failed to get ONVIF stream URL for {self.config.name}")
+            self._stream_url = None  # Clear cache on error
+            # Don't raise - return None so caller can handle gracefully
+            return None
 
     async def get_status(self) -> Dict:
         """Get camera status with detailed capabilities."""

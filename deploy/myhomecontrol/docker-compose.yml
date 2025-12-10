@@ -10,10 +10,20 @@ services:
       - "7777:7777"
     volumes:
       - ../../config.yaml:/app/config.yaml:ro
-      - app_logs:/app/logs
+      - app_logs:/app/logs  # Logs accessible to Promtail via volume mount
       - app_snapshots:/app/snapshots
       - app_recordings:/app/recordings
       - app_cache:/app/cache
+      # Token cache for Ring and Nest authentication (persists across restarts)
+      - app_tokens:/app/tokens
+    # Docker logging driver for json-file (works with Promtail Docker log driver)
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service,app,location"
+        tag: "{{.Name}}/{{.ID}}"
     depends_on:
       postgres:
         condition: service_healthy
@@ -24,9 +34,17 @@ services:
       retries: 10
     networks:
       - myhomecontrol
-    # On Windows, add extra_hosts to access devices on host network
+    # Network access configuration for hardware devices
+    # On Windows Docker Desktop, bridge networks can access host network (192.168.0.x)
+    # extra_hosts allows access to host machine and helps with DNS resolution
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    # DNS configuration - use host's DNS for proper device resolution
+    dns:
+      - 8.8.8.8  # Google DNS fallback
+      - 1.1.1.1  # Cloudflare DNS fallback
+    # Enable access to host network devices (cameras, Hue bridge, etc.)
+    # This allows the container to reach devices on 192.168.0.x network
     environment:
       - PYTHONUNBUFFERED=1
       - CONTAINER=yes
@@ -35,9 +53,16 @@ services:
       - POSTGRES_DB=myhomecontrol
       - POSTGRES_USER=myhomecontrol
       - POSTGRES_PASSWORD=myhomecontrol
+      # Network debugging
+      - DOCKER_NETWORK_DEBUG=${DOCKER_NETWORK_DEBUG:-false}
+      # Home Assistant service name (if in same Docker network)
+      # Leave empty to use host.docker.internal (if HA is on host)
+      - HOMEASSISTANT_SERVICE_NAME=${HOMEASSISTANT_SERVICE_NAME:-}
     # For Linux USB webcam access, uncomment and adjust:
     # devices:
     #   - "/dev/video0:/dev/video0"
+    # Note: USB webcam access in Docker on Windows is limited
+    # Prefer network cameras (Tapo/Ring/Nest) for Docker deployments
 
   postgres:
     image: postgres:16-alpine
@@ -61,11 +86,21 @@ volumes:
   app_snapshots:
   app_recordings:
   app_cache:
+  app_tokens:  # Token cache for Ring/Nest authentication
   postgres_data:
 
 networks:
   myhomecontrol:
     driver: bridge
+    # Enable external connectivity to access LAN devices (192.168.0.x)
+    # This allows containers to reach cameras, Hue bridge, weather stations, etc.
+    # On Windows Docker Desktop, bridge networks can access host network by default
+    # driver_opts are Linux-specific and may not apply on Windows
+    # ipam config is optional - Docker will auto-assign subnet if not specified
     # external: true  # Commented out - create network if it doesn't exist
+  # Optional: Connect to Home Assistant network if HA is containerized
+  # Uncomment if Home Assistant is running in Docker and you want to use service name
+  # homeassistant:
+  #   external: true
 
 

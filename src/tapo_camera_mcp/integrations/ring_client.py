@@ -225,7 +225,8 @@ class RingClient:
     ):
         self.email = email
         self.password = password
-        self.token_file = Path(token_file)
+        # Adjust token file path for Docker (use mounted volume)
+        self.token_file = self._adjust_token_path(token_file)
         self.cache_ttl = cache_ttl
 
         self._ring = None
@@ -238,6 +239,24 @@ class RingClient:
         # Raw API data for alarm devices
         self._raw_devices_data: dict[str, Any] = {}
         self._locations: list[dict] = []
+    
+    @staticmethod
+    def _adjust_token_path(token_file: str) -> Path:
+        """Adjust token file path for Docker environment."""
+        import os
+        token_path = Path(token_file)
+        
+        # In Docker, use mounted volume for token persistence
+        if os.getenv("CONTAINER") == "yes":
+            # If token file is in current directory, move to /app/tokens
+            if not token_path.is_absolute():
+                tokens_dir = Path("/app/tokens")
+                tokens_dir.mkdir(parents=True, exist_ok=True)
+                return tokens_dir / token_path.name
+            # If absolute path, ensure parent directory exists
+            token_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        return token_path
 
     async def initialize(self) -> bool:
         """Initialize Ring connection."""
@@ -370,8 +389,9 @@ class RingClient:
             # Mark as updated with longer TTL
             self._cache_time[update_cache_key] = datetime.now()
         except Exception as e:
-            # Log but don't fail - use stale data
-            logger.warning(f"Ring data refresh failed: {e}, using cached data")
+            # Log error - don't use stale cached data
+            logger.error(f"Ring data refresh failed: {e}")
+            raise  # Re-raise to fail properly instead of using stale data
 
     async def _fetch_alarm_data(self):
         """Fetch raw alarm device data from Ring API.

@@ -50,17 +50,28 @@ class CameraManager:
                 logger.warning(f"Camera '{config.name}' already exists")
                 return False
 
-            # Create and connect to camera
+            # Create camera - add it even if connection fails initially
+            # Connection will be retried when accessing stream/snapshot
+            import asyncio
             camera = CameraFactory.create(config)
-            connected = await camera.connect()
+            
+            # Try to connect, but don't fail if it times out
+            try:
+                connected = await asyncio.wait_for(camera.connect(), timeout=15.0)
+                logger.info(f"Camera {config.name} connected: {connected}")
+            except asyncio.TimeoutError:
+                logger.warning(f"Camera {config.name} connection timed out - will retry on stream access")
+                connected = False
+            except Exception as e:
+                logger.warning(f"Camera {config.name} connection failed: {e} - will retry on stream access")
+                connected = False
+            
+            # Add camera even if connection failed - it will retry when needed
+            self.cameras[config.name] = camera
+            logger.info(f"Added camera: {config.name} ({config.type}) - connected: {connected}")
+            return True
         except Exception:
             logger.exception(f"Failed to add camera {config.name}")
-            return False
-        else:
-            if connected:
-                self.cameras[config.name] = camera
-                logger.info(f"Added camera: {config.name} ({config.type})")
-                return True
             return False
 
     async def remove_camera(self, name: str) -> bool:
@@ -105,13 +116,15 @@ class CameraManager:
         result = []
         camera_names = self.groups.get_group_cameras(group) if group else self.cameras.keys()
 
+        import asyncio
         for name in camera_names:
             if name not in self.cameras:
                 continue
 
             camera = self.cameras[name]
             try:
-                status = await camera.get_status()
+                # Add timeout to prevent hanging on camera status checks
+                status = await asyncio.wait_for(camera.get_status(), timeout=3.0)
                 result.append(
                     {
                         "name": name,
@@ -119,6 +132,18 @@ class CameraManager:
                         if hasattr(camera.config.type, "value")
                         else str(camera.config.type),
                         "status": status,
+                        "groups": self.groups.get_camera_groups(name),
+                    }
+                )
+            except asyncio.TimeoutError:
+                logger.warning(f"Camera {name} status check timed out")
+                result.append(
+                    {
+                        "name": name,
+                        "type": camera.config.type.value
+                        if hasattr(camera.config.type, "value")
+                        else str(camera.config.type),
+                        "status": {"connected": False, "error": "Status check timed out"},
                         "groups": self.groups.get_camera_groups(name),
                     }
                 )

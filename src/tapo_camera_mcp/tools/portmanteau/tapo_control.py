@@ -365,14 +365,46 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                     },
                 }
 
+            # Provide helpful suggestions for unknown actions
+            action_lower_normalized = action_lower.replace("_", " ")
+            similar_actions = [
+                key for key in TAPO_ACTIONS.keys()
+                if action_lower_normalized in key.replace("_", " ") or key.replace("_", " ") in action_lower_normalized
+            ]
+            
+            error_msg = f"Unknown action '{action}'."
+            if similar_actions:
+                error_msg += f" Did you mean: {', '.join(similar_actions[:3])}?"
+            else:
+                error_msg += f" Available actions: {', '.join(sorted(TAPO_ACTIONS.keys())[:10])}"
+                if len(TAPO_ACTIONS) > 10:
+                    error_msg += f" (and {len(TAPO_ACTIONS) - 10} more)"
+            
             return {
                 "success": False,
-                "error": f"Unknown action '{action}'. Available actions: {', '.join(TAPO_ACTIONS.keys())}",
+                "error": error_msg,
+                "available_actions": list(TAPO_ACTIONS.keys()),
             }
 
         except Exception as e:
             logger.error(f"Error in tapo action '{action}': {e}", exc_info=True)
-            return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
+            error_msg = f"Failed to execute action '{action}': {e!s}"
+            
+            # Provide helpful context for common errors
+            error_str = str(e).lower()
+            if "connection" in error_str or "timeout" in error_str:
+                error_msg += " Check device connectivity and network settings."
+            elif "authentication" in error_str or "unauthorized" in error_str:
+                error_msg += " Verify device credentials in configuration."
+            elif "not found" in error_str:
+                error_msg += " Ensure the device exists and is properly configured."
+            
+            return {
+                "success": False,
+                "error": error_msg,
+                "action": action,
+                "exception_type": type(e).__name__,
+            }
 
 
 

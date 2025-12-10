@@ -44,6 +44,11 @@ class HardwareInitializer:
         except Exception:
             pass
         
+        # Test network connectivity to host network (for Docker debugging)
+        if os.getenv('CONTAINER') == 'yes':
+            logger.info("Testing network connectivity to host network...")
+            await self._test_network_connectivity()
+        
         # Check config file location
         from ..config import get_config
         config = get_config()
@@ -55,12 +60,14 @@ class HardwareInitializer:
         logger.info(f"Ring enabled: {config.get('ring', {}).get('enabled', False)}")
         
         # Initialize all hardware in parallel for speed
+        # Network-dependent initializations have internal timeouts to prevent hangs
         results = await asyncio.gather(
             self._init_cameras(),
             self._init_hue_bridge(),
             self._init_tapo_plugs(),
             self._init_netatmo(),
             self._init_ring(),
+            self._init_home_assistant(),
             return_exceptions=True
         )
         
@@ -71,6 +78,7 @@ class HardwareInitializer:
             "tapo_plugs": results[2] if not isinstance(results[2], Exception) else {"success": False, "error": str(results[2])},
             "netatmo": results[3] if not isinstance(results[3], Exception) else {"success": False, "error": str(results[3])},
             "ring": results[4] if not isinstance(results[4], Exception) else {"success": False, "error": str(results[4])},
+            "home_assistant": results[5] if not isinstance(results[5], Exception) else {"success": False, "error": str(results[5])},
         }
         
         # Summary
@@ -301,13 +309,14 @@ class HardwareInitializer:
             service = None
             try:
                 service = NetatmoService()
-                await service.initialize()
+                # Add timeout to initialization to prevent DNS hangs
+                await asyncio.wait_for(service.initialize(), timeout=8.0)
                 
                 if not service._use_real_api:
                     return {"success": False, "error": "Netatmo initialization failed - using simulated data"}
                 
-                # Test connection by getting stations
-                stations = await service.list_stations()
+                # Test connection by getting stations with timeout
+                stations = await asyncio.wait_for(service.list_stations(), timeout=5.0)
                 station_count = len(stations)
                 module_count = sum(len(s.get("modules", [])) for s in stations)
                 
@@ -319,6 +328,10 @@ class HardwareInitializer:
                     "stations_count": station_count,
                     "modules_count": module_count
                 }
+            except asyncio.TimeoutError:
+                error_msg = "Connection timeout - network/DNS issue"
+                logger.warning(f"  [TIMEOUT] Netatmo initialization: {error_msg}")
+                return {"success": False, "error": error_msg}
             except Exception as e:
                 error_msg = str(e)
                 error_type = type(e).__name__
@@ -355,9 +368,9 @@ class HardwareInitializer:
             if not ring_client:
                 return {"success": False, "error": "Ring client not available"}
             
-            # Try to get devices
+            # Try to get devices with timeout
             try:
-                devices = await ring_client.get_devices()
+                devices = await asyncio.wait_for(ring_client.get_devices(), timeout=8.0)
                 device_count = len(devices) if devices else 0
                 
                 logger.info(f"  [OK] Ring: {device_count} devices")
@@ -367,6 +380,10 @@ class HardwareInitializer:
                     "message": f"Connected - {device_count} devices",
                     "devices_count": device_count
                 }
+            except asyncio.TimeoutError:
+                error_msg = "Connection timeout - network/DNS issue"
+                logger.warning(f"  [TIMEOUT] Ring: {error_msg}")
+                return {"success": False, "error": error_msg}
             except Exception as e:
                 logger.warning(f"  [FAIL] Ring: {str(e)}")
                 return {"success": False, "error": str(e)}
@@ -374,6 +391,178 @@ class HardwareInitializer:
         except Exception as e:
             logger.exception("Failed to initialize Ring")
             return {"success": False, "error": str(e)}
+    
+    async def _init_home_assistant(self) -> Dict:
+        """Initialize and test Home Assistant connection (for Nest Protect)."""
+        try:
+            from ..integrations.homeassistant_client import init_homeassistant_client
+            from ..config import get_config
+            
+            logger.info("[SECURITY] Initializing Home Assistant (Nest Protect)...")
+            
+            config = get_config()
+            security_cfg = config.get("security", {}).get("integrations", {})
+            ha_cfg = security_cfg.get("homeassistant", {})
+            
+            if not ha_cfg.get("enabled"):
+                return {"success": True, "message": "Home Assistant not enabled in config"}
+            
+            url = ha_cfg.get("url", "http://localhost:8123")
+            token = ha_cfg.get("access_token")
+            
+            if not token:
+                return {"success": False, "error": "Home Assistant access token not configured"}
+            
+            # Initialize client (will auto-detect Docker and adjust URL)
+            client = await init_homeassistant_client(
+                base_url=url,
+                access_token=token,
+                cache_ttl=ha_cfg.get("cache_ttl", 30)
+            )
+            
+            if not client or not client.is_initialized:
+                return {"success": False, "error": "Failed to connect to Home Assistant"}
+            
+            # Test by getting Nest Protect devices
+            try:
+                devices = await client.get_nest_protect_devices()
+                device_count = len(devices) if devices else 0
+                
+                logger.info(f"  [OK] Home Assistant: Connected - {device_count} Nest Protect device(s)")
+                
+                return {
+                    "success": True,
+                    "message": f"Connected - {device_count} Nest Protect device(s)",
+                    "devices_count": device_count,
+                    "url": url
+                }
+            except Exception as e:
+                logger.warning(f"  [WARN] Home Assistant: Connected but no Nest devices found: {str(e)}")
+                return {
+                    "success": True,  # Connection works, just no devices
+                    "message": "Connected but no Nest Protect devices found",
+                    "devices_count": 0,
+                    "url": url
+                }
+                
+        except Exception as e:
+            logger.exception("Failed to initialize Home Assistant")
+            return {"success": False, "error": str(e)}
+    
+    async def _test_network_connectivity(self) -> None:
+        """Test network connectivity to common device IPs for Docker debugging."""
+        import socket
+        import asyncio
+        from ..config import get_config
+        
+        config = get_config()
+        
+        # Collect device IPs from config
+        test_ips = []
+        
+        # Camera IPs
+        cameras = config.get("cameras", {})
+        for cam_name, cam_cfg in cameras.items():
+            if cam_cfg.get("type") == "onvif":
+                host = cam_cfg.get("params", {}).get("host")
+                if host:
+                    test_ips.append(("camera", cam_name, host))
+        
+        # Hue Bridge IP
+        hue_cfg = config.get("lighting", {}).get("philips_hue", {})
+        bridge_ip = hue_cfg.get("bridge_ip")
+        if bridge_ip:
+            test_ips.append(("hue_bridge", "Hue Bridge", bridge_ip))
+        
+        # Home Assistant (for Nest Protect)
+        security_cfg = config.get("security", {}).get("integrations", {})
+        ha_cfg = security_cfg.get("homeassistant", {})
+        if ha_cfg.get("enabled"):
+            ha_url = ha_cfg.get("url", "http://localhost:8123")
+            # Extract hostname from URL
+            try:
+                from urllib.parse import urlparse
+                parsed = urlparse(ha_url)
+                ha_host = parsed.hostname or "localhost"
+                # Only test if it's an IP or known hostname (not localhost in Docker)
+                if ha_host and ha_host not in ["localhost", "127.0.0.1"]:
+                    test_ips.append(("home_assistant", "Home Assistant", ha_host))
+            except Exception:
+                pass
+        
+        # Tapo Plug IPs
+        energy_cfg = config.get("energy", {}).get("tapo_p115", {})
+        plugs = energy_cfg.get("devices", [])
+        for plug in plugs:
+            host = plug.get("host")
+            name = plug.get("name", "Unknown")
+            if host:
+                test_ips.append(("tapo_plug", name, host))
+        
+        if not test_ips:
+            logger.info("  [NETWORK] No device IPs configured for connectivity test")
+            return
+        
+        logger.info(f"  [NETWORK] Testing connectivity to {len(test_ips)} device(s)...")
+        
+        async def test_ip(device_type: str, name: str, ip: str) -> Tuple[str, str, bool, str]:
+            """Test if we can reach an IP address."""
+            try:
+                # Try to resolve the IP (if it's a hostname)
+                try:
+                    resolved_ip = socket.gethostbyname(ip)
+                except socket.gaierror:
+                    return (device_type, name, False, f"DNS resolution failed for {ip}")
+                
+                # Try to connect to common ports
+                ports_to_test = [80, 443, 2020, 9999]  # HTTP, HTTPS, ONVIF, Kasa
+                reachable = False
+                error_msg = "No reachable ports"
+                
+                for port in ports_to_test:
+                    try:
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        sock.settimeout(2)
+                        result = sock.connect_ex((resolved_ip, port))
+                        sock.close()
+                        if result == 0:
+                            reachable = True
+                            error_msg = f"Port {port} reachable"
+                            break
+                    except Exception as e:
+                        continue
+                
+                if reachable:
+                    return (device_type, name, True, error_msg)
+                else:
+                    return (device_type, name, False, error_msg)
+            except Exception as e:
+                return (device_type, name, False, str(e))
+        
+        # Test all IPs in parallel
+        results = await asyncio.gather(*[test_ip(dt, n, ip) for dt, n, ip in test_ips], return_exceptions=True)
+        
+        # Log results
+        reachable_count = 0
+        for result in results:
+            if isinstance(result, Exception):
+                logger.warning(f"  [NETWORK] Connectivity test error: {result}")
+                continue
+            
+            device_type, name, reachable, msg = result
+            if reachable:
+                logger.info(f"  [NETWORK] ✅ {name} ({device_type}): {msg}")
+                reachable_count += 1
+            else:
+                logger.warning(f"  [NETWORK] ❌ {name} ({device_type}): {msg}")
+        
+        if reachable_count == len(test_ips):
+            logger.info(f"  [NETWORK] All {reachable_count} device(s) reachable from container")
+        elif reachable_count > 0:
+            logger.warning(f"  [NETWORK] {reachable_count}/{len(test_ips)} device(s) reachable - check network configuration")
+        else:
+            logger.error(f"  [NETWORK] No devices reachable - Docker network may not have access to host network")
+            logger.error(f"  [NETWORK] Check: docker-compose.yml network configuration, Windows Firewall, router settings")
 
 
 # Global instance

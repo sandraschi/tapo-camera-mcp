@@ -54,6 +54,25 @@ class HomeAssistantClient:
         access_token: Optional[str] = None,
         cache_ttl: int = 30,
     ):
+        # Auto-detect Docker environment and adjust URL
+        import os
+        if os.getenv("CONTAINER") == "yes":
+            # In Docker, replace localhost with host.docker.internal for Windows/Mac
+            # Or use service name if Home Assistant is in same Docker network
+            if "localhost" in base_url or "127.0.0.1" in base_url:
+                # Try to detect if HA is in same network (service name) or on host
+                ha_service_name = os.getenv("HOMEASSISTANT_SERVICE_NAME", "homeassistant")
+                # First try service name (if in same Docker network)
+                # Fallback to host.docker.internal (if HA is on host)
+                if ha_service_name:
+                    # Replace localhost with service name
+                    base_url = base_url.replace("localhost", ha_service_name)
+                    base_url = base_url.replace("127.0.0.1", ha_service_name)
+                else:
+                    # Use host.docker.internal for Windows/Mac Docker Desktop
+                    base_url = base_url.replace("localhost", "host.docker.internal")
+                    base_url = base_url.replace("127.0.0.1", "host.docker.internal")
+        
         self.base_url = base_url.rstrip("/")
         self.access_token = access_token
         self.cache_ttl = cache_ttl
@@ -91,8 +110,12 @@ class HomeAssistantClient:
                 logger.error(f"Home Assistant connection failed: {response.status}")
                 return False
 
-        except aiohttp.ClientConnectorError:
+        except aiohttp.ClientConnectorError as e:
             logger.warning(f"Cannot connect to Home Assistant at {self.base_url}")
+            import os
+            if os.getenv("CONTAINER") == "yes":
+                logger.warning("  [DOCKER] If Home Assistant is on host, try: http://host.docker.internal:8123")
+                logger.warning("  [DOCKER] If Home Assistant is in Docker, ensure it's on same network")
             return False
         except Exception:
             logger.exception("Failed to initialize Home Assistant client")

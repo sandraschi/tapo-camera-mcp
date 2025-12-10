@@ -52,8 +52,52 @@ class OnboardingProgressResponse(BaseModel):
 async def discover_devices(background_tasks: BackgroundTasks):
     """Start device discovery process."""
     try:
+        # Wrap background task in error handler to prevent crashes
+        async def safe_discover():
+            try:
+                await discovery_manager.discover_all_devices()
+            except Exception as e:
+                error_type = type(e).__name__
+                error_msg = str(e).lower()
+                
+                # Categorize and log with actionable context
+                if "timeout" in error_msg or "timed out" in error_msg:
+                    logger.error(
+                        f"Device discovery timed out: {e}",
+                        extra={
+                            "error_category": "timeout",
+                            "actionable": "Check network connectivity and device availability. Discovery may take longer on slow networks."
+                        }
+                    )
+                elif "connection" in error_msg or "network" in error_msg:
+                    logger.error(
+                        f"Device discovery network error: {e}",
+                        extra={
+                            "error_category": "network",
+                            "actionable": "Check network connectivity, firewall settings, and ensure devices are on the same network."
+                        }
+                    )
+                elif "auth" in error_msg or "credential" in error_msg:
+                    logger.error(
+                        f"Device discovery authentication error: {e}",
+                        extra={
+                            "error_category": "authentication",
+                            "actionable": "Check device credentials in config.yaml. Some devices require authentication for discovery."
+                        }
+                    )
+                else:
+                    logger.exception(
+                        f"Background device discovery failed: {error_type}: {e}",
+                        extra={
+                            "error_category": "unknown",
+                            "error_type": error_type,
+                            "actionable": f"Unexpected error during discovery. Check logs for details. Error: {e}"
+                        }
+                    )
+                # Don't re-raise - background task failures shouldn't crash server
+        
         # Start discovery in background
-        background_tasks.add_task(discovery_manager.discover_all_devices)
+        background_tasks.add_task(safe_discover)
 
         return {
             "status": "success",
