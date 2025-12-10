@@ -1,6 +1,6 @@
 # 🎯 Tapo Camera MCP - Status Update
 
-**Date**: November 26, 2025
+**Date**: December 10, 2025
 **Status**: 🚀 **PRODUCTION-READY PLATFORM v1.4.0**
 
 ---
@@ -72,6 +72,17 @@
 - ✅ **Health Monitoring**: Container health checks and monitoring
 - ✅ **Network Integration**: Unified Docker network for all services
 
+### **📊 Monitoring Stack** (NEW in v1.4.0)
+- ✅ **Grafana**: Visualization dashboards at http://localhost:3001
+- ✅ **Prometheus**: Metrics collection at http://localhost:9095
+- ✅ **Loki**: Log aggregation at http://localhost:3101
+- ✅ **Promtail**: Log shipping from Docker and native deployments
+- ✅ **JSON Logging**: Structured logs for Docker containers
+- ✅ **Dual Log Sources**: Docker volume + native host logs
+- ✅ **Port Conflicts**: Resolved (non-standard ports: 3001, 9095, 3101)
+- ✅ **Config Fixes**: All deprecated configs updated for latest versions
+- ✅ **Alert Rules**: Fixed invalid time ranges in Grafana alerts
+
 ---
 
 ## 📊 **CURRENT STATUS**
@@ -94,6 +105,7 @@
   - ℹ️ Scenes are per-room (Hue app limitation, not code)
 - **LLM Integration**: ✅ Multi-provider support operational
 - **Docker Deployment**: ✅ Production-ready containers
+- **Monitoring Stack**: ✅ Fully operational (Grafana, Prometheus, Loki, Promtail)
 - **CI/CD**: ✅ Modern workflow with automated testing
 
 ### **🟡 Partially Working**
@@ -108,7 +120,27 @@
 - **Ring OAuth**: Setup and testing needed
 - **Netatmo OAuth**: Token refresh automation needed
 
-### **✅ Recently Fixed Issues** (November 26, 2025)
+### **✅ Recently Fixed Issues**
+
+#### **December 10, 2025 - Monitoring Stack Integration**
+- **Monitoring Stack Setup**: Fully operational Docker monitoring stack (Grafana, Prometheus, Loki, Promtail)
+  - **Solution**: Created network and volumes, fixed all configuration issues, resolved port conflicts
+  - **Port Configuration**: Grafana (3001), Prometheus (9095), Loki (3101) - non-standard ports to avoid conflicts
+  - **Loki Config**: Fixed deprecated `ingestion_burst_mb` → `ingestion_burst_size_mb`, updated storage paths
+  - **Prometheus Config**: Removed deprecated `federation` section (not supported in Prometheus 2.x)
+  - **Grafana Alerts**: Fixed invalid `relativeTimeRange` in alert rules (added `from: 300, to: 0`)
+  - **Promtail Config**: Updated Loki URL to use container name (`monitoring-loki:3100`), fixed positions file path
+  - **Log Shipping**: Configured to scrape both Docker volume logs and native Windows logs
+  - **Files Changed**: 
+    - `deploy/loki/loki-config.yaml`
+    - `deploy/prometheus/prometheus.yaml`
+    - `deploy/monitoring/config/grafana/provisioning/alerting/*.yaml`
+    - `deploy/promtail/promtail-config.yaml`
+    - `deploy/monitoring/docker-compose.monitoring.yml`
+  - **Status**: All containers running, logs shipping to Loki, metrics available in Prometheus, dashboards ready in Grafana
+  - **Documentation**: Created `docs/monitoring/SETUP.md` and updated `docs/DOCKER_LOGGING.md`
+
+#### **November 26, 2025**
 - **Energy Page Device Display**: Fixed Tapo P115 devices not showing on energy page
   - **Solution**: Added device initialization on web server startup
   - **Files Changed**: `src/tapo_camera_mcp/web/server.py`
@@ -172,6 +204,7 @@
 - **Lighting Control**: 90% ✅ (Philips Hue fully functional with caching, scenes per-room only)
 - **LLM Integration**: 100% ✅ (Multi-provider support)
 - **Docker Deployment**: 100% ✅ (Production-ready)
+- **Monitoring Stack**: 100% ✅ (Grafana, Prometheus, Loki, Promtail fully operational - December 10, 2025)
 - **CI/CD**: 100% ✅ (Modern workflow operational)
 
 ---
@@ -189,4 +222,4 @@ The platform foundation is solid with working MCP integration, energy management
 ---
 
 *Status Update by: AI Assistant*  
-*Last Updated: November 26, 2025*
+*Last Updated: December 10, 2025*

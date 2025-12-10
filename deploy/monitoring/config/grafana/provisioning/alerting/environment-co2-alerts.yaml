@@ -11,6 +11,9 @@ groups:
         data:
           - refId: A
             datasourceUid: prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
             model:
               expr: "netatmo_co2_ppm >= 800"
               instant: false
@@ -27,6 +30,9 @@ groups:
         data:
           - refId: A
             datasourceUid: prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
             model:
               expr: "netatmo_co2_ppm >= 1000"
               instant: false

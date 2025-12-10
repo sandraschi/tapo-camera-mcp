@@ -51,7 +51,7 @@ services:
       - --web.console.templates=/etc/prometheus/consoles
       - --web.enable-lifecycle
     ports:
-      - "9095:9090"
+      - "9095:9090"  # Already using 9095, no conflict
     volumes:
       - ../prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -63,10 +63,11 @@ services:
     image: grafana/loki:latest
     container_name: monitoring-loki
     ports:
-      - "3100:3100"
+      - "3101:3100"  # Changed from 3100 to avoid conflict with myai-loki
     volumes:
       - ../loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
       - loki_data:/loki
+      - loki_data:/var/lib/loki  # Mount to /var/lib/loki for path_prefix
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - monitoring
@@ -87,14 +88,18 @@ services:
     container_name: monitoring-promtail
     volumes:
       - ../promtail/promtail-config.yaml:/etc/promtail/config.yml:ro
-      # Mount host log directory so Promtail can read dashboard logs
-      - D:\Dev\repos\tapo-camera-mcp:/var/log/tapo-camera-mcp:ro
+      # Mount Docker volume from myhomecontrol stack (app_logs volume)
+      # This allows Promtail to read logs from the Docker container
+      - myhomecontrol_app_logs:/var/log/tapo-camera-mcp:ro
+      # Also mount host log directory for native Windows logs
+      - D:\Dev\repos\tapo-camera-mcp:/var/log/tapo-camera-mcp-host:ro
       - promtail_positions:/tmp
     command: -config.file=/etc/promtail/config.yml
     depends_on:
       - loki
     networks:
       - monitoring
+      - myhomecontrol  # Connect to myhomecontrol network to access app_logs volume
 
   grafana:
     image: grafana/grafana:latest
@@ -102,7 +107,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     ports:
-      - "3000:3000"
+      - "3001:3000"  # Changed from 3000 to avoid conflict with myai-grafana
     volumes:
       - grafana_data:/var/lib/grafana
       - ./config/grafana/provisioning:/etc/grafana/provisioning
@@ -133,6 +138,10 @@ volumes:
   grafana_data:
   alertmanager_data:
   promtail_positions:
+  # External volume from myhomecontrol stack for log access
+  myhomecontrol_app_logs:
+    external: true
+    name: myhomecontrol_app_logs
 
 networks:
   monitoring:

@@ -4,7 +4,7 @@ server:
   http_listen_port: 3100
 
 common:
-  path_prefix: /var/lib/loki
+  path_prefix: /loki  # Use /loki which is mounted as volume
   ring:
     kvstore:
       store: memberlist
@@ -22,15 +22,14 @@ schema_config:
 
 storage_config:
   filesystem:
-    directory: /var/lib/loki/chunks
+    directory: /loki/chunks  # Use /loki volume
 
 limits_config:
   max_streams_per_user: 5000
   ingestion_rate_mb: 10
-  ingestion_burst_mb: 20
-
-chunk_store_config:
-  max_look_back_period: 168h
+  ingestion_burst_size_mb: 20
+  max_query_length: 721h
+  max_query_parallelism: 32
 
 table_manager:
   retention_deletes_enabled: true

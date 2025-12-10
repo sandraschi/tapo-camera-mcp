@@ -11,6 +11,9 @@ groups:
         data:
           - refId: A
             datasourceUid: prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
             model:
               expr: "tapo_p115_power_watts >= 500"
               instant: false
@@ -27,6 +30,9 @@ groups:
         data:
           - refId: A
             datasourceUid: prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
             model:
               expr: "tapo_p115_power_watts >= 800"
               instant: false

@@ -67,10 +67,12 @@ scrape_configs:
           service: gitlab-ce
           role: scm
 
-federation:
-  scrape_interval: 60s
-  scrape_timeout: 30s
-  targets:
-    - 10.0.0.11:9090
-    - 10.0.0.12:9090
+# Federation removed - deprecated in Prometheus 2.x
+# Use remote_write/remote_read or multiple Prometheus instances instead
+# federation:
+#   scrape_interval: 60s
+#   scrape_timeout: 30s
+#   targets:
+#     - 10.0.0.11:9090
+#     - 10.0.0.12:9090
 
