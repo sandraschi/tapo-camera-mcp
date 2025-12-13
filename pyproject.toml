@@ -169,7 +169,7 @@ Changelog = "https://github.com/yourusername/tapo-camera-mcp/blob/main/CHANGELOG
 Source = "https://github.com/yourusername/tapo-camera-mcp"
 
 [project.scripts]
-tapo-camera-mcp = "tapo_camera_mcp.core.server:main"
+tapo-camera-mcp = "tapo_camera_mcp.cli_v2:main"
 tapo-llms = "tapo_camera_mcp.cli:main"
 
 [tool.ruff]

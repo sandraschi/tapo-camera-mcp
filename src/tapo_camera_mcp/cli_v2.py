@@ -56,8 +56,8 @@ class TapoCameraCLI:
         )
         parser.add_argument("--debug", action="store_true", help="Enable debug output")
 
-        # Subcommands
-        subparsers = parser.add_subparsers(dest="command", required=True)
+        # Subcommands (default to serve for MCP compatibility)
+        subparsers = parser.add_subparsers(dest="command", required=False)
 
         # Server commands
         server_parser = subparsers.add_parser("serve", help="Start the MCP server")
@@ -132,6 +132,10 @@ class TapoCameraCLI:
         """Run the CLI."""
         if args is None:
             args = self.parser.parse_args()
+
+        # Default to serve command for MCP compatibility (when no command specified)
+        if not hasattr(args, 'command') or args.command is None:
+            args.command = "serve"
 
         try:
             # Handle help command
