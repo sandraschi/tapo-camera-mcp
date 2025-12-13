@@ -15,21 +15,21 @@ async def test_plug(host: str, name: str):
     print(f"\n{'='*60}")
     print(f"Testing {name} (IP: {host})")
     print(f"{'='*60}")
-    
+
     try:
         service = TapoP115IngestionService()
         snapshot = await service._fetch_device_snapshot(host)
-        
+
         if snapshot:
-            print(f"[SUCCESS] Connection successful!")
-            print(f"\nDevice Info:")
+            print("[SUCCESS] Connection successful!")
+            print("\nDevice Info:")
             print(f"  Device ID: {snapshot.get('device_id')}")
             print(f"  Name: {snapshot.get('name')}")
             print(f"  Location: {snapshot.get('location')}")
             print(f"  Model: {snapshot.get('device_model')}")
-            print(f"\nPower State:")
+            print("\nPower State:")
             print(f"  Power: {'ON' if snapshot.get('power_state') else 'OFF'}")
-            print(f"\nEnergy Monitoring:")
+            print("\nEnergy Monitoring:")
             print(f"  Current Power: {snapshot.get('current_power', 0):.2f} W")
             print(f"  Voltage: {snapshot.get('voltage', 0):.2f} V")
             print(f"  Current: {snapshot.get('current', 0):.3f} A")
@@ -37,10 +37,9 @@ async def test_plug(host: str, name: str):
             print(f"  Monthly Energy: {snapshot.get('monthly_energy', 0):.2f} kWh")
             print(f"  Last Seen: {snapshot.get('last_seen')}")
             return True
-        else:
-            print(f"[FAILED] Connection failed - no data returned")
-            return False
-            
+        print("[FAILED] Connection failed - no data returned")
+        return False
+
     except Exception as e:
         print(f"[FAILED] Connection failed: {type(e).__name__}: {e}")
         import traceback
@@ -53,18 +52,18 @@ async def main():
     print("="*60)
     print("Tapo P115 Plug Connection Test")
     print("="*60)
-    
+
     results = []
-    
+
     # Test Living Room plug (192.168.0.17)
     results.append(await test_plug("192.168.0.17", "Living Room Aircon"))
-    
+
     # Test Kitchen plug (192.168.0.137)
     results.append(await test_plug("192.168.0.137", "Kitchen Zojirushi"))
-    
+
     # Test Server plug (192.168.0.38)
     results.append(await test_plug("192.168.0.38", "Server"))
-    
+
     # Summary
     print(f"\n{'='*60}")
     print("Test Summary")
@@ -73,7 +72,7 @@ async def main():
     print(f"Kitchen (192.168.0.137): {'[PASS]' if results[1] else '[FAIL]'}")
     print(f"Server (192.168.0.38): {'[PASS]' if results[2] else '[FAIL]'}")
     print(f"\nOverall: {'[SUCCESS] All tests passed' if all(results) else '[FAILED] Some tests failed'}")
-    
+
     return 0 if all(results) else 1
 
 

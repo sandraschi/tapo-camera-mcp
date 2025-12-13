@@ -15,11 +15,11 @@ Message Levels:
 
 import json
 import logging
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
-from collections import deque
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ class Message:
     details: Dict[str, Any] = field(default_factory=dict)
     acknowledged: bool = False
     ack_timestamp: Optional[datetime] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API responses."""
         return {
@@ -69,7 +69,7 @@ class Message:
             "acknowledged": self.acknowledged,
             "ack_timestamp": self.ack_timestamp.isoformat() if self.ack_timestamp else None
         }
-    
+
     def to_prometheus_labels(self) -> Dict[str, str]:
         """Convert to Prometheus label format."""
         return {
@@ -78,7 +78,7 @@ class Message:
             "source": self.source,
             "device_type": self.details.get("device_type", "unknown")
         }
-    
+
     def to_loki_entry(self) -> str:
         """Convert to Loki JSON log entry."""
         return json.dumps({
@@ -109,7 +109,7 @@ class MessagingService:
     - Acknowledgement tracking
     - Filtering by severity, category, source
     """
-    
+
     def __init__(self, max_messages: int = 1000):
         """
         Initialize messaging service.
@@ -125,10 +125,10 @@ class MessagingService:
             "alarm_count": 0,
             "total_count": 0
         }
-        
+
         # Prometheus metrics (for future integration)
         self._prom_metrics = {}
-        
+
     def add_message(
         self,
         severity: MessageSeverity,
@@ -154,7 +154,7 @@ class MessagingService:
         """
         self._message_counter += 1
         msg_id = f"msg_{self._message_counter}_{int(datetime.now().timestamp())}"
-        
+
         message = Message(
             id=msg_id,
             timestamp=datetime.now(),
@@ -165,9 +165,9 @@ class MessagingService:
             description=description,
             details=details or {}
         )
-        
+
         self.messages.append(message)
-        
+
         # Update metrics
         self._metrics["total_count"] += 1
         if severity == MessageSeverity.INFO:
@@ -176,28 +176,28 @@ class MessagingService:
             self._metrics["warning_count"] += 1
         elif severity == MessageSeverity.ALARM:
             self._metrics["alarm_count"] += 1
-        
+
         # Log to standard logging (for Promtail/Loki)
         log_level = logging.INFO if severity == MessageSeverity.INFO else \
                    logging.WARNING if severity == MessageSeverity.WARNING else \
                    logging.ERROR
-        
+
         logger.log(log_level, message.to_loki_entry())
-        
+
         return message
-    
+
     def info(self, category: MessageCategory, source: str, title: str, description: str, **details):
         """Convenience method for INFO messages."""
         return self.add_message(MessageSeverity.INFO, category, source, title, description, details)
-    
+
     def warning(self, category: MessageCategory, source: str, title: str, description: str, **details):
         """Convenience method for WARNING messages."""
         return self.add_message(MessageSeverity.WARNING, category, source, title, description, details)
-    
+
     def alarm(self, category: MessageCategory, source: str, title: str, description: str, **details):
         """Convenience method for ALARM messages."""
         return self.add_message(MessageSeverity.ALARM, category, source, title, description, details)
-    
+
     def get_messages(
         self,
         severity: Optional[MessageSeverity] = None,
@@ -222,31 +222,31 @@ class MessagingService:
             List of matching messages (newest first)
         """
         filtered = list(self.messages)
-        
+
         if severity:
             filtered = [m for m in filtered if m.severity == severity]
-        
+
         if category:
             filtered = [m for m in filtered if m.category == category]
-        
+
         if source:
             filtered = [m for m in filtered if m.source == source]
-        
+
         if since:
             filtered = [m for m in filtered if m.timestamp >= since]
-        
+
         if acknowledged is not None:
             filtered = [m for m in filtered if m.acknowledged == acknowledged]
-        
+
         # Sort by timestamp desc (newest first)
         filtered.sort(key=lambda m: m.timestamp, reverse=True)
-        
+
         return filtered[:limit]
-    
+
     def get_unacknowledged_alarms(self) -> List[Message]:
         """Get all unacknowledged ALARM messages."""
         return self.get_messages(severity=MessageSeverity.ALARM, acknowledged=False)
-    
+
     def acknowledge_message(self, message_id: str) -> bool:
         """Mark a message as acknowledged."""
         for msg in self.messages:
@@ -256,7 +256,7 @@ class MessagingService:
                 logger.info(f"Message {message_id} acknowledged")
                 return True
         return False
-    
+
     def acknowledge_all(self, severity: Optional[MessageSeverity] = None):
         """Acknowledge all messages, optionally filtered by severity."""
         count = 0
@@ -267,39 +267,39 @@ class MessagingService:
                 count += 1
         logger.info(f"Acknowledged {count} messages")
         return count
-    
+
     def get_metrics(self) -> Dict[str, Any]:
         """Get messaging metrics for Prometheus."""
         now = datetime.now()
         last_hour = now - timedelta(hours=1)
         last_day = now - timedelta(days=1)
-        
+
         recent_hour = [m for m in self.messages if m.timestamp >= last_hour]
         recent_day = [m for m in self.messages if m.timestamp >= last_day]
-        
+
         unacked_alarms = len([m for m in self.messages if m.severity == MessageSeverity.ALARM and not m.acknowledged])
-        
+
         return {
             # Lifetime counts
             "total_messages": self._metrics["total_count"],
             "info_total": self._metrics["info_count"],
             "warning_total": self._metrics["warning_count"],
             "alarm_total": self._metrics["alarm_count"],
-            
+
             # Recent activity
             "messages_last_hour": len(recent_hour),
             "messages_last_day": len(recent_day),
-            
+
             # Current state
             "messages_in_buffer": len(self.messages),
             "unacknowledged_alarms": unacked_alarms,
-            
+
             # By severity (current buffer)
             "info_current": len([m for m in self.messages if m.severity == MessageSeverity.INFO]),
             "warning_current": len([m for m in self.messages if m.severity == MessageSeverity.WARNING]),
             "alarm_current": len([m for m in self.messages if m.severity == MessageSeverity.ALARM]),
         }
-    
+
     def export_prometheus_metrics(self) -> str:
         """
         Export metrics in Prometheus text format.
@@ -307,7 +307,7 @@ class MessagingService:
         Returns metrics that Prometheus can scrape from /metrics endpoint.
         """
         metrics = self.get_metrics()
-        
+
         lines = [
             "# HELP tapo_messages_total Total messages by severity",
             "# TYPE tapo_messages_total counter",
@@ -324,7 +324,7 @@ class MessagingService:
             f'tapo_messages_last_hour {metrics["messages_last_hour"]}',
             ""
         ]
-        
+
         return "\n".join(lines)
 
 

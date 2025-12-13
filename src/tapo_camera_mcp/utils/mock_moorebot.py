@@ -8,13 +8,13 @@ Provides realistic mock data and behaviors for development without hardware.
 """
 import random
 import time
-from typing import Dict, List
 from datetime import datetime
+from typing import Dict, List
 
 
 class MockMoorebotScout:
     """Mock Moorebot Scout robot for testing"""
-    
+
     def __init__(self):
         self.battery_level = 100
         self.x = 0.0
@@ -23,7 +23,7 @@ class MockMoorebotScout:
         self.status = "idle"
         self.charging = False
         self.last_move_time = time.time()
-        
+
     def get_mock_status(self) -> Dict:
         """Generate realistic status data"""
         # Simulate battery drain
@@ -31,7 +31,7 @@ class MockMoorebotScout:
             self.battery_level = max(0, self.battery_level - 0.5)
         elif self.charging:
             self.battery_level = min(100, self.battery_level + 2.0)
-        
+
         return {
             "success": True,
             "status": self.status,
@@ -47,7 +47,7 @@ class MockMoorebotScout:
             "uptime": int(time.time() - self.last_move_time),
             "mock_mode": True
         }
-    
+
     def get_mock_sensors(self) -> Dict:
         """Generate realistic sensor data"""
         return {
@@ -75,7 +75,7 @@ class MockMoorebotScout:
             "timestamp": datetime.now().isoformat(),
             "mock_mode": True
         }
-    
+
     def simulate_movement(self, linear: float, angular: float, duration: float):
         """Simulate robot movement"""
         if duration > 0:
@@ -83,10 +83,10 @@ class MockMoorebotScout:
             self.x += linear * duration * 0.5  # Rough estimation
             self.heading += angular * duration * 57.3  # rad to deg
             self.heading = self.heading % 360
-            
+
         self.status = "moving" if (linear != 0 or angular != 0) else "idle"
         self.last_move_time = time.time()
-    
+
     def simulate_patrol(self, route: str) -> Dict:
         """Simulate patrol behavior"""
         waypoints = self._get_patrol_waypoints(route)
@@ -98,12 +98,12 @@ class MockMoorebotScout:
             "current_waypoint": 0,
             "mock_mode": True
         }
-    
+
     def simulate_docking(self) -> Dict:
         """Simulate docking attempt (sometimes fails!)"""
         # 70% success rate (realistic based on reports)
         success = random.random() > 0.3
-        
+
         if success:
             self.status = "charging"
             self.charging = True
@@ -114,26 +114,24 @@ class MockMoorebotScout:
                 "docking_status": "success",
                 "mock_mode": True
             }
-        else:
-            return {
-                "success": False,
-                "error": "Docking failed - alignment issue",
-                "suggestion": "Manually place robot on dock or retry",
-                "attempts": random.randint(2, 5),
-                "mock_mode": True
-            }
-    
+        return {
+            "success": False,
+            "error": "Docking failed - alignment issue",
+            "suggestion": "Manually place robot on dock or retry",
+            "attempts": random.randint(2, 5),
+            "mock_mode": True
+        }
+
     def _get_current_room(self) -> str:
         """Determine room based on position"""
         if -1.0 <= self.x <= 5.0 and -1.0 <= self.y <= 4.0:
             return "living_room"
-        elif 5.0 < self.x <= 8.0 and -1.0 <= self.y <= 3.0:
+        if 5.0 < self.x <= 8.0 and -1.0 <= self.y <= 3.0:
             return "bedroom"
-        elif -1.0 <= self.x <= 3.0 and 4.0 < self.y <= 7.0:
+        if -1.0 <= self.x <= 3.0 and 4.0 < self.y <= 7.0:
             return "kitchen"
-        else:
-            return "unknown"
-    
+        return "unknown"
+
     def _get_patrol_waypoints(self, route: str) -> List[Dict]:
         """Get waypoints for patrol route"""
         routes = {

@@ -553,10 +553,19 @@
             </div>
         </div>
         
-        <div style="margin-bottom: 16px;">
-            <button class="btn btn-secondary" onclick="changeTimeRange('24h')" id="btn-24h" style="margin-right: 8px;">24 Hours</button>
-            <button class="btn btn-secondary" onclick="changeTimeRange('7d')" id="btn-7d" style="margin-right: 8px;">7 Days</button>
-            <button class="btn btn-secondary" onclick="changeTimeRange('30d')" id="btn-30d">30 Days</button>
+        <div style="margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+            <span style="color: #6b7280; font-size: 13px; margin-right: 8px;">Local DB:</span>
+            <button class="btn btn-secondary" onclick="changeTimeRange('24h')" id="btn-24h">24h</button>
+            <button class="btn btn-secondary" onclick="changeTimeRange('7d')" id="btn-7d">7d</button>
+            <button class="btn btn-secondary" onclick="changeTimeRange('30d')" id="btn-30d">30d</button>
+            
+            <span style="color: #6b7280; font-size: 13px; margin-left: 16px; margin-right: 8px;">Netatmo API:</span>
+            <button class="btn btn-secondary" onclick="fetchNetatmoHistory('7d')" id="btn-netatmo-7d" title="Fetch 7 days from Netatmo servers">📡 7d</button>
+            <button class="btn btn-secondary" onclick="fetchNetatmoHistory('30d')" id="btn-netatmo-30d" title="Fetch 30 days from Netatmo servers">📡 30d</button>
+            <button class="btn btn-secondary" onclick="fetchNetatmoHistory('90d')" id="btn-netatmo-90d" title="Fetch 90 days from Netatmo servers">📡 90d</button>
+            <button class="btn btn-secondary" onclick="fetchNetatmoHistory('1y')" id="btn-netatmo-1y" title="Fetch 1 year from Netatmo servers">📡 1y</button>
+            
+            <span id="netatmo-status" style="font-size: 12px; color: #6b7280; margin-left: 16px;"></span>
         </div>
         
         <div class="chart-tabs">
@@ -836,7 +845,7 @@ async function loadChartData() {
         const stations = await stationsResponse.json();
         
         if (!stations || stations.length === 0) {
-            updateChartPlaceholder('No weather stations configured');
+            updateChartPlaceholder('Netatmo data unavailable - check API connection');
             return;
         }
         
@@ -1101,6 +1110,65 @@ function changeTimeRange(range) {
     loadChartData();
 }
 
+// Fetch historical data from Netatmo API (up to 2 years)
+async function fetchNetatmoHistory(range) {
+    const statusEl = document.getElementById('netatmo-status');
+    statusEl.textContent = `⏳ Fetching ${range} from Netatmo...`;
+    statusEl.style.color = '#f59e0b';
+    
+    try {
+        // Get station ID
+        const stationsResponse = await fetch('/api/weather/stations');
+        const stations = await stationsResponse.json();
+        
+        if (!stations || stations.length === 0) {
+            statusEl.textContent = '❌ No stations found';
+            statusEl.style.color = '#ef4444';
+            return;
+        }
+        
+        const stationId = stations[0].station_id;
+        const metrics = ['temperature', 'humidity', 'co2', 'pressure'];
+        
+        // Fetch all metrics in parallel
+        const results = await Promise.all(
+            metrics.map(metric => 
+                fetch(`/api/weather/stations/${stationId}/historical?data_type=${metric}&time_range=${range}&module_type=indoor&source=netatmo`)
+                    .then(r => r.json())
+                    .catch(e => {
+                        console.error(`Error fetching ${metric}:`, e);
+                        return { data_points: [] };
+                    })
+            )
+        );
+        
+        // Count total points received
+        const totalPoints = results.reduce((sum, r) => sum + (r.data_points?.length || 0), 0);
+        
+        if (totalPoints > 0) {
+            statusEl.textContent = `✅ Fetched ${totalPoints} points, stored in local DB`;
+            statusEl.style.color = '#22c55e';
+            
+            // Now reload chart from local DB to show new data
+            currentTimeRange = range;
+            await loadChartData();
+        } else {
+            statusEl.textContent = `⚠️ No data returned for ${range}`;
+            statusEl.style.color = '#f59e0b';
+        }
+        
+        // Clear status after 5 seconds
+        setTimeout(() => {
+            statusEl.textContent = '';
+        }, 5000);
+        
+    } catch (error) {
+        console.error('Error fetching Netatmo history:', error);
+        statusEl.textContent = `❌ Error: ${error.message}`;
+        statusEl.style.color = '#ef4444';
+    }
+}
+
 // Update chart placeholder
 function updateChartPlaceholder(message) {
     const canvas = document.getElementById('environmentChart');
@@ -1132,9 +1200,9 @@ async function loadWeatherStations() {
             container.innerHTML = `
                 <div class="station-card" style="text-align: center; padding: 40px;">
                     <div style="color: #6b7280; font-size: 16px;">
-                        <i class="fas fa-info-circle" style="font-size: 24px; margin-bottom: 12px; color: #f59e0b;"></i>
-                        <p>No Netatmo weather stations configured</p>
-                        <p style="font-size: 14px; margin-top: 8px;">Configure Netatmo in config.yaml to enable indoor weather monitoring</p>
+                        <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 12px; color: #f59e0b;"></i>
+                        <p>Netatmo stations unavailable</p>
+                        <p style="font-size: 14px; margin-top: 8px;">Check Netatmo API token or network connection. <a href="/help#netatmo" style="color: #3b82f6;">Troubleshoot</a></p>
                     </div>
                 </div>
             `;

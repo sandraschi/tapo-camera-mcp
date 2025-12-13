@@ -299,7 +299,7 @@ logger.info(f"Websockets found: {websockets.__file__}")
 #### **🤖 Robots Dashboard** (NEW)
 - **Roomba Status**: Coming soon integration
 - **Unitree Go2**: Planned purchase card with specs
-- **Mini Robot Tank**: Research status for perimeter patrol
+- **Pilot Labs Moorebot Scout**: AI home patrol robot (arriving Jan 2025)
 - **Petbot Loona**: No API available (documented)
 
 ### 🔧 **TECHNICAL IMPROVEMENTS**

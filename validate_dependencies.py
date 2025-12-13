@@ -18,10 +18,10 @@ def check_dependencies():
     print("\n" + "=" * 70)
     print("🔍 DEPENDENCY VALIDATION - Smart Home Dashboard")
     print("=" * 70 + "\n")
-    
+
     missing = []
     issues = []
-    
+
     # Core dependencies
     checks = [
         ("fastmcp", "FastMCP (MCP server)", "pip install fastmcp"),
@@ -30,7 +30,7 @@ def check_dependencies():
         ("uvicorn", "Uvicorn (ASGI server)", "pip install uvicorn"),
         ("jinja2", "Jinja2 (templates)", "pip install jinja2"),
     ]
-    
+
     # Hardware-specific dependencies
     hardware_checks = [
         ("pytapo", "PyTapo (Tapo C200 cameras)", "pip install pytapo", "Tapo Cameras"),
@@ -41,7 +41,7 @@ def check_dependencies():
         ("ring_doorbell", "Ring Library (Ring doorbell)", "pip install ring-doorbell", "Ring Doorbell"),
         ("onvif", "ONVIF (camera protocol)", "pip install onvif-zeep", "ONVIF Cameras"),
     ]
-    
+
     # System dependencies
     system_checks = [
         ("psycopg2", "psycopg2 (database)", "pip install psycopg2-binary", "Database"),
@@ -49,7 +49,7 @@ def check_dependencies():
         ("aiohttp", "aiohttp (async HTTP)", "pip install aiohttp", "HTTP Client"),
         ("PIL", "Pillow (image processing)", "pip install pillow", "Image Processing"),
     ]
-    
+
     print("📦 CORE DEPENDENCIES:")
     print("-" * 70)
     for module, name, install_cmd in checks:
@@ -59,7 +59,7 @@ def check_dependencies():
         except ImportError:
             print(f"   ❌ {name} - MISSING!")
             missing.append((name, install_cmd))
-    
+
     print("\n🔌 HARDWARE DEPENDENCIES:")
     print("-" * 70)
     for module, name, install_cmd, hardware in hardware_checks:
@@ -69,7 +69,7 @@ def check_dependencies():
         except ImportError:
             print(f"   ⚠️  {name} - MISSING (affects: {hardware})")
             issues.append((name, install_cmd, hardware))
-    
+
     print("\n⚙️ SYSTEM DEPENDENCIES:")
     print("-" * 70)
     for module, name, install_cmd, feature in system_checks:
@@ -79,9 +79,9 @@ def check_dependencies():
         except ImportError:
             print(f"   ❌ {name} - MISSING!")
             missing.append((name, install_cmd))
-    
+
     print("\n" + "=" * 70)
-    
+
     if missing:
         print("\n❌ CRITICAL MISSING DEPENDENCIES:")
         print("-" * 70)
@@ -90,7 +90,7 @@ def check_dependencies():
             print(f"      Fix: {install_cmd}")
         print("\n🚨 Server may not start! Install critical dependencies first.")
         return False
-    
+
     if issues:
         print("\n⚠️  OPTIONAL HARDWARE DEPENDENCIES MISSING:")
         print("-" * 70)
@@ -100,7 +100,7 @@ def check_dependencies():
         print("\n✅ Server will start, but some hardware won't be available.")
         print("   Install missing dependencies to enable full functionality.")
         return True  # Can still start
-    
+
     print("\n🎉 ALL DEPENDENCIES SATISFIED!")
     print("   Server is ready for full operation.")
     print("=" * 70 + "\n")

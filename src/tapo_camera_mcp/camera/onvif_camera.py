@@ -1,13 +1,11 @@
 """ONVIF camera implementation for Tapo and other ONVIF-compatible cameras."""
 
 import asyncio
-import io
 import logging
 from pathlib import Path
 from typing import Dict, Optional
 from urllib.parse import urlparse
 
-import requests
 from PIL import Image
 
 from .base import BaseCamera, CameraFactory, CameraType
@@ -38,7 +36,7 @@ class ONVIFCameraWrapper:
             self._ptz = None
             self._media = None
             self._profiles = None
-            
+
             # Create fresh connection (no caching - always re-authenticate)
             self._camera = ONVIFCamera(
                 self.host, self.port, self.username, self.password
@@ -196,7 +194,7 @@ class ONVIFBasedCamera(BaseCamera):
         # If already connected, return True
         if self._is_connected and self._camera:
             return True
-            
+
         try:
             if self._mock_camera:
                 self._camera = self._mock_camera
@@ -247,7 +245,7 @@ class ONVIFBasedCamera(BaseCamera):
 
         try:
             import cv2
-            
+
             loop = asyncio.get_event_loop()
 
             # Get RTSP stream URL
@@ -313,7 +311,7 @@ class ONVIFBasedCamera(BaseCamera):
         if not self._camera:
             logger.error(f"Camera {self.config.name} wrapper is None - cannot get stream URL")
             return None
-            
+
         try:
             loop = asyncio.get_event_loop()
             stream_url = await asyncio.wait_for(
@@ -324,14 +322,13 @@ class ONVIFBasedCamera(BaseCamera):
                 logger.info(f"Got stream URL for {self.config.name}: {stream_url[:50]}...")
                 self._stream_url = stream_url
                 return stream_url
-            else:
-                logger.error(f"Camera {self.config.name} returned None stream URL")
-                return None
+            logger.error(f"Camera {self.config.name} returned None stream URL")
+            return None
         except asyncio.TimeoutError:
             logger.error(f"Failed to get ONVIF stream URI for {self.config.name} - timed out")
             self._stream_url = None
             return None
-        except Exception as e:
+        except Exception:
             logger.exception(f"Failed to get ONVIF stream URL for {self.config.name}")
             self._stream_url = None  # Clear cache on error
             # Don't raise - return None so caller can handle gracefully

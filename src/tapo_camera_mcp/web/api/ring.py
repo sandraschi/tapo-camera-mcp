@@ -241,7 +241,7 @@ async def test_siren(request: RingSirenTestRequest):
         Countdown info, then triggers siren after delay
     """
     import asyncio
-    
+
     client = get_ring_client()
     if not client or not client.is_initialized:
         raise HTTPException(status_code=503, detail="Ring not initialized")
@@ -255,17 +255,17 @@ async def test_siren(request: RingSirenTestRequest):
         raise HTTPException(status_code=400, detail="Max countdown is 30 seconds")
 
     logger.warning(f"[ALARM] SIREN TEST INITIATED - {request.countdown}s countdown, {request.duration}s duration")
-    
+
     # Wait for countdown
     await asyncio.sleep(request.countdown)
-    
+
     try:
         # FIRE! 🔊
         success = await client.trigger_siren(
             activate=True,
             duration=request.duration,
         )
-        
+
         if not success:
             raise HTTPException(status_code=500, detail="Failed to trigger test siren")
 

@@ -12,10 +12,14 @@ import logging
 
 from fastmcp import FastMCP
 
+from .ai_analysis import register_ai_analysis_tool
+from .analytics_management import register_analytics_management_tool
 from .audio_management import register_audio_management_tool
+from .automation_management import register_automation_management_tool
 from .camera_management import register_camera_management_tool
 from .configuration_management import register_configuration_management_tool
 from .energy_management import register_energy_management_tool
+from .grafana_management import register_grafana_management_tool
 from .home_assistant_management import register_home_assistant_management_tool
 from .kitchen_management import register_kitchen_management_tool
 from .lighting_management import register_lighting_management_tool
@@ -23,6 +27,7 @@ from .media_management import register_media_management_tool
 from .motion_management import register_motion_management_tool
 from .ptz_management import register_ptz_management_tool
 from .ring_management import register_ring_management_tool
+from .robotics_management import register_robotics_management_tool
 from .security_management import register_security_management_tool
 from .system_management import register_system_management_tool
 from .tapo_control import register_tapo_control_tool
@@ -56,7 +61,14 @@ def register_all_portmanteau_tools(mcp: FastMCP) -> None:
     register_motion_management_tool(mcp)  # Motion detection
     register_home_assistant_management_tool(mcp)  # HA bridge for Nest Protect
 
-    logger.info("All portmanteau tools registered successfully (15 tools)")
+    # New tools (v1.6.0)
+    register_robotics_management_tool(mcp)  # Moorebot Scout robotics
+    register_ai_analysis_tool(mcp)  # Scene analysis and AI
+    register_automation_management_tool(mcp)  # Smart automation
+    register_analytics_management_tool(mcp)  # Performance analytics
+    register_grafana_management_tool(mcp)  # Grafana integration
+
+    logger.info("All portmanteau tools registered successfully (20 tools)")
 
 
 # Export the registration function

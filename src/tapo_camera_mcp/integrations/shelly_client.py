@@ -362,10 +362,9 @@ class ShellyClient:
         try:
             async with aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=self.timeout)
-            ) as session:
-                async with session.get(f"http://{ip}/rpc/Shelly.GetStatus") as resp:
-                    if resp.status == 200:
-                        return await resp.json()
+            ) as session, session.get(f"http://{ip}/rpc/Shelly.GetStatus") as resp:
+                if resp.status == 200:
+                    return await resp.json()
         except Exception:
             logger.exception(f"Failed to get Shelly status for {ip}")
 

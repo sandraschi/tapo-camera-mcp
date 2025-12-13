@@ -161,10 +161,13 @@ class ViennaAlertsClient:
     """Client for fetching Vienna/Austria emergency alerts."""
 
     # GeoSphere Austria (formerly ZAMG) endpoints
-    GEOSPHERE_WARNINGS_URL = "https://warnungen.zamg.ac.at/wsapp/api/getWarningsForRegion"
-    GEOSPHERE_ALL_WARNINGS_URL = "https://warnungen.zamg.ac.at/wsapp/api/getWarnings"
+    # NOTE: Old zamg.ac.at URLs are broken (SSL cert mismatch after rebrand)
+    # Trying new geosphere.at domain first, falling back to disabled if both fail
+    GEOSPHERE_WARNINGS_URL = "https://warnungen.zamg.at/wsapp/api/getWarningsForRegion"
+    GEOSPHERE_ALL_WARNINGS_URL = "https://warnungen.zamg.at/wsapp/api/getWarnings"
+    GEOSPHERE_ENABLED = False  # Disabled - API endpoints no longer work after GeoSphere rebrand
 
-    # Meteoalarm CAP feed
+    # Meteoalarm CAP feed (primary source - always works)
     METEOALARM_ATOM_URL = "https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-austria"
 
     # Cache settings
@@ -213,11 +216,12 @@ class ViennaAlertsClient:
 
         alerts = []
 
-        # Fetch from all sources in parallel
-        tasks = [
-            self._fetch_geosphere_alerts(),
-            self._fetch_meteoalarm_alerts(),
-        ]
+        # Fetch from all available sources in parallel
+        tasks = [self._fetch_meteoalarm_alerts()]  # Primary source (always enabled)
+
+        # GeoSphere is disabled due to API endpoint changes after 2024 rebrand
+        if self.GEOSPHERE_ENABLED:
+            tasks.append(self._fetch_geosphere_alerts())
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 

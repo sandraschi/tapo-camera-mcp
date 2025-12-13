@@ -59,7 +59,7 @@ async def discover_devices(background_tasks: BackgroundTasks):
             except Exception as e:
                 error_type = type(e).__name__
                 error_msg = str(e).lower()
-                
+
                 # Categorize and log with actionable context
                 if "timeout" in error_msg or "timed out" in error_msg:
                     logger.error(
@@ -95,7 +95,7 @@ async def discover_devices(background_tasks: BackgroundTasks):
                         }
                     )
                 # Don't re-raise - background task failures shouldn't crash server
-        
+
         # Start discovery in background
         background_tasks.add_task(safe_discover)
 

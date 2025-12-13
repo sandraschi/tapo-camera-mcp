@@ -239,13 +239,13 @@ class RingClient:
         # Raw API data for alarm devices
         self._raw_devices_data: dict[str, Any] = {}
         self._locations: list[dict] = []
-    
+
     @staticmethod
     def _adjust_token_path(token_file: str) -> Path:
         """Adjust token file path for Docker environment."""
         import os
         token_path = Path(token_file)
-        
+
         # In Docker, use mounted volume for token persistence
         if os.getenv("CONTAINER") == "yes":
             # If token file is in current directory, move to /app/tokens
@@ -255,7 +255,7 @@ class RingClient:
                 return tokens_dir / token_path.name
             # If absolute path, ensure parent directory exists
             token_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         return token_path
 
     async def initialize(self) -> bool:
@@ -373,19 +373,19 @@ class RingClient:
         """
         if not self._initialized or not self._ring:
             return
-        
+
         # Check if we need to update (use longer interval to avoid async issues)
         update_cache_key = "_last_update"
         if not force and self._is_cache_valid(update_cache_key):
             return  # Data is fresh enough
-        
+
         try:
             # Use synchronous update in executor to avoid nested async issues
             # The ring_doorbell library has internal async that conflicts with
             # calling update_data from within an async context
             await asyncio.to_thread(self._ring.update_data)
             await self._fetch_alarm_data()
-            
+
             # Mark as updated with longer TTL
             self._cache_time[update_cache_key] = datetime.now()
         except Exception as e:
@@ -419,7 +419,7 @@ class RingClient:
                         kind = dev_data.get("kind", "unknown")
                         name = dev_data.get("description", "Unknown")
                         logger.debug(f"  - {name} (kind={kind}, id={dev_id})")
-                        
+
                         # Count alarm-related devices
                         if any(k in kind.lower() for k in ["hub", "base", "panel", "sensor", "keypad", "siren"]):
                             alarm_device_count += 1
@@ -449,31 +449,31 @@ class RingClient:
             # Use Ring's internal async_query method (handles auth)
             endpoint = self.LOCATIONS_ENDPOINT  # "/clients_api/locations"
             response = await self._ring._async_query(endpoint, method="GET")
-            
+
             if response.status_code == 200:
                 locations_data = response.json()
                 self._locations = locations_data if isinstance(locations_data, list) else []
-                
+
                 logger.info(f"Ring: Found {len(self._locations)} locations")
-                
+
                 # Each location can have a security_panel with alarm devices
                 for location in self._locations:
                     location_id = location.get("id")
                     location_name = location.get("name", "Unknown Location")
-                    
+
                     # Check for security panel (base station)
                     security_panel = location.get("security_panel")
                     if security_panel:
                         logger.info(f"Ring: Location '{location_name}' has security panel (alarm system)")
-                        
+
                         # Security panel has devices list (sensors, keypads, etc.)
                         panel_devices = security_panel.get("devices", [])
                         logger.info(f"Ring: Security panel has {len(panel_devices)} devices")
-                        
+
                         # Add security panel as base station to raw devices
                         if "other" not in self._raw_devices_data:
                             self._raw_devices_data["other"] = {}
-                        
+
                         # Add base station
                         base_station_id = security_panel.get("id")
                         if base_station_id:
@@ -485,14 +485,14 @@ class RingClient:
                                 "firmware_version": security_panel.get("firmware_version"),
                                 "status": "online" if security_panel.get("online") else "offline",
                             }
-                        
+
                         # Add all alarm devices from security panel
                         for device in panel_devices:
                             device_id = device.get("device_id") or device.get("id")
                             if device_id:
                                 device_kind = device.get("kind", "unknown")
                                 device_name = device.get("description") or device.get("name", f"Device {device_id}")
-                                
+
                                 self._raw_devices_data["other"][str(device_id)] = {
                                     "kind": device_kind,
                                     "description": device_name,
@@ -508,7 +508,7 @@ class RingClient:
                                     "faulted": device.get("faulted", False),
                                     "motion_detected": device.get("motion_detected", False),
                                 }
-                                
+
                                 logger.debug(f"Ring: Added alarm device '{device_name}' ({device_kind}) from location '{location_name}'")
                     else:
                         logger.debug(f"Ring: Location '{location_name}' has no security panel (no alarm system)")
@@ -607,19 +607,19 @@ class RingClient:
             if not self._raw_devices_data:
                 logger.warning("No raw Ring device data available")
                 return []
-            
+
             devices = []
 
             # Check all device categories for alarm-related devices
             alarm_kinds = {"hub", "base", "panel", "sensor", "keypad", "siren", "range_extender"}
-            
+
             for category, category_devices in self._raw_devices_data.items():
                 for dev_id, dev_data in category_devices.items():
                     kind = dev_data.get("kind", "").lower()
-                    
+
                     # Check if this is an alarm-related device
                     is_alarm_device = any(ak in kind for ak in alarm_kinds)
-                    
+
                     if is_alarm_device:
                         device_type = self._get_device_type(kind)
                         name = dev_data.get("description", f"Device {dev_id}")
@@ -650,7 +650,7 @@ class RingClient:
                         logger.debug(f"Found alarm device: {name} ({kind})")
 
             logger.info(f"Ring: Found {len(devices)} alarm devices in raw data")
-            
+
             self._cache[cache_key] = devices
             self._cache_time[cache_key] = datetime.now()
             return devices

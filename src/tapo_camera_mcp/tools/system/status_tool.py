@@ -7,8 +7,15 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List
 
-import psutil
 from pydantic import BaseModel, ConfigDict, Field
+
+# Lazy import psutil to avoid import errors if not available
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    psutil = None
+    HAS_PSUTIL = False
 
 from tapo_camera_mcp.tools.base_tool import BaseTool, ToolCategory, tool
 
@@ -124,9 +131,15 @@ class StatusTool(BaseTool):
         """Get comprehensive health status for Gold tier monitoring."""
         try:
             # System resource health
-            cpu_percent = psutil.cpu_percent(interval=1)
-            memory_percent = psutil.virtual_memory().percent
-            disk_percent = psutil.disk_usage("/").percent
+            if HAS_PSUTIL and psutil:
+                cpu_percent = psutil.cpu_percent(interval=1)
+                memory_percent = psutil.virtual_memory().percent
+                disk_percent = psutil.disk_usage("/").percent
+            else:
+                cpu_percent = 0.0
+                memory_percent = 0.0
+                disk_percent = 0.0
+                system_warnings = ["psutil not available - system monitoring limited"]
 
             # Determine overall system health
             system_warnings = []
@@ -239,11 +252,23 @@ class StatusTool(BaseTool):
     async def _get_system_status(self) -> Dict[str, Any]:
         """Get basic system status information."""
         camera_manager = self._get_camera_manager()
+
+        if HAS_PSUTIL and psutil:
+            cpu_percent = psutil.cpu_percent(interval=1)
+            memory_percent = psutil.virtual_memory().percent
+            disk_percent = psutil.disk_usage("/").percent
+            uptime = self._format_uptime(psutil.boot_time())
+        else:
+            cpu_percent = 0.0
+            memory_percent = 0.0
+            disk_percent = 0.0
+            uptime = "unknown"
+
         return {
-            "cpu_percent": psutil.cpu_percent(interval=1),
-            "memory_percent": psutil.virtual_memory().percent,
-            "disk_usage": psutil.disk_usage("/").percent,
-            "uptime": self._format_uptime(psutil.boot_time()),
+            "cpu_percent": cpu_percent,
+            "memory_percent": memory_percent,
+            "disk_usage": disk_percent,
+            "uptime": uptime,
             "active_cameras": (len(camera_manager.get_active_cameras()) if camera_manager else 0),
             "active_streams": (len(camera_manager.get_active_streams()) if camera_manager else 0),
             "last_updated": datetime.utcnow().isoformat(),
@@ -273,15 +298,25 @@ class StatusTool(BaseTool):
 
     async def _get_detailed_system_status(self) -> Dict[str, Any]:
         """Get detailed system status information."""
+
+        if HAS_PSUTIL and psutil:
+            process_info = {
+                "pid": os.getpid(),
+                "memory_mb": psutil.Process().memory_info().rss / (1024 * 1024),
+                "threads": psutil.Process().num_threads(),
+            }
+        else:
+            process_info = {
+                "pid": os.getpid(),
+                "memory_mb": 0.0,
+                "threads": 0,
+            }
+
         return {
             "grafana": self._get_grafana_status(),
             "storage": self._get_storage_status(),
             "network": self._get_network_status(),
-            "process_info": {
-                "pid": os.getpid(),
-                "memory_mb": psutil.Process().memory_info().rss / (1024 * 1024),
-                "threads": psutil.Process().num_threads(),
-            },
+            "process_info": process_info,
         }
 
     def _get_grafana_status(self) -> Dict[str, Any]:
@@ -302,12 +337,26 @@ class StatusTool(BaseTool):
 
     def _get_network_status(self) -> Dict[str, Any]:
         """Get network status information."""
-        net_io = psutil.net_io_counters()
-        return {
-            "bytes_sent_mb": net_io.bytes_sent / (1024 * 1024),
-            "bytes_recv_mb": net_io.bytes_recv / (1024 * 1024),
-            "active_connections": len(psutil.net_connections()),
-        }
+        if HAS_PSUTIL and psutil:
+            net_io = psutil.net_io_counters()
+            if net_io:
+                return {
+                    "bytes_sent_mb": net_io.bytes_sent / (1024 * 1024),
+                    "bytes_recv_mb": net_io.bytes_recv / (1024 * 1024),
+                    "active_connections": len(psutil.net_connections()),
+                }
+            else:
+                return {
+                    "bytes_sent_mb": 0.0,
+                    "bytes_recv_mb": 0.0,
+                    "active_connections": 0,
+                }
+        else:
+            return {
+                "bytes_sent_mb": 0.0,
+                "bytes_recv_mb": 0.0,
+                "active_connections": 0,
+            }
 
     def _format_uptime(self, boot_time: float) -> str:
         """Format system uptime as a human-readable string."""

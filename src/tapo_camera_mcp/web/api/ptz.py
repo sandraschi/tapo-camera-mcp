@@ -1,7 +1,6 @@
 """PTZ (Pan-Tilt-Zoom) API endpoints for ONVIF cameras."""
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel

@@ -141,7 +141,7 @@ def test_real_validation_module():
         # Test credentials validation
         username, password = validate_credentials("testuser", "testpass")
         assert username == "testuser"
-        assert password == "testpass"  # noqa: S105
+        assert password == "testpass"
 
         # Test validation errors
         try:

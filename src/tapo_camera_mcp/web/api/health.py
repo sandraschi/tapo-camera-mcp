@@ -35,7 +35,7 @@ async def get_connection_health() -> Dict[str, Any]:
             logger.warning("Health check timed out, returning cached data")
         except Exception as e:
             logger.warning(f"Health check failed: {e}, returning cached data")
-        
+
         # Now return current health data
         return supervisor.get_health_summary()
     except Exception as e:
@@ -55,7 +55,7 @@ async def get_offline_devices() -> Dict[str, Any]:
     try:
         supervisor = get_supervisor()
         offline = supervisor.get_offline_devices()
-        
+
         return {
             "count": len(offline),
             "devices": [

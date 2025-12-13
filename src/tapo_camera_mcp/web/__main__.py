@@ -1,11 +1,12 @@
 """Entry point for running the web server as a module."""
 
-from .server import WebServer
 import argparse
-import sys
 import logging
+import sys
 from pathlib import Path
+
 from ..utils.logging import setup_logging
+from .server import WebServer
 
 logger = logging.getLogger(__name__)
 

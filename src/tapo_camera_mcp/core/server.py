@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -49,19 +50,19 @@ class TapoCameraServer:
         # Early return if already initialized (before lock)
         if cls._initialized:
             return cls._instance if cls._instance else cls()
-        
+
         if cls._instance is None:
             cls._instance = cls()
-        
+
         # Use lock to prevent concurrent initialization
         if cls._init_lock is None:
             cls._init_lock = asyncio.Lock()
-        
+
         async with cls._init_lock:
             # Double-check after acquiring lock
             if cls._initialized:
                 return cls._instance
-            
+
             if not cls._initializing:
                 cls._initializing = True
                 try:
@@ -78,7 +79,7 @@ class TapoCameraServer:
                     if elapsed >= timeout:
                         logger.error(f"Initialization timeout after {timeout}s - returning uninitialized instance")
                         break
-        
+
         return cls._instance
 
     async def initialize(self):
@@ -144,18 +145,25 @@ class TapoCameraServer:
             await self._register_tools()
 
             # Initialize all hardware and test connections (with timeout to prevent blocking)
-            from .hardware_init import initialize_all_hardware
-            logger.info("Initializing all hardware components...")
-            try:
-                hardware_results = await asyncio.wait_for(initialize_all_hardware(), timeout=30.0)
-                # Log summary
-                successful = sum(1 for r in hardware_results.values() if r.get("success", False))
-                total = len(hardware_results)
-                logger.info(f"Hardware initialization: {successful}/{total} components ready")
-            except asyncio.TimeoutError:
-                logger.warning("Hardware initialization timed out after 30s - continuing anyway")
-            except Exception as e:
-                logger.warning(f"Hardware initialization failed: {e} - continuing anyway")
+            # Can be skipped via TAPO_MCP_SKIP_HARDWARE_INIT env var for faster startup
+            skip_hardware_init = os.getenv("TAPO_MCP_SKIP_HARDWARE_INIT", "false").lower() in ("true", "1", "yes")
+
+            if skip_hardware_init:
+                logger.info("Skipping hardware initialization (TAPO_MCP_SKIP_HARDWARE_INIT=true) - hardware will initialize on first use")
+            else:
+                from .hardware_init import initialize_all_hardware
+                logger.info("Initializing all hardware components...")
+                try:
+                    # Reduced timeout from 30s to 10s for faster startup
+                    hardware_results = await asyncio.wait_for(initialize_all_hardware(), timeout=10.0)
+                    # Log summary
+                    successful = sum(1 for r in hardware_results.values() if r.get("success", False))
+                    total = len(hardware_results)
+                    logger.info(f"Hardware initialization: {successful}/{total} components ready")
+                except asyncio.TimeoutError:
+                    logger.warning("Hardware initialization timed out after 10s - continuing anyway (hardware will initialize on first use)")
+                except Exception as e:
+                    logger.warning(f"Hardware initialization failed: {e} - continuing anyway (hardware will initialize on first use)")
 
             # Start connection supervisor for device health monitoring
             from .connection_supervisor import get_supervisor
@@ -179,7 +187,7 @@ class TapoCameraServer:
         if hasattr(self, '_tools_registered') and self._tools_registered:
             logger.debug("Tools already registered, skipping")
             return
-        
+
         # Use portmanteau tools registration (cleaner, more maintainable)
         # Get tool mode from environment or config (default: production)
         import os

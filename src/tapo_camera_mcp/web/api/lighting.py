@@ -57,7 +57,7 @@ async def list_hue_lights(refresh: bool = False) -> dict[str, Any]:
         # Refresh from bridge if requested
         if refresh and hue_manager._initialized:
             await hue_manager._discover_devices()
-        
+
         lights = await hue_manager.get_all_lights()
         return {
             "lights": [_model_dump(light) for light in lights],
@@ -204,7 +204,7 @@ async def get_hue_status() -> dict[str, Any]:
     # Auto-initialize on first status check
     if not hue_manager._initialized and not hue_manager._connection_error:
         await hue_manager.initialize()
-    
+
     return {
         "connected": hue_manager._initialized,
         "bridge_ip": hue_manager._bridge_ip,

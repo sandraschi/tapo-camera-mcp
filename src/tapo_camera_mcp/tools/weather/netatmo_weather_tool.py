@@ -72,106 +72,143 @@ class NetatmoWeatherTool(BaseTool):
             }
 
     async def _get_stations(self) -> Dict[str, Any]:
-        """Get Netatmo weather stations."""
-        # Simulate Netatmo stations data
-        stations = [
-            {
-                "station_id": "netatmo_001",
-                "name": "Indoor Station",
-                "location": "Living Room",
-                "type": "indoor",
-                "modules": [
-                    {
-                        "module_id": "module_001",
-                        "name": "Main Module",
-                        "type": "indoor",
-                        "battery_level": 100,
-                        "signal_strength": 95,
-                    },
-                    {
-                        "module_id": "module_002",
-                        "name": "Outdoor Module",
-                        "type": "outdoor",
-                        "battery_level": 78,
-                        "signal_strength": 88,
-                    },
-                ],
-                "last_update": time.time() - 60,
-            },
-            {
-                "station_id": "netatmo_002",
-                "name": "Bedroom Station",
-                "location": "Bedroom",
-                "type": "indoor",
-                "modules": [
-                    {
-                        "module_id": "module_003",
-                        "name": "Bedroom Module",
-                        "type": "indoor",
-                        "battery_level": 92,
-                        "signal_strength": 90,
+        """Get Netatmo weather stations from real API if available."""
+        # Try to get real Netatmo stations using singleton
+        try:
+            from ...integrations.netatmo_client import NetatmoService
+
+            service = await NetatmoService.get_instance()
+
+            if service._use_real_api:
+                # Get real stations from Netatmo API
+                real_stations = await service.list_stations()
+
+                if real_stations:
+                    # Convert to expected format
+                    stations = []
+                    for station in real_stations:
+                        station_data = {
+                            "station_id": station.get("station_id"),
+                            "name": station.get("station_name", "Weather Station"),
+                            "location": station.get("location", "Unknown"),
+                            "type": "indoor",  # Main station is always indoor
+                            "modules": [],
+                            "last_update": station.get("last_update", time.time()),
+                        }
+
+                        # Add modules (only real ones - no fake outdoor module)
+                        for module in station.get("modules", []):
+                            station_data["modules"].append({
+                                "module_id": module.get("module_id"),
+                                "name": module.get("module_name"),
+                                "type": module.get("module_type", "indoor"),
+                                "battery_level": module.get("battery_percent"),
+                                "signal_strength": None,  # Not available in API response
+                            })
+
+                        stations.append(station_data)
+
+                    total_modules = sum(len(station["modules"]) for station in stations)
+
+                    return {
+                        "success": True,
+                        "operation": "stations",
+                        "stations": stations,
+                        "total_stations": len(stations),
+                        "total_modules": total_modules,
+                        "message": f"Found {len(stations)} Netatmo stations with {total_modules} modules",
+                        "timestamp": time.time(),
                     }
-                ],
-                "last_update": time.time() - 45,
-            },
-        ]
+        except Exception as e:
+            logger.warning(f"Failed to get real Netatmo stations: {e}")
 
-        total_modules = sum(len(station["modules"]) for station in stations)
-
+        # If Netatmo is not available, return empty list (no fake stations)
         return {
             "success": True,
             "operation": "stations",
-            "stations": stations,
-            "total_stations": len(stations),
-            "total_modules": total_modules,
-            "message": f"Found {len(stations)} Netatmo stations with {total_modules} modules",
+            "stations": [],
+            "total_stations": 0,
+            "total_modules": 0,
+            "message": "No Netatmo stations available (Netatmo API not configured or unavailable)",
             "timestamp": time.time(),
         }
 
     async def _get_weather_data(self, station_id: Optional[str]) -> Dict[str, Any]:
-        """Get Netatmo weather data."""
-        # Simulate weather data
-        import secrets
+        """Get Netatmo weather data from real API if available, otherwise return minimal data."""
+        station_id = station_id or "netatmo_001"
 
+        # Try to get real Netatmo data using singleton
+        try:
+            from ...integrations.netatmo_client import NetatmoService
+
+            service = await NetatmoService.get_instance()
+
+            if service._use_real_api:
+                # Get real data from Netatmo API
+                data, timestamp = await service.current_data(station_id, "all")
+
+                if data:
+                    weather_data = {
+                        "station_id": station_id,
+                        "timestamp": timestamp,
+                    }
+
+                    # Add indoor data if available
+                    if "indoor" in data:
+                        weather_data["indoor"] = {
+                            "temperature": data["indoor"].get("temperature"),
+                            "humidity": data["indoor"].get("humidity"),
+                            "co2": data["indoor"].get("co2"),
+                            "noise": data["indoor"].get("noise"),
+                            "pressure": data["indoor"].get("pressure"),
+                            "health_index": "Good" if data["indoor"].get("co2", 1000) < 1000 else "Fair",
+                        }
+
+                    # Only add outdoor data if it actually exists (real outdoor module)
+                    if data.get("outdoor"):
+                        weather_data["outdoor"] = {
+                            "temperature": data["outdoor"].get("temperature"),
+                            "humidity": data["outdoor"].get("humidity"),
+                            # Note: Netatmo outdoor modules don't have wind/rain/UV - those require separate modules
+                            # Only include if we actually have those modules
+                        }
+                    # If no outdoor module exists, don't include outdoor data at all
+
+                    # Add extra indoor modules if available (e.g., bathroom)
+                    if data.get("extra_indoor"):
+                        weather_data["extra_indoor"] = data["extra_indoor"]
+
+                    return {
+                        "success": True,
+                        "operation": "data",
+                        "weather_data": weather_data,
+                        "message": f"Weather data retrieved for station {station_id}",
+                        "timestamp": timestamp,
+                    }
+                logger.warning(f"No data returned from Netatmo API for station {station_id}")
+        except Exception as e:
+            logger.warning(f"Failed to get real Netatmo data: {e}")
+
+        # If Netatmo is not available or failed, return minimal indoor-only data
+        # DO NOT generate fake outdoor data
         weather_data = {
-            "station_id": station_id or "netatmo_001",
+            "station_id": station_id,
             "timestamp": time.time(),
             "indoor": {
-                "temperature": round(22.5 + secrets.randbelow(50) / 10, 1),
-                "humidity": round(45 + secrets.randbelow(20), 1),
-                "co2": round(450 + secrets.randbelow(200), 1),
-                "noise": round(35 + secrets.randbelow(20), 1),
-                "pressure": round(1013 + secrets.randbelow(40) - 20, 1),
-                "health_index": "Good",
+                "temperature": None,
+                "humidity": None,
+                "co2": None,
+                "noise": None,
+                "pressure": None,
+                "health_index": "No Data",
             },
-            "outdoor": {
-                "temperature": round(18.2 + secrets.randbelow(80) / 10, 1),
-                "humidity": round(65 + secrets.randbelow(25), 1),
-                "wind_speed": round(secrets.randbelow(20), 1),
-                "wind_direction": secrets.randbelow(360),
-                "rain": round(secrets.randbelow(10), 1),
-                "uv_index": secrets.randbelow(12),
-            },
-            "forecast": {
-                "today": {
-                    "high": 25.0,
-                    "low": 15.0,
-                    "condition": "Partly Cloudy",
-                    "rain_probability": 20,
-                },
-                "tomorrow": {
-                    "high": 27.0,
-                    "low": 17.0,
-                    "condition": "Sunny",
-                    "rain_probability": 5,
-                },
-            },
+            # Explicitly omit outdoor data - don't generate fake values
         }
 
         return {
             "success": True,
             "operation": "data",
             "weather_data": weather_data,
-            "message": f"Weather data retrieved for station {weather_data['station_id']}",
+            "message": f"Weather data retrieved for station {station_id} (Netatmo API unavailable - no outdoor data)",
             "timestamp": time.time(),
         }

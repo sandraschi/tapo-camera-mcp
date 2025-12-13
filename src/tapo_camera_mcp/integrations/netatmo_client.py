@@ -168,7 +168,39 @@ class NetatmoOAuth2Auth(AbstractAsyncAuth):
 
 
 class NetatmoService:
-    """Netatmo weather station service with real API calls via pyatmo 8.x."""
+    """Netatmo weather station service with real API calls via pyatmo 8.x.
+    
+    Uses singleton pattern to ensure only one instance exists across the app.
+    This prevents race conditions between web API, hardware_init, and connection_supervisor.
+    """
+
+    # Singleton instance
+    _instance: NetatmoService | None = None
+    _init_lock: asyncio.Lock | None = None
+
+    @classmethod
+    async def get_instance(cls, token_file: str = "netatmo_token.cache") -> NetatmoService:
+        """Get or create the singleton NetatmoService instance.
+        
+        This ensures only one Netatmo connection exists across all components.
+        """
+        if cls._init_lock is None:
+            cls._init_lock = asyncio.Lock()
+
+        async with cls._init_lock:
+            if cls._instance is None:
+                cls._instance = cls(token_file)
+
+            # Initialize if not already done
+            if not cls._instance._initialized:
+                await cls._instance.initialize()
+
+            return cls._instance
+
+    @classmethod
+    def reset_instance(cls) -> None:
+        """Reset the singleton instance (for testing or reconnection)."""
+        cls._instance = None
 
     def __init__(self, token_file: str = "netatmo_token.cache") -> None:
         self.config = get_netatmo_config()
@@ -221,9 +253,11 @@ class NetatmoService:
         """Initialize Netatmo client if enabled and credentials provided."""
         import asyncio
 
-        if self._initialized:
+        if self._initialized and self._use_real_api:
+            # Already successfully initialized with real API
             return
-        self._initialized = True
+
+        # Don't set _initialized = True here! Only set after SUCCESSFUL init
 
         if not self.config.enabled:
             logger.info("Netatmo disabled in config; using simulated data")
@@ -299,6 +333,7 @@ class NetatmoService:
             await asyncio.wait_for(self._account.async_update_weather_stations(), timeout=10.0)
 
             self._use_real_api = True
+            self._initialized = True  # Only set AFTER successful init
             logger.info(
                 f"Netatmo initialized: {len(self._account.homes)} homes, weather stations loaded"
             )
@@ -399,8 +434,22 @@ class NetatmoService:
             await self._session.close()
             self._session = None
 
+    async def _ensure_session_valid(self) -> bool:
+        """Check if session is valid and reinitialize if needed."""
+        # Check if session exists and is open
+        if self._session is None or self._session.closed:
+            logger.warning("Netatmo session invalid/closed - reinitializing...")
+            self._initialized = False
+            self._session = None
+            self._account = None
+            self._use_real_api = False
+            return False
+        return True
+
     async def list_stations(self) -> list[dict[str, Any]]:
         """Return list of weather stations with basic info."""
+        # Ensure session is valid before proceeding
+        await self._ensure_session_valid()
         await self.initialize()
 
         if self._use_real_api and self._account:
@@ -502,8 +551,16 @@ class NetatmoService:
                     logger.error(f"Netatmo API error: {error_msg}")
                     return []
             except RuntimeError as e:
-                # OAuth token refresh errors
                 error_msg = str(e)
+                # Handle closed session - trigger reinit on next call
+                if "Session is closed" in error_msg:
+                    logger.warning("Netatmo session was closed - will reinitialize on next call")
+                    self._initialized = False
+                    self._session = None
+                    self._account = None
+                    self._use_real_api = False
+                    return []
+                # OAuth token refresh errors
                 if "Token refresh failed" in error_msg or "Invalid refresh token" in error_msg:
                     logger.error(f"Netatmo authentication failed: {error_msg}")
                     logger.error("Please re-authenticate: python scripts/netatmo_oauth_helper.py auth-url <client_id> <redirect_uri>")
@@ -533,6 +590,8 @@ class NetatmoService:
 
     async def current_data(self, station_id: str, module_type: str) -> tuple[dict[str, Any], float]:
         """Return current weather data and timestamp."""
+        # Ensure session is valid before proceeding
+        await self._ensure_session_valid()
         await self.initialize()
 
         if self._use_real_api and self._account:
@@ -691,7 +750,7 @@ class NetatmoService:
                             data = extra_indoor
 
                 if data:
-                    self._store_data(station_id, module_type, data)
+                    self._store_data(station_id, module_type, data, netatmo_timestamp=timestamp)
                     return data, timestamp
                 logger.warning(f"No data found for station {station_id} with module_type {module_type}")
                 return {}, time.time()
@@ -730,10 +789,31 @@ class NetatmoService:
             return "indoor_extra"
         return "unknown"
 
-    def _store_data(self, station_id: str, module_type: str, data: dict[str, Any]) -> None:
-        """Store weather data in the database."""
+    def _store_data(self, station_id: str, module_type: str, data: dict[str, Any], netatmo_timestamp: float | None = None) -> None:
+        """Store weather data in the database.
+        
+        Args:
+            station_id: The station ID
+            module_type: Type of module (indoor, outdoor, all)
+            data: Weather data to store
+            netatmo_timestamp: Unix timestamp from Netatmo (to avoid duplicates)
+        """
         try:
-            timestamp = datetime.now(timezone.utc)
+            # Use Netatmo's timestamp if provided, otherwise use current time
+            if netatmo_timestamp:
+                timestamp = datetime.fromtimestamp(netatmo_timestamp, tz=timezone.utc)
+                # Check if we already stored data at this timestamp (dedup)
+                cache_key = f"last_stored_{station_id}_{module_type}"
+                last_stored = getattr(self, '_last_stored_timestamps', {}).get(cache_key, 0)
+                if netatmo_timestamp <= last_stored:
+                    logger.debug(f"Skipping duplicate data for {station_id}/{module_type} at {netatmo_timestamp}")
+                    return
+                # Update cache
+                if not hasattr(self, '_last_stored_timestamps'):
+                    self._last_stored_timestamps = {}
+                self._last_stored_timestamps[cache_key] = netatmo_timestamp
+            else:
+                timestamp = datetime.now(timezone.utc)
 
             if module_type in ("indoor", "all"):
                 indoor_data = data.get("indoor") if module_type == "all" else data
@@ -776,6 +856,176 @@ class NetatmoService:
                     )
         except Exception as e:
             logger.warning(f"Failed to store weather data: {e}")
+
+    async def fetch_historical_data(
+        self,
+        station_id: str,
+        module_id: str | None = None,
+        data_type: str = "temperature",
+        time_range: str = "7d",
+    ) -> list[dict[str, Any]]:
+        """Fetch historical data from Netatmo API (up to 2 years).
+        
+        Uses direct API call to /api/getmeasure endpoint since weather stations
+        don't support pyatmo's async_update_measures (which is for thermostats).
+        
+        Args:
+            station_id: Station ID (NAMain device ID)
+            module_id: Specific module ID (None = main indoor module)
+            data_type: Data type (temperature, humidity, co2, pressure, noise)
+            time_range: Time range (1d, 7d, 30d, 90d, 1y, 2y)
+            
+        Returns:
+            List of {timestamp, value} dicts
+        """
+        await self._ensure_session_valid()
+        await self.initialize()
+
+        if not self._use_real_api or not self._account:
+            logger.warning("Netatmo API not available for historical data")
+            return []
+
+        try:
+            import asyncio
+
+            # Parse time range to days
+            time_range_days = {
+                "1d": 1, "7d": 7, "30d": 30, "90d": 90,
+                "1y": 365, "2y": 730,
+            }.get(time_range, 7)
+
+            # Determine scale based on time range (for reasonable data density)
+            # API returns max 1024 points, so adjust scale to fit
+            if time_range_days <= 1:
+                scale = "30min"  # 48 points/day
+            elif time_range_days <= 7:
+                scale = "1hour"  # 168 points/week
+            elif time_range_days <= 30:
+                scale = "1hour"  # 720 points/month (close to limit)
+            elif time_range_days <= 90:
+                scale = "3hours"  # 720 points/90 days
+            else:
+                scale = "1day"  # 365 points/year
+
+            # Map data_type to Netatmo API type name
+            type_map = {
+                "temperature": "Temperature",
+                "humidity": "Humidity",
+                "co2": "CO2",
+                "pressure": "Pressure",
+                "noise": "Noise",
+            }
+            netatmo_type = type_map.get(data_type, "Temperature")
+
+            # Calculate time range
+            end_time = int(time.time())
+            start_time = end_time - (time_range_days * 86400)
+
+            # Get access token from pyatmo auth
+            access_token = None
+            if hasattr(self._account, 'auth') and hasattr(self._account.auth, 'async_get_access_token'):
+                access_token = await self._account.auth.async_get_access_token()
+
+            if not access_token:
+                logger.error("Could not get Netatmo access token")
+                return []
+
+            logger.info(f"Fetching Netatmo history: device={station_id}, module={module_id or 'main'}, "
+                       f"type={netatmo_type}, days={time_range_days}, scale={scale}")
+
+            # Make direct API call to getmeasure
+            url = "https://api.netatmo.com/api/getmeasure"
+            params = {
+                "device_id": station_id,
+                "scale": scale,
+                "type": netatmo_type,
+                "date_begin": start_time,
+                "date_end": end_time,
+                "optimize": "false",
+                "real_time": "true",
+            }
+
+            # Add module_id if specified (for outdoor sensor, etc.)
+            if module_id:
+                params["module_id"] = module_id
+
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Accept": "application/json",
+            }
+
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
+                async with session.get(url, params=params, headers=headers) as response:
+                    if response.status != 200:
+                        error_text = await response.text()
+                        logger.error(f"Netatmo API error {response.status}: {error_text}")
+                        return []
+
+                    data = await response.json()
+
+            # Parse response - format is {"body": {"timestamp1": [value1], "timestamp2": [value2], ...}}
+            body = data.get("body", {})
+            if not body:
+                logger.warning("No data in Netatmo response")
+                return []
+
+            result = []
+            for ts_str, values in body.items():
+                try:
+                    ts = int(ts_str)
+                    # Values is a list, first element is the requested type
+                    value = values[0] if values and values[0] is not None else None
+                    if value is not None:
+                        result.append({
+                            "timestamp": ts,
+                            "value": value,
+                        })
+                except (ValueError, IndexError, TypeError) as e:
+                    logger.warning(f"Error parsing Netatmo data point: {e}")
+                    continue
+
+            # Sort by timestamp
+            result.sort(key=lambda x: x["timestamp"])
+
+            logger.info(f"Fetched {len(result)} historical data points from Netatmo")
+
+            # Store in local DB for caching
+            stored_count = 0
+            for point in result:
+                try:
+                    ts = datetime.fromtimestamp(point["timestamp"], tz=timezone.utc)
+                    # Build kwargs dynamically based on data_type
+                    kwargs = {}
+                    if data_type == "temperature":
+                        kwargs["temperature_c"] = point["value"]
+                    elif data_type == "humidity":
+                        kwargs["humidity_percent"] = point["value"]
+                    elif data_type == "co2":
+                        kwargs["co2_ppm"] = int(point["value"])
+                    elif data_type == "pressure":
+                        kwargs["pressure_mbar"] = point["value"]
+                    elif data_type == "noise":
+                        kwargs["noise_db"] = point["value"]
+
+                    self._db.store_weather_data(
+                        station_id=station_id,
+                        module_type=module_id or "indoor",
+                        timestamp=ts,
+                        **kwargs
+                    )
+                    stored_count += 1
+                except Exception:
+                    pass  # Ignore storage errors for individual points
+
+            logger.info(f"Stored {stored_count} data points in local DB")
+            return result
+
+        except asyncio.TimeoutError:
+            logger.error("Netatmo historical data fetch timed out")
+            return []
+        except Exception as e:
+            logger.exception(f"Error fetching Netatmo historical data: {e}")
+            return []
 
     def _get_simulated_stations(self) -> list[dict[str, Any]]:
         """Return empty list - NO simulated data in production."""

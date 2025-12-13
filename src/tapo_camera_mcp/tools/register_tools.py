@@ -24,7 +24,7 @@ def register_all_tools(mcp: FastMCP, tool_mode: str = "production") -> None:
     if hasattr(mcp, '_tapo_tools_registered') and mcp._tapo_tools_registered:
         logger.debug("Tools already registered to this FastMCP instance, skipping")
         return
-    
+
     # Always register portmanteau tools (consolidated tools)
     from tapo_camera_mcp.tools.portmanteau import register_all_portmanteau_tools
 

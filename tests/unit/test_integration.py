@@ -113,7 +113,7 @@ def test_validation_module():
         # Test credentials validation
         username, password = validate_credentials("testuser", "testpass")
         assert username == "testuser"
-        assert password == "testpass"  # noqa: S105
+        assert password == "testpass"
 
         assert True
     except Exception:

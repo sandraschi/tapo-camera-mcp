@@ -23,7 +23,7 @@ class TestTapoCameraServer(unittest.IsolatedAsyncioTestCase):
         self.server = TapoCameraServer()
         self.test_host = "192.168.1.100"
         self.test_username = "testuser"
-        self.test_password = "testpass"  # noqa: S105
+        self.test_password = "testpass"
 
         # Mock the Tapo camera
         self.mock_camera = AsyncMock()

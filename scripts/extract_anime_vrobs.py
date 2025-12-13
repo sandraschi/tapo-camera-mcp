@@ -9,10 +9,11 @@ extracts design information for virtual robotics (vrobs) testing.
 **Resource**: Plex server on Goliath (50,000 anime episodes)
 """
 import json
-from typing import List, Dict
-from plexapi.server import PlexServer
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from enum import Enum
+from typing import List
+
+from plexapi.server import PlexServer
 
 
 class EmotionType(str, Enum):
@@ -71,7 +72,7 @@ FAMOUS_ROBOT_ANIME = {
         "year": 1979,
         "robots": ["RX-78-2 Gundam", "Zaku II", "countless mobile suits"]
     },
-    
+
     # Golden Age (1990s-2000s)
     "evangelion": {
         "title": "Neon Genesis Evangelion",
@@ -105,7 +106,7 @@ FAMOUS_ROBOT_ANIME = {
         "emotion": "neutral",
         "notes": "Realistic working robots"
     },
-    
+
     # Modern Era (2010s-2020s)
     "bokurano": {
         "title": "Bokurano",
@@ -137,12 +138,12 @@ FAMOUS_ROBOT_ANIME = {
 
 class PlexAnimeRobotExtractor:
     """Extract robot designs from Plex anime collection"""
-    
+
     def __init__(self, plex_url: str = "http://goliath:32400", token: str = None):
         self.plex = PlexServer(plex_url, token)
         self.anime_library = self.plex.library.section('Anime')
         self.robot_designs = []
-    
+
     def find_robot_anime(self) -> List:
         """
         Search Plex for anime with robot/mecha content.
@@ -152,14 +153,14 @@ class PlexAnimeRobotExtractor:
         """
         # Search by Mecha genre
         mecha_anime = self.anime_library.search(filters={'genre': 'Mecha'})
-        
+
         # Search by keywords
         keywords = [
             'robot', 'mecha', 'android', 'cyborg', 'gundam',
             'mazinger', 'astro', 'evangelion', 'mobile suit',
             'labor', 'frame', 'unit'
         ]
-        
+
         keyword_results = []
         for keyword in keywords:
             try:
@@ -167,13 +168,13 @@ class PlexAnimeRobotExtractor:
                 keyword_results.extend(results)
             except Exception as e:
                 print(f"Search failed for '{keyword}': {e}")
-        
+
         # Combine and deduplicate
         all_results = {show.title: show for show in (mecha_anime + keyword_results)}
-        
+
         print(f"Found {len(all_results)} anime with robot content!")
         return sorted(all_results.values(), key=lambda x: x.title)
-    
+
     def extract_design_from_anime(self, anime_title: str) -> List[AnimeRobotDesign]:
         """
         Extract robot designs from specific anime.
@@ -189,14 +190,14 @@ class PlexAnimeRobotExtractor:
             if anime_title.lower() in data["title"].lower():
                 print(f"Found famous anime: {data['title']}")
                 return self._extract_famous_designs(data)
-        
+
         print(f"Anime '{anime_title}' not in famous database - manual extraction needed")
         return []
-    
+
     def _extract_famous_designs(self, anime_data: dict) -> List[AnimeRobotDesign]:
         """Extract pre-documented famous robot designs"""
         designs = []
-        
+
         # Example: Astro Boy
         if "Astro Boy" in anime_data["title"]:
             designs.append(AnimeRobotDesign(
@@ -216,7 +217,7 @@ class PlexAnimeRobotExtractor:
                 scale_factor=135.0 / 11.5,  # 11.74× Scout size
                 notes="Iconic first anime robot, universally loved, nostalgic"
             ))
-        
+
         # Example: Tachikoma (Ghost in the Shell)
         if "Ghost in the Shell" in anime_data["title"]:
             designs.append(AnimeRobotDesign(
@@ -236,7 +237,7 @@ class PlexAnimeRobotExtractor:
                 scale_factor=240.0 / 11.5,  # 20.87× Scout size
                 notes="Friendly AI in weapon platform - cute spider tank"
             ))
-        
+
         # Example: Zearth (Bokurano - Mahiro Kitoh)
         if "Bokurano" in anime_data.get("title", ""):
             designs.append(AnimeRobotDesign(
@@ -256,9 +257,9 @@ class PlexAnimeRobotExtractor:
                 scale_factor=500.0 / 11.5,  # 43.48× Scout for 5m test version
                 notes="Mahiro Kitoh's dark masterpiece - beautiful but ominous, test aesthetic limit"
             ))
-        
+
         return designs
-    
+
     def generate_vrob_catalog(self, output_file: str = "anime_vrob_catalog.json"):
         """
         Generate complete vrob catalog from Plex collection.
@@ -277,11 +278,11 @@ class PlexAnimeRobotExtractor:
             "total_robots_found": 0,
             "robots": []
         }
-        
+
         # Search for robot anime
         robot_anime = self.find_robot_anime()
         catalog["total_anime_searched"] = len(robot_anime)
-        
+
         # Extract designs from famous anime
         for anime in robot_anime[:20]:  # Start with top 20
             try:
@@ -290,13 +291,13 @@ class PlexAnimeRobotExtractor:
                     catalog["robots"].append(asdict(design))
             except Exception as e:
                 print(f"Failed to extract from {anime.title}: {e}")
-        
+
         catalog["total_robots_found"] = len(catalog["robots"])
-        
+
         # Save catalog
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(catalog, f, indent=2, ensure_ascii=False)
-        
+
         print(f"Saved {len(catalog['robots'])} vrob designs to {output_file}")
         return catalog
 
@@ -313,32 +314,32 @@ def main():
         plex_url="http://goliath:32400",
         token="YOUR_PLEX_TOKEN_HERE"
     )
-    
+
     # Find all robot anime
     print("Searching Plex for robot anime...")
     robot_anime = extractor.find_robot_anime()
-    
+
     print(f"\nFound {len(robot_anime)} anime with robot content:")
     for i, anime in enumerate(robot_anime[:10], 1):
         print(f"{i}. {anime.title} ({anime.year})")
-    
+
     # Generate vrob catalog
     print("\nExtracting robot designs...")
     catalog = extractor.generate_vrob_catalog()
-    
-    print(f"\n✅ Catalog complete!")
+
+    print("\n✅ Catalog complete!")
     print(f"   - Total anime: {catalog['total_anime_searched']}")
     print(f"   - Total robots: {catalog['total_robots_found']}")
-    print(f"   - Output: anime_vrob_catalog.json")
-    
+    print("   - Output: anime_vrob_catalog.json")
+
     # Print emotion distribution
     emotions = {}
     for robot in catalog["robots"]:
         score = robot["emotion_score"]
         category = "cute" if score >= 7 else "neutral" if score >= 4 else "scary"
         emotions[category] = emotions.get(category, 0) + 1
-    
-    print(f"\n📊 Emotion Distribution:")
+
+    print("\n📊 Emotion Distribution:")
     print(f"   - Cute (7-10): {emotions.get('cute', 0)}")
     print(f"   - Neutral (4-6): {emotions.get('neutral', 0)}")
     print(f"   - Scary (0-3): {emotions.get('scary', 0)}")

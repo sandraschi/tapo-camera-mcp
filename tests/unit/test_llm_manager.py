@@ -1,13 +1,12 @@
 """Tests for LLM Manager."""
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from tapo_camera_mcp.llm.manager import LLMManager, get_llm_manager
 from tapo_camera_mcp.llm.providers import (
-    LMStudioProvider,
     OllamaProvider,
-    OpenAIProvider,
     ProviderType,
 )
 
@@ -58,7 +57,6 @@ class TestLLMManager:
         """Test registering invalid provider type."""
         # This should fail gracefully
         # Note: ProviderType enum should prevent this, but test error handling
-        pass
 
     @pytest.mark.asyncio
     async def test_list_providers(self, manager):

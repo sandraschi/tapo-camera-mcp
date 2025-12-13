@@ -12,8 +12,15 @@ import platform
 import time
 from typing import Any, Dict, Optional
 
-import psutil
 from pydantic import BaseModel, Field
+
+# Lazy import psutil to avoid import errors if not available
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    psutil = None
+    HAS_PSUTIL = False
 
 from ...tools.base_tool import BaseTool, ToolCategory, tool
 
@@ -98,45 +105,61 @@ class SystemInfoTool(BaseTool):
                     "machine": platform.machine(),
                     "processor": platform.processor(),
                     "python_version": platform.python_version(),
-                },
-                "cpu": {
-                    "count": psutil.cpu_count(),
-                    "percent": psutil.cpu_percent(interval=1),
-                    "freq": psutil.cpu_freq()._asdict() if psutil.cpu_freq() else None,
-                },
-                "memory": {
-                    "total": psutil.virtual_memory().total,
-                    "available": psutil.virtual_memory().available,
-                    "percent": psutil.virtual_memory().percent,
-                    "used": psutil.virtual_memory().used,
-                },
-                "disk": {
-                    "total": psutil.disk_usage("/").total if hasattr(psutil, "disk_usage") else 0,
-                    "used": psutil.disk_usage("/").used if hasattr(psutil, "disk_usage") else 0,
-                    "free": psutil.disk_usage("/").free if hasattr(psutil, "disk_usage") else 0,
-                    "percent": psutil.disk_usage("/").percent
-                    if hasattr(psutil, "disk_usage")
-                    else 0,
-                },
-                "network": {
-                    "interfaces": list(psutil.net_if_addrs().keys()),
-                    "io_counters": psutil.net_io_counters()._asdict()
-                    if psutil.net_io_counters()
-                    else {},
-                },
-                "processes": {
-                    "count": len(psutil.pids()),
-                    "tapo_processes": len(
-                        [
-                            p
-                            for p in psutil.process_iter(["name"])
-                            if "tapo" in p.info["name"].lower()
-                        ]
-                    ),
-                },
-                "uptime": time.time() - psutil.boot_time() if hasattr(psutil, "boot_time") else 0,
-                "timestamp": time.time(),
+                }
             }
+
+            # Add psutil data only if available
+            if HAS_PSUTIL and psutil:
+                system_info.update({
+                    "cpu": {
+                        "count": psutil.cpu_count(),
+                        "percent": psutil.cpu_percent(interval=1),
+                        "freq": psutil.cpu_freq()._asdict() if psutil.cpu_freq() else None,
+                    },
+                    "memory": {
+                        "total": psutil.virtual_memory().total,
+                        "available": psutil.virtual_memory().available,
+                        "percent": psutil.virtual_memory().percent,
+                        "used": psutil.virtual_memory().used,
+                    },
+                    "disk": {
+                        "total": psutil.disk_usage("/").total if hasattr(psutil, "disk_usage") else 0,
+                        "used": psutil.disk_usage("/").used if hasattr(psutil, "disk_usage") else 0,
+                        "free": psutil.disk_usage("/").free if hasattr(psutil, "disk_usage") else 0,
+                        "percent": psutil.disk_usage("/").percent
+                        if hasattr(psutil, "disk_usage")
+                        else 0,
+                    },
+                    "network": {
+                        "interfaces": list(psutil.net_if_addrs().keys()),
+                        "io_counters": psutil.net_io_counters()._asdict()
+                        if psutil.net_io_counters()
+                        else {},
+                    },
+                    "processes": {
+                        "count": len(psutil.pids()),
+                        "tapo_processes": len(
+                            [
+                                p
+                                for p in psutil.process_iter(["name"])
+                                if "tapo" in p.info["name"].lower()
+                            ]
+                        ),
+                    },
+                    "uptime": time.time() - psutil.boot_time() if hasattr(psutil, "boot_time") else 0,
+                })
+            else:
+                # Fallback data when psutil is not available
+                system_info.update({
+                    "cpu": {"count": "unknown", "percent": "unknown", "freq": None},
+                    "memory": {"total": "unknown", "available": "unknown", "percent": "unknown", "used": "unknown"},
+                    "disk": {"total": 0, "used": 0, "free": 0, "percent": 0},
+                    "network": {"interfaces": [], "io_counters": {}},
+                    "processes": {"count": "unknown", "tapo_processes": "unknown"},
+                    "uptime": 0,
+                })
+
+            system_info["timestamp"] = time.time()
 
             return {
                 "success": True,

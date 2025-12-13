@@ -15,20 +15,20 @@ async def inspect_energy(host: str, name: str):
     print(f"\n{'='*60}")
     print(f"Inspecting {name} (IP: {host})")
     print(f"{'='*60}")
-    
+
     try:
         service = TapoP115IngestionService()
         client = await service._get_client()
         plug = await client.p115(host)
-        
+
         # Get energy usage
         energy = await plug.get_energy_usage()
-        
+
         print(f"\nEnergy object type: {type(energy)}")
-        print(f"\nEnergy object attributes:")
+        print("\nEnergy object attributes:")
         print(f"  dir(): {[attr for attr in dir(energy) if not attr.startswith('_')]}")
-        
-        print(f"\nTrying to access common attributes:")
+
+        print("\nTrying to access common attributes:")
         attrs_to_try = [
             "current_power", "power", "power_mw", "realtime_power",
             "voltage", "voltage_v", "realtime_voltage",
@@ -36,7 +36,7 @@ async def inspect_energy(host: str, name: str):
             "today_energy", "today", "today_kwh", "energy_today",
             "month_energy", "month", "month_kwh", "energy_month",
         ]
-        
+
         for attr in attrs_to_try:
             try:
                 val = getattr(energy, attr, None)
@@ -44,15 +44,15 @@ async def inspect_energy(host: str, name: str):
                     print(f"  {attr}: {val} (type: {type(val)})")
             except Exception as e:
                 print(f"  {attr}: ERROR - {e}")
-        
+
         # Try to get as dict if possible
         if hasattr(energy, '__dict__'):
-            print(f"\nEnergy object __dict__:")
+            print("\nEnergy object __dict__:")
             for key, val in energy.__dict__.items():
                 print(f"  {key}: {val}")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"[FAILED] Inspection failed: {type(e).__name__}: {e}")
         import traceback
@@ -65,10 +65,10 @@ async def main():
     print("="*60)
     print("Tapo P115 Energy Object Inspection")
     print("="*60)
-    
+
     # Inspect Server plug (should be ~400W)
     success = await inspect_energy("192.168.0.38", "Server")
-    
+
     return 0 if success else 1
 
 

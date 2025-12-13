@@ -66,9 +66,12 @@ class HealthCheckTool(BaseTool):
             if self.include_cameras:
                 camera_health = await self._check_camera_health()
 
-            # Performance metrics (if requested)
+            # Performance metrics (if requested) - pass response time for accurate calculation
             performance_metrics = {}
             if self.include_performance:
+                # Update last check time for performance metrics
+                if not hasattr(self, "_last_check_time"):
+                    self._last_check_time = start_time
                 performance_metrics = await self._get_performance_metrics()
 
             # Overall status determination
@@ -81,11 +84,11 @@ class HealthCheckTool(BaseTool):
 
             # Determine overall status
             critical_issues = [
-                name for name, check in all_checks.items() 
+                name for name, check in all_checks.items()
                 if isinstance(check, dict) and check.get("status") == "critical"
             ]
             warning_issues = [
-                name for name, check in all_checks.items() 
+                name for name, check in all_checks.items()
                 if isinstance(check, dict) and check.get("status") == "warning"
             ]
 
@@ -129,19 +132,21 @@ class HealthCheckTool(BaseTool):
             # Basic responsiveness check
             server_responsive = hasattr(server, "mcp") and server.mcp is not None
 
-            # Check for registered tools
-            tools_count = len(server.mcp.list_tools()) if server_responsive else 0
+            # Check for registered tools - use _tools_registered flag instead of list_tools()
+            tools_registered = getattr(server, "_tools_registered", False) if server_responsive else False
 
             issues = []
             if not server_responsive:
                 issues.append("Server not properly initialized")
+            elif not tools_registered:
+                issues.append("Tools not yet registered")
 
             status = "critical" if issues else "healthy"
 
             return {
                 "status": status,
                 "responsive": server_responsive,
-                "tools_registered": tools_count,
+                "tools_registered": tools_registered,
                 "issues": issues,
             }
 
@@ -152,12 +157,26 @@ class HealthCheckTool(BaseTool):
     async def _check_system_health(self) -> Dict[str, Any]:
         """Check system resource health."""
         try:
-            import psutil
+            try:
+                import psutil
+                has_psutil = True
+            except ImportError:
+                has_psutil = False
 
-            # Get resource usage
-            cpu_percent = psutil.cpu_percent(interval=0.1)
-            memory = psutil.virtual_memory()
-            disk = psutil.disk_usage("/")
+            if has_psutil:
+                # Get resource usage
+                cpu_percent = psutil.cpu_percent(interval=0.1)
+                memory = psutil.virtual_memory()
+                disk = psutil.disk_usage("/")
+            else:
+                # Fallback when psutil is not available
+                return {
+                    "status": "warning",
+                    "issues": ["psutil not available - system monitoring limited"],
+                    "cpu_percent": 0.0,
+                    "memory_percent": 0.0,
+                    "disk_percent": 0.0
+                }
 
             issues = []
 
@@ -211,22 +230,31 @@ class HealthCheckTool(BaseTool):
                     "issues": ["No camera manager available"],
                 }
 
-            cameras = camera_manager.get_cameras()
-            total_cameras = len(cameras)
-            online_cameras = 0
+            # Use list_cameras() method or cameras dict
+            if hasattr(camera_manager, "list_cameras"):
+                cameras_list = await camera_manager.list_cameras()
+                total_cameras = len(cameras_list)
+                online_cameras = sum(1 for cam in cameras_list if cam.get("status", {}).get("connected", False))
+            elif hasattr(camera_manager, "cameras"):
+                cameras_dict = camera_manager.cameras
+                total_cameras = len(cameras_dict)
+                online_cameras = 0
+                for camera_name, camera in cameras_dict.items():
+                    try:
+                        status = await camera.get_status()
+                        if status.get("connected", False):
+                            online_cameras += 1
+                    except Exception:
+                        pass
+            else:
+                return {
+                    "status": "no_cameras",
+                    "total_cameras": 0,
+                    "online_cameras": 0,
+                    "issues": ["Cannot access camera list"],
+                }
+
             issues = []
-
-            # Check each camera
-            for camera in cameras:
-                try:
-                    if camera.is_online():
-                        online_cameras += 1
-                    else:
-                        issues.append(f"Camera {camera.id} is offline")
-                except Exception as e:
-                    issues.append(f"Error checking camera {camera.id}: {e!s}")
-
-            # Overall camera health
             if total_cameras == 0:
                 camera_status = "no_cameras"
             elif online_cameras == 0:
@@ -234,6 +262,7 @@ class HealthCheckTool(BaseTool):
                 issues.append("No cameras are online")
             elif online_cameras < total_cameras:
                 camera_status = "warning"
+                issues.append(f"{total_cameras - online_cameras} camera(s) offline")
             else:
                 camera_status = "healthy"
 
@@ -251,8 +280,20 @@ class HealthCheckTool(BaseTool):
     async def _get_performance_metrics(self) -> Dict[str, Any]:
         """Get performance monitoring metrics."""
         try:
-            # Record this health check response time
-            self._performance_metrics["response_times"].append(time.time())
+            # Calculate this health check response time (will be updated by caller)
+            current_time = time.time()
+
+            # Initialize if first call
+            if not hasattr(self, "_last_check_time"):
+                self._last_check_time = current_time
+                response_time_delta = 0
+            else:
+                response_time_delta = current_time - self._last_check_time
+                self._last_check_time = current_time
+
+            # Record response time delta (in ms)
+            if response_time_delta > 0:
+                self._performance_metrics["response_times"].append(response_time_delta * 1000)
 
             # Clean old metrics (keep last 100)
             if len(self._performance_metrics["response_times"]) > 100:
@@ -260,19 +301,23 @@ class HealthCheckTool(BaseTool):
                     "response_times"
                 ][-100:]
 
-            # Calculate metrics
+            # Calculate average response time
             response_times = self._performance_metrics["response_times"]
-            avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+            avg_response_time_ms = sum(response_times) / len(response_times) if response_times else 0
 
-            import psutil
-
-            process = psutil.Process()
-            memory_mb = process.memory_info().rss / (1024 * 1024)
+            try:
+                import psutil
+                process = psutil.Process()
+                memory_mb = process.memory_info().rss / (1024 * 1024)
+                has_psutil = True
+            except ImportError:
+                memory_mb = 0.0
+                has_psutil = False
 
             return {
                 "status": "healthy",
-                "avg_response_time_ms": avg_response_time * 1000,
-                "memory_usage_mb": memory_mb,
+                "avg_response_time_ms": round(avg_response_time_ms, 2),
+                "memory_usage_mb": round(memory_mb, 2),
                 "cpu_usage_percent": process.cpu_percent(),
                 "health_checks_count": len(response_times),
             }

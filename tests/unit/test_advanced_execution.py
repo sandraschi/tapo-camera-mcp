@@ -391,7 +391,7 @@ def test_error_recovery_mechanisms():
         for exc in exceptions_to_test:
             # Test that exceptions can be created and raised
             try:
-                raise exc  # noqa: TRY301
+                raise exc
             except TapoCameraError:
                 # Should be caught as base exception
                 pass
@@ -436,7 +436,7 @@ def test_configuration_validation():
                 password="testpass",
                 port=70000,  # Invalid port
             )
-            raise AssertionError("Should have failed validation")  # noqa: TRY301
+            raise AssertionError("Should have failed validation")
         except Exception as e:
             logger.debug(f"Expected validation error: {e}")  # Expected validation error
 
@@ -448,7 +448,7 @@ def test_configuration_validation():
                 password="testpass",
                 timeout=0,  # Invalid timeout
             )
-            raise AssertionError("Should have failed validation")  # noqa: TRY301
+            raise AssertionError("Should have failed validation")
         except Exception as e:
             logger.debug(f"Expected validation error: {e}")  # Expected validation error
 

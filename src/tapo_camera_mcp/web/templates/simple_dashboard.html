@@ -185,8 +185,8 @@
                 <h3 class="text-lg font-semibold">📹 Cameras</h3>
                 <a href="/cameras" class="text-blue-600 hover:text-blue-800 text-sm">View All →</a>
             </div>
-            <div id="camera-row" class="flex gap-3 overflow-x-auto pb-2">
-                <div class="text-center text-gray-500 text-sm py-4 w-full">
+            <div id="camera-row" style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; flex-wrap: nowrap;">
+                <div style="text-align: center; color: #6b7280; font-size: 14px; padding: 16px 0; width: 100%;">
                     <i class="fas fa-spinner fa-spin"></i> Loading cameras...
                 </div>
             </div>
@@ -533,8 +533,8 @@
             
             if (cameras.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center text-gray-500 text-sm py-2 w-full">
-                        No cameras configured. <a href="/cameras" class="text-blue-600 hover:underline">Add cameras</a>
+                    <div style="text-align: center; color: #6b7280; font-size: 14px; padding: 8px 0; width: 100%;">
+                        No cameras configured. <a href="/cameras" style="color: #2563eb; text-decoration: underline;">Add cameras</a>
                     </div>
                 `;
                 return;
@@ -548,8 +548,8 @@
                 const streamUrl = `/api/cameras/${encodeURIComponent(name)}/stream`;
                 
                 html += `
-                    <a href="/cameras" class="flex-shrink-0 group camera-thumb-link">
-                        <div class="bg-gray-800 rounded-lg overflow-hidden relative camera-thumb-container">
+                    <a href="/cameras" class="camera-thumb-link" style="flex-shrink: 0; text-decoration: none;">
+                        <div class="camera-thumb-container" style="background: #1f2937; border-radius: 8px; overflow: hidden; position: relative;">
                             <img src="${streamUrl}" 
                                  alt="${name}" 
                                  class="camera-thumb-img"
@@ -557,8 +557,8 @@
                             <div class="camera-thumb-fallback">
                                 📹
                             </div>
-                            <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 px-3 py-2">
-                                <span class="text-white text-sm truncate block">${status} ${name}</span>
+                            <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6); padding: 8px 12px;">
+                                <span style="color: white; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">${status} ${name}</span>
                             </div>
                         </div>
                     </a>
@@ -570,8 +570,8 @@
         } catch (error) {
             console.error('Error loading cameras:', error);
             container.innerHTML = `
-                <div class="text-center text-gray-500 text-sm py-2 w-full">
-                    <a href="/cameras" class="text-blue-600 hover:underline">View cameras</a>
+                <div style="text-align: center; color: #6b7280; font-size: 14px; padding: 8px 0; width: 100%;">
+                    <a href="/cameras" style="color: #2563eb; text-decoration: underline;">View cameras</a>
                 </div>
             `;
         }

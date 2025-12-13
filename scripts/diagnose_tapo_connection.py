@@ -18,27 +18,27 @@ except ImportError:
 print("\n📋 Checking for KLAP protocol support...")
 try:
     # Check if Tapo class has KLAP-related methods or attributes
-    from pytapo import Tapo
-    
     # Check Tapo class signature and methods
     import inspect
+
+    from pytapo import Tapo
     tapo_methods = [m for m in dir(Tapo) if not m.startswith('_')]
-    
+
     print(f"   Tapo class methods: {len(tapo_methods)} found")
-    
+
     # Look for KLAP-related methods
     klap_indicators = ['klap', 'KLAP', 'kasa', 'Kasa', 'local', 'Local']
     klap_methods = [m for m in tapo_methods if any(indicator in m for indicator in klap_indicators)]
-    
+
     if klap_methods:
         print(f"   ⚠️  Found potential KLAP-related methods: {klap_methods}")
     else:
         print("   ⚠️  No obvious KLAP-related methods found")
-    
+
     # Check Tapo.__init__ signature
     sig = inspect.signature(Tapo.__init__)
     print(f"   Tapo.__init__ parameters: {list(sig.parameters.keys())}")
-    
+
 except Exception as e:
     print(f"   ❌ Error checking Tapo class: {e}")
 
@@ -61,42 +61,42 @@ print("\n📋 Testing connection with config.yaml...")
 try:
     import yaml
     config_path = project_root / "config.yaml"
-    
+
     if config_path.exists():
         with open(config_path, encoding="utf-8") as f:
             config = yaml.safe_load(f)
-        
+
         kitchen_cfg = config.get("cameras", {}).get("tapo_kitchen", {}).get("params", {})
         if kitchen_cfg:
             host = kitchen_cfg.get("host", "")
             username = kitchen_cfg.get("username", "")
             password = kitchen_cfg.get("password", "")
-            
+
             if host and username and password:
                 print(f"   Testing connection to {host}...")
                 print(f"   Username: {username}")
                 print(f"   Password: {'*' * len(password)}")
-                
+
                 try:
                     camera = Tapo(host, username, password)
                     info = camera.getBasicInfo()
                     print("   ✅ Connection successful!")
-                    
+
                     device_info = info.get("device_info", {})
                     print(f"   Model: {device_info.get('device_model', 'Unknown')}")
                     print(f"   Firmware: {device_info.get('firmware_version', 'Unknown')}")
-                    
+
                     # Check firmware version for KLAP indicators
                     firmware = device_info.get('firmware_version', '')
                     if firmware:
                         # Newer firmware versions may indicate KLAP support
                         print(f"   ⚠️  Firmware version: {firmware}")
                         print("   Note: Check if firmware requires KLAP protocol")
-                    
+
                 except Exception as e:
                     error_msg = str(e)
                     print(f"   ❌ Connection failed: {error_msg}")
-                    
+
                     # Check for KLAP-related errors
                     if "KLAP" in error_msg or "kasa" in error_msg.lower():
                         print("   ⚠️  KLAP protocol may be required!")
@@ -110,7 +110,7 @@ try:
             print("   ⚠️  No tapo_kitchen config found")
     else:
         print("   ⚠️  config.yaml not found")
-        
+
 except Exception as e:
     print(f"   ❌ Error reading config: {e}")
 

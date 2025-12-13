@@ -4,8 +4,6 @@ Metrics collection and serving for Grafana integration.
 This module provides real-time camera metrics in a format compatible with Grafana.
 """
 
-import asyncio
-import contextlib
 import logging
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
@@ -96,7 +94,7 @@ class MetricsCollector:
         self._running = True
 
         # Use centralized polling manager instead of manual loop
-        from .polling_manager import get_polling_manager, PollingPriority
+        from .polling_manager import PollingPriority, get_polling_manager
 
         manager = get_polling_manager()
         self._polling_task = manager.register_task(

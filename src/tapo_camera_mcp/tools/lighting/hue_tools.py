@@ -359,12 +359,12 @@ class HueManager:
         """Get all discovered lights (from cache, with auto-rescan if stale)."""
         if not self._initialized:
             await self.initialize()
-        
+
         # Auto-rescan if cache looks stale (all lights off + not reachable = likely stale)
         if self.lights and all(not l.on and not l.reachable for l in self.lights.values()):
             logger.info("Cache appears stale (all lights off + unreachable), rescanning...")
             await self.rescan()
-        
+
         return list(self.lights.values())
 
     async def get_light(self, light_id: str) -> Optional[HueLight]:
@@ -390,39 +390,38 @@ class HueManager:
         try:
             # Normalize brightness (0-254 to 0-1)
             brightness_norm = brightness / 254.0 if brightness > 0 else 1.0
-            
+
             # Convert xy to XYZ (using Y as brightness)
             # We need to reconstruct Z from x, y, and Y
             # x = X / (X + Y + Z), y = Y / (X + Y + Z)
             # If we set Y = brightness_norm, we can solve for X and Z
             if y == 0:
                 return [255, 255, 255]  # Avoid division by zero
-            
+
             Y = brightness_norm
             X = (x / y) * Y
             Z = ((1 - x - y) / y) * Y
-            
+
             # Convert XYZ to linear RGB (inverse of sRGB to XYZ matrix)
             r_linear = X * 3.2404542 + Y * -1.5371385 + Z * -0.4985314
             g_linear = X * -0.9692660 + Y * 1.8760108 + Z * 0.0415560
             b_linear = X * 0.0556434 + Y * -0.2040259 + Z * 1.0572252
-            
+
             # Apply inverse gamma correction (sRGB)
             def inv_gamma_correct(val):
                 if val > 0.0031308:
                     return 1.055 * (val ** (1.0 / 2.4)) - 0.055
-                else:
-                    return 12.92 * val
-            
+                return 12.92 * val
+
             r_norm = max(0.0, min(1.0, inv_gamma_correct(r_linear)))
             g_norm = max(0.0, min(1.0, inv_gamma_correct(g_linear)))
             b_norm = max(0.0, min(1.0, inv_gamma_correct(b_linear)))
-            
+
             # Convert to 0-255 RGB
             r = int(round(r_norm * 255))
             g = int(round(g_norm * 255))
             b = int(round(b_norm * 255))
-            
+
             return [r, g, b]
         except Exception:
             logger.exception("Failed to convert XY to RGB")
@@ -439,36 +438,35 @@ class HueManager:
             r_norm = r / 255.0
             g_norm = g / 255.0
             b_norm = b / 255.0
-            
+
             # Apply gamma correction (sRGB gamma)
             def gamma_correct(val):
                 if val > 0.04045:
                     return ((val + 0.055) / 1.055) ** 2.4
-                else:
-                    return val / 12.92
-            
+                return val / 12.92
+
             r_gamma = gamma_correct(r_norm)
             g_gamma = gamma_correct(g_norm)
             b_gamma = gamma_correct(b_norm)
-            
+
             # Convert to XYZ color space (sRGB to XYZ matrix, D65 white point)
             x = r_gamma * 0.4124564 + g_gamma * 0.3575761 + b_gamma * 0.1804375
             y = r_gamma * 0.2126729 + g_gamma * 0.7151522 + b_gamma * 0.0721750
             z = r_gamma * 0.0193339 + g_gamma * 0.1191920 + b_gamma * 0.9503041
-            
+
             # Convert XYZ to xy (chromaticity coordinates)
             total = x + y + z
             if total == 0:
                 return None
-            
+
             x_xy = x / total
             y_xy = y / total
-            
+
             # Hue lights use a specific color gamut (most use Gamut B)
             # Clamp to valid range for Hue lights (approximate)
             x_xy = max(0.0, min(1.0, x_xy))
             y_xy = max(0.0, min(1.0, y_xy))
-            
+
             return [round(x_xy, 4), round(y_xy, 4)]
         except Exception:
             logger.exception("Failed to convert RGB to XY")
@@ -567,12 +565,12 @@ class HueManager:
         """Get all groups/rooms (from cache, with auto-rescan if stale)."""
         if not self._initialized:
             await self.initialize()
-        
+
         # Auto-rescan if cache looks stale (all groups off + 0 reachable = likely stale)
         if self.groups and all(not g.on and g.reachable_lights == 0 for g in self.groups.values()):
             logger.info("Cache appears stale (all groups off + 0 reachable), rescanning...")
             await self.rescan()
-        
+
         return list(self.groups.values())
 
     async def get_all_scenes(self) -> List[HueScene]:

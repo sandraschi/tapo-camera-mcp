@@ -18,7 +18,7 @@ from typing import Optional, Union
 
 class JSONFormatter(logging.Formatter):
     """JSON formatter for structured logging (Loki/Promtail compatible)."""
-    
+
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON."""
         log_data = {
@@ -30,11 +30,11 @@ class JSONFormatter(logging.Formatter):
             "function": record.funcName,
             "line": record.lineno,
         }
-        
+
         # Add exception info if present
         if record.exc_info:
             log_data["exception"] = self.formatException(record.exc_info)
-        
+
         # Add extra fields from record
         if hasattr(record, "category"):
             log_data["category"] = record.category
@@ -44,7 +44,7 @@ class JSONFormatter(logging.Formatter):
             log_data["severity"] = record.severity
         if hasattr(record, "details"):
             log_data["details"] = record.details
-        
+
         return json.dumps(log_data, ensure_ascii=False)
 
 
@@ -72,7 +72,7 @@ def setup_logging(
 
     # Check if running in Docker
     is_docker = os.getenv("CONTAINER") == "yes" or os.path.exists("/.dockerenv")
-    
+
     # Configure root logger
     logger = logging.getLogger()
     logger.setLevel(log_level)
@@ -89,7 +89,7 @@ def setup_logging(
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(json_formatter)
         logger.addHandler(console_handler)
-        
+
         # Also log to mounted volume for Promtail file scraping
         # Promtail reads from /var/log/tapo-camera-mcp/*.log (mounted from host)
         docker_log_dir = Path("/app/logs")
@@ -125,9 +125,9 @@ def setup_logging(
 
     # Log startup info (use standard logging for this message to avoid recursion)
     if is_docker:
-        logger.info(f"Logging configured successfully (Docker mode: JSON format for Loki/Promtail)")
+        logger.info("Logging configured successfully (Docker mode: JSON format for Loki/Promtail)")
     else:
-        logger.info(f"Logging configured successfully (Native mode: standard format)")
+        logger.info("Logging configured successfully (Native mode: standard format)")
 
 
 def get_logger(name: str) -> logging.Logger:

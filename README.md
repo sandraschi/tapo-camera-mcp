@@ -6,7 +6,7 @@
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![MCP Version](https://img.shields.io/badge/MCP-2.12.0-blue)](https://mcp-standard.org)
 [![FastMCP](https://img.shields.io/badge/FastMCP-2.13.0-green.svg)](https://github.com/jlowin/fastmcp)
-[![Status](https://img.shields.io/badge/status-Production%20Ready-success.svg)](https://github.com/sandraschi/tapo-camera-mcp)
+[![Status](https://img.shields.io/badge/status-Beta-yellow.svg)](https://github.com/sandraschi/tapo-camera-mcp)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/actions)
 [![Dashboard](https://img.shields.io/badge/Dashboard-Live-green.svg)](http://localhost:7777)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
@@ -15,7 +15,9 @@
 [![Multi-Device](https://img.shields.io/badge/Devices-Tapo%20%7C%20Ring%20%7C%20Nest%20%7C%20USB-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp)
 [![LLM Integration](https://img.shields.io/badge/LLM-Multi--Provider-orange.svg)](https://github.com/sandraschi/tapo-camera-mcp)
 
-🚀 **PRODUCTION-READY**: Comprehensive home security platform with unified surveillance dashboard, multi-device MCP architecture - serving as both individual device MCP servers AND a complete security monitoring ecosystem.
+⚠️ **BETA**: Comprehensive home security platform in active development. Unified surveillance dashboard with multi-device MCP architecture - serving as both individual device MCP servers AND a complete security monitoring ecosystem. **Status: Beta - Active Development**
+
+> **⚠️ Beta Status Notice**: This project is in active beta development. Features are working but may have bugs, APIs may change between versions, and some integrations are experimental. Not recommended for critical production use. Active development - contributions welcome.
 
 ## 🏗️ **DUAL ARCHITECTURE OVERVIEW**
 
@@ -39,7 +41,7 @@
 
 ## 🏆 **v1.8.0 RELEASE - STABILITY & MONITORING SYSTEM** (December 2025)
 
-**✅ DEMO-PROOF RELIABILITY:**
+**⚠️ BETA STATUS - Active Development:**
 - **🔍 Dependency Validator**: Checks all libraries on EVERY startup - no more "it worked yesterday"!
 - **👁️ Connection Supervisor**: Polls ALL devices every 60s with auto-reconnect
 - **🚨 3-Level Messaging**: Info/Warning/Alarm system with acknowledgement tracking
@@ -87,7 +89,7 @@
 - **🍳 Kitchen Dashboard**: Tefal Optigrill, Zojirushi water boiler integration
 - **🤖 Robots Dashboard**: Roomba, Unitree Go2 planned integrations
 
-**🎯 Current Status**: Full smart home platform with Ring doorbell, lighting, weather, kitchen, and robots dashboards.
+**🎯 Current Status**: Beta - Full smart home platform with Ring doorbell, lighting, weather, kitchen, and robots dashboards. **Active development - features may change.**
 
 ## 🚀 **DUAL ARCHITECTURE CAPABILITIES** (November 2025)
 
@@ -253,7 +255,7 @@ cameras:
 
 ### 💪 **STABILITY & MONITORING SYSTEM** (NEW - December 2025)
 
-#### 🔍 **Production Reliability**
+#### 🔍 **Beta Reliability Features**
 - **Dependency Validator**: Checks all 20+ libraries on every startup - prevents "it worked yesterday" failures
 - **Connection Supervisor**: Polls ALL devices every 60s with automatic reconnection
 - **3-Level Alerting**: Info (💬) / Warning (⚠️) / Alarm (🚨) system with escalation
@@ -321,7 +323,7 @@ scrape_configs:
 #### 🤖 **Robots Dashboard** (NEW in v1.4.0)
 - **Roomba**: Coming soon integration
 - **Unitree Go2**: Planned purchase with specs
-- **Mini Robot Tank**: Research status for apartment patrol
+- **Pilot Labs Moorebot Scout**: AI home patrol robot (arriving Jan 2025)
 
 #### 🚨 **Alarm System Integration**
 - **Nest Protect**: Smoke and CO detector monitoring
@@ -421,6 +423,14 @@ open http://localhost:7777/onboarding
 
 ### Installation Options
 
+This MCP server supports multiple installation methods:
+
+1. **MCPB Package** (Recommended) - One-click installation for Claude Desktop
+2. **Manual Installation** - Clone repository and install via pip/uv
+3. **JSON Config File** - Add to Claude Desktop or Cursor IDE config files
+
+---
+
 #### Option 1: MCPB Package (Recommended for Claude Desktop)
 
 **One-click installation** for Claude Desktop users:
@@ -441,7 +451,13 @@ open http://localhost:7777/onboarding
 "Start the dashboard and show me the camera feed"
 ```
 
-#### Option 2: Manual Installation
+**See [MCPB Quick Start Guide](docs/MCPB_QUICKSTART.md) for detailed instructions.**
+
+---
+
+#### Option 2: Manual Installation (Clone & Install)
+
+**For developers or users who prefer manual setup:**
 
 ### Prerequisites
 
@@ -449,6 +465,133 @@ open http://localhost:7777/onboarding
 - pip (Python package manager)
 - OpenCV (for webcam support)
 - TP-Link Tapo camera(s), Ring doorbell, or USB webcam
+
+### Version Manager Installation (Recommended)
+
+Using version managers ensures you have the correct Python and Node.js versions without conflicts.
+
+#### Python Version Management with uv (or pyenv)
+
+**uv** is a fast Python package installer and resolver (similar to nvm for Node.js). Alternatively, you can use **pyenv** for Python version management:
+
+```powershell
+# Windows (PowerShell)
+# Install uv
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Install Python 3.11 (or 3.10, 3.12)
+uv python install 3.11
+
+# Create virtual environment with specific Python version
+uv venv --python 3.11
+
+# Activate virtual environment
+.\venv\Scripts\activate
+
+# Install project dependencies
+uv pip install -e ".[dev]"
+```
+
+```bash
+# macOS/Linux
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install Python 3.11 (or 3.10, 3.12)
+uv python install 3.11
+
+# Create virtual environment with specific Python version
+uv venv --python 3.11
+
+# Activate virtual environment
+source .venv/bin/activate
+
+# Install project dependencies
+uv pip install -e ".[dev]"
+```
+
+**Alternative: Using pyenv for Python version management:**
+
+```bash
+# macOS/Linux
+# Install pyenv
+curl https://pyenv.run | bash
+
+# Add to shell configuration
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+source ~/.bashrc
+
+# Install Python 3.11
+pyenv install 3.11.0
+pyenv local 3.11.0
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate
+
+# Install project dependencies
+pip install -e ".[dev]"
+```
+
+#### Node.js Version Management with nvm or nvx (Optional)
+
+If you need Node.js for Grafana plugins or other frontend components:
+
+**Option 1: Using nvm (Node Version Manager)**
+
+```powershell
+# Windows (PowerShell)
+# Install nvm-windows from: https://github.com/coreybutler/nvm-windows/releases
+# Or use Chocolatey:
+choco install nvm
+
+# Install Node.js 20 LTS
+nvm install 20
+nvm use 20
+
+# Verify installation
+node --version
+npm --version
+```
+
+```bash
+# macOS/Linux
+# Install nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+
+# Reload shell configuration
+source ~/.bashrc  # or ~/.zshrc
+
+# Install Node.js 20 LTS
+nvm install 20
+nvm use 20
+
+# Verify installation
+node --version
+npm --version
+```
+
+**Option 2: Using nvx (Universal NVM - Cross-platform)**
+
+nvx is a universal Node.js version manager that works on both Unix and Windows:
+
+```bash
+# Install nvx via npm (requires npm 5.2.0+)
+npm install -g nvx
+
+# Run commands with specific Node.js version
+nvx 20 node --version
+
+# Or install and use a specific version
+nvx install 20
+nvx use 20
+
+# Verify installation
+node --version
+npm --version
+```
 
 ### Installation
 
@@ -511,6 +654,96 @@ The dashboard supports optional session-based authentication:
 
 **Default User:**
 When auth is first enabled, a default admin user is created with a random password (printed to console). Change it immediately in `config.yaml`!
+
+---
+
+#### Option 3: JSON Config File Installation (Claude Desktop / Cursor IDE)
+
+**For users who prefer manual JSON configuration:**
+
+After cloning and installing the repository, add the server to your MCP client configuration file.
+
+**Claude Desktop Configuration:**
+
+Edit `~/.config/claude/claude_desktop_config.json` (macOS/Linux) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+
+```json
+{
+  "mcpServers": {
+    "tapo-camera-mcp": {
+      "command": "python",
+      "args": ["-m", "tapo_camera_mcp.server_v2", "--direct"],
+      "cwd": "D:/Dev/repos/tapo-camera-mcp",
+      "env": {
+        "PYTHONPATH": "D:/Dev/repos/tapo-camera-mcp",
+        "TAPO_MCP_SKIP_HARDWARE_INIT": "true"
+      }
+    }
+  }
+}
+```
+
+**Fast Startup Option:**
+
+If the server takes too long to start (>1 minute), add `TAPO_MCP_SKIP_HARDWARE_INIT=true` to the `env` section. This skips hardware initialization during startup - hardware will initialize automatically on first use. This reduces startup time from 30-60 seconds to <5 seconds.
+
+**Without fast startup:** Server initializes all hardware (cameras, Hue, Netatmo, Ring, etc.) during startup (10s timeout)
+**With fast startup:** Server starts immediately, hardware initializes on-demand when tools are used
+
+**Cursor IDE Configuration:**
+
+Edit Cursor settings (Cmd+, on Mac or Ctrl+, on Windows) → MCP tab, or edit `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "tapo-camera-mcp": {
+      "command": "python",
+      "args": ["-m", "tapo_camera_mcp.server_v2", "--direct"],
+      "cwd": "D:/Dev/repos/tapo-camera-mcp",
+      "env": {
+        "PYTHONPATH": "D:/Dev/repos/tapo-camera-mcp"
+      }
+    }
+  }
+}
+```
+
+**Important Notes:**
+- Replace `D:/Dev/repos/tapo-camera-mcp` with your actual repository path
+- Use absolute paths (not relative)
+- Ensure Python 3.10+ is in your PATH
+- Restart Claude Desktop or Cursor after configuration
+- Verify installation by asking Claude/Cursor: "List available camera tools"
+
+**Troubleshooting JSON Config:**
+- Check Python path: `python --version` or `python3 --version`
+- Verify module exists: `python -m tapo_camera_mcp.server_v2 --help`
+- Check logs: `%APPDATA%\Claude\logs\` (Windows) or `~/.config/claude/logs/` (macOS/Linux)
+
+**Fast Startup (Skip Hardware Init):**
+
+If the server takes more than 1 minute to start, add `TAPO_MCP_SKIP_HARDWARE_INIT=true` to the `env` section:
+
+```json
+{
+  "mcpServers": {
+    "tapo-camera-mcp": {
+      "command": "python",
+      "args": ["-m", "tapo_camera_mcp.server_v2", "--direct"],
+      "cwd": "D:/Dev/repos/tapo-camera-mcp",
+      "env": {
+        "PYTHONPATH": "D:/Dev/repos/tapo-camera-mcp",
+        "TAPO_MCP_SKIP_HARDWARE_INIT": "true"
+      }
+    }
+  }
+}
+```
+
+This skips hardware initialization during startup (reduces startup from 30-60s to <5s). Hardware will initialize automatically when tools are first used.
+
+---
 
 ## 🚀 Usage
 

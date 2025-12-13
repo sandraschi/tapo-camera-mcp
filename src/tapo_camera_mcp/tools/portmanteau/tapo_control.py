@@ -6,7 +6,7 @@ When you say "tapo list lights", this tool handles it.
 """
 
 import logging
-from typing import Any
+from typing import Any, Union
 
 from fastmcp import FastMCP
 
@@ -57,7 +57,7 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
         light_id: str | None = None,
         group_id: str | None = None,
         scene_id: str | None = None,
-        brightness_percent: int | None = None,
+        brightness_percent: Union[int, str] | None = None,
         power_state: str | None = None,
     ) -> dict[str, Any]:
         """
@@ -110,6 +110,13 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
             tapo(action="turn on kettle")
         """
         try:
+            # Type conversion for parameters that may come as strings from JSON-RPC
+            if brightness_percent is not None:
+                if isinstance(brightness_percent, str):
+                    brightness_percent = int(brightness_percent)
+                elif not isinstance(brightness_percent, int):
+                    return {"success": False, "error": f"brightness_percent must be an integer, got {type(brightness_percent).__name__}"}
+
             # Normalize action (handle spaces and case)
             action_lower = action.lower().replace(" ", "_").strip()
 
@@ -368,10 +375,10 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
             # Provide helpful suggestions for unknown actions
             action_lower_normalized = action_lower.replace("_", " ")
             similar_actions = [
-                key for key in TAPO_ACTIONS.keys()
+                key for key in TAPO_ACTIONS
                 if action_lower_normalized in key.replace("_", " ") or key.replace("_", " ") in action_lower_normalized
             ]
-            
+
             error_msg = f"Unknown action '{action}'."
             if similar_actions:
                 error_msg += f" Did you mean: {', '.join(similar_actions[:3])}?"
@@ -379,7 +386,7 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                 error_msg += f" Available actions: {', '.join(sorted(TAPO_ACTIONS.keys())[:10])}"
                 if len(TAPO_ACTIONS) > 10:
                     error_msg += f" (and {len(TAPO_ACTIONS) - 10} more)"
-            
+
             return {
                 "success": False,
                 "error": error_msg,
@@ -389,7 +396,7 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
         except Exception as e:
             logger.error(f"Error in tapo action '{action}': {e}", exc_info=True)
             error_msg = f"Failed to execute action '{action}': {e!s}"
-            
+
             # Provide helpful context for common errors
             error_str = str(e).lower()
             if "connection" in error_str or "timeout" in error_str:
@@ -398,7 +405,7 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                 error_msg += " Verify device credentials in configuration."
             elif "not found" in error_str:
                 error_msg += " Ensure the device exists and is properly configured."
-            
+
             return {
                 "success": False,
                 "error": error_msg,

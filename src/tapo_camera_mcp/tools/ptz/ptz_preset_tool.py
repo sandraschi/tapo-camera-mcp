@@ -148,7 +148,7 @@ class PTZPresetTool(BaseTool):
                     if preset.get("name") == preset_name:
                         preset_id = preset.get("id")
                         break
-        
+
         if preset_id is None:
             return {
                 "success": False,

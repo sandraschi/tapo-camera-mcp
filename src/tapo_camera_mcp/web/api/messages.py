@@ -47,14 +47,14 @@ async def get_messages(
     """
     try:
         messaging = get_messaging_service()
-        
+
         from datetime import datetime, timedelta
         since = datetime.now() - timedelta(minutes=since_minutes)
-        
+
         sev = MessageSeverity(severity) if severity else None
         cat = MessageCategory(category) if category else None
         ack = False if unacknowledged_only else None
-        
+
         messages = messaging.get_messages(
             severity=sev,
             category=cat,
@@ -63,12 +63,12 @@ async def get_messages(
             limit=limit,
             acknowledged=ack
         )
-        
+
         return {
             "count": len(messages),
             "messages": [m.to_dict() for m in messages]
         }
-        
+
     except Exception as e:
         logger.exception("Error getting messages")
         return {"count": 0, "messages": [], "error": str(e)}
@@ -80,7 +80,7 @@ async def get_unacknowledged_alarms() -> Dict[str, Any]:
     try:
         messaging = get_messaging_service()
         alarms = messaging.get_unacknowledged_alarms()
-        
+
         return {
             "count": len(alarms),
             "alarms": [m.to_dict() for m in alarms]
@@ -103,7 +103,7 @@ async def acknowledge_messages(request: AcknowledgeRequest) -> Dict[str, Any]:
     try:
         messaging = get_messaging_service()
         count = 0
-        
+
         if request.acknowledge_all:
             count = messaging.acknowledge_all()
         elif request.severity:
@@ -113,7 +113,7 @@ async def acknowledge_messages(request: AcknowledgeRequest) -> Dict[str, Any]:
             for msg_id in request.message_ids:
                 if messaging.acknowledge_message(msg_id):
                     count += 1
-        
+
         return {
             "success": True,
             "acknowledged_count": count

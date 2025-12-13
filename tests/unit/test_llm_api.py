@@ -1,8 +1,9 @@
 """Tests for LLM API endpoints."""
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from tapo_camera_mcp.llm.manager import get_llm_manager
 from tapo_camera_mcp.llm.providers import ProviderType

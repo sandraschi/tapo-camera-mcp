@@ -95,13 +95,13 @@ class NestClient:
         self._devices: dict[str, NestProtectDevice] = {}
         self._cache_time: Optional[datetime] = None
         self._initialized = False
-    
+
     @staticmethod
     def _adjust_token_path(token_file: str) -> Path:
         """Adjust token file path for Docker environment."""
         import os
         token_path = Path(token_file)
-        
+
         # In Docker, use mounted volume for token persistence
         if os.getenv("CONTAINER") == "yes":
             # If token file is in current directory, move to /app/tokens
@@ -111,7 +111,7 @@ class NestClient:
                 return tokens_dir / token_path.name
             # If absolute path, ensure parent directory exists
             token_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         return token_path
 
     async def initialize(self) -> bool:

@@ -8,7 +8,7 @@ import asyncio
 import contextlib
 import logging
 import random
-from typing import Any, Literal
+from typing import Any, Literal, Union
 
 from fastmcp import FastMCP
 
@@ -167,14 +167,14 @@ def register_lighting_management_tool(mcp: FastMCP) -> None:
         light_id: str | None = None,
         group_id: str | None = None,
         scene_id: str | None = None,
-        on: bool | None = None,
-        brightness_percent: int | None = None,
-        color_temp_kelvin: int | None = None,
-        hue: int | None = None,
-        saturation: int | None = None,
-        rgb: list[int] | None = None,
+        on: Union[bool, str] | None = None,
+        brightness_percent: Union[int, str] | None = None,
+        color_temp_kelvin: Union[int, str] | None = None,
+        hue: Union[int, str] | None = None,
+        saturation: Union[int, str] | None = None,
+        rgb: list[Union[int, str]] | None = None,
         prank_mode: Literal["chaos", "wave", "disco", "sos"] | None = None,
-        duration: int = 5,
+        duration: Union[int, str] = 5,
     ) -> dict[str, Any]:
         """
         Comprehensive lighting management portmanteau tool.
@@ -270,6 +270,49 @@ def register_lighting_management_tool(mcp: FastMCP) -> None:
             result = await lighting_management(action="status")
         """
         try:
+            # Type conversion for parameters that may come as strings from JSON-RPC
+            if brightness_percent is not None:
+                if isinstance(brightness_percent, str):
+                    brightness_percent = int(brightness_percent)
+                elif not isinstance(brightness_percent, int):
+                    return {"success": False, "error": f"brightness_percent must be an integer, got {type(brightness_percent).__name__}"}
+
+            if color_temp_kelvin is not None:
+                if isinstance(color_temp_kelvin, str):
+                    color_temp_kelvin = int(color_temp_kelvin)
+                elif not isinstance(color_temp_kelvin, int):
+                    return {"success": False, "error": f"color_temp_kelvin must be an integer, got {type(color_temp_kelvin).__name__}"}
+
+            if hue is not None:
+                if isinstance(hue, str):
+                    hue = int(hue)
+                elif not isinstance(hue, int):
+                    return {"success": False, "error": f"hue must be an integer, got {type(hue).__name__}"}
+
+            if saturation is not None:
+                if isinstance(saturation, str):
+                    saturation = int(saturation)
+                elif not isinstance(saturation, int):
+                    return {"success": False, "error": f"saturation must be an integer, got {type(saturation).__name__}"}
+
+            # duration has a default value, so always check and convert if needed
+            if isinstance(duration, str):
+                duration = int(duration)
+            elif not isinstance(duration, int):
+                return {"success": False, "error": f"duration must be an integer, got {type(duration).__name__}"}
+
+            if on is not None:
+                if isinstance(on, str):
+                    on = on.lower() in ("true", "1", "yes", "on")
+                elif not isinstance(on, bool):
+                    return {"success": False, "error": f"on must be a boolean, got {type(on).__name__}"}
+
+            if rgb is not None:
+                if isinstance(rgb, list):
+                    rgb = [int(x) if isinstance(x, str) else x for x in rgb]
+                else:
+                    return {"success": False, "error": f"rgb must be a list, got {type(rgb).__name__}"}
+
             if action not in LIGHTING_ACTIONS:
                 return {
                     "success": False,
@@ -308,24 +351,24 @@ def register_lighting_management_tool(mcp: FastMCP) -> None:
             if action == "control_light":
                 if not light_id:
                     return {"success": False, "error": "light_id is required for control_light action"}
-                
+
                 # Validate RGB if provided
                 if rgb is not None:
                     if not isinstance(rgb, list) or len(rgb) != 3:
                         return {"success": False, "error": "rgb must be a list of 3 integers [R, G, B] where each value is 0-255"}
                     if not all(isinstance(c, int) and 0 <= c <= 255 for c in rgb):
                         return {"success": False, "error": "rgb values must be integers between 0 and 255"}
-                
+
                 # Validate hue if provided
                 if hue is not None:
                     if not isinstance(hue, int) or not (0 <= hue <= 65535):
                         return {"success": False, "error": "hue must be an integer between 0 and 65535"}
-                
+
                 # Validate saturation if provided
                 if saturation is not None:
                     if not isinstance(saturation, int) or not (0 <= saturation <= 254):
                         return {"success": False, "error": "saturation must be an integer between 0 and 254"}
-                
+
                 success = await hue_manager.set_light_state(
                     light_id,
                     on=on,

@@ -21,7 +21,7 @@ async def run_tests():
     server = TapoCameraServer()
     test_host = "192.168.1.100"
     test_username = "testuser"
-    test_password = "testpass"  # noqa: S105
+    test_password = "testpass"
 
     # Test 1: Connect to camera
     with patch("tapo_camera_mcp.server_v2.Tapo") as mock_tapo_class:

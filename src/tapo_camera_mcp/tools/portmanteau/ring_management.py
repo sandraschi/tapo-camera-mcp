@@ -18,6 +18,13 @@ RING_ACTIONS = {
     "live_view": "Get WebRTC live view info",
     "snapshot": "Get doorbell snapshot (requires subscription)",
     "alarm_status": "Get Ring alarm system status",
+    "arm_home": "Arm Ring alarm in HOME mode (partial)",
+    "arm_away": "Arm Ring alarm in AWAY mode (full)",
+    "disarm": "Disarm Ring alarm system",
+    "trigger_siren": "Activate Ring alarm siren",
+    "stop_siren": "Deactivate Ring alarm siren",
+    "alarm_events": "Get recent Ring alarm events (arm/disarm/sensors)",
+    "sensors": "Get Ring alarm sensor status (doors, motion, etc.)",
     "capabilities": "Get Ring device capabilities",
     "2fa": "Submit 2FA verification code",
     "initialize": "Initialize Ring client with credentials",
@@ -36,6 +43,13 @@ def register_ring_management_tool(mcp: FastMCP) -> None:
             "live_view",
             "snapshot",
             "alarm_status",
+            "arm_home",
+            "arm_away",
+            "disarm",
+            "trigger_siren",
+            "stop_siren",
+            "alarm_events",
+            "sensors",
             "capabilities",
             "2fa",
             "initialize",
@@ -45,6 +59,7 @@ def register_ring_management_tool(mcp: FastMCP) -> None:
         code: str | None = None,
         email: str | None = None,
         password: str | None = None,
+        siren_duration: int = 30,
     ) -> dict[str, Any]:
         """
         Comprehensive Ring doorbell management portmanteau tool.
@@ -62,6 +77,13 @@ def register_ring_management_tool(mcp: FastMCP) -> None:
                 - "live_view": Get WebRTC live view connection info (requires: device_id)
                 - "snapshot": Get doorbell snapshot - requires Ring Protect (requires: device_id)
                 - "alarm_status": Get Ring alarm system status (no params required)
+                - "arm_home": Arm Ring alarm in HOME mode - sensors on doors/windows only
+                - "arm_away": Arm Ring alarm in AWAY mode - all sensors active
+                - "disarm": Disarm the Ring alarm system
+                - "trigger_siren": Activate the Ring alarm siren (optional: siren_duration)
+                - "stop_siren": Deactivate the Ring alarm siren
+                - "alarm_events": Get recent Ring alarm events - arm/disarm/sensor triggers (optional: limit)
+                - "sensors": Get Ring alarm sensor status - doors, motion, flood, etc.
                 - "capabilities": Get Ring device capabilities (optional: device_id)
                 - "2fa": Submit 2FA verification code (requires: code)
                 - "initialize": Initialize Ring client (requires: email, password)
@@ -69,13 +91,15 @@ def register_ring_management_tool(mcp: FastMCP) -> None:
             device_id (str | None): Ring device ID. Required for: live_view, snapshot.
                 Optional for: events, capabilities.
 
-            limit (int): Maximum number of events to return. Used by: events action. Default: 10
+            limit (int): Maximum number of events to return. Used by: events, alarm_events. Default: 10
 
             code (str | None): 2FA verification code. Required for: 2fa action.
 
             email (str | None): Ring account email. Required for: initialize action.
 
             password (str | None): Ring account password. Required for: initialize action.
+
+            siren_duration (int): Duration in seconds for siren. Used by: trigger_siren. Default: 30
 
         Returns:
             dict[str, Any]: Dictionary containing:
@@ -94,11 +118,26 @@ def register_ring_management_tool(mcp: FastMCP) -> None:
             # Get recent events
             result = await ring_management(action="events", limit=20)
 
-            # Get events for specific device
-            result = await ring_management(action="events", device_id="12345", limit=5)
+            # Arm alarm in HOME mode (doors/windows only)
+            result = await ring_management(action="arm_home")
 
-            # Get live view info
-            result = await ring_management(action="live_view", device_id="12345")
+            # Arm alarm in AWAY mode (all sensors)
+            result = await ring_management(action="arm_away")
+
+            # Disarm the alarm
+            result = await ring_management(action="disarm")
+
+            # Trigger siren for 30 seconds
+            result = await ring_management(action="trigger_siren", siren_duration=30)
+
+            # Stop the siren
+            result = await ring_management(action="stop_siren")
+
+            # Get sensor status
+            result = await ring_management(action="sensors")
+
+            # Get alarm events (arm/disarm history)
+            result = await ring_management(action="alarm_events", limit=20)
 
             # Submit 2FA code
             result = await ring_management(action="2fa", code="123456")
@@ -248,7 +287,90 @@ def register_ring_management_tool(mcp: FastMCP) -> None:
 
             if action == "alarm_status":
                 alarm_status = await client.get_alarm_status()
-                return {"success": True, "action": action, "data": alarm_status}
+                if alarm_status:
+                    return {"success": True, "action": action, "data": alarm_status.to_dict()}
+                return {"success": False, "action": action, "error": "No alarm system found"}
+
+            if action == "arm_home":
+                from tapo_camera_mcp.integrations.ring_client import RingAlarmMode
+                success = await client.set_alarm_mode(RingAlarmMode.HOME)
+                return {
+                    "success": success,
+                    "action": action,
+                    "data": {
+                        "mode": "home",
+                        "message": "Ring alarm armed in HOME mode" if success else "Failed to arm alarm",
+                    },
+                }
+
+            if action == "arm_away":
+                from tapo_camera_mcp.integrations.ring_client import RingAlarmMode
+                success = await client.set_alarm_mode(RingAlarmMode.AWAY)
+                return {
+                    "success": success,
+                    "action": action,
+                    "data": {
+                        "mode": "away",
+                        "message": "Ring alarm armed in AWAY mode" if success else "Failed to arm alarm",
+                    },
+                }
+
+            if action == "disarm":
+                from tapo_camera_mcp.integrations.ring_client import RingAlarmMode
+                success = await client.set_alarm_mode(RingAlarmMode.DISARMED)
+                return {
+                    "success": success,
+                    "action": action,
+                    "data": {
+                        "mode": "disarmed",
+                        "message": "Ring alarm disarmed" if success else "Failed to disarm alarm",
+                    },
+                }
+
+            if action == "trigger_siren":
+                success = await client.trigger_siren(activate=True, duration=siren_duration)
+                return {
+                    "success": success,
+                    "action": action,
+                    "data": {
+                        "siren": "active",
+                        "duration": siren_duration,
+                        "message": f"Siren activated for {siren_duration}s" if success else "Failed to activate siren",
+                    },
+                }
+
+            if action == "stop_siren":
+                success = await client.trigger_siren(activate=False)
+                return {
+                    "success": success,
+                    "action": action,
+                    "data": {
+                        "siren": "stopped",
+                        "message": "Siren deactivated" if success else "Failed to stop siren",
+                    },
+                }
+
+            if action == "alarm_events":
+                events = await client.get_alarm_events(limit=limit)
+                return {
+                    "success": True,
+                    "action": action,
+                    "data": {"events": events, "count": len(events)},
+                }
+
+            if action == "sensors":
+                alarm_status = await client.get_alarm_status()
+                if alarm_status:
+                    return {
+                        "success": True,
+                        "action": action,
+                        "data": {
+                            "sensors": [s.to_dict() for s in alarm_status.sensors],
+                            "count": len(alarm_status.sensors),
+                            "base_station": alarm_status.base_station.to_dict() if alarm_status.base_station else None,
+                        },
+                    }
+                return {"success": False, "action": action, "error": "No alarm system found"}
 
             if action == "capabilities":
                 summary = await client.get_summary()

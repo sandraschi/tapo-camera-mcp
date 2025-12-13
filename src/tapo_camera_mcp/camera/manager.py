@@ -54,7 +54,7 @@ class CameraManager:
             # Connection will be retried when accessing stream/snapshot
             import asyncio
             camera = CameraFactory.create(config)
-            
+
             # Try to connect, but don't fail if it times out
             try:
                 connected = await asyncio.wait_for(camera.connect(), timeout=15.0)
@@ -65,7 +65,7 @@ class CameraManager:
             except Exception as e:
                 logger.warning(f"Camera {config.name} connection failed: {e} - will retry on stream access")
                 connected = False
-            
+
             # Add camera even if connection failed - it will retry when needed
             self.cameras[config.name] = camera
             logger.info(f"Added camera: {config.name} ({config.type}) - connected: {connected}")

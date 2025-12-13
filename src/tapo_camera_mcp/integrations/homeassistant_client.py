@@ -72,7 +72,7 @@ class HomeAssistantClient:
                     # Use host.docker.internal for Windows/Mac Docker Desktop
                     base_url = base_url.replace("localhost", "host.docker.internal")
                     base_url = base_url.replace("127.0.0.1", "host.docker.internal")
-        
+
         self.base_url = base_url.rstrip("/")
         self.access_token = access_token
         self.cache_ttl = cache_ttl
@@ -110,7 +110,7 @@ class HomeAssistantClient:
                 logger.error(f"Home Assistant connection failed: {response.status}")
                 return False
 
-        except aiohttp.ClientConnectorError as e:
+        except aiohttp.ClientConnectorError:
             logger.warning(f"Cannot connect to Home Assistant at {self.base_url}")
             import os
             if os.getenv("CONTAINER") == "yes":

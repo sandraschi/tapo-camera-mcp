@@ -3,49 +3,50 @@
 Tapo P115 uses the Tapo API (same as cameras) not the Kasa protocol.
 """
 
-import sys
 import asyncio
+import sys
+
 
 async def test_p115_tapo_api(ip, username, password):
     """Test connection to Tapo P115 using tapo library."""
     try:
         from tapo import ApiClient
-        
-        print(f"Testing Tapo P115 connection using Tapo API...")
+
+        print("Testing Tapo P115 connection using Tapo API...")
         print(f"IP: {ip}")
         print(f"Username: {username}")
         print(f"Password: {'*' * len(password)}")
         print()
-        
+
         # Create API client
         print("Creating Tapo API client...")
         client = ApiClient(username, password)
-        
+
         # Connect to P115 device
         print(f"Connecting to P115 at {ip}...")
         plug = await client.p115(ip)
-        
+
         # Get device info (returns object, not dict)
         device_info = await plug.get_device_info()
-        
+
         print("\n[SUCCESS] Connection successful!")
         print(f"Device Info Type: {type(device_info).__name__}")
-        
+
         # Access attributes directly (object, not dict)
         device_name = getattr(device_info, 'nickname', getattr(device_info, 'name', 'Unknown'))
         model = getattr(device_info, 'model', 'Unknown')
         firmware = getattr(device_info, 'fw_ver', getattr(device_info, 'firmware_version', 'Unknown'))
         mac = getattr(device_info, 'mac', 'Unknown')
         device_id = getattr(device_info, 'device_id', 'Unknown')
-        
+
         print(f"Device Name: {device_name}")
         print(f"Model: {model}")
         print(f"Firmware: {firmware}")
         print(f"MAC: {mac}")
         print(f"Device ID: {device_id}")
-        
+
         # Get current state (different API methods for P115)
-        print(f"\nCurrent State:")
+        print("\nCurrent State:")
         try:
             # Try different methods to get state
             is_on = await plug.is_on()
@@ -56,13 +57,13 @@ async def test_p115_tapo_api(ip, username, password):
                 is_on = getattr(state, 'is_on', getattr(state, 'device_on', False))
                 print(f"  Power: {'ON' if is_on else 'OFF'}")
             except Exception:
-                print(f"  Power: State information not available")
-        
+                print("  Power: State information not available")
+
         # Get energy usage if available
         try:
             energy_usage = await plug.get_energy_usage()
             if energy_usage:
-                print(f"\nEnergy Usage:")
+                print("\nEnergy Usage:")
                 current_power = getattr(energy_usage, 'current_power', getattr(energy_usage, 'power', 0))
                 today_energy = getattr(energy_usage, 'today_energy', getattr(energy_usage, 'today', 0))
                 month_energy = getattr(energy_usage, 'month_energy', getattr(energy_usage, 'month', 0))
@@ -71,9 +72,9 @@ async def test_p115_tapo_api(ip, username, password):
                 print(f"  This Month: {month_energy} kWh")
         except Exception as e:
             print(f"\nNote: Energy usage not available: {e}")
-        
+
         return True
-        
+
     except ImportError:
         print("[ERROR] tapo library not installed")
         print("Install with: pip install tapo")
@@ -83,7 +84,7 @@ async def test_p115_tapo_api(ip, username, password):
         error_msg = str(e)
         error_type = type(e).__name__
         print(f"\n[ERROR] Connection failed: {error_type}: {error_msg}")
-        
+
         if "Temporary Suspension" in error_msg or "1800 seconds" in error_msg:
             print("\n[LOCKOUT] Device is temporarily locked out")
             print("Wait 30 minutes or power cycle the device")
@@ -97,7 +98,7 @@ async def test_p115_tapo_api(ip, username, password):
             print("1. Device is online at IP 192.168.0.17")
             print("2. Device is accessible on network")
             print("3. Third-Party Compatibility is enabled in Tapo app")
-        
+
         import traceback
         traceback.print_exc()
         return False
@@ -106,17 +107,17 @@ if __name__ == "__main__":
     ip = "192.168.0.17"
     username = "sandraschipal@hotmail.com"
     password = "Sec0860ta#"
-    
+
     print("=" * 60)
     print("Testing Tapo P115 Smart Plug via Tapo API")
     print("=" * 60)
     print("\nNote: Tapo P115 uses Tapo API (same as cameras)")
     print("Uses 'tapo' Python library, not 'python-kasa'")
     print()
-    
+
     try:
         success = asyncio.run(test_p115_tapo_api(ip, username, password))
-        
+
         if success:
             print("\n" + "=" * 60)
             print("[SUCCESS] Tapo P115 is accessible via Tapo API!")
@@ -132,7 +133,7 @@ if __name__ == "__main__":
             print("2. Check credentials (use cloud account)")
             print("3. Enable Third-Party Compatibility in Tapo app")
             print("4. Make sure 'tapo' library is installed")
-        
+
         sys.exit(0 if success else 1)
     except KeyboardInterrupt:
         print("\n\n[INTERRUPTED] Test cancelled")

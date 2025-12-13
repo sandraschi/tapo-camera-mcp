@@ -1707,6 +1707,7 @@ Provide a concise summary:"""
             logger.warning(f"Onboarding module not available: {e}")
             onboarding_router = None
             onboarding_available = False
+        from .api.alerts import router as alerts_router
         from .api.audio import router as audio_router
         from .api.energy import router as energy_router
         from .api.health import router as health_router
@@ -1723,6 +1724,7 @@ Provide a concise summary:"""
 
         if onboarding_available and onboarding_router:
             self.app.include_router(onboarding_router)
+        self.app.include_router(alerts_router)
         self.app.include_router(sensors_router)
         self.app.include_router(energy_router)
         self.app.include_router(weather_router)

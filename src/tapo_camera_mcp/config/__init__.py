@@ -72,7 +72,7 @@ class ConfigManager:
             if path.exists():
                 logger.info(f"Found config file at: {path}")
                 return path
-        
+
         # Log all searched paths for debugging
         logger.warning("Config file not found. Searched paths:")
         for path in search_paths:

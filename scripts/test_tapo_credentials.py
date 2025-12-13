@@ -62,37 +62,37 @@ for i, combo in enumerate(test_combinations, 1):
     if not combo["username"] or not combo["password"]:
         print(f"[SKIP] Test {i}: {combo['name']} - Missing credentials")
         continue
-    
+
     print(f"[TEST {i}] {combo['name']}")
     print(f"   Username: {combo['username']}")
     print(f"   Password: {'*' * len(combo['password'])}")
-    
+
     try:
         camera = Tapo(host, combo["username"], combo["password"])
         info = camera.getBasicInfo()
-        
+
         device_info = info.get("device_info", {})
-        print(f"   [SUCCESS] Connection successful!")
+        print("   [SUCCESS] Connection successful!")
         print(f"   Model: {device_info.get('device_model', 'Unknown')}")
         print(f"   Firmware: {device_info.get('firmware_version', 'Unknown')}")
         print(f"   Serial: {device_info.get('serial_number', 'Unknown')}")
-        
+
         successful = combo
         break
-        
+
     except Exception as e:
         error_msg = str(e)
         print(f"   [FAILED] {error_msg}")
-        
+
         if "Temporary Suspension" in error_msg or "1800 seconds" in error_msg:
-            print(f"   [WARNING] Camera is locked out - wait 30 minutes")
-            print(f"   [STOP] Stopping tests to prevent further lockouts")
+            print("   [WARNING] Camera is locked out - wait 30 minutes")
+            print("   [STOP] Stopping tests to prevent further lockouts")
             break
         elif "Invalid authentication" in error_msg or "Invalid auth" in error_msg:
-            print(f"   [INFO] Authentication failed - trying next combination")
+            print("   [INFO] Authentication failed - trying next combination")
         else:
-            print(f"   [INFO] Connection error - trying next combination")
-    
+            print("   [INFO] Connection error - trying next combination")
+
     print()
 
 print()
@@ -101,7 +101,7 @@ print("RESULTS")
 print("=" * 70)
 
 if successful:
-    print(f"[SUCCESS] Working credentials found!")
+    print("[SUCCESS] Working credentials found!")
     print(f"   Method: {successful['name']}")
     print(f"   Username: {successful['username']}")
     print(f"   Password: {'*' * len(successful['password'])}")
@@ -110,7 +110,7 @@ if successful:
     print(f"   username: \"{successful['username']}\"")
     print(f"   password: \"{successful['password']}\"")
 else:
-    print(f"[FAILED] No working credentials found")
+    print("[FAILED] No working credentials found")
     print()
     print("Troubleshooting:")
     print("  1. Verify Third-Party Compatibility is enabled:")

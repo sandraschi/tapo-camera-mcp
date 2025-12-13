@@ -8,8 +8,6 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from tapo_camera_mcp.tools.portmanteau.tapo_control import register_tapo_control_tool
-from fastmcp import FastMCP
 
 # Import the actual function
 from tapo_camera_mcp.tools.portmanteau.tapo_control import tapo
@@ -44,7 +42,7 @@ async def test_action(action: str, **kwargs):
 async def main():
     # Test list lights
     await test_action("list lights")
-    
+
     # Test list plugs
     await test_action("list plugs")
 

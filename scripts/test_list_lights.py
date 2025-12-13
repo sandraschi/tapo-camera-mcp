@@ -14,10 +14,10 @@ from tapo_camera_mcp.tools.lighting.hue_tools import hue_manager
 async def main():
     await hue_manager.initialize()
     lights = await hue_manager.get_all_lights()
-    
+
     print(f"\nFound {len(lights)} lights:\n")
     print("=" * 60)
-    
+
     for i, light in enumerate(lights, 1):
         status = "ON" if light.on else "OFF"
         reachable = "[OK]" if light.reachable else "[X]"

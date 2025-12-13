@@ -6,13 +6,10 @@ Provides MCP tool interface for Moorebot Scout robot control.
 **Timestamp**: 2025-12-02
 **Status**: Mock mode ready, hardware support when robot arrives
 """
-from typing import Dict, Optional
 import logging
+from typing import Dict, Optional
 
-from tapo_camera_mcp.integrations.moorebot_client import (
-    MoorebotScoutClient,
-    MoorebotStatus
-)
+from tapo_camera_mcp.integrations.moorebot_client import MoorebotScoutClient
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +127,7 @@ async def moorebot_move(
     """
     try:
         client = get_moorebot_client()
-        
+
         # Validate velocities
         if not (-0.3 <= linear <= 0.3):
             return {
@@ -138,14 +135,14 @@ async def moorebot_move(
                 "error": "Linear velocity out of range",
                 "valid_range": "-0.3 to 0.3 m/s"
             }
-        
+
         if not (-2.0 <= angular <= 2.0):
             return {
                 "success": False,
                 "error": "Angular velocity out of range",
                 "valid_range": "-2.0 to 2.0 rad/s"
             }
-        
+
         return await client.move(linear, angular, duration)
     except Exception as e:
         logger.error(f"Moorebot move failed: {e}")
@@ -372,7 +369,7 @@ async def moorebot_get_camera_stream() -> Dict:
         client = get_moorebot_client()
         video_url = await client.get_video_stream_url()
         audio_url = await client.get_audio_stream_url()
-        
+
         return {
             "success": True,
             "video_url": video_url,
