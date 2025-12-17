@@ -58,6 +58,7 @@ class TapoCameraCLI:
 
         # Subcommands (default to serve for MCP compatibility)
         subparsers = parser.add_subparsers(dest="command", required=False)
+        parser.set_defaults(command="serve")
 
         # Server commands
         server_parser = subparsers.add_parser("serve", help="Start the MCP server")
@@ -131,11 +132,13 @@ class TapoCameraCLI:
     async def run(self, args=None):
         """Run the CLI."""
         if args is None:
-            args = self.parser.parse_args()
+            import sys
+            # Use parse_known_args to handle cases where no subcommand is provided
+            args, unknown = self.parser.parse_known_args()
 
-        # Default to serve command for MCP compatibility (when no command specified)
-        if not hasattr(args, 'command') or args.command is None:
-            args.command = "serve"
+            # If no command was specified (which can happen with set_defaults), ensure it's serve
+            if not hasattr(args, 'command') or args.command is None or args.command not in ['serve', 'connect', 'camera', 'help']:
+                args.command = 'serve'
 
         try:
             # Handle help command
@@ -145,11 +148,11 @@ class TapoCameraCLI:
 
             # Handle serve command (start the server)
             if args.command == "serve":
-                server = TapoCameraServer()
+                server = await TapoCameraServer.get_instance()
                 print_info(f"Starting Tapo Camera MCP server on {args.host}:{args.port}")
                 if args.stdio:
                     print_info("Stdio transport enabled")
-                server.run(host=args.host, port=args.port, stdio=args.stdio)
+                await server.run(host=args.host, port=args.port, stdio=args.stdio)
                 return 0
 
             # For other commands, we need a client
@@ -300,10 +303,34 @@ class TapoCameraCLI:
             data = data["content"]
 
 
+async def main_async():
+    """Async entry point for the CLI."""
+    cli = TapoCameraCLI()
+
+    # Handle MCP compatibility - if no arguments provided, default to serve
+    import sys
+    if len(sys.argv) == 1:
+        # No arguments provided, run server directly for MCP compatibility
+        server = await TapoCameraServer.get_instance()
+        print_info("Starting Tapo Camera MCP server (stdio mode)")
+        await server.run(stdio=True, direct=True)
+        return 0
+
+    try:
+        return await cli.run()
+    except SystemExit as e:
+        # If argparse failed due to missing command, try running server
+        if e.code == 2:  # argparse error code
+            print_info("No command specified, starting MCP server...")
+            server = await TapoCameraServer.get_instance()
+            await server.run(stdio=True, direct=True)
+            return 0
+        else:
+            raise
+
 def main():
     """Entry point for the CLI."""
-    cli = TapoCameraCLI()
-    return asyncio.run(cli.run())
+    return asyncio.run(main_async())
 
 
 if __name__ == "__main__":
