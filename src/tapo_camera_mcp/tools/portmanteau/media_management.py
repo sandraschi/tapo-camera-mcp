@@ -104,6 +104,13 @@ def register_media_management_tool(mcp: FastMCP) -> None:
             logger.info(f"Executing media management action: {action}")
 
             if action in ["capture", "capture_still", "analyze"]:
+                if not camera_name:
+                    return {"success": False, "error": "camera_name is required for this action"}
+
+                if action == "analyze":
+                    if not prompt:
+                        return {"success": False, "error": "prompt is required for analyze action"}
+
                 tool = ImageCaptureTool()
                 operation_map = {
                     "capture": "capture",
@@ -112,7 +119,7 @@ def register_media_management_tool(mcp: FastMCP) -> None:
                 }
                 result = await tool.execute(
                     operation=operation_map[action],
-                    camera_id=camera_name or "",
+                    camera_id=camera_name,
                     quality=quality or "high",
                     save_to_temp=save_to_temp,
                     analyze=analyze,
@@ -121,6 +128,13 @@ def register_media_management_tool(mcp: FastMCP) -> None:
                 return {"success": True, "action": action, "data": result}
 
             if action in ["start_recording", "stop_recording", "get_stream_url"]:
+                if not camera_name:
+                    return {"success": False, "error": "camera_name is required for this action"}
+
+                if action == "start_recording":
+                    if not duration:
+                        return {"success": False, "error": "duration is required for start_recording action"}
+
                 tool = VideoRecordingTool()
                 operation_map = {
                     "start_recording": "start",
@@ -129,7 +143,7 @@ def register_media_management_tool(mcp: FastMCP) -> None:
                 }
                 result = await tool.execute(
                     operation=operation_map[action],
-                    camera_id=camera_name or "",
+                    camera_id=camera_name,
                     duration=duration,
                     output_dir=output_dir,
                 )

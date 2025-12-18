@@ -202,12 +202,15 @@ def register_ptz_management_tool(mcp: FastMCP) -> None:
             logger.info(f"Executing PTZ management action: {action}")
 
             if action in ["move", "position", "stop"]:
+                if not camera_name:
+                    return {"success": False, "error": "camera_name is required for this action"}
+
                 tool = PTZControlTool()
                 operation_map = {"move": "move", "position": "position", "stop": "stop"}
                 # Only pass speed for move operation
                 execute_params = {
                     "operation": operation_map[action],
-                    "camera_id": camera_name or "",
+                    "camera_id": camera_name,
                 }
                 if action == "move":
                     execute_params.update({
@@ -220,6 +223,16 @@ def register_ptz_management_tool(mcp: FastMCP) -> None:
                 return {"success": True, "action": action, "data": result}
 
             if action in ["save_preset", "recall_preset", "list_presets", "delete_preset", "home"]:
+                if not camera_name:
+                    return {"success": False, "error": "camera_name is required for this action"}
+
+                if action == "save_preset":
+                    if not preset_name:
+                        return {"success": False, "error": "preset_name is required for save_preset action"}
+                elif action in ["recall_preset", "delete_preset"]:
+                    if not preset_name and not preset_id:
+                        return {"success": False, "error": "preset_name or preset_id is required for this action"}
+
                 tool = PTZPresetTool()
                 operation_map = {
                     "save_preset": "save",
@@ -230,7 +243,7 @@ def register_ptz_management_tool(mcp: FastMCP) -> None:
                 }
                 result = await tool.execute(
                     operation=operation_map[action],
-                    camera_id=camera_name or "",
+                    camera_id=camera_name,
                     preset_name=preset_name,
                     preset_id=preset_id,
                 )

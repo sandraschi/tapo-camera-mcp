@@ -9,6 +9,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 
+from ...config import get_config
 from ...db import TimeSeriesDB
 from ...ingest import IngestionUnavailableError, WienEnergieIngestionService
 from ...tools.energy.tapo_plug_tools import tapo_plug_manager
@@ -41,22 +42,67 @@ async def list_energy_devices() -> dict[str, Any]:
     """
     devices = []
 
-    # Get Tapo P115 devices
+    # Get Tapo P115 devices with fresh API data
     try:
         tapo_devices = await tapo_plug_manager.get_all_devices()
         for device in tapo_devices:
+            device_id = device.device_id
+            host = tapo_plug_manager.get_device_host(device_id)
+
+            # Get fresh data from Tapo API if we have credentials and host
+            current_power = 0.0
+            voltage = 0.0
+            current = 0.0
+            today_energy = 0.0
+            month_energy = 0.0
+            power_state = False
+
+            if host:
+                try:
+                    # Get fresh data directly from Tapo API
+                    account_email = config.get('energy', {}).get('tapo_p115', {}).get('account', {}).get('email')
+                    account_password = config.get('energy', {}).get('tapo_p115', {}).get('account', {}).get('password')
+
+                    if account_email and account_password:
+                        import tapo
+                        client = await tapo.ApiClient(account_email, account_password).p115(host)
+                        device_info = await client.get_device_info()
+                        energy_usage = await client.get_energy_usage()
+
+                        # Get real-time current power (Tapo P115 DOES provide this!)
+                        current_power_result = await client.get_current_power()
+                        current_power = current_power_result.current_power if hasattr(current_power_result, 'current_power') else 0.0
+
+                        # Get energy usage data
+                        power_state = device_info.device_on if hasattr(device_info, 'device_on') else False
+                        today_energy = energy_usage.today_energy if hasattr(energy_usage, 'today_energy') else 0
+                        month_energy = energy_usage.month_energy if hasattr(energy_usage, 'month_energy') else 0
+
+                        # Voltage and current are not provided by Tapo P115 API
+                        voltage = 0.0
+                        current = 0.0
+
+                except Exception as e:
+                    # If API call fails, use cached device data
+                    current_power = device.current_power
+                    voltage = device.voltage
+                    current = device.current
+                    today_energy = device.daily_energy
+                    month_energy = device.monthly_energy
+                    power_state = device.power_state
+
             devices.append({
                 "device_id": device.device_id,
                 "name": device.name,
                 "location": device.location,
                 "type": "tapo_p115",
                 "device_model": device.device_model,
-                "power_state": device.power_state,
-                "current_power": device.current_power,
-                "voltage": device.voltage,
-                "current": device.current,
-                "daily_energy": device.daily_energy,
-                "monthly_energy": device.monthly_energy,
+                "power_state": power_state,
+                "current_power": current_power,  # Always 0.0 for Tapo P115 (not supported)
+                "voltage": voltage,
+                "current": current,
+                "daily_energy": today_energy,
+                "monthly_energy": month_energy,
                 "daily_cost": device.daily_cost,
                 "monthly_cost": device.monthly_cost,
                 "last_seen": device.last_seen,

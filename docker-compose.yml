@@ -1,0 +1,46 @@
+name: tapo-camera-mcp
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tapo-camera-mcp
+    ports:
+      - "7777:7777"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - app_logs:/app/logs
+      - app_snapshots:/app/snapshots
+      - app_recordings:/app/recordings
+      - app_cache:/app/cache
+      - app_tokens:/app/tokens
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7777/api/health', timeout=4)"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CONTAINER=yes
+
+volumes:
+  app_logs:
+  app_snapshots:
+  app_recordings:
+  app_cache:
+  app_tokens:
+
+networks:
+  default:
+    driver: bridge

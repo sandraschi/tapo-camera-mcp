@@ -65,7 +65,8 @@ dependencies = [
     "onvif-zeep>=0.2.12,<1.0.0",   # ONVIF camera protocol
     "phue>=1.1,<2.0.0",             # Philips Hue Bridge integration
     "jinja2>=3.0.0,<4.0.0",         # Template engine for web dashboard
-    "tapo>=0.1.0,<1.0.0"            # Tapo P115 smart plug integration
+    "tapo>=0.1.0,<1.0.0",           # Tapo P115 smart plug integration
+    "watchfiles>=0.21.0"            # File monitoring and crashproofing
 ]
 
 [project.optional-dependencies]

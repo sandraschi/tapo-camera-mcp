@@ -5,9 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2025-12-10 🔧 **Netatmo Token Refresh Fix + Weather Page**
+## [1.8.1] - 2025-12-18 ⚡ **Real-Time Power Monitoring Fix**
 
 ### 🐛 **BUG FIXES**
+
+#### **Tapo P115 Real-Time Power Monitoring**
+- **Fixed missing current_power data**: Tapo P115 plugs now report real-time power consumption in watts
+- **Correct API method usage**: Changed from accessing `energy.current_power` (non-existent) to using `client.get_current_power()` method
+- **Added real-time power tracking**: Energy API now returns actual current power consumption (e.g., 107W, 52W, 254W)
+- **Enhanced energy monitoring**: Plugs are now fully functional for real-time energy monitoring and cost tracking
+
+### 🐛 **BUG FIXES** (Previous)
 
 #### **Netatmo Token Refresh**
 - **Fixed 403 errors after token refresh**: System was using cached/stale access tokens after refresh

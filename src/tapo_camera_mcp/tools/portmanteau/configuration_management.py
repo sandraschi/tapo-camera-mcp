@@ -100,6 +100,9 @@ def register_configuration_management_tool(mcp: FastMCP) -> None:
                 }
 
             if action in ["led_control", "motion_detection"]:
+                if not camera_name:
+                    return {"success": False, "error": "camera_name is required for this action"}
+
                 tool = DeviceSettingsTool()
                 operation_map = {
                     "led_control": "led",
@@ -107,16 +110,19 @@ def register_configuration_management_tool(mcp: FastMCP) -> None:
                 }
                 result = await tool.execute(
                     operation=operation_map[action],
-                    camera_id=camera_name or "",
+                    camera_id=camera_name,
                     enabled=enabled,
                 )
                 return {"success": True, "action": action, "data": result}
 
             if action in ["privacy_settings", "privacy_mode"]:
+                if not camera_name:
+                    return {"success": False, "error": "camera_name is required for this action"}
+
                 tool = PrivacySettingsTool()
                 result = await tool.execute(
                     operation=action,
-                    camera_id=camera_name or "",
+                    camera_id=camera_name,
                     enabled=enabled,
                 )
                 return {"success": True, "action": action, "data": result}

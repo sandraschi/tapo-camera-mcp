@@ -245,6 +245,7 @@ class ConnectionSupervisor:
                     info = await device.get_device_info()
                     energy = await device.get_energy_usage()
 
+                    # Tapo P115 only provides energy usage data, not real-time power
                     self._update_health(
                         device_id=f"plug_{device_id}",
                         device_type="plug",
@@ -252,7 +253,9 @@ class ConnectionSupervisor:
                         connected=True,
                         error=None,
                         details={
-                            'power': energy.current_power if energy else 0,
+                            'power': 0.0,  # Real-time power not available from Tapo P115
+                            'today_energy': energy.today_energy if energy else 0,
+                            'month_energy': energy.month_energy if energy else 0,
                             'host': host,
                             'model': info.model if info else 'P115'
                         }

@@ -21,7 +21,21 @@ async def inspect_energy(host: str, name: str):
         client = await service._get_client()
         plug = await client.p115(host)
 
+        # Get device info first
+        print("Getting device info...")
+        device_info = await plug.get_device_info()
+        print(f"Device info type: {type(device_info)}")
+        print(f"Device info attributes: {[attr for attr in dir(device_info) if not attr.startswith('_')]}")
+
+        # Try to get device info as dict
+        if hasattr(device_info, '__dict__'):
+            print("\nDevice info __dict__:")
+            for key, val in device_info.__dict__.items():
+                print(f"  {key}: {val}")
+
         # Get energy usage
+        print("\n" + "="*50)
+        print("Getting energy usage...")
         energy = await plug.get_energy_usage()
 
         print(f"\nEnergy object type: {type(energy)}")
@@ -50,6 +64,68 @@ async def inspect_energy(host: str, name: str):
             print("\nEnergy object __dict__:")
             for key, val in energy.__dict__.items():
                 print(f"  {key}: {val}")
+
+        # Check if plug has other methods for power data
+        print("\n" + "="*50)
+        print("Checking plug object methods...")
+        plug_methods = [method for method in dir(plug) if not method.startswith('_') and callable(getattr(plug, method))]
+        print(f"Available methods: {plug_methods}")
+
+        # Try get_current_power method
+        print("\n" + "="*50)
+        print("Testing get_current_power() method...")
+        try:
+            current_power_result = await plug.get_current_power()
+            print(f"get_current_power() result type: {type(current_power_result)}")
+            print(f"get_current_power() result: {current_power_result}")
+
+            if hasattr(current_power_result, '__dict__'):
+                print("get_current_power() result __dict__:")
+                for key, val in current_power_result.__dict__.items():
+                    print(f"  {key}: {val}")
+
+            # Check if it has power attribute
+            if hasattr(current_power_result, 'power'):
+                print(f"Power from get_current_power(): {current_power_result.power}")
+            elif hasattr(current_power_result, 'current_power'):
+                print(f"Current power from get_current_power(): {current_power_result.current_power}")
+
+        except Exception as e:
+            print(f"get_current_power() failed: {e}")
+            import traceback
+            traceback.print_exc()
+
+        # Try get_power_data method
+        print("\n" + "="*50)
+        print("Testing get_power_data() method...")
+        try:
+            power_data_result = await plug.get_power_data()
+            print(f"get_power_data() result type: {type(power_data_result)}")
+            print(f"get_power_data() result: {power_data_result}")
+
+            if hasattr(power_data_result, '__dict__'):
+                print("get_power_data() result __dict__:")
+                for key, val in power_data_result.__dict__.items():
+                    print(f"  {key}: {val}")
+
+        except Exception as e:
+            print(f"get_power_data() failed: {e}")
+
+        # Try get_device_usage method
+        print("\n" + "="*50)
+        print("Testing get_device_usage() method...")
+        try:
+            device_usage_result = await plug.get_device_usage()
+            print(f"get_device_usage() result type: {type(device_usage_result)}")
+            print(f"get_device_usage() result: {device_usage_result}")
+
+            if hasattr(device_usage_result, '__dict__'):
+                print("get_device_usage() result __dict__:")
+                for key, val in device_usage_result.__dict__.items():
+                    print(f"  {key}: {val}")
+
+        except Exception as e:
+            print(f"get_device_usage() failed: {e}")
 
         return True
 

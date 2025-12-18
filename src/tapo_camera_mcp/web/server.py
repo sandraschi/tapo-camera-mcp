@@ -1536,8 +1536,21 @@ Provide a concise summary:"""
                     name = device.name or device_id
                     location = getattr(device, "location", "unknown")
 
-                    # Power consumption in watts
-                    power_watts = device.current_power
+                    # Get real-time current power from Tapo P115
+                    power_watts = 0.0  # Default fallback
+                    try:
+                        # Get fresh power data from Tapo API
+                        account_email = config.get('energy', {}).get('tapo_p115', {}).get('account', {}).get('email')
+                        account_password = config.get('energy', {}).get('tapo_p115', {}).get('account', {}).get('password')
+
+                        if account_email and account_password and host != "unknown":
+                            import tapo
+                            client = await tapo.ApiClient(account_email, account_password).p115(host)
+                            current_power_result = await client.get_current_power()
+                            power_watts = current_power_result.current_power if hasattr(current_power_result, 'current_power') else 0.0
+                    except Exception:
+                        # Fallback to cached data if API fails
+                        power_watts = getattr(device, 'current_power', 0.0)
                     metrics_lines.append(
                         f'tapo_p115_power_watts{{device_id="{device_id}",host="{host}",name="{name}",location="{location}"}} {power_watts}'
                     )
@@ -2737,7 +2750,8 @@ if __name__ == "__main__":
     if is_docker:
         # In Docker: Log to stdout (Docker json-file driver) and mounted volume
         # Promtail reads from /app/logs/tapo_mcp.log (mounted to host)
-        setup_logging(log_file="/app/logs/tapo_mcp.log")
+        log_file = "/app/logs/tapo_mcp.log"
+        setup_logging(log_file=log_file)
     else:
         # Native: Log to project root
         log_file = Path(__file__).parent.parent.parent.parent / "tapo_mcp.log"
