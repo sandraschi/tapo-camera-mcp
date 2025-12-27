@@ -1,0 +1,22 @@
+{
+  "living_room_cam": {
+    "Bed": {
+      "name": "Bed",
+      "camera_name": "living_room_cam",
+      "pan": 0.502068,
+      "tilt": -1.0,
+      "zoom": 0,
+      "description": ""
+    }
+  },
+  "tapo_kitchen": {
+    "Forward": {
+      "name": "Forward",
+      "camera_name": "tapo_kitchen",
+      "pan": 0.135988,
+      "tilt": -0.525126,
+      "zoom": 0,
+      "description": ""
+    }
+  }
+}

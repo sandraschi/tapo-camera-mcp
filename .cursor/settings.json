@@ -1,5 +1,5 @@
 {
-  "python.defaultInterpreterPath": "./build_venv/Scripts/python.exe",
+  "python.defaultInterpreterPath": "C:\\Users\\sandr\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
   "python.linting.enabled": true,
   "python.linting.pylintEnabled": false,
   "python.linting.flake8Enabled": false,
