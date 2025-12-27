@@ -53,17 +53,23 @@ class CameraManager:
             # Create camera - add it even if connection fails initially
             # Connection will be retried when accessing stream/snapshot
             import asyncio
+
             camera = CameraFactory.create(config)
 
             # Try to connect, but don't fail if it times out
             try:
-                connected = await asyncio.wait_for(camera.connect(), timeout=15.0)
+                # Reduced timeout to prevents server startup hang from slow cameras
+                connected = await asyncio.wait_for(camera.connect(), timeout=2.0)
                 logger.info(f"Camera {config.name} connected: {connected}")
             except asyncio.TimeoutError:
-                logger.warning(f"Camera {config.name} connection timed out - will retry on stream access")
+                logger.warning(
+                    f"Camera {config.name} connection timed out (2s) - will retry on stream access"
+                )
                 connected = False
             except Exception as e:
-                logger.warning(f"Camera {config.name} connection failed: {e} - will retry on stream access")
+                logger.warning(
+                    f"Camera {config.name} connection failed: {e} - will retry on stream access"
+                )
                 connected = False
 
             # Add camera even if connection failed - it will retry when needed
@@ -113,50 +119,59 @@ class CameraManager:
         Returns:
             List of camera information dictionaries
         """
-        result = []
-        camera_names = self.groups.get_group_cameras(group) if group else self.cameras.keys()
+        camera_names = self.groups.get_group_cameras(group) if group else list(self.cameras.keys())
 
         import asyncio
-        for name in camera_names:
+
+        async def get_camera_info(name):
             if name not in self.cameras:
-                continue
+                return None
 
             camera = self.cameras[name]
             try:
                 # Add timeout to prevent hanging on camera status checks
                 status = await asyncio.wait_for(camera.get_status(), timeout=3.0)
-                result.append(
-                    {
-                        "name": name,
-                        "type": camera.config.type.value
-                        if hasattr(camera.config.type, "value")
-                        else str(camera.config.type),
-                        "status": status,
-                        "groups": self.groups.get_camera_groups(name),
-                    }
-                )
+                return {
+                    "name": name,
+                    "type": camera.config.type.value
+                    if hasattr(camera.config.type, "value")
+                    else str(camera.config.type),
+                    "status": status,
+                    "groups": self.groups.get_camera_groups(name),
+                }
             except asyncio.TimeoutError:
                 logger.warning(f"Camera {name} status check timed out")
-                result.append(
-                    {
-                        "name": name,
-                        "type": camera.config.type.value
-                        if hasattr(camera.config.type, "value")
-                        else str(camera.config.type),
-                        "status": {"connected": False, "error": "Status check timed out"},
-                        "groups": self.groups.get_camera_groups(name),
-                    }
-                )
+                return {
+                    "name": name,
+                    "type": camera.config.type.value
+                    if hasattr(camera.config.type, "value")
+                    else str(camera.config.type),
+                    "status": {"connected": False, "error": "Status check timed out"},
+                    "groups": self.groups.get_camera_groups(name),
+                }
             except Exception as e:
                 logger.exception(f"Error getting status for {name}")
-                result.append(
-                    {
-                        "name": name,
-                        "error": str(e),
-                        "groups": self.groups.get_camera_groups(name),
-                    }
-                )
-        return result
+                return {
+                    "name": name,
+                    "error": str(e),
+                    "groups": self.groups.get_camera_groups(name),
+                }
+
+        # Run checks in parallel
+        results = await asyncio.gather(
+            *[get_camera_info(name) for name in camera_names], return_exceptions=True
+        )
+
+        # Filter out None results and handle exceptions in results
+        final_results = []
+        for r in results:
+            if isinstance(r, Exception):
+                logger.error(f"Error in camera status check task: {r}")
+                continue
+            if r:
+                final_results.append(r)
+
+        return final_results
 
     async def capture_still(
         self, camera_name: str, save_path: Optional[Union[str, Path]] = None

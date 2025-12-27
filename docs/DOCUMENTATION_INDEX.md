@@ -86,6 +86,20 @@ docs/
 │                       → Camera control and streaming APIs
 │                       → WebSocket support and mobile APIs
 │
+├── ring-setup-guide.md 🔔 **UPDATED**: Ring Doorbell integration guide
+│                       → Web dashboard setup (`/ring`)
+│                       → One-click initialization
+│                       → 2FA authentication
+│                       → Device management and alarm controls
+│                       → Live view and event timeline
+│
+├── nest-protect-setup-guide.md 🔥 **NEW**: Nest Protect integration guide
+│                              → Home Assistant bridge setup
+│                               → Web dashboard (`/nest`)
+│                               → Device status and alerts
+│                               → Smoke/CO monitoring
+│                               → Troubleshooting guide
+│
 ├── STATUS_UPDATE.md 📊 **UPDATED**: Current project status (November 2025)
 │                    → Production-ready platform v1.3.0
 │                    → LLM integration, Dockerization, Energy management

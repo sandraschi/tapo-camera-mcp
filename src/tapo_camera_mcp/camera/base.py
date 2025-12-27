@@ -18,6 +18,12 @@ class CameraType(str, Enum):
         RING: Ring doorbell camera
         WEBCAM: Standard USB/web camera
         LAPTOP: Built-in laptop camera
+        MICROSCOPE: USB microscope camera
+        OTOSCOPE: USB otoscope camera
+        SCANNER: USB scanner camera
+        DIGICAM: Digital camera (old digicams repurposed as webcams)
+        IPHONE: iPhone repurposed as webcam
+        PUBLIC_WEBCAM: Public/external webcams (weather cams, tourist cams)
         PETCUBE: Petcube pet camera
         FURBO: Furbo pet camera
     """
@@ -27,6 +33,12 @@ class CameraType(str, Enum):
     RING = "ring"
     WEBCAM = "webcam"
     LAPTOP = "laptop"
+    MICROSCOPE = "microscope"
+    OTOSCOPE = "otoscope"
+    SCANNER = "scanner"
+    DIGICAM = "digicam"
+    IPHONE = "iphone"
+    PUBLIC_WEBCAM = "public_webcam"
     PETCUBE = "petcube"
     FURBO = "furbo"
 
@@ -124,6 +136,7 @@ class BaseCamera(ABC):
             "firmware": "Unknown",
             "resolution": "Unknown",
             "ptz_capable": False,
+            "digital_zoom_capable": True,  # Digital zoom available for all cameras
             "audio_capable": False,
             "streaming_capable": False,
             "capture_capable": True,  # Most cameras can capture
@@ -202,6 +215,10 @@ class CameraFactory:
             return cls._camera_classes[CameraType.WEBCAM](config, mock_webcam=mock_webcam)
         if config.type == CameraType.LAPTOP:
             # Laptop cameras use same implementation as webcams but with different detection
+            mock_webcam = MockWebCamera(config.params)
+            return cls._camera_classes[CameraType.WEBCAM](config, mock_webcam=mock_webcam)
+        if config.type == CameraType.MICROSCOPE:
+            # Microscope cameras use same implementation as webcams
             mock_webcam = MockWebCamera(config.params)
             return cls._camera_classes[CameraType.WEBCAM](config, mock_webcam=mock_webcam)
         if config.type == CameraType.RING:

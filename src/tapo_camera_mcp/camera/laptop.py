@@ -162,6 +162,7 @@ class LaptopCamera(BaseCamera):
             "streaming": await self.is_streaming(),
             "resolution": resolution,
             "ptz_capable": False,  # Laptop cameras don't have PTZ
+            "digital_zoom_capable": True,  # Digital zoom always available
             "audio_capable": True,  # Laptop cameras often have audio
             "streaming_capable": True,  # Laptop cameras can stream
             "capture_capable": True,  # Laptop cameras can capture

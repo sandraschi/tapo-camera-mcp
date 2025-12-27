@@ -83,6 +83,64 @@ Access the web interface at `http://localhost:7777` (or your server's IP address
 
 ![Web Interface](docs/images/web-interface.png)
 
+### 3.1 Security Dashboards
+
+The platform includes dedicated dashboards for security devices:
+
+#### Ring Doorbell Dashboard (`/ring`)
+
+Access at `http://localhost:7777/ring` to manage your Ring doorbell and alarm system.
+
+**Features:**
+- **Status Card**: Real-time connection status with color-coded indicators
+  - 🟢 Green: Connected and ready
+  - 🟡 Yellow: Needs initialization or 2FA
+  - 🔴 Red: Configuration issue
+- **One-Click Initialization**: "Initialize Connection" button for easy setup
+- **2FA Support**: In-page form for submitting verification codes
+- **Device Cards**: Visual display of battery, WiFi signal, model, firmware
+- **Live View**: Direct WebRTC streaming (no subscription required)
+- **Alarm Controls**: Disarm, Home, and Away mode buttons
+- **Recent Events**: Timeline of motion and doorbell events
+- **Toast Notifications**: User feedback for all actions
+
+**Setup:**
+1. Configure Ring credentials in `config.yaml`
+2. Navigate to `/ring` dashboard
+3. Click "Initialize Connection" if not connected
+4. Submit 2FA code if prompted
+5. Devices appear automatically once connected
+
+See [Ring Setup Guide](ring-setup-guide.md) for detailed instructions.
+
+#### Nest Protect Dashboard (`/nest`)
+
+Access at `http://localhost:7777/nest` to monitor your Nest Protect smoke and CO detectors.
+
+**Features:**
+- **Status Card**: Connection status via Home Assistant integration
+- **Device Cards**: Visual display of smoke/CO status, battery health, location
+- **Alert Section**: Color-coded alerts (emergency = red, warning = yellow)
+- **Auto-Refresh**: Status updates every 30 seconds
+- **Setup Instructions**: Step-by-step Home Assistant configuration guide
+
+**Setup:**
+1. Ensure Home Assistant is running (`http://localhost:8123`)
+2. Create a long-lived access token in Home Assistant
+3. Configure Nest integration in Home Assistant (Settings → Devices & Services)
+4. Add Home Assistant settings to `config.yaml`:
+   ```yaml
+   security:
+     integrations:
+       homeassistant:
+         enabled: true
+         url: http://localhost:8123
+         access_token: "your_token_here"
+   ```
+5. Navigate to `/nest` dashboard to view devices
+
+See [Nest Protect Setup Guide](nest-protect-setup-guide.md) for detailed instructions.
+
 ## 4. Camera Management
 
 ### 4.1 Adding Cameras

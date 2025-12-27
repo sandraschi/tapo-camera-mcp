@@ -1,7 +1,7 @@
 # 🏠 Home Security MCP Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.8.1-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/releases)
+[![Version](https://img.shields.io/badge/version-1.7.0-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/releases)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![MCP Version](https://img.shields.io/badge/MCP-2.12.0-blue)](https://mcp-standard.org)
@@ -81,6 +81,9 @@
 - **📹 Two-Way Talk**: WebRTC audio for speaking to visitors at door
 - **🧪 Ring Tests**: Comprehensive pytest suite for Ring client and API
 - **📚 Ring Docs**: Full integration guide with subscription comparison
+- **🎨 Enhanced UI**: Modern gradient status cards, setup instructions, one-click initialization
+- **📱 Ring Dashboard**: Dedicated `/ring` page with device cards, alarm controls, event timeline
+- **🔥 Nest Dashboard**: Dedicated `/nest` page with device status, alerts, and Home Assistant integration
 
 **Previous v1.4.0:**
 - **💡 Philips Hue Lighting**: 18 lights, 6 groups, 11 predefined scenes, cached device lists

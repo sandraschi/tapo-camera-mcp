@@ -4,8 +4,11 @@ Web server module for Tapo Camera MCP.
 This module provides the web server implementation using FastAPI.
 """
 
+import asyncio
 import logging
+import os
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Generator, List, Optional
@@ -543,6 +546,15 @@ class WebServer:
                         }
                     )
 
+                # Add custom camera name if available
+                try:
+                    from .api.camera_names import get_display_name
+                    display_info = await get_display_name(camera_info["name"])
+                    camera_info["custom_name"] = display_info.get("custom_name")
+                except Exception as e:
+                    logger.debug(f"Could not get custom name for camera {camera_info.get('name', 'unknown')}: {e}")
+                    camera_info["custom_name"] = None
+
                 cameras_data.append(camera_info)
 
         except asyncio.TimeoutError:
@@ -591,6 +603,40 @@ class WebServer:
                 priority = 3
             return (priority, name)
 
+        # Add Ring doorbells to cameras list
+        try:
+            from tapo_camera_mcp.integrations.ring_client import get_ring_client
+            
+            ring_client = get_ring_client()
+            if ring_client and ring_client.is_initialized:
+                try:
+                    doorbells = await asyncio.wait_for(ring_client.get_doorbells(), timeout=3.0)
+                    for doorbell in doorbells:
+                        doorbell_dict = doorbell.to_dict() if hasattr(doorbell, 'to_dict') else dict(doorbell)
+                        device_id = str(doorbell_dict.get('id', doorbell_dict.get('device_id', '')))
+                        cameras_data.append({
+                            "name": f"ring_{device_id}",
+                            "id": device_id,
+                            "type": "ring",
+                            "custom_name": doorbell_dict.get('name', f"Ring {device_id}"),
+                            "status": "online",
+                            "model": doorbell_dict.get('model', 'Ring Doorbell'),
+                            "firmware": doorbell_dict.get('firmware', 'Unknown'),
+                            "resolution": "1080p",
+                            "ptz_capable": False,
+                            "audio_capable": True,
+                            "streaming_capable": True,
+                            "digital_zoom_capable": False,
+                            "battery_life": doorbell_dict.get('battery_life', 'Unknown'),
+                            "wifi_signal": doorbell_dict.get('wifi_signal_strength', 'Unknown'),
+                        })
+                except asyncio.TimeoutError:
+                    logger.debug("Ring doorbells fetch timed out")
+                except Exception as e:
+                    logger.debug(f"Could not fetch Ring doorbells: {e}")
+        except Exception as e:
+            logger.debug(f"Ring integration not available: {e}")
+
         cameras_data = sorted(cameras_data, key=_camera_sort_key)
 
         return self.templates.TemplateResponse(
@@ -634,6 +680,16 @@ class WebServer:
             {
                 "request": request,
                 "active_page": "health",
+            },
+        )
+
+    async def human_health_page(self, request: Request):
+        """Serve the human health monitoring page."""
+        return self.templates.TemplateResponse(
+            "human_health.html",
+            {
+                "request": request,
+                "active_page": "human-health",
             },
         )
 
@@ -917,7 +973,38 @@ class WebServer:
 
                 # Add timeouts to prevent hanging
                 server = await asyncio.wait_for(TapoCameraServer.get_instance(), timeout=5.0)
-                cameras = await asyncio.wait_for(server.camera_manager.list_cameras(), timeout=5.0)
+                # INCREASED TIMEOUT: list_cameras now runs parallel checks (patched in manager.py)
+                # but with many cameras, 5.0s might still be too tight locally. Bump to 8.0s.
+                cameras = await asyncio.wait_for(server.camera_manager.list_cameras(), timeout=8.0)
+
+                # Add Ring cameras if Ring integration is available
+                try:
+                    from .api.ring import get_ring_client
+                    ring_client = get_ring_client()
+                    logger.debug(f"Ring client check: client={ring_client is not None}, initialized={ring_client.is_initialized if ring_client else False}")
+                    if ring_client and ring_client.is_initialized:
+                        # Get Ring doorbells
+                        doorbells = await asyncio.wait_for(ring_client.get_doorbells(), timeout=3.0)
+                        logger.debug(f"Found {len(doorbells)} Ring doorbells")
+                        for doorbell in doorbells:
+                            ring_camera = {
+                                "name": f"ring_{doorbell.id}",
+                                "type": "ring",
+                                "status": "online" if doorbell.is_online else "offline",
+                                "model": doorbell.device_type,
+                                "firmware": doorbell.extra_data.get("firmware", "N/A"),
+                                "battery_life": doorbell.battery_level,
+                                "streaming": True,
+                                "capture_capable": True,
+                                "groups": []
+                            }
+                            cameras.append(ring_camera)
+                            logger.info(f"Added Ring camera: {ring_camera['name']}")
+                    else:
+                        logger.debug("Ring client not available or not initialized")
+                except Exception as e:
+                    logger.exception(f"Could not add Ring cameras: {e}")
+
                 return {"success": True, "cameras": cameras}
             except asyncio.TimeoutError:
                 logger.warning("Camera list request timed out")
@@ -960,17 +1047,24 @@ class WebServer:
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
                 server = await TapoCameraServer.get_instance()
+                logger.info(f"STREAMING: Server instance: {server is not None}")
 
                 if hasattr(server, "camera_manager") and server.camera_manager:
                     camera = server.camera_manager.cameras.get(camera_id)
+                    logger.info(f"STREAMING: Camera lookup for {camera_id}: found={camera is not None}, total cameras={len(server.camera_manager.cameras)}")
+
+                    # Handle Ring cameras
+                    if camera_id.startswith("ring_"):
+                        return {"stream_url": None, "type": "webrtc", "note": "Ring camera uses WebRTC streaming"}
+
                     if camera:
                         # Get camera type as string
                         camera_type = camera.config.type
                         if hasattr(camera_type, "value"):
                             camera_type = camera_type.value
 
-                        # For webcam, return MJPEG stream
-                        if camera_type == "webcam":
+                        # For webcam and microscope cameras, return MJPEG stream
+                        if camera_type in ["webcam", "microscope"]:
                             return StreamingResponse(
                                 self._generate_webcam_stream(camera),
                                 media_type="multipart/x-mixed-replace; boundary=frame",
@@ -1023,9 +1117,34 @@ class WebServer:
 
                         # For webcam, use existing webcam stream
                         if camera_type == "webcam":
+                            # Proxy to windows_camera_server.py on port 7778
+                            device_id = camera.config.params.get('device_id', 0)
+                            proxy_url = f"http://localhost:7778/mjpeg?device={device_id}"
+                            logger.info(f"Proxying webcam stream for {camera_id} to {proxy_url}")
+                            
+                            import httpx
+                            
+                            async def stream_proxy():
+                                async with httpx.AsyncClient() as client:
+                                    try:
+                                        async with client.stream("GET", proxy_url, timeout=None) as response:
+                                            if response.status_code != 200:
+                                                logger.error(f"Proxy failed with status {response.status_code}")
+                                                return
+                                            async for chunk in response.aiter_bytes():
+                                                yield chunk
+                                    except Exception as e:
+                                        logger.error(f"Error in webcam proxy stream: {e}")
+                            
                             return StreamingResponse(
-                                self._generate_webcam_stream(camera),
+                                stream_proxy(),
                                 media_type="multipart/x-mixed-replace; boundary=frame",
+                                headers={
+                                    "Cache-Control": "no-cache",
+                                    "Pragma": "no-cache",
+                                    "Expires": "0",
+                                    "Connection": "keep-alive"
+                                }
                             )
 
                         # For RTSP/ONVIF cameras, transcode to MJPEG
@@ -1050,9 +1169,32 @@ class WebServer:
 
                                 logger.info(f"Starting MJPEG stream for {camera_id} (ONVIF)")
                                 return StreamingResponse(
-                                    self._generate_rtsp_mjpeg_stream(stream_url),
+                                    self._generate_rtsp_mjpeg_stream_sync(stream_url),
                                     media_type="multipart/x-mixed-replace; boundary=frame",
+                                    headers={"Cache-Control": "no-cache", "Connection": "keep-alive"}
                                 )
+                                # # Get stream URL - CRITICAL for ONVIF streaming
+                                # stream_url = await asyncio.wait_for(camera.get_stream_url(), timeout=15.0)
+                                # if not stream_url:
+                                #     logger.error(f"Failed to get stream URL for {camera_id}")
+                                #     return Response(content=f"Failed to get stream URL for camera {camera_id}", status_code=500)
+                                #
+                                # # Add auth for ONVIF (Tapo cameras need credentials in RTSP URL)
+                                # if camera_type == "onvif":
+                                #     from urllib.parse import urlparse
+                                #     parsed = urlparse(stream_url)
+                                #     username = camera.config.params.get("username", "")
+                                #     password = camera.config.params.get("password", "")
+                                #     if username and password:
+                                #         # Rebuild RTSP URL with credentials
+                                #         stream_url = f"rtsp://{username}:{password}@{parsed.hostname}:{parsed.port or 554}{parsed.path}"
+                                #         logger.info(f"ONVIF MJPEG stream: Added auth to RTSP URL for {camera_id}")
+                                #
+                                # logger.info(f"Starting MJPEG stream for {camera_id} (ONVIF)")
+                                # return StreamingResponse(
+                                #     self._generate_rtsp_mjpeg_stream(stream_url),
+                                #     media_type="multipart/x-mixed-replace; boundary=frame",
+                                # )
                             except asyncio.TimeoutError:
                                 logger.error(f"Timeout getting stream URL for {camera_id}")
                                 return Response(content=f"Timeout getting stream URL for camera {camera_id}", status_code=500)
@@ -1722,10 +1864,18 @@ Provide a concise summary:"""
             onboarding_available = False
         from .api.alerts import router as alerts_router
         from .api.audio import router as audio_router
+        from .api.camera_names import router as camera_names_router
+        from .api.custom_presets import router as custom_presets_router
         from .api.energy import router as energy_router
         from .api.health import router as health_router
         from .api.lighting import router as lighting_router
         from .api.messages import router as messages_router
+        from .api.microscope import router as microscope_router
+        from .api.otoscope import router as otoscope_router
+        from .api.scanner import router as scanner_router
+        from .api.dymo import router as dymo_router
+        from .api.appliance_monitor import router as appliance_monitor_router
+        from .api.ikettle import router as ikettle_router
         from .api.motion import router as motion_router
         from .api.ptz import router as ptz_router
         from .api.ring import router as ring_router
@@ -1738,6 +1888,8 @@ Provide a concise summary:"""
         if onboarding_available and onboarding_router:
             self.app.include_router(onboarding_router)
         self.app.include_router(alerts_router)
+        self.app.include_router(camera_names_router)
+        self.app.include_router(custom_presets_router)
         self.app.include_router(sensors_router)
         self.app.include_router(energy_router)
         self.app.include_router(weather_router)
@@ -1751,6 +1903,12 @@ Provide a concise summary:"""
         self.app.include_router(thermal_router)
         self.app.include_router(health_router)
         self.app.include_router(messages_router)
+        self.app.include_router(microscope_router)
+        self.app.include_router(otoscope_router)
+        self.app.include_router(scanner_router)
+        self.app.include_router(dymo_router)
+        self.app.include_router(appliance_monitor_router)
+        self.app.include_router(ikettle_router)
 
         # LLM router
         from .api.llm import router as llm_router
@@ -1812,17 +1970,54 @@ Provide a concise summary:"""
         @self.app.get("/stream/{camera_id}", response_class=HTMLResponse, name="stream_viewer")
         async def stream_viewer_page(request: Request, camera_id: str):
             """Serve the stream viewer page for a camera."""
+            # Get custom camera name if available
+            custom_name = None
+            camera_type = "unknown"
+            try:
+                from .api.camera_names import get_display_name
+                display_info = await get_display_name(camera_id)
+                custom_name = display_info.get("custom_name")
+                camera_type = display_info.get("type", "unknown")
+            except Exception as e:
+                logger.debug(f"Could not get custom name for camera {camera_id}: {e}")
+
+            # If we couldn't get type from display info, try to get it from camera manager
+            if camera_type == "unknown":
+                try:
+                    camera = await self.camera_manager.get_camera(camera_id)
+                    if camera and hasattr(camera, 'config') and camera.config:
+                        camera_type = camera.config.type.value
+                except Exception as e:
+                    logger.debug(f"Could not get camera type for {camera_id}: {e}")
+
+            display_name = custom_name or camera_id.replace("_", " ").title()
+
             return self.templates.TemplateResponse(
                 "stream_viewer.html",
                 {
                     "request": request,
-                    "title": f"{camera_id} Stream - Tapo Camera MCP",
+                    "title": f"{display_name} Stream - Tapo Camera MCP",
                     "camera_id": camera_id,
-                    "camera_name": camera_id.replace("_", " ").title(),
+                    "camera_name": display_name,
+                    "camera_type": camera_type,
+                    "custom_name": custom_name,
                 },
             )
 
         # Weather Monitoring route
+        @self.app.get("/appliance-monitor", response_class=HTMLResponse, name="appliance_monitor")
+        async def appliance_monitor_page(request: Request):
+            """Serve the appliance monitoring dashboard page."""
+            return self.templates.TemplateResponse(
+                "appliance_monitor.html",
+                {
+                    "request": request,
+                    "active_page": "appliance_monitor",
+                    "title": "Appliance Monitor - Tapo Camera MCP",
+                    "description": "Monitor appliance health through power consumption patterns",
+                },
+            )
+
         @self.app.get("/weather", response_class=HTMLResponse, name="weather")
         async def weather_page(request: Request):
             """Serve the weather monitoring dashboard page."""
@@ -1848,6 +2043,18 @@ Provide a concise summary:"""
                 },
             )
 
+        @self.app.get("/vienna-webcams", response_class=HTMLResponse, name="vienna_webcams")
+        async def vienna_webcams_page(request: Request):
+            """Serve the Vienna public webcams dashboard page."""
+            return self.templates.TemplateResponse(
+                "vienna_webcams.html",
+                {
+                    "request": request,
+                    "title": "Vienna Public Webcams - Tapo Camera MCP",
+                    "description": "Live views of Vienna landmarks and weather monitoring cameras",
+                },
+            )
+
         @self.app.get("/robots", response_class=HTMLResponse, name="robots")
         async def robots_page(request: Request):
             """Serve the robots dashboard page."""
@@ -1857,6 +2064,32 @@ Provide a concise summary:"""
                     "request": request,
                     "title": "Robots - Tapo Camera MCP",
                     "description": "Control and monitor robot vacuums and other robots",
+                },
+            )
+
+        @self.app.get("/ring", response_class=HTMLResponse, name="ring")
+        async def ring_page(request: Request):
+            """Serve the Ring doorbell dashboard page."""
+            return self.templates.TemplateResponse(
+                "ring.html",
+                {
+                    "request": request,
+                    "active_page": "ring",
+                    "title": "Ring Doorbell - Tapo Camera MCP",
+                    "description": "Monitor and control your Ring doorbell and alarm system",
+                },
+            )
+
+        @self.app.get("/nest", response_class=HTMLResponse, name="nest")
+        async def nest_page(request: Request):
+            """Serve the Nest Protect dashboard page."""
+            return self.templates.TemplateResponse(
+                "nest.html",
+                {
+                    "request": request,
+                    "active_page": "nest",
+                    "title": "Nest Protect - Tapo Camera MCP",
+                    "description": "Monitor fire and CO alarms from your Nest Protect devices",
                 },
             )
 
@@ -2489,6 +2722,13 @@ Provide a concise summary:"""
             response_class=HTMLResponse,
             name="health",
         )
+        self.app.add_api_route(
+            "/human-health",
+            self.human_health_page,
+            methods=["GET"],
+            response_class=HTMLResponse,
+            name="human-health",
+        )
 
         # Settings API endpoints
         @self.app.get("/api/settings")
@@ -2541,40 +2781,56 @@ Provide a concise summary:"""
 
     async def _generate_webcam_stream(self, camera) -> Generator[bytes, None, None]:
         """Generate MJPEG stream from webcam."""
+        cap = None
         try:
             import asyncio
-
             import cv2
 
-            # Ensure camera is connected
-            if not await camera.is_connected():
-                await camera.connect()
+            # For webcams, create our own VideoCapture instance for streaming
+            # Don't reuse the camera's _cap as it might be used for other operations
+            device_id = getattr(camera, '_device_id', 0)
+            cap = cv2.VideoCapture(device_id)
 
-            # Get OpenCV VideoCapture from webcam
-            if hasattr(camera, "_cap") and camera._cap:
-                cap = camera._cap
+            if not cap.isOpened():
+                logger.error(f"Could not open webcam device {device_id} for streaming")
+                return
 
-                while True:
-                    ret, frame = cap.read()
-                    if not ret:
-                        # If read fails, wait a bit before retrying to avoid tight loop
-                        await asyncio.sleep(0.1)
-                        continue
+            # Set resolution based on camera configuration, with fallbacks
+            config = getattr(camera, 'config', {})
+            resolution = config.get('params', {}).get('resolution', '640x480')
+            width, height = map(int, resolution.split('x'))
 
-                    # Encode frame as JPEG
-                    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 80]
-                    result, encoded_img = cv2.imencode(".jpg", frame, encode_param)
+            # Set the configured resolution
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+            cap.set(cv2.CAP_PROP_FPS, 10)  # Reasonable FPS for streaming
 
-                    if result:
-                        # Create MJPEG frame
-                        yield (
-                            b"--frame\r\n"
-                            b"Content-Type: image/jpeg\r\n\r\n" + encoded_img.tobytes() + b"\r\n"
-                        )
+            logger.info(f"Streaming webcam {device_id} at {width}x{height}")
 
-                    # Control frame rate - 0.1 seconds = 10 FPS (reasonable for streaming)
-                    # This prevents excessive CPU usage from aggressive polling
+            logger.info(f"Started webcam streaming for device {device_id}")
+
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    logger.warning(f"Failed to read frame from webcam device {device_id}")
+                    # If read fails, wait a bit before retrying to avoid tight loop
                     await asyncio.sleep(0.1)
+                    continue
+
+                # Encode frame as JPEG
+                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 80]
+                result, encoded_img = cv2.imencode(".jpg", frame, encode_param)
+
+                if result:
+                    # Create MJPEG frame
+                    yield (
+                        b"--frame\r\n"
+                        b"Content-Type: image/jpeg\r\n\r\n" + encoded_img.tobytes() + b"\r\n"
+                    )
+
+                # Control frame rate - 0.1 seconds = 10 FPS (reasonable for streaming)
+                # This prevents excessive CPU usage from aggressive polling
+                await asyncio.sleep(0.1)
 
         except Exception:
             logger.exception("Error generating webcam stream")
@@ -2586,21 +2842,173 @@ Provide a concise summary:"""
             )
             yield error_frame
 
+    async def _generate_rtsp_mjpeg_stream_sync(self, rtsp_url: str) -> Generator[bytes, None, None]:
+        """Generate MJPEG stream from RTSP URL for browser viewing."""
+        import asyncio
+        import cv2
+        import os
+        import time
+
+        logger.info(f"Opening RTSP stream for ONVIF: {rtsp_url[:60]}...")
+        
+        # Set FFMPEG options for stability
+        os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'rtsp_transport;tcp|analyzeduration;1000000|probesize;1000000'
+        
+        cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
+        try:
+            if not cap.isOpened():
+                logger.error(f"Failed to open RTSP stream: {rtsp_url[:60]}...")
+                return
+
+            logger.info(f"ONVIF MJPEG stream started successfully: {rtsp_url[:50]}...")
+            consecutive_failures = 0
+            max_failures = 50
+
+            while consecutive_failures < max_failures:
+                ret, frame = cap.read()
+                if not ret:
+                    consecutive_failures += 1
+                    await asyncio.sleep(0.1)
+                    continue
+
+                consecutive_failures = 0
+                
+                # Resize for bandwidth efficiency if too large
+                height, width = frame.shape[:2]
+                if width > 1280:
+                    scale = 1280 / width
+                    frame = cv2.resize(frame, (int(width * scale), int(height * scale)))
+
+                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
+                result, encoded_img = cv2.imencode(".jpg", frame, encode_param)
+
+                if result:
+                    yield (
+                        b"--frame\r\n"
+                        b"Content-Type: image/jpeg\r\n\r\n" + encoded_img.tobytes() + b"\r\n"
+                    )
+                
+                await asyncio.sleep(0.05) # ~20 FPS target
+        except Exception as e:
+            logger.exception(f"Error generating RTSP MJPEG stream: {e}")
+        finally:
+            cap.release()
+            logger.info("ONVIF RTSP stream released")
+
+    def _generate_dummy_mjpeg_stream(self) -> Generator[bytes, None, None]:
+        """Generate dummy MJPEG stream for testing."""
+        import asyncio
+        import cv2
+        import numpy as np
+
+        try:
+            logger.info("Starting dummy MJPEG stream")
+            frame_count = 0
+
+            while frame_count < 100:  # Generate 100 frames then stop
+                # Create a dummy frame with frame number
+                frame = np.zeros((240, 320, 3), dtype=np.uint8)
+                cv2.putText(frame, f"Frame {frame_count}", (50, 120),
+                           cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+
+                # Encode as JPEG
+                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
+                result, encoded_img = cv2.imencode(".jpg", frame, encode_param)
+
+                if result:
+                    yield (
+                        b"--frame\r\n"
+                        b"Content-Type: image/jpeg\r\n\r\n" + encoded_img.tobytes() + b"\r\n"
+                    )
+
+                frame_count += 1
+                import time
+                time.sleep(0.1)  # 10 FPS
+
+            logger.info("Dummy MJPEG stream completed")
+
+        except Exception as e:
+            logger.exception(f"Error in dummy MJPEG stream: {e}")
+
     async def _generate_rtsp_mjpeg_stream(self, rtsp_url: str) -> Generator[bytes, None, None]:
         """Generate MJPEG stream from RTSP URL for browser viewing - CRITICAL for ONVIF cameras."""
         import asyncio
 
         import cv2
 
-        cap = None
+        print("DEBUG: _generate_rtsp_mjpeg_stream function STARTED")
         try:
+            print("DEBUG: _generate_rtsp_mjpeg_stream try block entered")
             # Open RTSP stream with OpenCV - CRITICAL: This must work for ONVIF
             logger.info(f"Opening RTSP stream for ONVIF: {rtsp_url[:60]}...")
-            cap = cv2.VideoCapture(rtsp_url)
 
-            # Configure for low latency streaming
-            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Minimize buffer for lower latency
-            cap.set(cv2.CAP_PROP_FPS, 30)  # Request 30 FPS
+            # Try different RTSP paths that are common for Tapo cameras
+            logger.info("Starting RTSP path testing...")
+            try:
+                rtsp_paths = ['/stream1', '/live', '/Streaming/Channels/101', '/Streaming/Channels/1', '/stream2', '/h264', '/avc']
+                logger.info(f"Testing {len(rtsp_paths)} RTSP paths")
+            except Exception as e:
+                logger.error(f"Error setting up RTSP paths: {e}")
+                raise
+            cap = None
+
+            for path in rtsp_paths:
+                test_url = rtsp_url.replace('/stream1', path)
+                logger.info(f"Trying RTSP path: {path}")
+
+                # Handle URLs with @ in username (like email addresses) for each path
+                if '@' in test_url:
+                    # URL has @ in username (like email), try URL encoding
+                    from urllib.parse import urlparse, urlunparse, quote
+                    parsed = urlparse(test_url)
+                    if '@' in parsed.netloc:
+                        # Username contains @, encode it
+                        user_pass, host = parsed.netloc.split('@', 1)
+                        encoded_user_pass = quote(user_pass, safe=':')
+                        new_netloc = f"{encoded_user_pass}@{host}"
+                        test_url = urlunparse(parsed._replace(netloc=new_netloc))
+                        logger.debug(f"URL-encoded path: {test_url[:60]}...")
+
+                # Try both TCP and UDP transport for each path
+                for transport in ['tcp', 'udp']:
+                    if cap is not None:
+                        cap.release()
+                    cap = None
+
+                    os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = f'rtsp_transport;{transport}'
+                    logger.debug(f"Trying {transport} transport for {path}")
+
+                    cap = cv2.VideoCapture(test_url, cv2.CAP_FFMPEG)
+
+                    # Configure for RTSP streaming
+                    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                    cap.set(cv2.CAP_PROP_FPS, 10)  # Lower FPS
+                    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)  # Lower resolution
+                    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+                    if cap.isOpened():
+                        # Test if we can actually read a frame with longer timeout
+                        start_time = time.time()
+                        ret = False
+                        while time.time() - start_time < 3.0 and not ret:  # 3 second timeout
+                            ret, frame = cap.read()
+                            if ret and frame is not None and frame.size > 0:
+                                logger.info(f"Successfully opened RTSP stream with path: {path} using {transport} transport")
+                                rtsp_url = test_url  # Use this working URL
+                                break
+                            time.sleep(0.1)  # Small delay between attempts
+
+                        if ret and frame is not None and frame.size > 0:
+                            break  # Found working combination
+                        else:
+                            logger.debug(f"RTSP path {path} with {transport} opened but no valid frames")
+                            cap.release()
+                            cap = None
+                    else:
+                        logger.debug(f"RTSP path {path} with {transport} failed to open")
+
+                if cap is not None and cap.isOpened():
+                    break  # Found working path/transport combination
 
             # Give it a moment to connect (ONVIF can take a second)
             await asyncio.sleep(0.5)

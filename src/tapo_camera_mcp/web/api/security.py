@@ -188,3 +188,145 @@ async def get_nest_status() -> Dict[str, Any]:
     return await _compute_nest_status()
 
 
+@router.get("/nest/devices", summary="Get all Nest Protect devices")
+async def get_nest_devices() -> Dict[str, Any]:
+    """Get all Nest Protect devices with detailed status."""
+    try:
+        from tapo_camera_mcp.integrations.nest_client import get_nest_client
+        
+        client = get_nest_client()
+        if not client or not client.is_initialized:
+            # Fallback to security manager
+            try:
+                manager = await _get_security_manager()
+                devices = await manager.get_all_devices()
+                return {
+                    "devices": [device.to_dict() if hasattr(device, 'to_dict') else {
+                        "device_id": getattr(device, 'id', ''),
+                        "name": getattr(device, 'name', ''),
+                        "type": getattr(device, 'type', 'protect'),
+                        "status": getattr(device, 'status', 'unknown'),
+                        "location": getattr(device, 'location', 'Unknown'),
+                        "battery_level": getattr(device, 'battery_level', None),
+                        "battery_status": getattr(device, 'battery_status', 'unknown'),
+                        "last_seen": getattr(device, 'last_seen', None),
+                    } for device in devices],
+                    "count": len(devices),
+                }
+            except Exception:
+                return {"devices": [], "count": 0, "message": "Nest client not initialized"}
+        
+        devices = await client.get_devices()
+        return {
+            "devices": [device.to_dict() for device in devices],
+            "count": len(devices),
+        }
+    except Exception as e:
+        logger.exception("Failed to get Nest Protect devices")
+        return {"devices": [], "count": 0, "error": str(e)}
+
+
+@router.get("/nest/alerts", summary="Get Nest Protect alerts")
+async def get_nest_alerts() -> Dict[str, Any]:
+    """Get active alerts from Nest Protect devices (smoke, CO, offline)."""
+    try:
+        from tapo_camera_mcp.integrations.nest_client import get_nest_client
+        
+        client = get_nest_client()
+        if not client or not client.is_initialized:
+            return {
+                "alerts": [],
+                "total_alerts": 0,
+                "active_alerts": 0,
+                "message": "Nest client not initialized",
+            }
+        
+        devices = await client.get_devices()
+        alerts = []
+        
+        for device in devices:
+            # Check smoke status
+            if device.smoke_status.value != "ok":
+                alerts.append({
+                    "device_id": device.device_id,
+                    "device_name": device.name,
+                    "location": device.location,
+                    "type": "smoke",
+                    "status": device.smoke_status.value,
+                    "severity": "emergency" if device.smoke_status.value == "emergency" else "warning",
+                })
+            
+            # Check CO status
+            if device.co_status.value != "ok":
+                alerts.append({
+                    "device_id": device.device_id,
+                    "device_name": device.name,
+                    "location": device.location,
+                    "type": "co",
+                    "status": device.co_status.value,
+                    "severity": "emergency" if device.co_status.value == "emergency" else "warning",
+                })
+            
+            # Check if offline
+            if not device.is_online:
+                alerts.append({
+                    "device_id": device.device_id,
+                    "device_name": device.name,
+                    "location": device.location,
+                    "type": "offline",
+                    "status": "offline",
+                    "severity": "warning",
+                })
+            
+            # Check battery health
+            if device.battery_health != "ok":
+                alerts.append({
+                    "device_id": device.device_id,
+                    "device_name": device.name,
+                    "location": device.location,
+                    "type": "battery",
+                    "status": device.battery_health,
+                    "severity": "warning",
+                })
+        
+        return {
+            "alerts": alerts,
+            "total_alerts": len(alerts),
+            "active_alerts": len([a for a in alerts if a["severity"] == "emergency"]),
+            "warnings": len([a for a in alerts if a["severity"] == "warning"]),
+        }
+    except Exception as e:
+        logger.exception("Failed to get Nest Protect alerts")
+        return {"alerts": [], "total_alerts": 0, "error": str(e)}
+
+
+@router.get("/nest/summary", summary="Get Nest Protect summary")
+async def get_nest_summary() -> Dict[str, Any]:
+    """Get comprehensive Nest Protect summary."""
+    try:
+        from tapo_camera_mcp.integrations.nest_client import get_nest_client
+        
+        client = get_nest_client()
+        if not client or not client.is_initialized:
+            # Fallback to security manager status
+            status = await _compute_nest_status()
+            return {
+                "initialized": status.get("enabled", False),
+                "total_devices": status.get("devices_total", 0),
+                "devices": status.get("devices", []),
+                "message": "Using security manager" if status.get("enabled") else "Nest client not initialized",
+            }
+        
+        summary = await client.get_summary()
+        return {
+            "initialized": True,
+            **summary,
+        }
+    except Exception as e:
+        logger.exception("Failed to get Nest Protect summary")
+        return {
+            "initialized": False,
+            "error": str(e),
+        }
+
+

@@ -90,10 +90,11 @@ async def _get_netatmo_service() -> NetatmoService:
 @router.get("/stations", response_model=List[WeatherStationResponse])
 async def get_weather_stations(
     include_offline: bool = Query(False, description="Include offline stations"),
+    force_refresh: bool = Query(False, description="Force data refresh from Netatmo API"),
 ) -> List[WeatherStationResponse]:
     """Get all available Netatmo weather stations."""
     try:
-        logger.info(f"Getting weather stations (include_offline={include_offline})")
+        logger.info(f"Getting weather stations (include_offline={include_offline}, force_refresh={force_refresh})")
 
         cfg = get_model(WeatherSettings)
         use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
@@ -102,7 +103,7 @@ async def get_weather_stations(
             import asyncio
             try:
                 service = await _get_netatmo_service()
-                raw = await asyncio.wait_for(service.list_stations(), timeout=10.0)
+                raw = await asyncio.wait_for(service.list_stations(force_refresh=force_refresh), timeout=15.0)
             except asyncio.TimeoutError:
                 logger.warning("Netatmo list_stations timed out")
                 raw = []
@@ -141,10 +142,11 @@ async def get_weather_stations(
 async def get_station_weather_data(
     station_id: str,
     module_type: str = Query("all", description="Module type to query (indoor, outdoor, all)"),
+    force_refresh: bool = Query(False, description="Force data refresh from Netatmo API"),
 ) -> WeatherDataResponse:
     """Get current weather data from a specific station."""
     try:
-        logger.info(f"Getting weather data for station {station_id}, module type: {module_type}")
+        logger.info(f"Getting weather data for station {station_id}, module type: {module_type}, force_refresh={force_refresh}")
 
         cfg = get_model(WeatherSettings)
         use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
@@ -153,7 +155,11 @@ async def get_station_weather_data(
             import asyncio
             try:
                 service = await _get_netatmo_service()
-                data, ts = await asyncio.wait_for(service.current_data(station_id, module_type), timeout=10.0)
+                # Force refresh by calling refresh before getting data
+                if force_refresh:
+                    logger.info("Forcing Netatmo data refresh...")
+                    await asyncio.wait_for(service.list_stations(force_refresh=True), timeout=10.0)
+                data, ts = await asyncio.wait_for(service.current_data(station_id, module_type), timeout=15.0)
             except asyncio.TimeoutError:
                 logger.warning(f"Netatmo current_data timed out for {station_id}")
                 raise HTTPException(status_code=503, detail="Weather data request timed out")
@@ -538,10 +544,12 @@ async def get_station_modules(station_id: str) -> Dict[str, Any]:
 
 
 @router.get("/overview")
-async def get_weather_overview() -> Dict[str, Any]:
+async def get_weather_overview(
+    force_refresh: bool = Query(False, description="Force data refresh from Netatmo API"),
+) -> Dict[str, Any]:
     """Get weather overview across all stations."""
     try:
-        logger.info("Getting weather overview")
+        logger.info(f"Getting weather overview (force_refresh={force_refresh})")
 
         cfg = get_model(WeatherSettings)
         use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
@@ -551,7 +559,7 @@ async def get_weather_overview() -> Dict[str, Any]:
                 import asyncio
                 # Get real data from Netatmo
                 service = await _get_netatmo_service()
-                stations = await asyncio.wait_for(service.list_stations(), timeout=10.0)
+                stations = await asyncio.wait_for(service.list_stations(force_refresh=force_refresh), timeout=15.0)
 
                 if stations:
                     total_stations = len(stations)
@@ -559,6 +567,7 @@ async def get_weather_overview() -> Dict[str, Any]:
 
                     # Get data from first station
                     station_id = stations[0]["station_id"]
+                    # Don't force refresh again for the data call since list_stations likely handled it
                     data, ts = await asyncio.wait_for(service.current_data(station_id, "all"), timeout=10.0)
 
                     # Count total modules across all stations
@@ -723,10 +732,12 @@ async def get_external_forecast(
 
 
 @router.get("/combined")
-async def get_combined_weather() -> Dict[str, Any]:
+async def get_combined_weather(
+    force_refresh: bool = Query(False, description="Force data refresh from Netatmo API"),
+) -> Dict[str, Any]:
     """Get combined internal (Netatmo) and external (Vienna) weather."""
     try:
-        logger.info("Getting combined weather data")
+        logger.info(f"Getting combined weather data (force_refresh={force_refresh})")
 
         # Get internal Netatmo data
         cfg = get_model(WeatherSettings)
@@ -737,7 +748,7 @@ async def get_combined_weather() -> Dict[str, Any]:
             try:
                 import asyncio
                 service = await _get_netatmo_service()
-                stations = await asyncio.wait_for(service.list_stations(), timeout=10.0)
+                stations = await asyncio.wait_for(service.list_stations(force_refresh=force_refresh), timeout=15.0)
                 if stations:
                     station_id = stations[0]["station_id"]
                     data, ts = await asyncio.wait_for(service.current_data(station_id, "all"), timeout=10.0)

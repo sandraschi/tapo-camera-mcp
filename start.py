@@ -7,6 +7,7 @@ This script provides easy commands to start different components of the system.
 
 import argparse
 import logging
+import os
 import subprocess
 
 # Configure logging
@@ -29,7 +30,9 @@ def run_command(cmd, description):
 
 def start_mcp_server(debug=False):
     """Start the MCP server."""
-    cmd = "python -m tapo_camera_mcp.server_v2 --direct"
+    # Use python -c to ensure proper PyO3 initialization for Rust libraries
+    import_cmd = "import sys; sys.path.insert(0, 'src'); from tapo_camera_mcp.server_v2 import main; main()"
+    cmd = f'python -c "{import_cmd}" --direct'
     if debug:
         cmd += " --debug"
 

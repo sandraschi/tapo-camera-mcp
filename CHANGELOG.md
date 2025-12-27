@@ -5,6 +5,197 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.0] - 2025-12-18 🌤️ **Vienna Public Webcams Integration**
+
+### 🆕 **FEATURES**
+
+#### **USB Otoscope Camera Support**
+- **Full medical camera integration**: Added complete support for USB otoscope cameras
+- **Medical examination presets**: Pre-configured settings for ear, throat, nose, skin, and mouth examinations
+- **LED light control**: Adjustable LED intensity (0-100%) for optimal illumination
+- **Digital magnification**: Variable magnification levels with measurement calibration
+- **Medical metadata**: Embedded examination data in captured images and videos
+- **Specimen tracking**: Automatic categorization by examination type
+- **Focus mode control**: Auto, manual, and fixed focus modes
+- **Measurement tools**: Calibrated pixel-to-millimeter conversion for accurate measurements
+
+#### **Otoscope Detection & Configuration**
+- **Detection script**: `scripts/detect_otoscope.py` for automatic USB otoscope discovery
+- **Smart configuration**: Automatic detection of common otoscope resolutions (640x480, 800x600)
+- **Easy setup**: One-command device detection and configuration generation
+
+#### **Medical Camera API**
+- **Complete REST API**: `/api/otoscope/*` endpoints for all otoscope functions
+- **Medical presets**: Apply examination-specific settings with single API call
+- **Calibration endpoints**: Accurate measurement calibration and validation
+- **Recording controls**: Start/stop medical examination recordings
+
+#### **AI-Powered Humorous Fridge Labels**
+- **50-Label Bulk Printing**: Generate and print 50 humorous labels for maximum fridge coverage
+  - Dad jokes, puns, sarcastic remarks, and absurd humor
+  - Food-related, chore-related, and general humor categories
+  - Short, medium, and long humor styles
+  - Preview before printing to ensure quality
+- **Humor Categories**: Specialized humor for different contexts
+  - General: Universal humor for any fridge item
+  - Food: Food-related puns and jokes ("Lettuce turnip the beet")
+  - Chores: Sarcastic household chore reminders
+  - Pets: Pet-related humor
+  - Tech: Technology jokes
+  - Life: Life observations with humor
+- **Humor Themes**: Multiple comedic styles
+  - Dad Jokes: Classic pun-based humor
+  - Puns: Clever wordplay
+  - Sarcastic: Witty, sarcastic remarks
+  - Absurd: Completely ridiculous humor
+  - Random: Mix of all styles
+- **Web Interface**: Easy-to-use form for label generation
+  - Theme and category selection
+  - Style preference (short/medium/long)
+  - Count control (1-100 labels)
+  - Preview functionality
+  - One-click bulk printing
+- **Dymo Integration**: Full integration with existing Dymo printer system
+  - Uses configured tape sizes and colors
+  - Batch printing optimized for label efficiency
+  - Error handling for out-of-tape situations
+
+#### **Plant Growth Timelapse Photography**
+- **Automated Germination Monitoring**: Set microscope over germinating plants for time-lapse capture
+  - 10-minute intervals (configurable) for optimal germination tracking
+  - Multi-day sessions (24+ hours) to capture full growth cycles
+  - Built-in LED light ensures consistent illumination throughout session
+  - Auto-focus every 10 shots to maintain sharp focus as plants grow
+- **Intelligent Session Management**: Smart session naming and organization
+  - Automatic timestamp-based session directories
+  - Plant-specific session names (e.g., "basil_germination_20251218_143000")
+  - Metadata tracking for each captured image
+  - Session status monitoring and progress tracking
+- **Growth Video Creation**: Convert image sequences to timelapse videos
+  - MP4 video output with configurable frame rates
+  - Optional timestamp overlays showing capture time
+  - Professional-quality growth acceleration videos
+  - Perfect for sharing germination progress or educational content
+- **Plant Health Analysis**: AI-powered growth pattern analysis
+  - Detect growth acceleration phases
+  - Monitor color changes (green development)
+  - Track subtle movement and structural changes
+  - Generate growth reports and recommendations
+- **One-Click Germination Setup**: Quick-start templates for common scenarios
+  - "Quick Start" button for immediate 10-minute interval monitoring
+  - 24-hour default duration perfect for most germination cycles
+  - Automatic LED brightness optimization for plant photography
+  - Guided setup prompts for plant identification and session naming
+- **Web Interface Integration**: Full microscope control panel
+  - Live timelapse status monitoring
+  - Session progress indicators
+  - Video creation tools with preview
+  - Growth analysis dashboards
+
+#### **Vienna Public Webcams Integration**
+- **Live Vienna Landmark Cameras**: Integrated 8+ public webcams showing Vienna's most iconic locations
+  - Stephansdom Cathedral (weather watching on St. Stephen's)
+  - Rathaus City Hall (perfect for snow/rain views with Rathauspark)
+  - Donau City Skyline (modern Vienna with UNO City)
+  - Prater Riesenrad (famous ferris wheel landmark)
+  - Schönbrunn Palace Gardens (seasonal weather and gardens)
+  - Naschmarkt (lively food market atmosphere)
+  - Augarten Royal Gardens (peaceful park views)
+  - Danube Canal (water and weather monitoring)
+- **Dedicated Vienna Webcams Dashboard**: New `/vienna-webcams` page with live camera grid
+  - Auto-refresh every 5 minutes for weather updates
+  - Individual camera refresh buttons
+  - Connection status monitoring
+  - Direct links to original webcam sources
+  - Mobile-responsive design for phone viewing
+- **Weather Monitoring Focus**: Optimized for watching Vienna weather conditions
+  - Snow accumulation on landmarks
+  - Rain patterns across the city
+  - Seasonal changes in gardens and parks
+  - Fog and atmospheric conditions
+- **Public Webcam Framework**: Extensible system for adding more city webcams
+  - Configurable camera metadata (location, description)
+  - Automatic image loading with error handling
+  - Status monitoring and connection testing
+  - Cache-busting for fresh image updates
+
+#### **iKettle Smart Kettle Integration**
+- **Complete iKettle Control**: Full REST API integration with Smarter iKettle
+  - Temperature control (20°C to 100°C / 68°F to 212°F)
+  - Boil operations with custom temperature settings
+  - Keep warm mode with configurable duration
+  - Operation scheduling and morning coffee routines
+  - Real-time status monitoring and water level detection
+- **Morning Coffee Automation**: Intelligent wake-up coffee preparation
+  - Schedule coffee heating for exact wake-up time
+  - Pre-heat timing to ensure perfect temperature
+  - Configurable coffee temperature (default 95°C for optimal extraction)
+  - Integration with existing morning routines
+- **Smart Kettle Modes**: Multiple operational modes support
+  - Wake Up mode for morning routines
+  - Home mode for general household use
+  - Formula mode for specialized heating profiles
+  - Voice control integration ready (Alexa/Google Assistant)
+- **Advanced Monitoring**: Comprehensive kettle status and diagnostics
+  - Real-time temperature monitoring
+  - Water level detection and low-water alerts
+  - Boiling status and operation progress
+  - Keep warm timer and temperature maintenance
+  - Connection status and error reporting
+- **Web Interface Controls**: Full-featured kettle management dashboard
+  - One-click coffee and tea heating buttons
+  - Keep warm and stop operation controls
+  - Morning routine setup wizard
+  - Live status display with temperature and water level
+  - Historical operation logging and notifications
+- **Zojirushi Comparison Mode**: Side-by-side feature comparison
+  - Instant hot water vs. heated-on-demand
+  - Energy efficiency analysis (vacuum insulation vs. heating)
+  - Temperature precision and control
+  - Maintenance and reliability tracking
+  - Cost-benefit analysis for both approaches
+
+#### **Enhanced Camera Management**
+- **Medical device classification**: Special handling for medical vs. security cameras
+- **Improved naming**: Better support for descriptive camera names including medical devices
+- **Configuration templates**: Updated examples with otoscope configuration
+
+### 📋 **CONFIGURATION EXAMPLE**
+```yaml
+# USB Otoscope Configuration
+otoscope1:
+  type: otoscope
+  device_id: 2
+  resolution: "640x480"
+  fps: 30
+  light_intensity: 80
+  focus_mode: "auto"
+  specimen_type: "ear"
+  magnification: 1.0
+```
+
+### 🩺 **MEDICAL PRESETS AVAILABLE**
+- **Ear Exam**: Optimized for tympanic membrane visualization
+- **Throat Exam**: Suitable for oropharyngeal examination
+- **Nose Exam**: Designed for nasal cavity inspection
+- **Skin Exam**: High magnification for dermatological assessment
+- **Mouth Exam**: Appropriate for oral cavity examination
+
+### 🔧 **USAGE EXAMPLES**
+```bash
+# Apply ear examination preset
+curl -X POST http://localhost:7777/api/otoscope/apply_preset \
+  -d '{"camera_name":"otoscope1","preset_name":"ear_exam"}'
+
+# Calibrate for measurements
+curl -X POST http://localhost:7777/api/otoscope/calibrate \
+  -d '{"camera_name":"otoscope1","reference_size_mm":10,"pixels":100}'
+
+# Capture medical image
+curl -X POST http://localhost:7777/api/otoscope/capture_medical \
+  -d '{"camera_name":"otoscope1","filename":"ear-exam-001"}'
+```
+
 ## [1.8.1] - 2025-12-18 ⚡ **Real-Time Power Monitoring Fix**
 
 ### 🐛 **BUG FIXES**

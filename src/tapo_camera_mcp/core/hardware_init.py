@@ -58,6 +58,7 @@ class HardwareInitializer:
         logger.info(f"Config loaded: {len(config)} top-level keys")
         logger.info(f"Cameras configured: {len(config.get('cameras', {}))}")
         logger.info(f"Hue configured: {bool(config.get('lighting', {}).get('philips_hue', {}).get('bridge_ip'))}")
+        logger.info(f"Tapo lighting configured: {len(config.get('lighting', {}).get('tapo_lighting', {}).get('devices', []))}")
         logger.info(f"Tapo plugs configured: {len(config.get('energy', {}).get('tapo_p115', {}).get('devices', []))}")
         logger.info(f"Netatmo enabled: {config.get('weather', {}).get('integrations', {}).get('netatmo', {}).get('enabled', False)}")
         logger.info(f"Ring enabled: {config.get('ring', {}).get('enabled', False)}")
@@ -67,6 +68,7 @@ class HardwareInitializer:
         results = await asyncio.gather(
             self._init_cameras(),
             self._init_hue_bridge(),
+            self._init_tapo_lighting(),
             self._init_tapo_plugs(),
             self._init_netatmo(),
             self._init_ring(),
@@ -78,10 +80,11 @@ class HardwareInitializer:
         self.initialization_results = {
             "cameras": results[0] if not isinstance(results[0], Exception) else {"success": False, "error": str(results[0])},
             "hue_bridge": results[1] if not isinstance(results[1], Exception) else {"success": False, "error": str(results[1])},
-            "tapo_plugs": results[2] if not isinstance(results[2], Exception) else {"success": False, "error": str(results[2])},
-            "netatmo": results[3] if not isinstance(results[3], Exception) else {"success": False, "error": str(results[3])},
-            "ring": results[4] if not isinstance(results[4], Exception) else {"success": False, "error": str(results[4])},
-            "home_assistant": results[5] if not isinstance(results[5], Exception) else {"success": False, "error": str(results[5])},
+            "tapo_lighting": results[2] if not isinstance(results[2], Exception) else {"success": False, "error": str(results[2])},
+            "tapo_plugs": results[3] if not isinstance(results[3], Exception) else {"success": False, "error": str(results[3])},
+            "netatmo": results[4] if not isinstance(results[4], Exception) else {"success": False, "error": str(results[4])},
+            "ring": results[5] if not isinstance(results[5], Exception) else {"success": False, "error": str(results[5])},
+            "home_assistant": results[6] if not isinstance(results[6], Exception) else {"success": False, "error": str(results[6])},
         }
 
         # Summary
@@ -209,6 +212,49 @@ class HardwareInitializer:
 
         except Exception as e:
             logger.exception("Failed to initialize Hue Bridge")
+            return {"success": False, "error": str(e)}
+
+    async def _init_tapo_lighting(self) -> Dict:
+        """Initialize and test Tapo lighting devices."""
+        try:
+            from ..config import get_config
+            from ..tools.lighting.tapo_lighting_tools import tapo_lighting_manager
+
+            logger.info("[LIGHTING] Initializing Tapo smart lights...")
+
+            config = get_config()
+            tapo_cfg = config.get("lighting", {}).get("tapo_lighting", {})
+
+            if not tapo_cfg:
+                return {"success": False, "message": "Tapo lighting not configured"}
+
+            devices_cfg = tapo_cfg.get("devices", [])
+            if not devices_cfg:
+                return {"success": False, "message": "No Tapo lighting devices configured"}
+
+            # Initialize Tapo lighting manager
+            if not tapo_lighting_manager._initialized:
+                success = await tapo_lighting_manager.initialize()
+                if not success:
+                    return {
+                        "success": False,
+                        "error": tapo_lighting_manager._connection_error or "Initialization failed"
+                    }
+
+            # Test connection by rescanning devices
+            await tapo_lighting_manager.rescan_devices()
+            lights = tapo_lighting_manager.devices
+
+            logger.info(f"  [OK] Tapo Lighting: {len(lights)} lights")
+
+            return {
+                "success": True,
+                "message": f"Connected - {len(lights)} lights",
+                "lights_count": len(lights)
+            }
+
+        except Exception as e:
+            logger.exception("Failed to initialize Tapo lighting")
             return {"success": False, "error": str(e)}
 
     async def _init_tapo_plugs(self) -> Dict:
@@ -363,15 +409,43 @@ class HardwareInitializer:
             if not ring_cfg.get("enabled"):
                 return {"success": True, "message": "Ring not enabled in config"}
 
-            # Test Ring connection
+            # Initialize Ring client if not already done
             ring_client = get_ring_client()
             if not ring_client:
-                return {"success": False, "error": "Ring client not available"}
+                # Initialize the Ring client with config credentials
+                from ..integrations.ring_client import init_ring_client
+
+                email = ring_cfg.get("email")
+                password = ring_cfg.get("password")
+                token_file = ring_cfg.get("token_file", "ring_token.cache")
+                cache_ttl = ring_cfg.get("cache_ttl", 60)
+
+                if not email or not password:
+                    return {"success": False, "error": "Ring email/password not configured"}
+
+                try:
+                    ring_client = await init_ring_client(
+                        email=email,
+                        password=password,
+                        token_file=token_file,
+                        cache_ttl=cache_ttl
+                    )
+
+                    if not ring_client.is_initialized and not ring_client.is_2fa_pending:
+                        return {"success": False, "error": "Ring initialization failed"}
+                except Exception as e:
+                    return {"success": False, "error": f"Ring initialization error: {e}"}
+
+            if not ring_client:
+                return {"success": False, "error": "Failed to initialize Ring client"}
 
             # Try to get devices with timeout (reduced from 8s to 3s)
             try:
-                devices = await asyncio.wait_for(ring_client.get_devices(), timeout=3.0)
-                device_count = len(devices) if devices else 0
+                # Get both doorbells and alarm devices
+                doorbells = await asyncio.wait_for(ring_client.get_doorbells(), timeout=3.0)
+                alarm_devices = await asyncio.wait_for(ring_client.get_alarm_devices(), timeout=3.0)
+                devices = (doorbells or []) + (alarm_devices or [])
+                device_count = len(devices)
 
                 logger.info(f"  [OK] Ring: {device_count} devices")
 

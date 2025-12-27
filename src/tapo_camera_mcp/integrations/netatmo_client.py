@@ -213,6 +213,11 @@ class NetatmoService:
         self.token_file = self._adjust_token_path(token_file)
         # Load refresh token from cache if available (overrides config)
         self._load_token_cache()
+        
+        # Background update task
+        self._background_task: asyncio.Task | None = None
+        self._last_update_success: float = 0
+        self._update_interval = 600  # 10 minutes (Netatmo update rate)
 
     @staticmethod
     def _adjust_token_path(token_file: str) -> Path:
@@ -329,14 +334,30 @@ class NetatmoService:
 
             # Create account and fetch initial data with timeout
             self._account = pyatmo.AsyncAccount(auth)
-            import asyncio
-            await asyncio.wait_for(self._account.async_update_weather_stations(), timeout=10.0)
+            
+            # Initial fetch to ensure we have data
+            logger.info("Performing initial Netatmo data fetch...")
+            try:
+                await asyncio.wait_for(self._account.async_update_weather_stations(), timeout=15.0)
+                self._last_update_success = time.time()
+                logger.info(f"Netatmo initialized: {len(self._account.homes)} homes, weather stations loaded")
+                
+                # Start background update loop
+                if self._background_task is None or self._background_task.done():
+                    self._background_task = asyncio.create_task(self._update_loop())
+                    logger.info("Netatmo background update loop started")
+                    
+                self._use_real_api = True
+                self._initialized = True
+            except Exception as e:
+                logger.error(f"Initial Netatmo data fetch failed: {e}")
+                # We still consider it initialized if we have the account, 
+                # the background loop will try again
+                self._use_real_api = True
+                self._initialized = True
+                if self._background_task is None or self._background_task.done():
+                    self._background_task = asyncio.create_task(self._update_loop())
 
-            self._use_real_api = True
-            self._initialized = True  # Only set AFTER successful init
-            logger.info(
-                f"Netatmo initialized: {len(self._account.homes)} homes, weather stations loaded"
-            )
 
         except asyncio.TimeoutError:
             logger.error("Netatmo initialization timed out - async_update_weather_stations took too long")
@@ -428,8 +449,57 @@ class NetatmoService:
             self._account = None
             self._use_real_api = False
 
+    async def _update_loop(self) -> None:
+        """Background task to periodically update Netatmo data."""
+        logger.info("Netatmo background update loop running")
+        while True:
+            try:
+                await asyncio.sleep(self._update_interval)
+                
+                if not self._use_real_api or not self._account:
+                    continue
+                    
+                logger.debug("Running periodic Netatmo data update...")
+                
+                # Update data
+                await self._refresh_data()
+                
+            except asyncio.CancelledError:
+                logger.info("Netatmo background update loop cancelled")
+                break
+            except Exception as e:
+                logger.error(f"Error in Netatmo background update loop: {e}")
+                # Wait a bit before retrying to avoid tight loops on error
+                await asyncio.sleep(60)
+
+    async def _refresh_data(self) -> bool:
+        """Internal method to refresh data from Netatmo API."""
+        if not self._account:
+            return False
+            
+        try:
+            # Force token refresh logic is handled inside pyatmo/auth usually, 
+            # but we wrap the call to handle errors
+            await asyncio.wait_for(self._account.async_update_weather_stations(), timeout=15.0)
+            self._last_update_success = time.time()
+            logger.debug("Netatmo data updated successfully")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to refresh Netatmo data: {e}")
+            # Try to handle token errors specifically?
+            # For now just log and return False
+            return False
+
     async def close(self) -> None:
         """Clean up resources."""
+        if self._background_task:
+            self._background_task.cancel()
+            try:
+                await self._background_task
+            except asyncio.CancelledError:
+                pass
+            self._background_task = None
+            
         if self._session:
             await self._session.close()
             self._session = None
@@ -446,16 +516,27 @@ class NetatmoService:
             return False
         return True
 
-    async def list_stations(self) -> list[dict[str, Any]]:
+    async def list_stations(self, force_refresh: bool = False) -> list[dict[str, Any]]:
         """Return list of weather stations with basic info."""
         # Ensure session is valid before proceeding
         await self._ensure_session_valid()
         await self.initialize()
 
         if self._use_real_api and self._account:
-            # Helper function to process stations after successful API call
+            # Check if data is stale (over 15 minutes old) or force refresh requested
+            is_stale = (time.time() - self._last_update_success) > 900
+            
+            if force_refresh or is_stale:
+                logger.info(f"Refresing Netatmo data (force={force_refresh}, stale={is_stale})")
+                await self._refresh_data()
+
+            # Helper function to process stations
             def _process_stations():
                 stations = []
+                # Safety check for homes
+                if not hasattr(self._account, 'homes') or not self._account.homes:
+                    return []
+                    
                 for home_id, home in self._account.homes.items():
                     # Find weather station modules in this home
                     for module_id, module in home.modules.items():
@@ -486,106 +567,16 @@ class NetatmoService:
                 return stations
 
             try:
-                # Force token refresh before API call to ensure we have a valid token
-                if hasattr(self._account, 'auth') and hasattr(self._account.auth, 'async_get_access_token'):
-                    try:
-                        await self._account.auth.async_get_access_token()
-                    except RuntimeError as token_error:
-                        error_msg = str(token_error)
-                        if "Invalid refresh token" in error_msg or "expired" in error_msg.lower():
-                            logger.error("Netatmo refresh token is invalid or expired. Please re-authenticate.")
-                            logger.error("Run: python scripts/netatmo_oauth_helper.py auth-url <client_id> <redirect_uri>")
-                            return []
-                        raise
-
-                # Refresh data with timeout to prevent hanging
-                await asyncio.wait_for(
-                    self._account.async_update_weather_stations(),
-                    timeout=10.0
-                )
-
-                # Process stations after successful API call
+                # Just process the existing data in self._account
                 stations = _process_stations()
-                if stations:
-                    return stations
+                return stations
 
-            except asyncio.TimeoutError:
-                logger.warning("Netatmo list_stations: async_update_weather_stations timed out")
-            except PyatmoApiError as e:
-                # Handle pyatmo API errors (403 Invalid access token, etc.)
-                error_msg = str(e)
-                if "403" in error_msg or "Invalid access token" in error_msg:
-                    logger.warning("Netatmo access token invalid (403). Attempting token refresh...")
-                    # Try to force token refresh and retry once
-                    try:
-                        if hasattr(self._account, 'auth') and hasattr(self._account.auth, 'async_get_access_token'):
-                            # Clear cached token AND expiry to force refresh
-                            if hasattr(self._account.auth, '_access_token'):
-                                self._account.auth._access_token = None
-                            if hasattr(self._account.auth, '_token_expiry'):
-                                self._account.auth._token_expiry = 0  # Force expiry check to fail
-                            # Force token refresh
-                            await self._account.auth.async_get_access_token()
-                            logger.info("Netatmo access token refreshed, retrying API call...")
-                            # Retry the API call
-                            await asyncio.wait_for(
-                                self._account.async_update_weather_stations(),
-                                timeout=10.0
-                            )
-                            # If retry succeeds, process stations
-                            logger.info("Netatmo token refreshed successfully, processing stations")
-                            stations = _process_stations()
-                            if stations:
-                                return stations
-                        else:
-                            raise RuntimeError("Cannot refresh token - auth object missing")
-                    except (RuntimeError, PyatmoApiError) as refresh_error:
-                        refresh_msg = str(refresh_error)
-                        if "Invalid refresh token" in refresh_msg or "expired" in refresh_msg.lower():
-                            logger.error("Netatmo refresh token is invalid or expired. Please re-authenticate.")
-                            logger.error("Run: python scripts/netatmo_oauth_helper.py auth-url <client_id> <redirect_uri>")
-                            return []
-                        logger.error(f"Netatmo token refresh failed: {refresh_error}")
-                        return []
-                else:
-                    logger.error(f"Netatmo API error: {error_msg}")
-                    return []
-            except RuntimeError as e:
-                error_msg = str(e)
-                # Handle closed session - trigger reinit on next call
-                if "Session is closed" in error_msg:
-                    logger.warning("Netatmo session was closed - will reinitialize on next call")
-                    self._initialized = False
-                    self._session = None
-                    self._account = None
-                    self._use_real_api = False
-                    return []
-                # OAuth token refresh errors
-                if "Token refresh failed" in error_msg or "Invalid refresh token" in error_msg:
-                    logger.error(f"Netatmo authentication failed: {error_msg}")
-                    logger.error("Please re-authenticate: python scripts/netatmo_oauth_helper.py auth-url <client_id> <redirect_uri>")
-                    return []
-                logger.exception(f"Netatmo runtime error in list_stations: {e}")
-            except AttributeError as e:
-                # pyatmo API changes or missing attributes
-                logger.error(f"Netatmo API attribute error (pyatmo version mismatch?): {e}")
-            except KeyError as e:
-                # Missing expected data in pyatmo response
-                logger.error(f"Netatmo API data structure error: {e}")
-            except aiohttp.ClientError as e:
-                # Network/HTTP errors
-                logger.error(f"Netatmo network error in list_stations: {e}")
             except Exception as e:
-                error_type = type(e).__name__
-                error_msg = str(e)
-                # Check for pyatmo-specific exceptions
-                if "pyatmo" in error_type.lower() or "netatmo" in error_type.lower():
-                    logger.error(f"Netatmo/pyatmo exception in list_stations: {error_type}: {error_msg}")
-                else:
-                    logger.exception(f"Unexpected error fetching Netatmo stations: {error_type}: {error_msg}")
+                logger.exception(f"Error processing Netatmo stations: {e}")
+                return []
 
         # NO simulated data - return empty list
-        logger.warning("Netatmo API unavailable - returning empty list (no simulated data)")
+        logger.warning("Netatmo API unavailable - return empty list")
         return []
 
     async def current_data(self, station_id: str, module_type: str) -> tuple[dict[str, Any], float]:

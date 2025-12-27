@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from ...config import ConfigManager, get_config
 from ...tools.lighting.hue_tools import hue_manager
+from ...tools.lighting.tapo_lighting_tools import tapo_lighting_manager
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,7 @@ class LightControlRequest(BaseModel):
     hue: int | None = None
     saturation: int | None = None
     rgb: list[int] | None = None
+    effect: str | None = None
 
 
 class GroupControlRequest(BaseModel):
@@ -411,4 +413,137 @@ async def connect_hue_bridge(request: HueConfigRequest) -> dict[str, Any]:
     except Exception as e:
         logger.exception("Failed to connect to Hue Bridge")
         raise HTTPException(status_code=500, detail=f"Failed to connect: {e!s}")
+
+
+# Tapo Lighting API Endpoints
+
+@router.get("/tapo/lights", summary="List all Tapo smart lights")
+async def list_tapo_lights(refresh: bool = False) -> dict[str, Any]:
+    """List all configured Tapo lights."""
+    try:
+        if not tapo_lighting_manager._initialized:
+            success = await tapo_lighting_manager.initialize()
+            if not success:
+                raise HTTPException(status_code=500, detail="Failed to initialize Tapo lighting")
+
+        if refresh:
+            await tapo_lighting_manager.rescan_devices()
+
+        lights = await tapo_lighting_manager.get_all_lights()
+        return {
+            "success": True,
+            "lights": [_model_dump(light) for light in lights],
+            "count": len(lights)
+        }
+    except Exception as e:
+        logger.exception("Failed to list Tapo lights")
+        raise HTTPException(status_code=500, detail=f"Failed to list Tapo lights: {e!s}")
+
+
+@router.get("/tapo/lights/{light_id}", summary="Get specific Tapo light")
+async def get_tapo_light(light_id: str) -> dict[str, Any]:
+    """Get a specific Tapo light by ID."""
+    try:
+        if not tapo_lighting_manager._initialized:
+            success = await tapo_lighting_manager.initialize()
+            if not success:
+                raise HTTPException(status_code=500, detail="Failed to initialize Tapo lighting")
+
+        light = await tapo_lighting_manager.get_light(light_id)
+        if not light:
+            raise HTTPException(status_code=404, detail=f"Tapo light {light_id} not found")
+
+        return {
+            "success": True,
+            "light": _model_dump(light)
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Failed to get Tapo light {light_id}")
+        raise HTTPException(status_code=500, detail=f"Failed to get light: {e!s}")
+
+
+@router.post("/tapo/lights/{light_id}/control", summary="Control a Tapo light")
+async def control_tapo_light(light_id: str, request: LightControlRequest) -> dict[str, Any]:
+    """Control a Tapo light."""
+    try:
+        if not tapo_lighting_manager._initialized:
+            success = await tapo_lighting_manager.initialize()
+            if not success:
+                raise HTTPException(status_code=500, detail="Failed to initialize Tapo lighting")
+
+        success = await tapo_lighting_manager.set_light_state(
+            light_id=light_id,
+            on=request.on,
+            brightness_percent=request.brightness_percent,
+            hue=request.hue,
+            saturation=request.saturation,
+            rgb=request.rgb,
+            effect=request.effect
+        )
+
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Failed to control Tapo light {light_id}")
+
+        # Get updated light info
+        light = await tapo_lighting_manager.get_light(light_id)
+
+        return {
+            "success": True,
+            "light": _model_dump(light) if light else None
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Failed to control Tapo light {light_id}")
+        raise HTTPException(status_code=500, detail=f"Failed to control light: {e!s}")
+
+
+@router.get("/lights", summary="List all lights (Hue + Tapo combined)")
+async def list_all_lights(refresh: bool = False) -> dict[str, Any]:
+    """List all lights from all lighting systems."""
+    try:
+        all_lights = []
+        hue_count = 0
+        tapo_count = 0
+
+        # Get Hue lights
+        try:
+            if not hue_manager._initialized:
+                await hue_manager.initialize()
+
+            if refresh:
+                await hue_manager.rescan_devices()
+
+            hue_lights = await hue_manager.get_all_lights()
+            all_lights.extend([_model_dump(light) for light in hue_lights])
+            hue_count = len(hue_lights)
+        except Exception as e:
+            logger.warning(f"Failed to get Hue lights: {e}")
+
+        # Get Tapo lights
+        try:
+            if not tapo_lighting_manager._initialized:
+                await tapo_lighting_manager.initialize()
+
+            if refresh:
+                await tapo_lighting_manager.rescan_devices()
+
+            tapo_lights = await tapo_lighting_manager.get_all_lights()
+            all_lights.extend([_model_dump(light) for light in tapo_lights])
+            tapo_count = len(tapo_lights)
+        except Exception as e:
+            logger.warning(f"Failed to get Tapo lights: {e}")
+
+        return {
+            "success": True,
+            "lights": all_lights,
+            "count": len(all_lights),
+            "hue_count": hue_count,
+            "tapo_count": tapo_count
+        }
+    except Exception as e:
+        logger.exception("Failed to list all lights")
+        raise HTTPException(status_code=500, detail=f"Failed to list lights: {e!s}")
 

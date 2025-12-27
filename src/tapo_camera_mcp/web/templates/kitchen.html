@@ -341,6 +341,47 @@
                 <p style="margin: 8px 0; color: #6b7280;">
                     The Smarter iKettle is a WiFi-enabled electric kettle that allows remote control via smartphone app or voice commands (Alexa, Google Assistant).
                 </p>
+
+                <!-- iKettle Control Panel -->
+                <div id="ikettle-controls" style="margin-top: 20px; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb;">
+                    <h4 style="margin: 0 0 15px 0; color: #1f2937;">iKettle Controls</h4>
+
+                    <div id="ikettle-status" style="margin-bottom: 15px; display: none;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div id="ikettle-status-indicator" style="width: 12px; height: 12px; border-radius: 50%; background: #6b7280;"></div>
+                            <span id="ikettle-status-text" style="font-weight: 500;">Connecting...</span>
+                        </div>
+                        <div style="margin-top: 10px; font-size: 14px; color: #6b7280;">
+                            <div id="ikettle-temp-display">Temperature: --°C</div>
+                            <div id="ikettle-water-display">Water Level: --</div>
+                            <div id="ikettle-mode-display">Mode: --</div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px;">
+                        <button onclick="ikettleBoilCoffee()" style="padding: 8px 12px; background: #059669; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            ☕ Coffee (95°C)
+                        </button>
+                        <button onclick="ikettleBoilTea()" style="padding: 8px 12px; background: #0891b2; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            🍵 Tea (100°C)
+                        </button>
+                        <button onclick="ikettleKeepWarm()" style="padding: 8px 12px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            🌡️ Keep Warm
+                        </button>
+                        <button onclick="ikettleStop()" style="padding: 8px 12px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            ⏹️ Stop
+                        </button>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button onclick="ikettleMorningCoffee()" style="padding: 10px 15px; background: #7c3aed; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                            🌅 Setup Morning Coffee
+                        </button>
+                        <button onclick="ikettleRefreshStatus()" style="padding: 10px 15px; background: #6b7280; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            🔄 Refresh Status
+                        </button>
+                    </div>
+                </div>
                 <p><strong>Price:</strong> Approximately $80-$150 USD (varies by retailer - Best Buy: $149.99, Bstock: $79.99)</p>
                 <p><strong>Key Advantages Over Current Setup:</strong></p>
                 <ul style="margin: 8px 0; padding-left: 20px; color: #6b7280;">
@@ -366,13 +407,225 @@
                 <p><strong>API Status:</strong> App-based control, potential for integration if API is available</p>
             </div>
             <div class="appliance-controls">
-                <button class="btn btn-secondary" disabled>Not Owned</button>
+                <button class="btn btn-primary" onclick="ikettleRefreshStatus()">Check iKettle Status</button>
+                <button class="btn btn-success" onclick="ikettleMorningCoffee()">Setup Morning Coffee</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+// iKettle control functions
+async function ikettleRefreshStatus() {
+    try {
+        const response = await fetch('/api/ikettle/status');
+        const result = await response.json();
+
+        if (result.success) {
+            const status = result.status;
+            const statusDiv = document.getElementById('ikettle-status');
+            const indicator = document.getElementById('ikettle-status-indicator');
+            const statusText = document.getElementById('ikettle-status-text');
+
+            statusDiv.style.display = 'block';
+
+            if (status.connected) {
+                indicator.style.background = '#10b981'; // green
+                statusText.textContent = `Connected - ${status.state || 'Ready'}`;
+
+                // Update displays
+                document.getElementById('ikettle-temp-display').textContent =
+                    status.current_temperature_c ? `Temperature: ${status.current_temperature_c}°C` : 'Temperature: --°C';
+                document.getElementById('ikettle-water-display').textContent =
+                    `Water Level: ${status.water_level || 'Unknown'}`;
+                document.getElementById('ikettle-mode-display').textContent =
+                    `Mode: ${status.mode || 'Unknown'}`;
+
+                if (status.state === 'boiling') {
+                    indicator.style.background = '#f59e0b'; // orange
+                    statusText.textContent = 'Boiling...';
+                }
+            } else {
+                indicator.style.background = '#dc2626'; // red
+                statusText.textContent = 'Disconnected';
+            }
+        } else {
+            showToast('Failed to get iKettle status');
+        }
+    } catch (error) {
+        console.error('Error refreshing iKettle status:', error);
+        showToast('Error connecting to iKettle');
+    }
+}
+
+async function ikettleBoilCoffee() {
+    try {
+        const response = await fetch('/api/ikettle/boil', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ temperature_c: 95 })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast(`☕ Heating water for coffee (${result.temperature_c}°C)`);
+            setTimeout(ikettleRefreshStatus, 1000);
+        } else {
+            showToast('Failed to start coffee heating');
+        }
+    } catch (error) {
+        console.error('Error boiling for coffee:', error);
+        showToast('Error starting coffee heating');
+    }
+}
+
+async function ikettleBoilTea() {
+    try {
+        const response = await fetch('/api/ikettle/boil', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ temperature_c: 100 })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast(`🍵 Heating water for tea (${result.temperature_c}°C)`);
+            setTimeout(ikettleRefreshStatus, 1000);
+        } else {
+            showToast('Failed to start tea heating');
+        }
+    } catch (error) {
+        console.error('Error boiling for tea:', error);
+        showToast('Error starting tea heating');
+    }
+}
+
+async function ikettleKeepWarm() {
+    const temperature = prompt('Keep warm temperature (°C):', '95');
+    const duration = prompt('Duration in minutes:', '30');
+
+    if (!temperature || !duration) return;
+
+    try {
+        const response = await fetch('/api/ikettle/keep-warm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                temperature_c: parseInt(temperature),
+                duration_minutes: parseInt(duration)
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast(`🌡️ Keep warm set to ${result.temperature_c}°C for ${result.duration_minutes} minutes`);
+            setTimeout(ikettleRefreshStatus, 1000);
+        } else {
+            showToast('Failed to set keep warm');
+        }
+    } catch (error) {
+        console.error('Error setting keep warm:', error);
+        showToast('Error setting keep warm');
+    }
+}
+
+async function ikettleStop() {
+    try {
+        const response = await fetch('/api/ikettle/stop', {
+            method: 'POST'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast('⏹️ Kettle stopped');
+            setTimeout(ikettleRefreshStatus, 1000);
+        } else {
+            showToast('Failed to stop kettle');
+        }
+    } catch (error) {
+        console.error('Error stopping kettle:', error);
+        showToast('Error stopping kettle');
+    }
+}
+
+async function ikettleMorningCoffee() {
+    const wakeTime = prompt('Wake up time (HH:MM):', '07:00');
+    const coffeeTemp = prompt('Coffee temperature (°C):', '95');
+
+    if (!wakeTime || !coffeeTemp) return;
+
+    try {
+        const response = await fetch('/api/ikettle/morning-routine', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                wake_time: wakeTime,
+                coffee_temperature: parseInt(coffeeTemp)
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast(`🌅 Morning coffee scheduled for ${result.wake_time} (${result.delay_minutes} minutes from now)`);
+        } else {
+            showToast('Failed to schedule morning coffee');
+        }
+    } catch (error) {
+        console.error('Error setting morning routine:', error);
+        showToast('Error setting morning routine');
+    }
+}
+
+// Toast notification function
+function showToast(message) {
+    const existingToast = document.querySelector('.toast-notification');
+    if (existingToast) {
+        existingToast.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #10b981;
+        color: white;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        font-size: 0.875rem;
+        font-weight: 500;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+    `;
+    toast.textContent = message;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+    }, 10);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }, 3000);
+}
+
 // Load appliance data
 async function loadAppliances() {
     try {
@@ -389,9 +642,11 @@ async function loadAppliances() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     loadAppliances();
-    
+    ikettleRefreshStatus(); // Check iKettle status on load
+
     // Refresh every 30 seconds
     setInterval(loadAppliances, 30000);
+    setInterval(ikettleRefreshStatus, 15000); // Refresh iKettle status every 15 seconds
 });
 </script>
 {% endblock %}

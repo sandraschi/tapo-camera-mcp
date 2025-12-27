@@ -246,6 +246,58 @@
         background-color: #fce7f3;
         color: #9f1239;
     }
+
+    .light-type-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        margin-left: 8px;
+    }
+
+    .light-type-hue {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+
+    .light-type-tapo {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    .effect-controls {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .effect-picker-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .effect-select {
+        padding: 8px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+    }
+
+    .effect-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .current-effect {
+        font-size: 12px;
+        color: #6b7280;
+        font-style: italic;
+    }
     
     .btn {
         padding: 10px 20px;
@@ -372,6 +424,15 @@
         <button class="btn" style="background: linear-gradient(45deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444); color: white; animation: disco-btn 2s linear infinite;" onclick="discoMode()" title="Party time! 🎉">
             🪩 Disco!
         </button>
+        <select class="btn" style="background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 8px 12px; border-radius: 6px; font-size: 14px;" onchange="globalEffect(this.value)" title="Apply effect to all Tapo lights">
+            <option value="">🎭 Effects</option>
+            <option value="Rainbow">🌈 Rainbow</option>
+            <option value="Ocean">🌊 Ocean</option>
+            <option value="Aurora">🌌 Aurora</option>
+            <option value="Christmas">🎄 Christmas</option>
+            <option value="Sunrise">🌅 Sunrise</option>
+            <option value="Sunset">🌇 Sunset</option>
+        </select>
     </div>
     
     <style>
@@ -507,7 +568,8 @@ async function globalLightControl(state) {
     
     // Fire all requests immediately without waiting
     reachableLights.forEach(light => {
-        fetch('/api/lighting/hue/lights/' + light.light_id + '/control', {
+        const endpoint = getLightControlEndpoint(light);
+        fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ on: turnOn })
@@ -537,7 +599,8 @@ async function globalBrightness(percent) {
     
     // Fire all requests immediately without waiting
     reachableLights.forEach(light => {
-        fetch('/api/lighting/hue/lights/' + light.light_id + '/control', {
+        const endpoint = getLightControlEndpoint(light);
+        fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ on: true, brightness_percent: percent })
@@ -595,10 +658,11 @@ async function discoMode() {
         const randomBri = 50 + Math.floor(Math.random() * 50); // 50-100%
         
         try {
-            await fetch('/api/lighting/hue/lights/' + randomLight.light_id + '/control', {
+            const endpoint = getLightControlEndpoint(randomLight);
+            await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     on: true, 
                     hue: randomHue,
                     saturation: 254,
@@ -622,18 +686,71 @@ async function discoMode() {
     }, 30000);
 }
 
+// Apply effect to all Tapo lights
+async function globalEffect(effect) {
+    if (!effect) return;
+
+    const select = event.target;
+    const originalText = select.value;
+    select.disabled = true;
+    select.style.opacity = '0.6';
+
+    const tapoLights = lights.filter(l => l.light_type === 'tapo' && l.reachable);
+
+    if (tapoLights.length === 0) {
+        alert('No Tapo lights available for effects');
+        select.disabled = false;
+        select.style.opacity = '1';
+        select.value = '';
+        return;
+    }
+
+    // Apply effect to all Tapo lights
+    const promises = tapoLights.map(light => {
+        const endpoint = getLightControlEndpoint(light);
+        return fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ on: true, effect: effect })
+        }).catch(e => console.warn('Effect failed for light:', light.light_id, e));
+    });
+
+    await Promise.all(promises);
+    console.log(`Applied ${effect} effect to ${tapoLights.length} Tapo lights`);
+
+    // Re-enable select
+    setTimeout(() => {
+        select.disabled = false;
+        select.style.opacity = '1';
+        select.value = '';
+    }, 500);
+
+    // Refresh UI after a moment
+    setTimeout(() => loadData(), 1000);
+}
+
 // Load all data (from cache - fast)
 async function loadData(forceRescan = false) {
     try {
-        // Check connection status
-        const statusResponse = await fetch('/api/lighting/hue/status');
-        const status = await statusResponse.json();
+        // Check connection status - use combined lighting status
+        const statusResponse = await fetch('/api/lighting/lights?refresh=' + (forceRescan ? 'true' : 'false'));
+        const statusData = await statusResponse.json();
+
+        // Create a combined status object
+        const status = {
+            connected: statusData.success,
+            lights_count: statusData.count || 0,
+            hue_count: statusData.hue_count || 0,
+            tapo_count: statusData.tapo_count || 0,
+            last_scan: new Date().toISOString()
+        };
         
         const statusEl = document.getElementById('connection-status');
         const setupNotice = document.getElementById('setup-notice');
         
         if (status.connected) {
-            statusEl.textContent = 'Connected';
+            const totalLights = status.lights_count || 0;
+            statusEl.textContent = `Connected (${totalLights} lights)`;
             statusEl.className = 'connection-status status-connected';
             setupNotice.style.display = 'none';
             
@@ -660,15 +777,46 @@ async function loadData(forceRescan = false) {
             }
         }
         
-        // Load lights from cache (fast)
-        const lightsResponse = await fetch('/api/lighting/hue/lights');
+        // Load lights from all systems (Hue + Tapo)
+        const lightsResponse = await fetch('/api/lighting/lights');
         const lightsData = await lightsResponse.json();
         lights = lightsData.lights || [];
+
+        // Store counts for overview
+        const hueCount = lightsData.hue_count || 0;
+        const tapoCount = lightsData.tapo_count || 0;
+
+        // Add light type detection
+        lights.forEach(light => {
+            if (light.manufacturer === 'TP-Link' || light.device_id) {
+                light.light_type = 'tapo';
+            } else {
+                light.light_type = 'hue';
+            }
+        });
+
+        // Helper function to get control endpoint for light
+        function getLightControlEndpoint(light) {
+            if (light.light_type === 'tapo') {
+                return `/api/lighting/tapo/lights/${light.light_id || light.device_id}/control`;
+            } else {
+                return `/api/lighting/hue/lights/${light.light_id}/control`;
+            }
+        }
         
-        // Load groups
-        const groupsResponse = await fetch('/api/lighting/hue/groups');
-        const groupsData = await groupsResponse.json();
-        groups = groupsData.groups || [];
+        // Load groups (Hue only for now)
+        try {
+            const groupsResponse = await fetch('/api/lighting/hue/groups');
+            if (groupsResponse.ok) {
+                const groupsData = await groupsResponse.json();
+                groups = groupsData.groups || [];
+            } else {
+                groups = [];
+            }
+        } catch (e) {
+            console.warn('Failed to load groups:', e);
+            groups = [];
+        }
         
         // Load scenes (with timeout)
         try {
@@ -718,15 +866,25 @@ async function loadData(forceRescan = false) {
 function updateOverview() {
     const totalLights = lights.length;
     const lightsOn = lights.filter(l => l.on).length;
+    const hueLights = lights.filter(l => l.light_type === 'hue').length;
+    const tapoLights = lights.filter(l => l.light_type === 'tapo').length;
     const totalGroups = groups.length;
     const reachable = lights.filter(l => l.reachable).length;
     const totalScenes = scenes.length;
-    
+
     document.getElementById('total-lights').textContent = totalLights;
     document.getElementById('lights-on').textContent = lightsOn;
     document.getElementById('total-groups').textContent = totalGroups;
     document.getElementById('reachable-lights').textContent = reachable;
     document.getElementById('total-scenes').textContent = totalScenes;
+
+    // Update overview card labels to show breakdown
+    const totalLightsLabel = document.querySelector('#total-lights').parentElement.querySelector('.overview-label');
+    if (totalLightsLabel) {
+        totalLightsLabel.textContent = hueLights > 0 && tapoLights > 0 ?
+            `Hue: ${hueLights}, Tapo: ${tapoLights}` :
+            hueLights > 0 ? 'Philips Hue' : tapoLights > 0 ? 'Tapo Lights' : 'Total Lights';
+    }
 }
 
 function renderScenes() {
@@ -789,38 +947,56 @@ function renderGroups() {
 
 function renderLights() {
     const container = document.getElementById('lights-container');
-    
+
     if (lights.length === 0) {
         container.innerHTML = '<p>No lights found. Make sure your Hue Bridge is connected and lights are powered on.</p>';
         return;
     }
-    
-    container.innerHTML = lights.map(light => {
+
+    // Sort lights to prioritize Tapo L900 lightstrip at the top
+    const sortedLights = [...lights].sort((a, b) => {
+        const aIsL900 = a.device_id === 'tapo_l900_lightstrip' || a.name?.toLowerCase().includes('l900');
+        const bIsL900 = b.device_id === 'tapo_l900_lightstrip' || b.name?.toLowerCase().includes('l900');
+
+        if (aIsL900 && !bIsL900) return -1;  // L900 first
+        if (!aIsL900 && bIsL900) return 1;   // L900 first
+        return 0;  // Keep original order for others
+    });
+
+    container.innerHTML = sortedLights.map(light => {
+        // Unified light ID that works for both Hue (light_id) and Tapo (device_id)
+        const unifiedLightId = light.light_id || light.device_id;
+
         // Check if light supports color (multicolor bulbs)
         // Color is supported if: colormode is xy/hs, OR if hue/saturation values exist, OR model suggests color
         const hasColorMode = light.color_mode && (light.color_mode === 'xy' || light.color_mode === 'hs');
-        const hasHueSat = (light.hue !== undefined && light.hue !== null) || 
+        const hasHueSat = (light.hue !== undefined && light.hue !== null) ||
                           (light.saturation !== undefined && light.saturation !== null);
         const hasXY = light.xy && light.xy.length === 2;
         const supportsColor = hasColorMode || hasHueSat || hasXY;
-        
+
         // Get current RGB values, default to white if not set
         const currentRgb = light.rgb && light.rgb.length === 3 ? light.rgb : [255, 255, 255];
         const rgbHex = '#' + currentRgb.map(c => {
             const hex = Math.max(0, Math.min(255, Math.round(c))).toString(16);
             return hex.length === 1 ? '0' + hex : hex;
         }).join('');
-        
+
         // Color mode badge
-        const colorModeBadge = light.color_mode ? 
+        const colorModeBadge = light.color_mode ?
             `<span class="color-mode-badge color-mode-${light.color_mode}">${light.color_mode.toUpperCase()}</span>` : '';
-        
+
+        // Light type badge (Hue vs Tapo)
+        const lightTypeBadge = light.light_type === 'tapo' ?
+            '<span class="light-type-badge light-type-tapo">TAPO</span>' :
+            '<span class="light-type-badge light-type-hue">HUE</span>';
+
         return `
-        <div class="light-card" data-light-id="${light.light_id}">
+        <div class="light-card" data-light-id="${unifiedLightId}">
             <div class="light-header">
                 <div>
-                    <div class="light-name">${light.name}${colorModeBadge}</div>
-                    <div class="light-room">${light.room || 'Unassigned'} • ${light.model || 'Unknown Model'}</div>
+                    <div class="light-name">${light.name}${colorModeBadge}${lightTypeBadge}</div>
+                    <div class="light-room">${light.location || light.room || 'Unassigned'} • ${light.model || 'Unknown Model'}</div>
                 </div>
                 <div class="light-status">
                     <span class="status-indicator ${!light.reachable ? 'status-unreachable' : (light.on ? 'status-on' : 'status-off')}"></span>
@@ -828,53 +1004,84 @@ function renderLights() {
                 </div>
             </div>
             <div class="light-controls">
-                <button class="btn ${light.on ? 'btn-danger' : 'btn-success'}" onclick="toggleLight('${light.light_id}', ${!light.on})" ${!light.reachable ? 'disabled' : ''}>
+                <button class="btn ${light.on ? 'btn-danger' : 'btn-success'}" onclick="toggleLight('${unifiedLightId}', ${!light.on})" ${!light.reachable ? 'disabled' : ''}>
                     ${light.on ? 'Turn Off' : 'Turn On'}
                 </button>
                 <div class="brightness-control">
-                    <input type="range" min="0" max="100" value="${light.brightness_percent || 0}" 
-                           class="brightness-slider" 
-                           onchange="setBrightness('${light.light_id}', this.value)"
+                    <input type="range" min="0" max="100" value="${light.brightness || light.brightness_percent || 0}"
+                           class="brightness-slider"
+                           onchange="setBrightness('${unifiedLightId}', this.value)"
                            ${!light.reachable || !light.on ? 'disabled' : ''}>
-                    <div class="brightness-value">${light.brightness_percent || 0}%</div>
+                    <div class="brightness-value">${light.brightness || light.brightness_percent || 0}%</div>
                 </div>
             </div>
             ${supportsColor ? `
             <div class="color-controls">
                 <div class="color-label">Color (RGB)</div>
                 <div class="color-picker-wrapper">
-                    <input type="color" 
-                           class="color-picker-input" 
+                    <input type="color"
+                           class="color-picker-input"
                            value="${rgbHex}"
-                           onchange="setLightColor('${light.light_id}', this.value)"
+                           onchange="setLightColor('${unifiedLightId}', this.value)"
                            ${!light.reachable || !light.on ? 'disabled' : ''}
                            title="Pick a color">
                     <div class="rgb-inputs">
-                        <input type="number" 
-                               class="rgb-input" 
-                               min="0" 
-                               max="255" 
+                        <input type="number"
+                               class="rgb-input"
+                               min="0"
+                               max="255"
                                value="${currentRgb[0]}"
                                placeholder="R"
-                               onchange="setLightColorRGB('${light.light_id}', 'r', this.value)"
+                               onchange="setLightColorRGB('${unifiedLightId}', 'r', this.value)"
                                ${!light.reachable || !light.on ? 'disabled' : ''}>
-                        <input type="number" 
-                               class="rgb-input" 
-                               min="0" 
-                               max="255" 
+                        <input type="number"
+                               class="rgb-input"
+                               min="0"
+                               max="255"
                                value="${currentRgb[1]}"
                                placeholder="G"
-                               onchange="setLightColorRGB('${light.light_id}', 'g', this.value)"
+                               onchange="setLightColorRGB('${unifiedLightId}', 'g', this.value)"
                                ${!light.reachable || !light.on ? 'disabled' : ''}>
-                        <input type="number" 
-                               class="rgb-input" 
-                               min="0" 
-                               max="255" 
+                        <input type="number"
+                               class="rgb-input"
+                               min="0"
+                               max="255"
                                value="${currentRgb[2]}"
                                placeholder="B"
-                               onchange="setLightColorRGB('${light.light_id}', 'b', this.value)"
+                               onchange="setLightColorRGB('${unifiedLightId}', 'b', this.value)"
                                ${!light.reachable || !light.on ? 'disabled' : ''}>
                     </div>
+                </div>
+            </div>
+            ` : ''}
+            ${light.light_type === 'tapo' ? `
+            <div class="effect-controls">
+                <div class="color-label">Effects</div>
+                <div class="effect-picker-wrapper">
+                    <select class="effect-select"
+                            onchange="setLightEffect('${unifiedLightId}', this.value)"
+                            ${!light.reachable || !light.on ? 'disabled' : ''}>
+                        <option value="">-- Select Effect --</option>
+                        <option value="Aurora" ${light.effect === 'Aurora' ? 'selected' : ''}>🌌 Aurora</option>
+                        <option value="Bubbling Cauldron" ${light.effect === 'Bubbling Cauldron' ? 'selected' : ''}>🪄 Bubbling Cauldron</option>
+                        <option value="Candy Cane" ${light.effect === 'Candy Cane' ? 'selected' : ''}>🍭 Candy Cane</option>
+                        <option value="Christmas" ${light.effect === 'Christmas' ? 'selected' : ''}>🎄 Christmas</option>
+                        <option value="Flicker" ${light.effect === 'Flicker' ? 'selected' : ''}>🔥 Flicker</option>
+                        <option value="Grandma's Christmas Lights" ${light.effect === 'Grandma\'s Christmas Lights' ? 'selected' : ''}>🏠 Grandma's Christmas Lights</option>
+                        <option value="Hanukkah" ${light.effect === 'Hanukkah' ? 'selected' : ''}>🕎 Hanukkah</option>
+                        <option value="Haunted Mansion" ${light.effect === 'Haunted Mansion' ? 'selected' : ''}>🏰 Haunted Mansion</option>
+                        <option value="Icicle" ${light.effect === 'Icicle' ? 'selected' : ''}>❄️ Icicle</option>
+                        <option value="Lightning" ${light.effect === 'Lightning' ? 'selected' : ''}>⚡ Lightning</option>
+                        <option value="Ocean" ${light.effect === 'Ocean' ? 'selected' : ''}>🌊 Ocean</option>
+                        <option value="Rainbow" ${light.effect === 'Rainbow' ? 'selected' : ''}>🌈 Rainbow</option>
+                        <option value="Raindrop" ${light.effect === 'Raindrop' ? 'selected' : ''}>💧 Raindrop</option>
+                        <option value="Spring" ${light.effect === 'Spring' ? 'selected' : ''}>🌸 Spring</option>
+                        <option value="Valentine's" ${light.effect === 'Valentine\'s' ? 'selected' : ''}>💝 Valentine's</option>
+                        <option value="Sunrise" ${light.effect === 'Sunrise' ? 'selected' : ''}>🌅 Sunrise</option>
+                        <option value="Sunset" ${light.effect === 'Sunset' ? 'selected' : ''}>🌇 Sunset</option>
+                        <option value="Daylight" ${light.effect === 'Daylight' ? 'selected' : ''}>☀️ Daylight</option>
+                    </select>
+                    ${light.effect ? `<div class="current-effect">Current: ${light.effect}</div>` : ''}
                 </div>
             </div>
             ` : ''}
@@ -903,7 +1110,11 @@ async function toggleLight(lightId, turnOn) {
             }
         }
 
-        const response = await fetch(`/api/lighting/hue/lights/${lightId}/control`, {
+        // Find the light to determine its type
+        const foundLight = lights.find(l => (l.light_id || l.device_id) === lightId);
+        const endpoint = foundLight ? getLightControlEndpoint(foundLight) : `/api/lighting/hue/lights/${lightId}/control`;
+
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -962,7 +1173,11 @@ async function toggleLight(lightId, turnOn) {
 
 async function setBrightness(lightId, brightnessPercent) {
     try {
-        const response = await fetch(`/api/lighting/hue/lights/${lightId}/control`, {
+        // Find the light to determine its type
+        const foundLight = lights.find(l => (l.light_id || l.device_id) === lightId);
+        const endpoint = foundLight ? getLightControlEndpoint(foundLight) : `/api/lighting/hue/lights/${lightId}/control`;
+
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1028,8 +1243,12 @@ async function setLightColorRGB(lightId, channel, value) {
         } else if (channel === 'all' && Array.isArray(value)) {
             rgb = value;
         }
-        
-        const response = await fetch(`/api/lighting/hue/lights/${lightId}/control`, {
+
+        // Find the light to determine its type
+        const foundLight = lights.find(l => (l.light_id || l.device_id) === lightId);
+        const endpoint = foundLight ? getLightControlEndpoint(foundLight) : `/api/lighting/hue/lights/${lightId}/control`;
+
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1072,6 +1291,47 @@ async function setLightColorRGB(lightId, channel, value) {
         await loadData();
     } catch (error) {
         console.error('Error setting color:', error);
+        alert('Error: ' + error.message);
+    }
+}
+
+// Set light effect
+async function setLightEffect(lightId, effect) {
+    if (!effect) return; // Empty selection
+
+    try {
+        // Find the light to determine its type
+        const foundLight = lights.find(l => (l.light_id || l.device_id) === lightId);
+        const endpoint = foundLight ? getLightControlEndpoint(foundLight) : `/api/lighting/hue/lights/${lightId}/control`;
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                on: true,  // Turn on if setting effect
+                effect: effect
+            }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to set effect');
+        }
+
+        // Update UI immediately
+        if (foundLight) {
+            foundLight.effect = effect;
+            foundLight.on = true;
+            renderLights();
+        }
+
+        // Reload to get updated state from device
+        await new Promise(resolve => setTimeout(resolve, 300));
+        await loadData();
+    } catch (error) {
+        console.error('Error setting effect:', error);
         alert('Error: ' + error.message);
     }
 }

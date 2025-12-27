@@ -12,6 +12,7 @@ from fastmcp import FastMCP
 
 from tapo_camera_mcp.tools.energy.tapo_plug_tools import tapo_plug_manager
 from tapo_camera_mcp.tools.lighting.hue_tools import hue_manager
+from tapo_camera_mcp.tools.lighting.tapo_lighting_tools import tapo_lighting_manager
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +25,16 @@ def _model_dump(model: Any) -> dict[str, Any]:
 
 
 TAPO_ACTIONS = {
-    # Lighting
-    "list_lights": "List all Philips Hue lights",
-    "list_light": "List all Philips Hue lights (alias for list_lights)",
-    "turn_on_light": "Turn on a light",
-    "turn_off_light": "Turn off a light",
-    "set_brightness": "Set light brightness",
+    # Lighting (Hue + Tapo)
+    "list_lights": "List all lights (Hue + Tapo)",
+    "list_light": "List all lights (alias for list_lights)",
+    "list_hue_lights": "List Philips Hue lights only",
+    "list_tapo_lights": "List Tapo smart lights only",
+    "turn_on_light": "Turn on a light (specify light_id)",
+    "turn_off_light": "Turn off a light (specify light_id)",
+    "set_brightness": "Set light brightness (specify light_id and brightness_percent)",
+    "set_color": "Set light color (specify light_id and rgb values)",
+    "set_effect": "Set light effect/mode (specify light_id and effect name)",
     "list_groups": "List all Hue groups/rooms",
     "list_scenes": "List all available scenes",
     "activate_scene": "Activate a lighting scene",
@@ -59,6 +64,7 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
         scene_id: str | None = None,
         brightness_percent: Union[int, str] | None = None,
         power_state: str | None = None,
+        effect: str | None = None,
     ) -> dict[str, Any]:
         """
         Unified Tapo control tool for all hardware operations.
@@ -89,6 +95,7 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
             scene_id (str | None): Scene ID for scene operations
             brightness_percent (int | None): Brightness percentage (0-100)
             power_state (str | None): Power state ("on"/"off"/"toggle")
+            effect (str | None): Lighting effect name (for Tapo lights)
 
         Returns:
             dict[str, Any]: Operation result
@@ -102,6 +109,9 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
 
             # Set brightness
             tapo(action="set brightness", light_id="3", brightness_percent=80)
+
+            # Set lighting effect
+            tapo(action="set effect", light_id="tapo_l900_lightstrip", effect="Rainbow")
 
             # List all smart plugs
             tapo(action="list plugs")
@@ -124,66 +134,190 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
 
             # Lighting actions
             if action_lower in ["list_lights", "list_light", "list lights", "list light"]:
+                # Get both Hue and Tapo lights
+                hue_lights = []
+                tapo_lights = []
+
+                if hue_manager._initialized or await hue_manager.initialize():
+                    hue_lights = await hue_manager.get_all_lights()
+
+                if tapo_lighting_manager._initialized or await tapo_lighting_manager.initialize():
+                    tapo_lights_raw = await tapo_lighting_manager.get_all_lights()
+                    tapo_lights = [_model_dump(light) for light in tapo_lights_raw]
+
+                all_lights = []
+                all_lights.extend([_model_dump(light) for light in hue_lights])
+                all_lights.extend(tapo_lights)
+
+                return {
+                    "success": True,
+                    "action": "list_lights",
+                    "data": {
+                        "lights": all_lights,
+                        "count": len(all_lights),
+                        "hue_count": len(hue_lights),
+                        "tapo_count": len(tapo_lights),
+                    },
+                }
+
+            if action_lower in ["list_hue_lights", "list hue lights"]:
                 if not hue_manager._initialized:
                     await hue_manager.initialize()
                 lights = await hue_manager.get_all_lights()
                 return {
                     "success": True,
-                    "action": "list_lights",
+                    "action": "list_hue_lights",
                     "data": {
                         "lights": [_model_dump(light) for light in lights],
                         "count": len(lights),
+                        "type": "hue"
                     },
                 }
+
+            if action_lower in ["list_tapo_lights", "list tapo lights"]:
+                if not tapo_lighting_manager._initialized:
+                    await tapo_lighting_manager.initialize()
+                lights = await tapo_lighting_manager.get_all_lights()
+                return {
+                    "success": True,
+                    "action": "list_tapo_lights",
+                    "data": {
+                        "lights": [_model_dump(light) for light in lights],
+                        "count": len(lights),
+                        "type": "tapo"
+                    },
+                }
+
+            # Try Hue first, then Tapo for light operations
+            async def _control_light(light_id: str, action: str, **kwargs):
+                """Try to control light with both Hue and Tapo managers."""
+                # First try Hue
+                if hue_manager._initialized or await hue_manager.initialize():
+                    try:
+                        if action == "turn_on":
+                            success = await hue_manager.set_light_state(light_id, on=True, **kwargs)
+                        elif action == "turn_off":
+                            success = await hue_manager.set_light_state(light_id, on=False, **kwargs)
+                        elif action == "set_brightness":
+                            success = await hue_manager.set_light_state(light_id, on=True, **kwargs)
+                        elif action == "set_color":
+                            # For Hue, convert RGB to XY
+                            rgb = kwargs.get("rgb")
+                            if rgb:
+                                success = await hue_manager.set_light_rgb(light_id, rgb)
+                            else:
+                                success = False
+                        elif action == "set_effect":
+                            # Hue lights don't support effects
+                            return {"success": False, "error": "Effects are not supported for Philips Hue lights"}
+                        else:
+                            success = False
+
+                        if success:
+                            light = await hue_manager.get_light(light_id)
+                            return {"success": True, "type": "hue", "light": _model_dump(light) if light else None}
+                    except Exception:
+                        pass  # Continue to try Tapo
+
+                # Then try Tapo
+                if tapo_lighting_manager._initialized or await tapo_lighting_manager.initialize():
+                    try:
+                        if action == "turn_on":
+                            success = await tapo_lighting_manager.set_light_state(light_id, on=True, **kwargs)
+                        elif action == "turn_off":
+                            success = await tapo_lighting_manager.set_light_state(light_id, on=False, **kwargs)
+                        elif action == "set_brightness":
+                            success = await tapo_lighting_manager.set_light_state(light_id, **kwargs)
+                        elif action == "set_color":
+                            success = await tapo_lighting_manager.set_light_state(light_id, **kwargs)
+                        elif action == "set_effect":
+                            success = await tapo_lighting_manager.set_light_state(light_id, **kwargs)
+                        else:
+                            success = False
+
+                        if success:
+                            light = await tapo_lighting_manager.get_light(light_id)
+                            return {"success": True, "type": "tapo", "light": _model_dump(light) if light else None}
+                    except Exception:
+                        pass  # Both failed
+
+                return {"success": False, "error": f"Light {light_id} not found or failed to control"}
 
             if action_lower in ["turn_on_light", "turn on light", "on light"]:
                 if not light_id:
                     return {"success": False, "error": "light_id is required to turn on a light"}
-                if not hue_manager._initialized:
-                    await hue_manager.initialize()
-                success = await hue_manager.set_light_state(light_id, on=True, brightness_percent=brightness_percent)
-                if success:
-                    light = await hue_manager.get_light(light_id)
+                result = await _control_light(light_id, "turn_on", brightness_percent=brightness_percent)
+                if result["success"]:
                     return {
                         "success": True,
                         "action": "turn_on_light",
-                        "data": {"light": _model_dump(light) if light else None},
+                        "type": result.get("type", "unknown"),
+                        "data": {"light": result.get("light")},
                     }
-                return {"success": False, "error": "Failed to turn on light"}
+                return {"success": False, "error": result.get("error", "Failed to turn on light")}
 
             if action_lower in ["turn_off_light", "turn off light", "off light"]:
                 if not light_id:
                     return {"success": False, "error": "light_id is required to turn off a light"}
-                if not hue_manager._initialized:
-                    await hue_manager.initialize()
-                success = await hue_manager.set_light_state(light_id, on=False)
-                if success:
-                    light = await hue_manager.get_light(light_id)
+                result = await _control_light(light_id, "turn_off")
+                if result["success"]:
                     return {
                         "success": True,
                         "action": "turn_off_light",
-                        "data": {"light": _model_dump(light) if light else None},
+                        "type": result.get("type", "unknown"),
+                        "data": {"light": result.get("light")},
                     }
-                return {"success": False, "error": "Failed to turn off light"}
+                return {"success": False, "error": result.get("error", "Failed to turn off light")}
 
             if action_lower in ["set_brightness", "set brightness"]:
                 if not light_id:
                     return {"success": False, "error": "light_id is required to set brightness"}
                 if brightness_percent is None:
                     return {"success": False, "error": "brightness_percent is required"}
-                if not hue_manager._initialized:
-                    await hue_manager.initialize()
-                success = await hue_manager.set_light_state(
-                    light_id, on=True, brightness_percent=brightness_percent
-                )
-                if success:
-                    light = await hue_manager.get_light(light_id)
+                result = await _control_light(light_id, "set_brightness", brightness_percent=brightness_percent)
+                if result["success"]:
                     return {
                         "success": True,
                         "action": "set_brightness",
-                        "data": {"light": _model_dump(light) if light else None},
+                        "type": result.get("type", "unknown"),
+                        "data": {"light": result.get("light")},
                     }
-                return {"success": False, "error": "Failed to set brightness"}
+                return {"success": False, "error": result.get("error", "Failed to set brightness")}
+
+            if action_lower in ["set_color", "set color"]:
+                if not light_id:
+                    return {"success": False, "error": "light_id is required to set color"}
+                rgb_values = None
+                if isinstance(brightness_percent, list) and len(brightness_percent) >= 3:
+                    rgb_values = brightness_percent[:3]
+                if not rgb_values:
+                    return {"success": False, "error": "rgb parameter required for set_color (pass as brightness_percent=[r,g,b])"}
+
+                result = await _control_light(light_id, "set_color", rgb=rgb_values)
+                if result["success"]:
+                    return {
+                        "success": True,
+                        "action": "set_color",
+                        "type": result.get("type", "unknown"),
+                        "data": {"light": result.get("light")},
+                    }
+                return {"success": False, "error": result.get("error", "Failed to set color")}
+
+            if action_lower in ["set_effect", "set effect", "activate_effect"]:
+                if not light_id:
+                    return {"success": False, "error": "light_id is required to set effect"}
+                if not effect:
+                    return {"success": False, "error": "effect parameter is required"}
+
+                result = await _control_light(light_id, "set_effect", effect=effect)
+                if result["success"]:
+                    return {
+                        "success": True,
+                        "action": "set_effect",
+                        "type": result.get("type", "unknown"),
+                        "data": {"light": result.get("light"), "effect": effect},
+                    }
+                return {"success": False, "error": result.get("error", "Failed to set effect")}
 
             if action_lower in ["list_groups", "list groups"]:
                 if not hue_manager._initialized:
@@ -357,18 +491,28 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
             # Status
             if action_lower == "status":
                 lights_count = 0
+                tapo_lights_count = 0
                 plugs_count = 0
+
                 if hue_manager._initialized:
                     lights_count = len(hue_manager.lights)
+
+                if tapo_lighting_manager._initialized:
+                    tapo_lights_count = len(tapo_lighting_manager.devices)
+
                 devices = await tapo_plug_manager.get_all_devices()
                 plugs_count = len(devices)
+
                 return {
                     "success": True,
                     "action": "status",
                     "data": {
-                        "lights": lights_count,
+                        "lights": lights_count + tapo_lights_count,
+                        "hue_lights": lights_count,
+                        "tapo_lights": tapo_lights_count,
                         "smart_plugs": plugs_count,
                         "hue_connected": hue_manager._initialized,
+                        "tapo_lighting_connected": tapo_lighting_manager._initialized,
                     },
                 }
 

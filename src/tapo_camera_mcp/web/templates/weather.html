@@ -360,9 +360,17 @@
 
 {% block content %}
 <div class="weather-dashboard">
-    <div class="page-header">
-        <h1>🌡️ Weather Monitoring</h1>
-        <p>Indoor air quality (Netatmo) and external weather (Vienna) side by side</p>
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1>🌡️ Weather Monitoring</h1>
+            <p><strong>🏠 HOME Weather</strong> (Netatmo sensors) vs <strong>🌍 VIENNA City</strong> (external weather)</p>
+            <p style="font-size: 14px; color: #6b7280; margin: 4px 0 0 0;">
+                Left: Your indoor air quality | Right: Vienna's outdoor weather
+            </p>
+        </div>
+        <button onclick="refreshDashboard()" id="refresh-btn" style="background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600; transition: background 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <i class="fas fa-sync-alt"></i> <span>Refresh Now</span>
+        </button>
     </div>
     
     <!-- Two-Column Layout: Internal vs External -->
@@ -372,8 +380,9 @@
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 24px; color: white;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <div>
-                    <h2 style="margin: 0; font-size: 20px; font-weight: 600;">🏠 Indoor</h2>
-                    <p style="margin: 4px 0 0 0; opacity: 0.8; font-size: 14px;" id="internal-location">Netatmo Weather Station</p>
+                    <h2 style="margin: 0; font-size: 20px; font-weight: 600;">🏠 YOUR HOME</h2>
+                    <p style="margin: 4px 0 0 0; opacity: 0.8; font-size: 14px;" id="internal-location">Netatmo Indoor Sensors</p>
+                    <p style="margin: 2px 0 0 0; opacity: 0.6; font-size: 12px;">Living room, bathroom air quality</p>
                 </div>
                 <div style="text-align: right;">
                     <div style="font-size: 48px; font-weight: 700;" id="internal-temp">--°</div>
@@ -407,8 +416,9 @@
         <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border-radius: 16px; padding: 24px; color: white;" id="external-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <div>
-                    <h2 style="margin: 0; font-size: 20px; font-weight: 600;">🌍 Vienna</h2>
-                    <p style="margin: 4px 0 0 0; opacity: 0.8; font-size: 14px;" id="external-description">Loading...</p>
+                    <h2 style="margin: 0; font-size: 20px; font-weight: 600;">🌍 VIENNA CITY</h2>
+                    <p style="margin: 4px 0 0 0; opacity: 0.8; font-size: 14px;" id="external-description">Outdoor weather comparison</p>
+                    <p style="margin: 2px 0 0 0; opacity: 0.6; font-size: 12px;">Not your home - city weather</p>
                 </div>
                 <div style="text-align: right;">
                     <div style="font-size: 48px; font-weight: 700;" id="external-temp">--°</div>
@@ -441,7 +451,7 @@
     
     <!-- 5-Day Forecast -->
     <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px;">
-        <h3 style="margin: 0 0 16px 0; color: #1f2937;">📅 5-Day Forecast (Vienna)</h3>
+        <h3 style="margin: 0 0 16px 0; color: #1f2937;">📅 VIENNA City Forecast (Next 5 Days)</h3>
         <div id="forecast-container" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;">
             <!-- Forecast will be loaded dynamically -->
             <div style="text-align: center; padding: 16px; background: #f3f4f6; border-radius: 8px;">
@@ -1188,10 +1198,46 @@ function requestNotificationPermission() {
     }
 }
 
-// Load and render weather stations dynamically
-async function loadWeatherStations() {
+// Refresh Dashboard Logic
+async function refreshDashboard() {
+    const btn = document.getElementById('refresh-btn');
+    const icon = btn.querySelector('i');
+    const text = btn.querySelector('span');
+    
+    // Set loading state
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+    icon.classList.add('fa-spin');
+    text.textContent = 'Refreshing...';
+    
     try {
-        const response = await fetch('/api/weather/stations');
+        // Force refresh both data sources
+        // We use Promise.all to run them in parallel
+        await Promise.all([
+            loadWeatherStations(true),
+            loadCombinedWeather(true)
+        ]);
+        
+        // Also refresh charts (though less critical)
+        loadChartData();
+        
+    } catch (error) {
+        console.error('Manual refresh failed:', error);
+        alert('Refresh failed: ' + error.message);
+    } finally {
+        // Reset state
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        icon.classList.remove('fa-spin');
+        text.textContent = 'Refresh Now';
+    }
+}
+
+// Load and render weather stations dynamically
+async function loadWeatherStations(forceRefresh = false) {
+    try {
+        const url = forceRefresh ? '/api/weather/stations?force_refresh=true' : '/api/weather/stations';
+        const response = await fetch(url);
         const stations = await response.json();
         
         const container = document.getElementById('weather-stations-container');
@@ -1221,7 +1267,8 @@ async function loadWeatherStations() {
             // Fetch current data for this station
             let allData = {};
             try {
-                const dataResponse = await fetch(`/api/weather/stations/${station.station_id}/data?module_type=all`);
+                const dataUrl = `/api/weather/stations/${station.station_id}/data?module_type=all` + (forceRefresh ? '&force_refresh=true' : '');
+                const dataResponse = await fetch(dataUrl);
                 if (!dataResponse.ok) {
                     throw new Error(`HTTP ${dataResponse.status}: ${dataResponse.statusText}`);
                 }
@@ -1411,9 +1458,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Load combined internal + external weather
-async function loadCombinedWeather() {
+async function loadCombinedWeather(forceRefresh = false) {
     try {
-        const response = await fetch('/api/weather/combined');
+        const url = forceRefresh ? '/api/weather/combined?force_refresh=true' : '/api/weather/combined';
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }

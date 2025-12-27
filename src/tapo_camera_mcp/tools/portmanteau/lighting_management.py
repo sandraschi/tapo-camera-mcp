@@ -136,7 +136,7 @@ def _model_dump(model: Any) -> dict[str, Any]:
 LIGHTING_ACTIONS = {
     "list_lights": "List all Philips Hue lights",
     "get_light": "Get specific light status",
-    "control_light": "Control a light (on/off, brightness, color)",
+    "control_light": "Control a light (on/off, brightness, color, effects)",
     "list_groups": "List all Hue groups/rooms",
     "control_group": "Control all lights in a group/room",
     "list_scenes": "List all available scenes",
@@ -173,6 +173,7 @@ def register_lighting_management_tool(mcp: FastMCP) -> None:
         hue: Union[int, str] | None = None,
         saturation: Union[int, str] | None = None,
         rgb: list[Union[int, str]] | None = None,
+        effect: str | None = None,
         prank_mode: Literal["chaos", "wave", "disco", "sos"] | None = None,
         duration: Union[int, str] = 5,
     ) -> dict[str, Any]:
@@ -222,6 +223,12 @@ def register_lighting_management_tool(mcp: FastMCP) -> None:
             rgb (list[int] | None): RGB color values [R, G, B] where each value is 0-255. Used by: control_light operation.
                 Example: [255, 0, 0] for red, [0, 255, 0] for green, [0, 0, 255] for blue.
                 Only works with multicolor bulbs. RGB is converted to Hue's XY color space internally.
+
+            effect (str | None): Lighting effect/mode to activate. Used by: control_light operation.
+                For Tapo lights: Aurora, Bubbling Cauldron, Candy Cane, Christmas, Flicker,
+                Grandma's Christmas Lights, Hanukkah, Haunted Mansion, Icicle, Lightning, Ocean,
+                Rainbow, Raindrop, Spring, Valentine's, Sunrise, Sunset, Daylight
+                For Hue lights: effect names supported by the bulb.
 
             prank_mode (Literal["chaos", "wave", "disco", "sos"] | None): Prank mode for fun light shows:
                 - "chaos": Random on/off for all lights
@@ -352,32 +359,69 @@ def register_lighting_management_tool(mcp: FastMCP) -> None:
                 if not light_id:
                     return {"success": False, "error": "light_id is required for control_light action"}
 
-                # Validate RGB if provided
-                if rgb is not None:
-                    if not isinstance(rgb, list) or len(rgb) != 3:
-                        return {"success": False, "error": "rgb must be a list of 3 integers [R, G, B] where each value is 0-255"}
-                    if not all(isinstance(c, int) and 0 <= c <= 255 for c in rgb):
-                        return {"success": False, "error": "rgb values must be integers between 0 and 255"}
+                # Check if this is a Tapo light (has tapo_lighting_manager) or Hue light
+                from tapo_camera_mcp.tools.lighting.tapo_lighting_tools import tapo_lighting_manager
+                is_tapo_light = await tapo_lighting_manager.get_light(light_id) is not None
 
-                # Validate hue if provided
-                if hue is not None:
-                    if not isinstance(hue, int) or not (0 <= hue <= 65535):
-                        return {"success": False, "error": "hue must be an integer between 0 and 65535"}
+                if is_tapo_light:
+                    # Handle Tapo light (supports effects)
+                    # Validate RGB if provided
+                    if rgb is not None:
+                        if not isinstance(rgb, list) or len(rgb) != 3:
+                            return {"success": False, "error": "rgb must be a list of 3 integers [R, G, B] where each value is 0-255"}
+                        if not all(isinstance(c, int) and 0 <= c <= 255 for c in rgb):
+                            return {"success": False, "error": "rgb values must be integers between 0 and 255"}
 
-                # Validate saturation if provided
-                if saturation is not None:
-                    if not isinstance(saturation, int) or not (0 <= saturation <= 254):
-                        return {"success": False, "error": "saturation must be an integer between 0 and 254"}
+                    # Validate hue if provided
+                    if hue is not None:
+                        if not isinstance(hue, int) or not (0 <= hue <= 360):
+                            return {"success": False, "error": "hue must be an integer between 0 and 360 for Tapo lights"}
 
-                success = await hue_manager.set_light_state(
-                    light_id,
-                    on=on,
-                    brightness_percent=brightness_percent,
-                    color_temp=color_temp_kelvin,
-                    hue=hue,
-                    saturation=saturation,
-                    rgb=rgb,
-                )
+                    # Validate saturation if provided
+                    if saturation is not None:
+                        if not isinstance(saturation, int) or not (0 <= saturation <= 100):
+                            return {"success": False, "error": "saturation must be an integer between 0 and 100 for Tapo lights"}
+
+                    success = await tapo_lighting_manager.set_light_state(
+                        light_id=light_id,
+                        on=on,
+                        brightness_percent=brightness_percent,
+                        hue=hue,
+                        saturation=saturation,
+                        rgb=rgb,
+                        effect=effect,
+                    )
+                else:
+                    # Handle Hue light (no effects support)
+                    if effect is not None:
+                        return {"success": False, "error": "Effects are not supported for Philips Hue lights. Use Tapo lights for effects."}
+
+                    # Validate RGB if provided
+                    if rgb is not None:
+                        if not isinstance(rgb, list) or len(rgb) != 3:
+                            return {"success": False, "error": "rgb must be a list of 3 integers [R, G, B] where each value is 0-255"}
+                        if not all(isinstance(c, int) and 0 <= c <= 255 for c in rgb):
+                            return {"success": False, "error": "rgb values must be integers between 0 and 255"}
+
+                    # Validate hue if provided
+                    if hue is not None:
+                        if not isinstance(hue, int) or not (0 <= hue <= 65535):
+                            return {"success": False, "error": "hue must be an integer between 0 and 65535"}
+
+                    # Validate saturation if provided
+                    if saturation is not None:
+                        if not isinstance(saturation, int) or not (0 <= saturation <= 254):
+                            return {"success": False, "error": "saturation must be an integer between 0 and 254"}
+
+                    success = await hue_manager.set_light_state(
+                        light_id,
+                        on=on,
+                        brightness_percent=brightness_percent,
+                        color_temp=color_temp_kelvin,
+                        hue=hue,
+                        saturation=saturation,
+                        rgb=rgb,
+                    )
                 if success:
                     # Get updated light state
                     light = await hue_manager.get_light(light_id)

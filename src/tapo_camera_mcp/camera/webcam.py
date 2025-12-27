@@ -190,14 +190,42 @@ class WebCamera(BaseCamera):
 
         # Get resolution information if connected
         resolution = "Unknown"
-        if connected and self._cap:
-            try:
-                width = int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-                height = int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                if width > 0 and height > 0:
-                    resolution = f"{width}x{height}"
-            except Exception as exc:
-                logger.debug("Failed to get webcam resolution: %s", exc)
+        if connected:
+            # Try to get resolution from existing capture object
+            if self._cap:
+                try:
+                    width = int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                    height = int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                    if width > 0 and height > 0:
+                        resolution = f"{width}x{height}"
+                except Exception as exc:
+                    logger.debug("Failed to get webcam resolution from existing cap: %s", exc)
+
+            # If no resolution from existing cap, try to open camera briefly
+            if resolution == "Unknown":
+                temp_cap = None
+                try:
+                    temp_cap = cv2.VideoCapture(self._device_id)
+                    if temp_cap.isOpened():
+                        # Try to set configured resolution first
+                        config_res = self.config.get('params', {}).get('resolution', '640x480')
+                        try:
+                            conf_width, conf_height = map(int, config_res.split('x'))
+                            temp_cap.set(cv2.CAP_PROP_FRAME_WIDTH, conf_width)
+                            temp_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, conf_height)
+                        except:
+                            pass  # Ignore config parsing errors
+
+                        # Get actual resolution
+                        width = int(temp_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                        height = int(temp_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                        if width > 0 and height > 0:
+                            resolution = f"{width}x{height}"
+                except Exception as exc:
+                    logger.debug("Failed to get webcam resolution: %s", exc)
+                finally:
+                    if temp_cap:
+                        temp_cap.release()
 
         status = {
             "connected": connected,
@@ -207,6 +235,7 @@ class WebCamera(BaseCamera):
             "streaming": await self.is_streaming(),
             "resolution": resolution,
             "ptz_capable": False,  # Most webcams don't have PTZ
+            "digital_zoom_capable": True,  # Digital zoom always available
             "audio_capable": False,  # Audio not implemented for webcams
             "streaming_capable": True,  # Webcams can stream
             "capture_capable": True,  # Webcams can capture

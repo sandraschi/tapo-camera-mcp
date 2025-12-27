@@ -1708,7 +1708,7 @@ async function startWebRTC(deviceId) {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             device_id: deviceId,
-                            candidate: JSON.stringify(event.candidate)
+                            candidate: event.candidate.candidate
                         })
                     });
                 } catch (e) {

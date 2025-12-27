@@ -39,7 +39,7 @@ async def _get_camera(camera_name: str):
 @router.post("/move")
 async def ptz_move(request: PTZMoveRequest):
     """Start continuous PTZ movement.
-    
+
     Values range from -1.0 to 1.0:
     - pan: negative = left, positive = right
     - tilt: negative = down, positive = up
@@ -53,11 +53,30 @@ async def ptz_move(request: PTZMoveRequest):
             status_code=400, detail="Camera does not support PTZ controls"
         )
 
+    # Validate and clamp values to prevent issues
+    pan = max(-1.0, min(1.0, request.pan))
+    tilt = max(-1.0, min(1.0, request.tilt))
+    zoom = max(-1.0, min(1.0, request.zoom))
+
+    # For Tapo C200, ensure minimum movement threshold
+    # Very small values might not register
+    min_threshold = 0.05
+    if abs(pan) < min_threshold and abs(tilt) < min_threshold and abs(zoom) < min_threshold:
+        # If all values are too small, stop movement instead
+        try:
+            await camera.ptz_stop()
+            return {
+                "success": True,
+                "message": "PTZ stopped (values too small for movement)",
+            }
+        except Exception:
+            pass
+
     try:
-        await camera.ptz_move(pan=request.pan, tilt=request.tilt, zoom=request.zoom)
+        await camera.ptz_move(pan=pan, tilt=tilt, zoom=zoom)
         return {
             "success": True,
-            "message": f"PTZ moving: pan={request.pan}, tilt={request.tilt}, zoom={request.zoom}",
+            "message": f"PTZ moving: pan={pan:.3f}, tilt={tilt:.3f}, zoom={zoom:.3f}",
         }
     except Exception as e:
         logger.exception("PTZ move failed")

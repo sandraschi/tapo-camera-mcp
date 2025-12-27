@@ -1,12 +1,25 @@
 """Camera module imports."""
 
 import logging
+import platform
+
+logger = logging.getLogger(__name__)
 
 from .laptop import LaptopCamera
 from .onvif_camera import ONVIFBasedCamera
 from .petcube import PetcubeCamera
+from .public_webcam import PublicWebcam
 from .tapo import TapoCamera
-from .webcam import WebCamera
+
+# Use Windows webcam proxy implementation for Docker containers
+# This allows USB cameras on Windows host to be accessed from Linux Docker containers
+try:
+    from .windows_webcam import WindowsWebCamera as WebCamera, WindowsMicroscopeCamera as MicroscopeCamera
+    logger.info("Using Windows webcam proxy implementation")
+except ImportError as e:
+    logger.warning(f"Failed to import Windows webcam proxy, falling back to standard: {e}")
+    from .webcam import WebCamera
+    from .microscope import MicroscopeCamera
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +41,7 @@ except Exception as e:
     RING_AVAILABLE = False
     RingCamera = None  # type: ignore[assignment,misc]
 
-__all__ = ["LaptopCamera", "ONVIFBasedCamera", "PetcubeCamera", "TapoCamera", "WebCamera"]
+__all__ = ["LaptopCamera", "MicroscopeCamera", "ONVIFBasedCamera", "PetcubeCamera", "PublicWebcam", "TapoCamera", "WebCamera"]
 
 # Only add RingCamera to __all__ if it's available
 if RING_AVAILABLE:

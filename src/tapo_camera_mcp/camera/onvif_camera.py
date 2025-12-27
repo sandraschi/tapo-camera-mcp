@@ -38,8 +38,11 @@ class ONVIFCameraWrapper:
             self._profiles = None
 
             # Create fresh connection (no caching - always re-authenticate)
+            # Set shorter timeout to prevent 20+ second delays
+            import zeep
+            transport = zeep.transports.Transport(timeout=10)  # 10 second timeout
             self._camera = ONVIFCamera(
-                self.host, self.port, self.username, self.password
+                self.host, self.port, self.username, self.password, transport=transport
             )
             logger.info(f"ONVIF camera connected at {self.host}:{self.port} (fresh connection)")
             return True
@@ -137,10 +140,61 @@ class ONVIFCameraWrapper:
         if not profiles:
             raise RuntimeError("No media profiles for PTZ")
 
+        # Ensure we have valid velocity values
+        # Tapo C200 might need specific velocity ranges
+        pan = float(pan) if pan != 0 else 0.0
+        tilt = float(tilt) if tilt != 0 else 0.0
+        zoom = float(zoom) if zoom != 0 else 0.0
+
+        # Create velocity structure - ensure proper format for ONVIF
+        velocity = {
+            "PanTilt": {
+                "x": pan,  # Pan velocity (-1.0 to 1.0)
+                "y": tilt  # Tilt velocity (-1.0 to 1.0)
+            }
+        }
+
+        # Only add zoom if it's non-zero (some cameras don't support zoom)
+        if zoom != 0:
+            velocity["Zoom"] = {"x": zoom}
+
         request = ptz.create_type("ContinuousMove")
         request.ProfileToken = profiles[0].token
-        request.Velocity = {"PanTilt": {"x": pan, "y": tilt}, "Zoom": {"x": zoom}}
+        request.Velocity = velocity
+
+        logger.debug(f"PTZ continuous move: pan={pan}, tilt={tilt}, zoom={zoom}")
         ptz.ContinuousMove(request)
+
+    def relative_move(self, pan_normalized: float = 0, tilt_normalized: float = 0, zoom: float = 0):
+        """Move PTZ camera relatively using normalized ONVIF coordinates (-1.0 to 1.0)."""
+        ptz = self.get_ptz_service()
+        profiles = self.get_media_profiles()
+        if not profiles:
+            raise RuntimeError("No media profiles for PTZ")
+
+        # Get current position (normalized -1.0 to 1.0)
+        current_pos = self.get_current_position()
+        if not current_pos:
+            # If we can't get current position, use goto_position with the requested coordinates
+            logger.warning("Cannot get current PTZ position, using absolute movement")
+            self.goto_position(pan_normalized, tilt_normalized, zoom)
+            return
+
+        # Calculate new position using normalized coordinates
+        new_pan = current_pos.get('pan', 0) + pan_normalized
+        new_tilt = current_pos.get('tilt', 0) + tilt_normalized
+        new_zoom = current_pos.get('zoom', 0) + zoom
+
+        # Clamp to valid ONVIF ranges (-1.0 to 1.0)
+        new_pan = max(-1.0, min(1.0, new_pan))
+        new_tilt = max(-1.0, min(1.0, new_tilt))
+        new_zoom = max(0.0, min(1.0, new_zoom))  # Zoom is usually 0.0 to 1.0
+
+        logger.debug(f"Relative move: current=({current_pos.get('pan', 0):.3f}, {current_pos.get('tilt', 0):.3f}) -> "
+                    f"target=({new_pan:.3f}, {new_tilt:.3f})")
+
+        # Use goto_position for absolute movement
+        self.goto_position(new_pan, new_tilt, new_zoom)
 
     def stop_move(self):
         """Stop PTZ movement."""
@@ -176,6 +230,44 @@ class ONVIFCameraWrapper:
 
         presets = ptz.GetPresets(profiles[0].token)
         return [{"token": p.token, "name": p.Name} for p in presets]
+
+    def get_current_position(self) -> dict:
+        """Get current PTZ position."""
+        ptz = self.get_ptz_service()
+        profiles = self.get_media_profiles()
+        if not profiles:
+            return {}
+
+        try:
+            status = ptz.GetStatus(profiles[0].token)
+            position = status.Position if hasattr(status, 'Position') else {}
+
+            result = {}
+            if hasattr(position, 'PanTilt'):
+                result['pan'] = getattr(position.PanTilt, 'x', 0)
+                result['tilt'] = getattr(position.PanTilt, 'y', 0)
+            if hasattr(position, 'Zoom'):
+                result['zoom'] = getattr(position.Zoom, 'x', 0)
+
+            return result
+        except Exception as e:
+            logger.warning(f"Could not get PTZ position: {e}")
+            return {}
+
+    def goto_position(self, pan: float, tilt: float, zoom: float = 0):
+        """Go to absolute PTZ position."""
+        ptz = self.get_ptz_service()
+        profiles = self.get_media_profiles()
+        if not profiles:
+            raise RuntimeError("No media profiles for PTZ")
+
+        request = ptz.create_type("AbsoluteMove")
+        request.ProfileToken = profiles[0].token
+        request.Position = {
+            "PanTilt": {"x": pan, "y": tilt},
+            "Zoom": {"x": zoom}
+        }
+        ptz.AbsoluteMove(request)
 
 
 @CameraFactory.register(CameraType.ONVIF)
@@ -382,6 +474,7 @@ class ONVIFBasedCamera(BaseCamera):
                 "streaming": await self.is_streaming(),
                 "resolution": resolution,
                 "ptz_capable": ptz_capable,
+                "digital_zoom_capable": True,  # Digital zoom always available
                 "audio_capable": False,  # ONVIF audio check would need more work
                 "streaming_capable": True,
                 "capture_capable": True,
@@ -393,6 +486,7 @@ class ONVIFBasedCamera(BaseCamera):
                 "error": str(e),
                 "resolution": "N/A",
                 "ptz_capable": False,
+                "digital_zoom_capable": True,  # Digital zoom always available even on error
                 "audio_capable": False,
                 "streaming_capable": False,
                 "capture_capable": False,
@@ -445,14 +539,59 @@ class ONVIFBasedCamera(BaseCamera):
 
     # PTZ Methods
     async def ptz_move(self, pan: float = 0, tilt: float = 0, zoom: float = 0):
-        """Move PTZ camera continuously."""
-        if not await self.is_connected():
+        """Move PTZ camera relatively by degrees.
+
+        Parameters:
+            pan: Pan movement in degrees (positive = right, negative = left)
+            tilt: Tilt movement in degrees (positive = up, negative = down)
+            zoom: Zoom movement (relative, positive = zoom in, negative = zoom out)
+        """
+        # Only reconnect if we're sure we're not connected
+        # This prevents unnecessary reconnections that cause delays
+        if not self._is_connected or not self._camera:
+            logger.debug("PTZ: Camera not connected, connecting...")
             await self.connect()
 
+        # Quick connection check - if this fails, try reconnect
+        try:
+            if hasattr(self._camera, '_camera') and self._camera._camera:
+                # Test if the underlying connection is still valid
+                self._camera._camera.devicemgmt.GetDeviceInformation()
+            else:
+                raise Exception("Invalid camera connection")
+        except Exception:
+            logger.warning("PTZ: Connection test failed, reconnecting...")
+            await self.connect()
+
+        # Use normalized ONVIF coordinates (-1.0 to 1.0)
+        # Larger values give bigger movements
+        pan_normalized = pan * 0.3   # 0.3 = reasonable movement size
+        tilt_normalized = tilt * 0.3 # 0.3 = reasonable movement size
+        zoom_relative = zoom * 0.1   # Reasonable zoom steps
+
+        # Log PTZ movement for debugging
+        logger.debug(f"PTZ move requested: pan={pan} ({pan_normalized:.3f} normalized), tilt={tilt} ({tilt_normalized:.3f} normalized), zoom={zoom}")
+
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(
-            None, lambda: self._camera.continuous_move(pan, tilt, zoom)
-        )
+        try:
+            # Use relative movement instead of continuous
+            await asyncio.wait_for(
+                loop.run_in_executor(
+                    None, lambda: self._camera.relative_move(pan_normalized, tilt_normalized, zoom_relative)
+                ),
+                timeout=8.0  # Longer timeout for positioning
+            )
+            logger.debug(f"PTZ relative move executed successfully")
+        except asyncio.TimeoutError:
+            logger.error("PTZ move timed out after 8 seconds")
+            # Reset connection state on timeout
+            self._is_connected = False
+            raise Exception("PTZ operation timed out")
+        except Exception as e:
+            logger.error(f"PTZ move failed: {e}")
+            # Reset connection state on any error
+            self._is_connected = False
+            raise
 
     async def ptz_stop(self):
         """Stop PTZ movement."""
@@ -470,6 +609,24 @@ class ONVIFBasedCamera(BaseCamera):
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(
             None, lambda: self._camera.go_to_preset(preset_token)
+        )
+
+    async def ptz_get_current_position(self) -> dict:
+        """Get current PTZ position asynchronously."""
+        if not await self.is_connected():
+            await self.connect()
+
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self._camera.get_current_position)
+
+    async def ptz_goto_position(self, pan: float, tilt: float, zoom: float = 0):
+        """Go to absolute PTZ position asynchronously."""
+        if not await self.is_connected():
+            await self.connect()
+
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(
+            None, lambda: self._camera.goto_position(pan, tilt, zoom)
         )
 
     async def ptz_get_presets(self) -> list:

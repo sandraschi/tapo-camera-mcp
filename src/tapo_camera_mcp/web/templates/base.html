@@ -911,12 +911,6 @@
                         <span>Recordings</span>
                     </a>
                 </li>
-                <li class="nav-item {% if request.url.path == '/onboarding' %}active{% endif %}">
-                    <a href="/onboarding">
-                        <i class="fas fa-magic"></i>
-                        <span>Device Setup</span>
-                    </a>
-                </li>
                 <li class="nav-item {% if request.url.path == '/energy' %}active{% endif %}">
                     <a href="/energy">
                         <i class="fas fa-bolt"></i>
@@ -947,6 +941,18 @@
                         <span>Alarms</span>
                     </a>
                 </li>
+                <li class="nav-item {% if request.url.path == '/ring' %}active{% endif %}">
+                    <a href="/ring">
+                        <i class="fas fa-door-open"></i>
+                        <span>Ring Doorbell</span>
+                    </a>
+                </li>
+                <li class="nav-item {% if request.url.path == '/nest' %}active{% endif %}">
+                    <a href="/nest">
+                        <i class="fas fa-fire-extinguisher"></i>
+                        <span>Nest Protect</span>
+                    </a>
+                </li>
                 <li class="nav-item {% if request.url.path == '/weather' %}active{% endif %}">
                     <a href="/weather">
                         <i class="fas fa-thermometer-half"></i>
@@ -956,7 +962,13 @@
                 <li class="nav-item {% if request.url.path == '/health' %}active{% endif %}">
                     <a href="/health">
                         <i class="fas fa-heartbeat"></i>
-                        <span>Health</span>
+                        <span>PC Health</span>
+                    </a>
+                </li>
+                <li class="nav-item {% if request.url.path == '/human-health' %}active{% endif %}">
+                    <a href="/human-health">
+                        <i class="fas fa-user-md"></i>
+                        <span>Human Health</span>
                     </a>
                 </li>
                 <li class="nav-item {% if request.url.path == '/health-dashboard' %}active{% endif %}">
@@ -969,6 +981,12 @@
                     <a href="/alerts">
                         <i class="fas fa-bell"></i>
                         <span>Alerts</span>
+                    </a>
+                </li>
+                <li class="nav-item {% if request.url.path == '/onboarding' %}active{% endif %}">
+                    <a href="/onboarding">
+                        <i class="fas fa-magic"></i>
+                        <span>Device Setup</span>
                     </a>
                 </li>
                 <li class="nav-item {% if request.url.path == '/settings' %}active{% endif %}">

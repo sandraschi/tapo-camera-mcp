@@ -10,7 +10,9 @@ import os
 import sys
 import warnings
 
-from tapo_camera_mcp.camera.tapo import Tapo
+# Defer Tapo import to avoid PyO3 initialization issues
+# Will be imported in main() after Python interpreter is ready
+Tapo = None
 
 # Suppress warnings to prevent noise in logs
 os.environ["PYTHONWARNINGS"] = "ignore"
@@ -79,6 +81,11 @@ def main():
         if args.direct:
             logger.info("=== USING DIRECT STDIO MODE FOR CLAUDE DESKTOP ===")
             logger.info("This mode is optimized for Claude Desktop integration")
+
+            # Import Tapo library BEFORE starting asyncio to avoid PyO3 initialization issues
+            logger.info("Importing Tapo library...")
+            from tapo_camera_mcp.camera.tapo import Tapo
+
             import asyncio
 
             async def direct_main():

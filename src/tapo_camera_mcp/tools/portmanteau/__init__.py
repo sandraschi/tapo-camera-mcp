@@ -32,6 +32,12 @@ from .security_management import register_security_management_tool
 from .system_management import register_system_management_tool
 from .tapo_control import register_tapo_control_tool
 from .weather_management import register_weather_management_tool
+from .medical_management import register_medical_management_tool
+from .shelly_management import register_shelly_management_tool
+from .thermal_management import register_thermal_management_tool
+from .appliance_monitor_management import register_appliance_monitor_management_tool
+from .alerts_management import register_alerts_management_tool
+from .messages_management import register_messages_management_tool
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +74,12 @@ def register_all_portmanteau_tools(mcp: FastMCP) -> None:
     register_analytics_management_tool(mcp)  # Performance analytics
     register_grafana_management_tool(mcp)  # Grafana integration
 
+    register_medical_management_tool(mcp)
+    register_shelly_management_tool(mcp)
+    register_thermal_management_tool(mcp)
+    register_appliance_monitor_management_tool(mcp)
+    register_alerts_management_tool(mcp)
+    register_messages_management_tool(mcp)
     logger.info("All portmanteau tools registered successfully (20 tools)")
 
 

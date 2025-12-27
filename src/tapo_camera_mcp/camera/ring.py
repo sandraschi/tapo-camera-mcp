@@ -118,19 +118,18 @@ class RingCamera(BaseCamera):
             return image
 
     async def get_stream_url(self) -> Optional[str]:
-        """Get the stream URL for the camera."""
+        """Get the stream URL for the camera.
+
+        Ring doorbells use WebRTC for live streaming, not HTTP URLs.
+        This method returns None to indicate WebRTC should be used instead.
+        """
         if not await self.is_connected():
             await self.connect()
 
-        try:
-            # Get live stream URL
-            return await asyncio.get_event_loop().run_in_executor(
-                None, lambda: self._device.recording_url()
-            )
-
-        except Exception:
-            logger.exception("Failed to get stream URL from Ring")
-            return None
+        # Ring doorbells require WebRTC for live streaming
+        # The stream viewer should detect this and use WebRTC endpoints
+        logger.info("Ring doorbell live streaming requires WebRTC - no HTTP URL available")
+        return None
 
     async def get_status(self) -> Dict:
         """Get camera status."""

@@ -12,6 +12,7 @@
 # Supported Camera Types:
 # - tapo: TP-Link Tapo cameras (requires pytapo)
 # - webcam: USB webcams (requires opencv-python)
+# - microscope: USB microscope cameras (requires opencv-python)
 # - ring: Ring doorbell cameras (requires ring-doorbell)
 # - furbo: Furbo pet cameras (uses built-in API client)
 
@@ -40,7 +41,62 @@ cameras:
     device_id: 0  # Usually 0 for the first webcam
     resolution: "1920x1080"  # Optional
     fps: 30  # Optional, frames per second
-    
+
+  # USB Microscope Camera Example
+  microscope1:
+    type: microscope
+    device_id: 1  # Check which device ID your microscope appears as
+    resolution: "1280x720"  # Common microscope resolutions
+    fps: 15  # Lower FPS for better image quality
+    magnification: 50.0  # Current magnification setting
+    focus_mode: "auto"  # auto, manual, or fixed
+    led_brightness: 75  # 0-100 LED brightness
+    calibration_factor: 0.01  # mm per pixel (calibrate for measurements)
+
+  # USB Otoscope Camera Example
+  otoscope1:
+    type: otoscope
+    device_id: 2  # Check which device ID your otoscope appears as
+    resolution: "640x480"  # Common otoscope resolutions
+    fps: 30  # Frames per second
+    light_intensity: 80  # 0-100 LED brightness
+    focus_mode: "auto"  # auto, manual, or fixed
+    specimen_type: "ear"  # ear, throat, nose, mouth, skin, other
+    magnification: 1.0  # Digital magnification
+    # calibration_data: {}  # Will be set during calibration process
+
+  # USB Digital Camera (Digicam) Example
+  canon_eos:
+    type: digicam
+    device_id: 3  # Check which device ID your camera appears as
+    resolution: "1920x1080"  # Camera's native resolution
+    fps: 30  # Frames per second
+    camera_model: "Canon EOS Rebel T7i"  # Your camera model
+    connection_type: "usb"  # usb, hdmi, wifi
+    driver_software: "canon"  # canon, nikon, sony, generic
+    original_megapixels: 24  # Camera's megapixel rating
+    has_optical_zoom: true  # true if camera has zoom lens
+    max_optical_zoom: 8.0  # Maximum optical zoom (if applicable)
+    focus_mode: "auto"  # auto, manual, macro, infinity
+    image_stabilization: true
+    night_mode: false
+
+  # Repurposed iPhone Webcam Example
+  old_iphone:
+    type: iphone
+    device_id: 4  # Check which device ID your iPhone appears as
+    resolution: "1920x1080"  # iPhone camera resolution
+    fps: 30  # Frames per second
+    iphone_model: "iPhone 12 Pro"  # Your iPhone model
+    ios_version: "16.5"  # iOS version
+    connection_method: "wifi"  # wifi, usb, continuity
+    webcam_app: "continuity"  # continuity, epoccam, manycam
+    camera_lens: "wide"  # wide, ultra_wide, telephoto
+    hdr_mode: true
+    portrait_mode: false
+    live_photos: false
+    stabilization: true
+
   # Ring Doorbell Camera Example
   front_door:
     type: ring

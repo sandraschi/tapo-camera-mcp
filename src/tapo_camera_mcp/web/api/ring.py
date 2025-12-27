@@ -5,7 +5,7 @@ Ring doorbell and alarm API endpoints.
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from tapo_camera_mcp.integrations.ring_client import (
@@ -45,28 +45,110 @@ class RingSummaryResponse(BaseModel):
 @router.get("/status")
 async def get_ring_status():
     """Get Ring connection status."""
+    from ..config import get_config
+    
+    config = get_config()
+    ring_cfg = config.get("ring", {})
+    enabled = ring_cfg.get("enabled", False)
+    
+    if not enabled:
+        return {
+            "connected": False,
+            "initialized": False,
+            "two_fa_pending": False,
+            "enabled": False,
+            "message": "Ring integration is disabled in config.yaml",
+            "config_issue": True,
+        }
+    
     client = get_ring_client()
     if not client:
         return {
             "connected": False,
             "initialized": False,
             "two_fa_pending": False,
-            "message": "Ring client not configured",
+            "enabled": True,
+            "message": "Ring client not initialized. Click 'Initialize' to connect.",
+            "needs_init": True,
         }
 
     if client.is_2fa_pending:
-        message = "2FA code required"
+        return {
+            "connected": False,
+            "initialized": False,
+            "two_fa_pending": True,
+            "enabled": True,
+            "message": "2FA code required. Check your email/SMS and submit the code.",
+        }
     elif client.is_initialized:
-        message = "Connected"
+        return {
+            "connected": True,
+            "initialized": True,
+            "two_fa_pending": False,
+            "enabled": True,
+            "message": "Ring is connected and ready",
+        }
     else:
-        message = "Not initialized"
+        return {
+            "connected": False,
+            "initialized": False,
+            "two_fa_pending": False,
+            "enabled": True,
+            "message": "Ring client not initialized. Click 'Initialize' to connect.",
+            "needs_init": True,
+        }
 
-    return {
-        "connected": True,
-        "initialized": client.is_initialized,
-        "two_fa_pending": client.is_2fa_pending,
-        "message": message,
-    }
+
+@router.post("/init")
+async def initialize_ring():
+    """Initialize Ring connection."""
+    from ..config import get_config
+    from ..integrations.ring_client import init_ring_client
+    
+    config = get_config()
+    ring_cfg = config.get("ring", {})
+    
+    if not ring_cfg.get("enabled"):
+        raise HTTPException(status_code=400, detail="Ring is disabled in config.yaml")
+    
+    email = ring_cfg.get("email")
+    password = ring_cfg.get("password")
+    token_file = ring_cfg.get("token_file", "ring_token.cache")
+    cache_ttl = ring_cfg.get("cache_ttl", 60)
+    
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Ring email/password not configured in config.yaml")
+    
+    try:
+        client = await init_ring_client(
+            email=email,
+            password=password,
+            token_file=token_file,
+            cache_ttl=cache_ttl
+        )
+        
+        if client.is_2fa_pending:
+            return {
+                "success": False,
+                "two_fa_pending": True,
+                "message": "2FA code required. Check your email/SMS and submit the code using /api/ring/auth/2fa",
+            }
+        
+        if client.is_initialized:
+            return {
+                "success": True,
+                "initialized": True,
+                "message": "Ring initialized successfully",
+            }
+        else:
+            return {
+                "success": False,
+                "initialized": False,
+                "message": "Ring initialization failed",
+            }
+    except Exception as e:
+        logger.exception("Failed to initialize Ring")
+        raise HTTPException(status_code=500, detail=f"Initialization failed: {str(e)}") from e
 
 
 @router.get("/summary", response_model=RingSummaryResponse)
@@ -333,7 +415,7 @@ async def get_recent_events(limit: int = 10):
 async def get_event_video_url(device_id: str, recording_id: str):
     """Get video URL for a specific Ring event.
 
-    Note: Requires Ring Protect subscription to access recordings.
+    Note: Works WITHOUT Ring Protect subscription for recent events (< 60 days).
     """
     import asyncio
 
@@ -342,27 +424,28 @@ async def get_event_video_url(device_id: str, recording_id: str):
         raise HTTPException(status_code=503, detail="Ring not initialized")
 
     try:
-        # Run in separate thread to avoid event loop issues
-        def get_url():
+        # Use async recording URL to avoid timeout issues
+        try:
             for db in client._ring.video_devices():
                 if str(db.id) == device_id:
-                    if not db.has_subscription:
-                        return {"error": "subscription_required", "has_subscription": False}
-                    url = db.recording_url(recording_id)
-                    return {"url": url, "has_subscription": True}
+                    url = await db.async_recording_url(recording_id)
+                    return {"url": url, "has_subscription": db.has_subscription}
             return None
+        except Exception as e:
+            return {"error": str(e), "has_subscription": False}
 
         result = await asyncio.to_thread(get_url)
 
         if not result:
             raise HTTPException(status_code=404, detail="Device not found")
 
-        if result.get("error") == "subscription_required":
+        if result.get("error"):
             return {
                 "video_url": None,
                 "recording_id": recording_id,
-                "has_subscription": False,
-                "message": "Ring Protect subscription required to access video recordings"
+                "has_subscription": result.get("has_subscription", False),
+                "error": result["error"],
+                "message": "Video may not be available or may require Ring Protect subscription for older recordings"
             }
 
         if not result.get("url"):
@@ -734,4 +817,179 @@ async def get_doorbell_capabilities(device_id: str):
         raise
     except Exception as e:
         logger.exception("Failed to get Ring capabilities")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.post("/events/{device_id}/video/{recording_id}/download")
+async def download_event_video(device_id: str, recording_id: str, request: Request):
+    """Download and optionally save a Ring event video locally.
+
+    FREE alternative to Ring Protect cloud storage!
+    Works without Ring Protect subscription for recent events.
+    """
+    # Parse JSON body for save_path
+    body = await request.json()
+    save_path = body.get("save_path")
+    """Download and optionally save a Ring event video locally.
+
+    FREE alternative to Ring Protect cloud storage!
+    Works without Ring Protect subscription for recent events.
+    """
+    import httpx
+    import os
+    from pathlib import Path
+
+    client = get_ring_client()
+    if not client or not client.is_initialized:
+        raise HTTPException(status_code=503, detail="Ring not initialized")
+
+    try:
+        # Get the video URL directly to avoid double API calls and URL expiration
+        # Use async recording URL directly
+        video_url = None
+        has_subscription = False
+
+        try:
+            for db in client._ring.video_devices():
+                if str(db.id) == device_id:
+                    video_url = await db.async_recording_url(recording_id)
+                    has_subscription = db.has_subscription
+                    break
+
+            if not video_url:
+                return {
+                    "success": False,
+                    "error": "Video not available or device not found",
+                    "saved_path": None
+                }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to get video URL: {str(e)}",
+                "saved_path": None
+            }
+
+        # Download the video with redirect following
+        async with httpx.AsyncClient(timeout=60.0, follow_redirects=True) as http_client:
+            response = await http_client.get(video_url)
+            response.raise_for_status()
+
+            video_data = response.content
+
+        # Save locally if path provided
+        saved_path = None
+        if save_path:
+            # Create directory if it doesn't exist
+            save_dir = Path(save_path)
+            save_dir.mkdir(parents=True, exist_ok=True)
+
+            # Generate filename with timestamp
+            from datetime import datetime
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"ring_{device_id}_{recording_id}_{timestamp}.mp4"
+            full_path = save_dir / filename
+
+            with open(full_path, "wb") as f:
+                f.write(video_data)
+
+            saved_path = str(full_path)
+            logger.info(f"Saved Ring video locally: {saved_path}")
+
+        return {
+            "success": True,
+            "video_size_bytes": len(video_data),
+            "saved_path": saved_path,
+            "message": "Video downloaded successfully. FREE Ring Protect alternative!"
+        }
+
+    except Exception as e:
+        logger.exception("Failed to download Ring video")
+        raise HTTPException(status_code=500, detail=f"Download failed: {str(e)}") from e
+
+
+@router.post("/events/auto-download")
+async def auto_download_recent_events(
+    hours_back: int = 24,
+    save_path: str = "./ring_videos",
+    max_videos: int = 10
+):
+    """Automatically download recent Ring event videos for local storage.
+
+    FREE alternative to Ring Protect cloud storage!
+    Downloads motion and doorbell events from the last N hours.
+    """
+    import asyncio
+    from datetime import datetime, timedelta
+
+    client = get_ring_client()
+    if not client or not client.is_initialized:
+        raise HTTPException(status_code=503, detail="Ring not initialized")
+
+    try:
+        # Get recent events
+        events = await client.get_recent_events(limit=max_videos * 2)  # Get more to filter by time
+
+        # Filter events by time
+        cutoff_time = datetime.now() - timedelta(hours=hours_back)
+        recent_events = []
+        for event in events:
+            if event.get("timestamp"):
+                try:
+                    event_time = datetime.fromisoformat(event["timestamp"].replace('Z', '+00:00'))
+                    if event_time > cutoff_time:
+                        recent_events.append(event)
+                except:
+                    pass  # Skip events with invalid timestamps
+
+        recent_events = recent_events[:max_videos]  # Limit to max_videos
+
+        # Download videos
+        downloaded = []
+        failed = []
+
+        for event in recent_events:
+            try:
+                device_id = event.get("device_id")
+                recording_id = event.get("recording_id")
+
+                if device_id and recording_id:
+                    result = await download_event_video(device_id, recording_id, save_path)
+                    if result["success"]:
+                        downloaded.append({
+                            "device_id": device_id,
+                            "recording_id": recording_id,
+                            "saved_path": result["saved_path"],
+                            "size_bytes": result["video_size_bytes"],
+                            "event_type": event.get("event_type"),
+                            "timestamp": event.get("timestamp")
+                        })
+                    else:
+                        failed.append({
+                            "device_id": device_id,
+                            "recording_id": recording_id,
+                            "error": result.get("error")
+                        })
+
+                await asyncio.sleep(1)  # Rate limiting
+
+            except Exception as e:
+                failed.append({
+                    "device_id": event.get("device_id"),
+                    "recording_id": event.get("recording_id"),
+                    "error": str(e)
+                })
+
+        return {
+            "success": True,
+            "hours_back": hours_back,
+            "total_events_found": len(recent_events),
+            "downloaded": downloaded,
+            "failed": failed,
+            "save_path": save_path,
+            "message": f"Downloaded {len(downloaded)} videos locally. FREE Ring Protect alternative!"
+        }
+
+    except Exception as e:
+        logger.exception("Failed to auto-download Ring videos")
         raise HTTPException(status_code=500, detail=str(e)) from e

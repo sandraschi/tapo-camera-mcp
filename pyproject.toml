@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "home-security-mcp-platform"
-version = "1.6.1"  # Alexa 2 - voice, TTS, STT, alarms, prank modes
+version = "1.16.0"  # Vienna Webcams - Public landmark cameras for weather watching
 description = "🏠 Beta home security MCP platform with unified surveillance dashboard, multi-device support (Tapo, Ring, Nest Protect, USB webcams), and Claude Desktop integration"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -28,14 +28,14 @@ classifiers = [
     "Topic :: Multimedia :: Video :: Capture",
     "Topic :: Security",
     "Typing :: Typed",
-    "Framework :: FastMCP"
+    "Framework :: FastMCP",
 ]
 keywords = ["home-security", "surveillance", "mcp", "fastmcp", "tapo", "ring", "nest-protect", "webcam", "home-automation", "security-dashboard"]
 
 dependencies = [
     # Core dependencies
-    "fastmcp>=2.13.0,<3.0.0",      # MCP 2.13.0 stdio protocol
-    "pytapo>=3.2.0,<3.3.0",        # Tapo camera control (3.2.x compatible with Python 3.10)
+    "fastmcp==2.14.1",              # MCP 2.14.1 stdio protocol
+    "pytapo>=3.3.54,<4.0.0",        # Tapo camera control (Updated to 3.3.x)
     "python-kasa>=0.7.0,<0.8.0",   # TP-Link Kasa (required by pytapo, 0.7.x compatible with Python 3.10)
     "pydantic>=2.0.0,<3.0.0",      # Data validation and settings management
     "python-dotenv>=1.0.0,<2.0.0", # Environment variable management
@@ -66,7 +66,7 @@ dependencies = [
     "phue>=1.1,<2.0.0",             # Philips Hue Bridge integration
     "jinja2>=3.0.0,<4.0.0",         # Template engine for web dashboard
     "tapo>=0.1.0,<1.0.0",           # Tapo P115 smart plug integration
-    "watchfiles>=0.21.0"            # File monitoring and crashproofing
+    "watchfiles>=0.21.0",            # File monitoring and crashproofing
 ]
 
 [project.optional-dependencies]
@@ -90,7 +90,7 @@ dev = [
     "pytest-env>=0.8.0,<1.0.0",    # Environment variables in tests
     
     # Code quality
-    "ruff>=0.1.0,<1.0.0",              # Fast Python linter and formatter
+    "ruff>=0.14.10,<1.0.0",              # Fast Python linter and formatter
     "mypy>=1.0.0,<2.0.0",
     "pylint>=2.12.0,<3.0.0",
     "flake8>=5.0.0,<7.0.0",
@@ -223,7 +223,7 @@ ignore = [
     "TRY301", # abstract raise to inner function (sometimes overly pedantic)
     "NPY002", # replace legacy numpy.random
     "RUF012", # mutable class attributes should be annotated with `typing.ClassVar`
-    "PLC0415", # import should be at top-level (intentional lazy imports for circular deps)
+
     "B023", # function definition does not bind loop variable (intentional closures)
     "N806", # variable in function should be lowercase (Meta class is conventional)
     "PLW0603", # using global statement (intentional module-level state)
@@ -270,8 +270,8 @@ disable = [
     "E1136",  # unsubscriptable-object (false positives with type hints)
 ]
 
-[project.entry-points."fastmcp.plugins"]
-tapo_camera = "tapo_camera_mcp.plugin:register_plugin"
+[project.entry-points]
+"fastmcp.plugins" = { tapo_camera = "tapo_camera_mcp.plugin:register_plugin" }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

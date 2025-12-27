@@ -366,7 +366,7 @@ class RingClient:
 
     async def _update_data(self, force: bool = False):
         """Update Ring data from API.
-        
+
         Args:
             force: If True, bypass cache and force refresh from Ring API.
                    Use sparingly due to rate limiting and async issues.
@@ -380,10 +380,10 @@ class RingClient:
             return  # Data is fresh enough
 
         try:
-            # Use synchronous update in executor to avoid nested async issues
-            # The ring_doorbell library has internal async that conflicts with
-            # calling update_data from within an async context
-            await asyncio.to_thread(self._ring.update_data)
+            # Skip data refresh for now due to async event loop conflicts
+            # The ring_doorbell library has internal async code that conflicts
+            # with FastAPI's async event loop. Data is refreshed during init.
+            logger.debug("Skipping Ring data refresh to avoid async conflicts")
             await self._fetch_alarm_data()
 
             # Mark as updated with longer TTL
@@ -553,38 +553,30 @@ class RingClient:
             return self._cache[cache_key]
 
         try:
-            await self._update_data()
+            # Skip _update_data() to avoid async conflicts
+            # Use cached data from initialization instead
             devices = []
 
-            for doorbell in self._ring.video_devices():
-                battery = (
-                    doorbell.battery_life
-                    if hasattr(doorbell, "battery_life")
-                    else None
-                )
-                kind = (
-                    doorbell.kind if hasattr(doorbell, "kind") else "unknown"
-                )
-                has_sub = (
-                    doorbell.has_subscription
-                    if hasattr(doorbell, "has_subscription")
-                    else False
-                )
+            # Access video devices directly from raw data to avoid async calls
+            doorbots_data = self._raw_devices_data.get("doorbots", {})
+            for dev_id, dev_data in doorbots_data.items():
                 device = RingDevice(
-                    id=str(doorbell.id),
-                    name=doorbell.name,
+                    id=str(dev_id),
+                    name=dev_data.get("description", f"Doorbell {dev_id}"),
                     device_type=RingDeviceType.DOORBELL,
-                    battery_level=battery,
-                    is_online=True,
+                    battery_level=dev_data.get("battery_life"),
+                    is_online=dev_data.get("status") != "offline",
                     extra_data={
-                        "kind": kind,
-                        "has_subscription": has_sub,
+                        "kind": dev_data.get("kind", "doorbell"),
+                        "has_subscription": dev_data.get("has_subscription", False),
+                        "firmware": dev_data.get("firmware_version"),
                     },
                 )
                 devices.append(device)
 
             self._cache[cache_key] = devices
             self._cache_time[cache_key] = datetime.now()
+            logger.info(f"Ring: Found {len(devices)} doorbells from cached data")
         except Exception:
             logger.exception("Failed to get Ring doorbells")
             return []
