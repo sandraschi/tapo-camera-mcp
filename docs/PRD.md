@@ -27,7 +27,19 @@ To create the definitive 2026 SOTA home management platform that unifies surveil
 - **Lighting**: Philips Hue & Tapo L-series synchronization.
 
 
+### **Reliability & Safety Protocol (SOTA 2026)**
+
+#### **Mission-Critical Uptime**
+- **Safety First**: Environmental alarms (Smoke/CO) are high-priority interrupts.
+- **Siren Logic**: In a detection event, the local and unified sirens must trigger immediately via redundant Pushover/System-Audio paths. Reliability is non-negotiable.
+
+#### **Patrol Robotics Hierarchy**
+- **Tier 1 (Scout)**: Entry-level surveillance patrol (Moorebot Scout).
+- **Tier 2 (Tactical)**: Formidable quadruped/humanoid intervention (Unitree Go2/G1).
+- **Control Interface**: Unified tactical dashboard for telemetry and manual override.
+
 ### **Target Users**
+
 - **🏠 Home Security Professionals**: Users with comprehensive security ecosystems (cameras + sensors)
 - **🤖 AI Integration Developers**: Developers building MCP-based security systems
 - **🏢 System Administrators**: IT professionals managing multi-vendor security networks
