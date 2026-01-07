@@ -96,15 +96,18 @@
 
 ## 🚀 **DUAL ARCHITECTURE CAPABILITIES** (November 2025)
 
-### 🧠 **System Philosophy: Hardware Selection**
-The system logic is built around an idiosyncratic but highly intentional hardware collection:
+### 🧠 **System Philosophy: The Meta-Home & Hardware Selection**
+The system logic is built around an idiosyncratic but highly intentional hardware collection and a unified "Meta-Home" vision:
 
+- **🌌 The Meta-Home Concept**: We bridge the gap between physical security (Tapo/Go2) and digital existence. The "Home" encompasses entertainment (Plex), communication (Email/Teams), and agentic development (Antigravity IDE projects).
 - **Value-Driven Selection**: Every device is "keenly priced"—leveraging multifunctionality and value (e.g., Tapo P115 plugs secured at €15 during Black Friday cycles).
 - **API-First Integration**: Reliable data reality requires open or reverse-engineered APIs. We favor hardware that treats local control as a first-class citizen.
-- **Reliable Uptime**: Surveillance is secondary to safety. Mission-critical components (like the **Carbon Monoxide siren logic**) operate under a zero-delay requirement—when the alarm triggers, the siren *must* sound.
+- **Mission-Critical Reliability**: Uptime is the ultimate arbiter of system truth. Core safety systems—specifically **Carbon Monoxide (CO) and Burglar Alarms**—require 100% reliability. When an alarm triggers, sirens must sound immediately via redundant paths.
+- **Ongoing Integration**: Some facets are actively being refined or remain experimental. This is a living SOTA project.
 - **Patrol Evolution**: The system supports staged robotics. The **Moorebot Scout** serves as a lightweight premise patroller, filling the gap until formidable tactical units like the **Unitree Go2** are deployed.
 
 ### 🛠️ **Hardware Integration Matrix (SOTA 2026)**
+
 The system orchestrates a diverse hardware fleet through dedicated MCP interfaces.
 
 | Category | Supported Hardware |

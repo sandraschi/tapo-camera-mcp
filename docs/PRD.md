@@ -29,14 +29,19 @@ To create the definitive 2026 SOTA home management platform that unifies surveil
 
 ### **Reliability & Safety Protocol (SOTA 2026)**
 
-#### **Mission-Critical Uptime**
-- **Safety First**: Environmental alarms (Smoke/CO) are high-priority interrupts.
-- **Siren Logic**: In a detection event, the local and unified sirens must trigger immediately via redundant Pushover/System-Audio paths. Reliability is non-negotiable.
+#### **Categorized Alert Logic**
+- **🚨 Hard Alarms (100% Uptime)**: Life-safety and security interrupts (**CO, Fire, Burglar**). These require absolute priority and zero-delay siren triggers via redundant dispatch paths.
+- **🔔 Soft Alarms (Productivity/Environmental)**: Non-critical notifications such as **Antigravity IDE updates**, **Teams/Email alerts**, or **indoor CO2 thresholds**. These use a lower-intensity notification tier.
 
 #### **Patrol Robotics Hierarchy**
 - **Tier 1 (Scout)**: Entry-level surveillance patrol (Moorebot Scout).
 - **Tier 2 (Tactical)**: Formidable quadruped/humanoid intervention (Unitree Go2/G1).
 - **Control Interface**: Unified tactical dashboard for telemetry and manual override.
+
+### Phase 4: The Meta-Home (Conceptual/Future)
+- **Digital/Physical Bridge**: Unifying Plex media, communication (Teams/Email), and development workflows (IDE projects) into the central dashboard.
+- **Agentic Sync**: Real-time status of agentic projects acting as "soft" home telemetry.
+
 
 ### **Target Users**
 
