@@ -10,16 +10,22 @@ To create the definitive 2026 SOTA home management platform that unifies surveil
 
 ## Scope
 ### Phase 1: Core Surveillance (Complete)
-- Tapo, Ring, Nest, USB webcam integration.
-- Live dashboard (7777).
+- **Tapo Ecosystem**: C100, C200, C210, C310 camera management.
+- **Legacy Integration**: Ring Doorbell, Nest Cam, Nest Protect.
+- **Universal Optical**: USB Webcam auto-detection.
+- **Live Dashboard**: Centralized management at `localhost:7777`.
 
 ### Phase 2: Environmental & Utility (Complete)
-- Netatmo, OpenMeteo, Shelly Energy monitoring.
+- **Netatmo**: Full weather station metrics (Temp, Humidity, Pressure, CO2).
+- **Shelly/Tapo Power**: P115, Shelly 1PM monitoring/control.
+- **Meteorology**: GeoSphere Austria & OpenMeteo integration.
 
 ### Phase 3: Robotics & Municipal (Active/Staging)
-- Unitree Go2, Moorebot Scout tactical control.
-- Vienna Municipal webcam proxies.
-- Medical-grade optical diagnostics (Otoscope/Microscope).
+- **Tactical Robotics**: Unitree Go2, Moorebot Scout, iKettle, Vbot integration.
+- **Vienna Services**: Public webcam aggregation, Emergency alert monitoring.
+- **Medical Diagnostics**: USB Otoscope/Microscope SOTA 2026 integration.
+- **Lighting**: Philips Hue & Tapo L-series synchronization.
+
 
 ### **Target Users**
 - **🏠 Home Security Professionals**: Users with comprehensive security ecosystems (cameras + sensors)

@@ -98,14 +98,27 @@
 
 ### **🎯 ASPECT 1: INDIVIDUAL MCP SERVERS**
 
-#### ✅ **WORKING NOW**
-- **🎥 Tapo Camera MCP**: TP-Link Tapo camera control and monitoring
-- **📹 USB Webcam MCP**: Auto-detection and management
-- **🤖 Robotics MCP**: Unitree Go2 and Moorebot Scout control (NEW)
-- **🏥 Medical Optics MCP**: USB Otoscope support for health diagnostics (NEW)
-- **🤖 Claude Desktop Integration**: MCP protocol compliance for AI assistants
-- **🔧 Camera Management Tools**: Add, configure, and control cameras
-- **📊 Real-time Status**: Camera connection health and diagnostics
+### 🛠️ **Hardware Integration Matrix (SOTA 2026)**
+The system orchestrates a diverse hardware fleet through dedicated MCP interfaces.
+
+| Category | Supported Hardware |
+| :--- | :--- |
+| **🎥 Surveillance** | **Tapo** (C100, C200, C210, C310), **Ring** (Doorbell, Cam), **Nest** (Cam, Protect), **USB Webcams** |
+| **🤖 Robotics** | **Unitree** (Go2, G1), **Moorebot** (Scout), **Vbot**, **iKettle** |
+| **💡 Lighting & Power** | **Philips Hue** (Full Bridge), **Tapo** (L530E, L510E), **Shelly** (1PM, 2.5, EM), **Tapo Plugs** (P100, P110, P115) |
+| **🌡️ Environment** | **Netatmo** (Weather Station, Indoor/Outdoor), **Nest Protect** (Smoke/CO) |
+| **🏥 Medical Optics** | **USB Otoscope**, **Digital Microscope** (Macro-surveillance) |
+| **🔥 Thermal** | **FLIR** (One/Pro via thermal bridge) |
+
+### 🌐 **External Services & Intelligence**
+| Category | Service / Provider |
+| :--- | :--- |
+| **🧠 Intelligence** | **Claude Desktop** (MCP Integration), **OpenAI/Anthropic** LLM Backend |
+| **🏛️ Municipal** | **Vienna Public Webcams** (City Monitoring), **Vienna Emergency Alerts** |
+| **⛅ Meteorology** | **GeoSphere Austria** (SOTA 2026), **OpenMeteo** (Local Forecasting) |
+| **🚨 Notifications** | **Pushover** (Emergency Dispatch), **System Audio** (Vienna Circle Voice) |
+| **🕸️ Connectivity** | **Tailscale** (Zero-Trust VPN), **HomeAssistant** Bridge |
+| **🎬 Media** | **Plex Media Server** (Status Monitoring) |
 
 #### 🎯 **CORE MCP FEATURES**
 - **MCP 2.12.0 Protocol**: Full Model Context Protocol compliance
@@ -115,12 +128,11 @@
 
 ### **🎯 ASPECT 2: UNIFIED SECURITY DASHBOARD**
 
-#### ✅ **WORKING NOW**
+#### 🎯 **CORE DASHBOARD FEATURES**
 - **🏠 Live Security Dashboard**: Single interface at `localhost:7777`
 - **🔗 Multi-MCP Integration**: Connect multiple security MCP servers
 - **📊 Real-time Monitoring**: Cameras + sensors + alarms + robots in one view
 - **🚨 Alert Aggregation**: Unified security and robotics event display
-- **🇦🇹 Vienna Integration**: Municipal webcams and local weather context (NEW)
 - **📱 Mobile Access**: Works on iPad/iPhone via Tailscale
 
 #### 🎯 **CORE DASHBOARD FEATURES**
