@@ -106,7 +106,21 @@ The system logic is built around an idiosyncratic but highly intentional hardwar
 - **Ongoing Integration**: Some facets are actively being refined or remain experimental. This is a living SOTA project.
 - **Patrol Evolution**: The system supports staged robotics. The **Moorebot Scout** serves as a lightweight premise patroller, filling the gap until formidable tactical units like the **Unitree Go2** are deployed.
 
+### 🏗️ **Infrastructure & Stability**
+To support 100% uptime for safety systems, the project targets a resilient hardware-software substrate:
+- **High-Availability**: Multi-server failover architecture with backup battery support (UPS) to mitigate localized power failure.
+- **Anti-Sabotage Connectivity**: Dual-link internet strategy (Fiber primary + 5G/Starlink failover) to ensure cloud-dependent alerts remain operational.
+- **Orchestration**: System evolution from monolithic Docker containers toward **Kubernetes (K8s)** for automated stabilization and self-healing.
+
+### 📊 **Monitoring & Observability (LPG Stack)**
+Comprehensive system health is managed via a unified observability stack:
+- **Loki**: Centralized log aggregation for all security events.
+- **Prometheus**: Real-time metrics collection from hardware and services.
+- **Grafana**: Unified SOTA 2026 visualization dashboard.
+- **Promtail**: High-efficiency log shipping from edge devices.
+
 ### 🛠️ **Hardware Integration Matrix (SOTA 2026)**
+
 
 The system orchestrates a diverse hardware fleet through dedicated MCP interfaces.
 
