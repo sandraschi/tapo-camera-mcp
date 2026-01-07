@@ -320,5 +320,5 @@ warn_no_return = true
 warn_unreachable = true
 
 [[tool.mypy.overrides]]
-module = ["pytapo.*"]
+module = ["pytapo.*", "fastmcp.*"]
 ignore_missing_imports = true

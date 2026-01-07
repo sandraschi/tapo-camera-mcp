@@ -249,11 +249,9 @@ function Repair-ToolImports {
         # Find the registration function and add missing registrations
         $lines = Get-Content $initFile
         $inFunction = $false
-        $functionStart = -1
         for ($i = 0; $i -lt $lines.Count; $i++) {
             if ($lines[$i] -match "def register_all_portmanteau_tools") {
                 $inFunction = $true
-                $functionStart = $i
             } elseif ($inFunction -and $lines[$i] -match "^    logger\.info") {
                 # Insert before the logger.info line
                 $lines = $lines[0..($i-1)] + $registerSection.TrimEnd("`n").Split("`n") + $lines[$i..($lines.Count-1)]

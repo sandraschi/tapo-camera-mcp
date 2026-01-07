@@ -10,12 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Shield, 
-  Smoke, 
-  Bell, 
-  Battery, 
-  Wifi, 
+import {
+  Shield,
+  Smoke,
+  Bell,
+  Battery,
+  Wifi,
   AlertTriangle,
   CheckCircle,
   XCircle,
@@ -99,10 +99,10 @@ export const AlarmDashboard: React.FC<AlarmDashboardProps> = ({ className }) => 
       setRecentEvents(eventsData.events || []);
 
       // Determine overall system status
-      const hasAlarms = eventsData.events?.some((event: AlarmEvent) => 
+      const hasAlarms = eventsData.events?.some((event: AlarmEvent) =>
         event.severity === 'critical' && !event.resolved
       );
-      const hasWarnings = eventsData.events?.some((event: AlarmEvent) => 
+      const hasWarnings = eventsData.events?.some((event: AlarmEvent) =>
         event.severity === 'high' && !event.resolved
       );
 
@@ -160,11 +160,11 @@ export const AlarmDashboard: React.FC<AlarmDashboardProps> = ({ className }) => 
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'text-red-600 bg-red-50 border-red-200';
-      case 'high': return 'text-orange-600 bg-orange-50 border-orange-200';
-      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'low': return 'text-blue-600 bg-blue-50 border-blue-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'critical': return 'text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-900/20 dark:border-red-800';
+      case 'high': return 'text-orange-600 bg-orange-50 border-orange-200 dark:text-orange-400 dark:bg-orange-900/20 dark:border-orange-800';
+      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200 dark:text-yellow-400 dark:bg-yellow-900/20 dark:border-yellow-800';
+      case 'low': return 'text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-900/20 dark:border-blue-800';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200 dark:text-gray-400 dark:bg-gray-800/50 dark:border-gray-700';
     }
   };
 
@@ -182,9 +182,9 @@ export const AlarmDashboard: React.FC<AlarmDashboardProps> = ({ className }) => 
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
           Error loading alarm data: {error}
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={fetchAlarmData}
             className="ml-2"
           >
@@ -208,23 +208,22 @@ export const AlarmDashboard: React.FC<AlarmDashboardProps> = ({ className }) => 
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{nestDevices.length}</div>
-              <div className="text-sm text-gray-600">Nest Protect Devices</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{nestDevices.length}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Nest Protect Devices</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{ringDevices.length}</div>
-              <div className="text-sm text-gray-600">Ring Devices</div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{ringDevices.length}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Ring Devices</div>
             </div>
             <div className="text-center">
-              <div className={`text-2xl font-bold ${
-                systemStatus === 'alarm' ? 'text-red-600' :
-                systemStatus === 'warning' ? 'text-yellow-600' :
-                'text-green-600'
-              }`}>
+              <div className={`text-2xl font-bold ${systemStatus === 'alarm' ? 'text-red-600 dark:text-red-400' :
+                  systemStatus === 'warning' ? 'text-yellow-600 dark:text-yellow-400' :
+                    'text-green-600 dark:text-green-400'
+                }`}>
                 {systemStatus === 'alarm' ? 'ALARM' :
-                 systemStatus === 'warning' ? 'WARNING' : 'ALL CLEAR'}
+                  systemStatus === 'warning' ? 'WARNING' : 'ALL CLEAR'}
               </div>
-              <div className="text-sm text-gray-600">System Status</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">System Status</div>
             </div>
           </div>
         </CardContent>
@@ -337,7 +336,7 @@ export const AlarmDashboard: React.FC<AlarmDashboardProps> = ({ className }) => 
         <CardContent>
           <div className="space-y-3">
             {recentEvents.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <CheckCircle className="h-12 w-12 mx-auto mb-2 text-green-500" />
                 <p>No alerts in the last 24 hours</p>
               </div>

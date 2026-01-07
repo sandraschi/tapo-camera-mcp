@@ -1,0 +1,41 @@
+# Log Management Configuration
+# Add these settings to your config.yaml file
+
+# Log management settings
+log_management_enabled: true
+log_max_size_mb: 10.0        # Rotate logs when they exceed 10MB
+log_max_files: 5             # Keep maximum 5 rotated log files
+log_compress_after_days: 1   # Compress logs after 1 day
+log_delete_after_days: 30    # Delete compressed logs after 30 days
+
+# Example full config.yaml with log management:
+#
+# # Tapo Camera MCP Configuration
+# debug: false
+#
+# # Web UI Settings
+# web_ui:
+#   enabled: true
+#   host: "0.0.0.0"
+#   port: 7777
+#   title: "Home Control"
+#
+# # Log Management (NEW!)
+# log_management_enabled: true
+# log_max_size_mb: 10.0
+# log_max_files: 5
+# log_compress_after_days: 1
+# log_delete_after_days: 30
+#
+# # Lighting Configuration
+# lighting:
+#   philips_hue:
+#     bridge_ip: "192.168.1.100"
+#     username: "your-bridge-username"
+#
+# # Camera Configuration
+# cameras:
+#   tapo:
+#     enabled: false  # Disabled for home control focus
+#   onvif:
+#     enabled: false  # Disabled for home control focus

@@ -5,18 +5,15 @@
 {% block extra_css %}
 <style>
     .settings-section {
-        background: white;
         border-radius: 0.75rem;
         padding: 1.5rem;
         margin-bottom: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        border: 1px solid #e5e7eb;
     }
 
     .settings-section h3 {
         font-size: 1.125rem;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-primary);
         margin-bottom: 1rem;
         display: flex;
         align-items: center;
@@ -34,9 +31,9 @@
         justify-content: space-between;
         align-items: center;
         padding: 1rem;
-        background-color: #f9fafb;
+        background-color: var(--bg-secondary);
         border-radius: 0.5rem;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-primary);
     }
 
     .setting-info {
@@ -45,13 +42,13 @@
 
     .setting-label {
         font-weight: 500;
-        color: #1f2937;
+        color: var(--text-primary);
         margin-bottom: 0.25rem;
     }
 
     .setting-description {
         font-size: 0.875rem;
-        color: #6b7280;
+        color: var(--text-secondary);
     }
 
     .setting-control {
@@ -80,7 +77,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: #ccc;
+        background-color: var(--border-primary);
         transition: 0.4s;
         border-radius: 24px;
     }
@@ -97,86 +94,35 @@
         border-radius: 50%;
     }
 
-    input:checked + .toggle-slider {
-        background-color: #3b82f6;
+    input:checked+.toggle-slider {
+        background-color: var(--accent-gold);
     }
 
-    input:checked + .toggle-slider:before {
+    input:checked+.toggle-slider:before {
         transform: translateX(20px);
     }
 
-    .btn-primary {
-        background-color: #3b82f6;
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 0.375rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-
-    .btn-primary:hover {
-        background-color: #2563eb;
-    }
-
-    .btn-secondary {
-        background-color: #f3f4f6;
-        color: #374151;
-        border: 1px solid #d1d5db;
-        padding: 0.5rem 1rem;
-        border-radius: 0.375rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .btn-secondary:hover {
-        background-color: #e5e7eb;
-    }
-
-    .btn-danger {
-        background-color: #dc2626;
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 0.375rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-
-    .btn-danger:hover {
-        background-color: #b91c1c;
-    }
-
-    .btn-danger:disabled {
-        background-color: #9ca3af;
-        cursor: not-allowed;
-    }
-
     .battery-status-good {
-        color: #10b981;
+        color: var(--success-color);
     }
 
     .battery-status-low {
-        color: #f59e0b;
+        color: var(--warning-color);
     }
 
     .battery-status-critical {
-        color: #dc2626;
+        color: var(--error-color);
     }
 
     .battery-status-unknown {
-        color: #6b7280;
+        color: var(--text-secondary);
     }
 
     .form-input {
         padding: 0.5rem;
-        border: 1px solid #d1d5db;
+        background-color: var(--input-bg);
+        color: var(--text-primary);
+        border: 1px solid var(--border-primary);
         border-radius: 0.375rem;
         font-size: 0.875rem;
         width: 100%;
@@ -184,8 +130,8 @@
 
     .form-input:focus {
         outline: none;
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        border-color: var(--accent-gold);
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
     }
 
     .status-indicator {
@@ -201,60 +147,13 @@
     }
 
     .status-online {
-        background-color: #dcfce7;
-        color: #166534;
+        background-color: rgba(16, 185, 129, 0.15);
+        color: var(--success-color);
     }
 
     .status-offline {
-        background-color: #fef3c7;
-        color: #92400e;
-    }
-
-    /* Dark theme support */
-    [data-theme="dark"] .settings-section {
-        background: #374151;
-        border-color: #4b5563;
-    }
-
-    [data-theme="dark"] .setting-item {
-        background-color: #4b5563;
-        border-color: #6b7280;
-    }
-
-    [data-theme="dark"] .setting-label {
-        color: #f9fafb;
-    }
-
-    [data-theme="dark"] .setting-description {
-        color: #d1d5db;
-    }
-
-    [data-theme="dark"] .btn-primary {
-        background-color: #3b82f6;
-    }
-
-    [data-theme="dark"] .btn-primary:hover {
-        background-color: #2563eb;
-    }
-
-    [data-theme="dark"] .btn-secondary {
-        background-color: #4b5563;
-        color: #f9fafb;
-        border-color: #6b7280;
-    }
-
-    [data-theme="dark"] .btn-secondary:hover {
-        background-color: #6b7280;
-    }
-
-    [data-theme="dark"] .form-input {
-        background-color: #4b5563;
-        color: #f9fafb;
-        border-color: #6b7280;
-    }
-
-    [data-theme="dark"] .form-input:focus {
-        border-color: #3b82f6;
+        background-color: rgba(245, 158, 11, 0.15);
+        color: var(--warning-color);
     }
 </style>
 {% endblock %}
@@ -263,14 +162,15 @@
 <div class="container mx-auto px-4 py-8">
     <!-- Page Header -->
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
-        <p class="text-gray-600">Configure your Home Security MCP system</p>
+        <h1 class="text-3xl font-bold text-gray-100 mb-2"><span style="color: var(--accent-gold);">⚙️</span> Settings
+        </h1>
+        <p class="text-gray-400">Configure your Home Security MCP system</p>
     </div>
 
     <!-- System Status -->
-    <div class="settings-section">
+    <div class="settings-section glass">
         <h3>
-            <i class="fas fa-server text-blue-500"></i>
+            <i class="fas fa-server" style="color: var(--accent-gold);"></i>
             System Status
         </h3>
         <div class="settings-grid">
@@ -308,9 +208,9 @@
     </div>
 
     <!-- Camera Settings -->
-    <div class="settings-section">
+    <div class="settings-section glass">
         <h3>
-            <i class="fas fa-video text-green-500"></i>
+            <i class="fas fa-video" style="color: var(--accent-gold);"></i>
             Camera Settings
         </h3>
         <div class="settings-grid">
@@ -355,9 +255,9 @@
     </div>
 
     <!-- Network Settings -->
-    <div class="settings-section">
+    <div class="settings-section glass">
         <h3>
-            <i class="fas fa-network-wired text-purple-500"></i>
+            <i class="fas fa-network-wired" style="color: var(--accent-gold);"></i>
             Network Settings
         </h3>
         <div class="settings-grid">
@@ -490,16 +390,19 @@
                     <div class="setting-description">IP address of your Philips Hue Bridge (e.g., 192.168.1.100)</div>
                 </div>
                 <div class="setting-control">
-                    <input type="text" id="hue-bridge-ip" class="form-input" placeholder="192.168.1.100" style="width: 200px;">
+                    <input type="text" id="hue-bridge-ip" class="form-input" placeholder="192.168.1.100"
+                        style="width: 200px;">
                 </div>
             </div>
             <div class="setting-item" style="grid-column: 1 / -1;">
                 <div class="setting-info">
                     <div class="setting-label">Bridge Username (API Key)</div>
-                    <div class="setting-description">Press the button on your Hue Bridge, then click "Connect" to generate</div>
+                    <div class="setting-description">Press the button on your Hue Bridge, then click "Connect" to
+                        generate</div>
                 </div>
                 <div class="setting-control">
-                    <input type="text" id="hue-username" class="form-input" placeholder="Leave empty to auto-generate" style="width: 300px;">
+                    <input type="text" id="hue-username" class="form-input" placeholder="Leave empty to auto-generate"
+                        style="width: 300px;">
                     <button id="hue-connect" class="btn-primary" style="margin-left: 12px;">
                         <i class="fas fa-plug mr-2"></i>
                         Create New Username (Press Button)
@@ -535,10 +438,13 @@
         </div>
         <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p class="text-sm text-blue-800">
-                <strong>Option 1 - Use Existing Username:</strong> If you have a username from another app (Hue app, Home Assistant, etc.), 
+                <strong>Option 1 - Use Existing Username:</strong> If you have a username from another app (Hue app,
+                Home Assistant, etc.),
                 enter it and click "Test Existing".<br><br>
-                <strong>Option 2 - Create New Username:</strong> Press the button on your Hue Bridge, then click "Create New (Press Button)". 
-                This creates a new API username for this system and will <strong>NOT</strong> affect your Alexa connection or any other integrations.
+                <strong>Option 2 - Create New Username:</strong> Press the button on your Hue Bridge, then click "Create
+                New (Press Button)".
+                This creates a new API username for this system and will <strong>NOT</strong> affect your Alexa
+                connection or any other integrations.
             </p>
         </div>
     </div>
@@ -556,7 +462,8 @@
                     <div class="setting-description">Days to keep video recordings</div>
                 </div>
                 <div class="setting-control">
-                    <input type="number" id="retention-video" class="form-input" min="1" max="3650" value="30" style="width: 100px;">
+                    <input type="number" id="retention-video" class="form-input" min="1" max="3650" value="30"
+                        style="width: 100px;">
                     <span class="text-sm text-gray-500 ml-2">days</span>
                 </div>
             </div>
@@ -566,7 +473,8 @@
                     <div class="setting-description">Days to keep snapshot images</div>
                 </div>
                 <div class="setting-control">
-                    <input type="number" id="retention-snapshots" class="form-input" min="1" max="3650" value="90" style="width: 100px;">
+                    <input type="number" id="retention-snapshots" class="form-input" min="1" max="3650" value="90"
+                        style="width: 100px;">
                     <span class="text-sm text-gray-500 ml-2">days</span>
                 </div>
             </div>
@@ -576,7 +484,8 @@
                     <div class="setting-description">Days to keep weather/energy time series</div>
                 </div>
                 <div class="setting-control">
-                    <input type="number" id="retention-environment" class="form-input" min="1" max="3650" value="365" style="width: 100px;">
+                    <input type="number" id="retention-environment" class="form-input" min="1" max="3650" value="365"
+                        style="width: 100px;">
                     <span class="text-sm text-gray-500 ml-2">days</span>
                 </div>
             </div>
@@ -641,7 +550,7 @@
 
     <script>
         // Settings page functionality
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             console.log('Settings page loaded successfully');
 
             // Load retention policies
@@ -672,7 +581,7 @@
             const connectHueBtn = document.getElementById('hue-connect');
             if (connectHueBtn) {
                 console.log('Attaching click handler to hue-connect button');
-                connectHueBtn.addEventListener('click', function(e) {
+                connectHueBtn.addEventListener('click', function (e) {
                     console.log('hue-connect button clicked', e);
                     e.preventDefault();
                     connectHueBridge();
@@ -713,13 +622,13 @@
             const exportBtn = document.querySelectorAll('.btn-secondary')[1];
 
             if (saveBtn) {
-                saveBtn.addEventListener('click', function() {
+                saveBtn.addEventListener('click', function () {
                     alert('Settings saved successfully!');
                 });
             }
 
             if (resetBtn) {
-                resetBtn.addEventListener('click', function() {
+                resetBtn.addEventListener('click', function () {
                     if (confirm('Reset all settings to defaults?')) {
                         alert('Settings reset to defaults');
                     }
@@ -727,7 +636,7 @@
             }
 
             if (exportBtn) {
-                exportBtn.addEventListener('click', function() {
+                exportBtn.addEventListener('click', function () {
                     alert('Configuration export not implemented yet');
                 });
             }
@@ -755,7 +664,7 @@
             try {
                 const response = await fetch('/api/settings/retention', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         video_recordings: video,
                         snapshots: snapshots,
@@ -781,7 +690,7 @@
             try {
                 const response = await fetch('/api/security/ring/status');
                 const data = await response.json();
-                
+
                 if (data.devices && data.devices.length > 0) {
                     container.innerHTML = data.devices.map(device => {
                         const batteryLevel = device.battery_level;
@@ -789,8 +698,8 @@
                         const isCharging = device.is_charging;
                         const statusClass = `battery-status-${batteryStatus}`;
                         const statusIcon = batteryStatus === 'critical' ? 'fa-battery-empty' :
-                                          batteryStatus === 'low' ? 'fa-battery-quarter' :
-                                          batteryStatus === 'good' ? 'fa-battery-full' : 'fa-battery-half';
+                            batteryStatus === 'low' ? 'fa-battery-quarter' :
+                                batteryStatus === 'good' ? 'fa-battery-full' : 'fa-battery-half';
                         const chargingIcon = isCharging ? '<i class="fas fa-plug text-green-500 ml-2"></i>' : '';
 
                         return `
@@ -841,22 +750,22 @@
             try {
                 const response = await fetch('/api/security/nest/status');
                 const data = await response.json();
-                
+
                 if (data.devices && data.devices.length > 0) {
                     container.innerHTML = data.devices.map(device => {
                         const batteryLevel = device.battery_level;
                         const batteryStatus = device.battery_status || 'unknown';
                         const statusClass = `battery-status-${batteryStatus}`;
                         const statusIcon = batteryStatus === 'critical' ? 'fa-battery-empty' :
-                                          batteryStatus === 'low' ? 'fa-battery-quarter' :
-                                          batteryStatus === 'good' ? 'fa-battery-full' : 'fa-battery-half';
-                        const deviceType = device.type === 'smoke_detector' ? 'Smoke/CO Detector' : 
-                                          device.type === 'co_detector' ? 'CO Detector' : 'Protect';
-                        const statusBadge = device.status === 'online' ? 
+                            batteryStatus === 'low' ? 'fa-battery-quarter' :
+                                batteryStatus === 'good' ? 'fa-battery-full' : 'fa-battery-half';
+                        const deviceType = device.type === 'smoke_detector' ? 'Smoke/CO Detector' :
+                            device.type === 'co_detector' ? 'CO Detector' : 'Protect';
+                        const statusBadge = device.status === 'online' ?
                             '<span class="status-indicator status-online" style="margin-left: 0.5rem;">Online</span>' :
                             device.status === 'offline' ?
-                            '<span class="status-indicator status-offline" style="margin-left: 0.5rem;">Offline</span>' :
-                            '<span class="status-indicator" style="background-color: #fef3c7; color: #92400e; margin-left: 0.5rem;">Warning</span>';
+                                '<span class="status-indicator status-offline" style="margin-left: 0.5rem;">Offline</span>' :
+                                '<span class="status-indicator" style="background-color: #fef3c7; color: #92400e; margin-left: 0.5rem;">Warning</span>';
 
                         return `
                             <div class="setting-item">
@@ -901,7 +810,7 @@
         async function scrubData(dryRun) {
             const resultsDiv = document.getElementById('scrub-results');
             const scrubExecuteBtn = document.getElementById('scrub-execute');
-            
+
             if (resultsDiv) {
                 resultsDiv.style.display = 'block';
                 resultsDiv.innerHTML = '<p>Processing...</p>';
@@ -914,14 +823,14 @@
             try {
                 const response = await fetch('/api/storage/scrub', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         confirm: true,
                         dry_run: dryRun,
                     }),
                 });
                 const data = await response.json();
-                
+
                 if (resultsDiv) {
                     if (data.success) {
                         const results = data.results || {};
@@ -965,14 +874,14 @@
             try {
                 const response = await fetch('/api/lighting/hue/config');
                 const data = await response.json();
-                
+
                 if (data.bridge_ip) {
                     document.getElementById('hue-bridge-ip').value = data.bridge_ip;
                 }
                 if (data.username) {
                     document.getElementById('hue-username').value = data.username;
                 }
-                
+
                 // Update status
                 updateHueStatus(data.connected || false, data.error || null);
             } catch (error) {
@@ -1061,7 +970,7 @@
                 alert('Error: Bridge IP input field not found');
                 return;
             }
-            
+
             const bridgeIpValue = bridgeIp.value.trim();
             console.log('Bridge IP:', bridgeIpValue);
 
@@ -1080,7 +989,7 @@
                 console.log('User cancelled');
                 return;
             }
-            
+
             console.log('Proceeding with connection...');
 
             try {

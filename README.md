@@ -15,7 +15,7 @@
 [![Multi-Device](https://img.shields.io/badge/Devices-Tapo%20%7C%20Ring%20%7C%20Nest%20%7C%20USB-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp)
 [![LLM Integration](https://img.shields.io/badge/LLM-Multi--Provider-orange.svg)](https://github.com/sandraschi/tapo-camera-mcp)
 
-⚠️ **BETA**: Comprehensive home security platform in active development. Unified surveillance dashboard with multi-device MCP architecture - serving as both individual device MCP servers AND a complete security monitoring ecosystem. **Status: Beta - Active Development**
+⚠️ **BETA**: Comprehensive home security platform in active development. Unified surveillance dashboard with multi-device MCP architecture - serving as both individual device MCP servers AND a complete security monitoring ecosystem. **Status: Production Beta - SOTA 2026**
 
 > **⚠️ Beta Status Notice**: This project is in active beta development. Features are working but may have bugs, APIs may change between versions, and some integrations are experimental. Not recommended for critical production use. Active development - contributions welcome.
 
@@ -101,6 +101,8 @@
 #### ✅ **WORKING NOW**
 - **🎥 Tapo Camera MCP**: TP-Link Tapo camera control and monitoring
 - **📹 USB Webcam MCP**: Auto-detection and management
+- **🤖 Robotics MCP**: Unitree Go2 and Moorebot Scout control (NEW)
+- **🏥 Medical Optics MCP**: USB Otoscope support for health diagnostics (NEW)
 - **🤖 Claude Desktop Integration**: MCP protocol compliance for AI assistants
 - **🔧 Camera Management Tools**: Add, configure, and control cameras
 - **📊 Real-time Status**: Camera connection health and diagnostics
@@ -116,8 +118,9 @@
 #### ✅ **WORKING NOW**
 - **🏠 Live Security Dashboard**: Single interface at `localhost:7777`
 - **🔗 Multi-MCP Integration**: Connect multiple security MCP servers
-- **📊 Real-time Monitoring**: Cameras + sensors + alarms in one view
-- **🚨 Alert Aggregation**: Unified security event display
+- **📊 Real-time Monitoring**: Cameras + sensors + alarms + robots in one view
+- **🚨 Alert Aggregation**: Unified security and robotics event display
+- **🇦🇹 Vienna Integration**: Municipal webcams and local weather context (NEW)
 - **📱 Mobile Access**: Works on iPad/iPhone via Tailscale
 
 #### 🎯 **CORE DASHBOARD FEATURES**

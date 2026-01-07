@@ -13,27 +13,42 @@ auth:
       role: admin
 
 cameras:
-  # USB Webcam
-  test_webcam:
-    type: webcam
-    params:
-      device_id: 0
-      resolution: 1920x1080
-      fps: 30
-  kitchen_cam:
+  # Tapo Camera 1 (Kitchen) - Back to ONVIF (working credentials)
+  tapo_kitchen:
     type: onvif
     params:
       host: 192.168.0.164
       onvif_port: 2020
       username: sandraschi
-      password: Sec1000kitchen
-  living_room_cam:
+      password: Sec1060ta
+
+  # Tapo Camera 2 (Living Room) - Back to ONVIF (working credentials)
+  tapo_living_room:
     type: onvif
     params:
       host: 192.168.0.206
       onvif_port: 2020
       username: sandraschi
       password: Sec1000living
+
+  # USB Camera 1 (Microscope) - Windows host via HTTP proxy
+  usb_camera_1:
+    type: microscope
+    params:
+      device_id: 0  # Microscope camera on device 0
+      resolution: 640x480  # Lower resolution for microscope
+      fps: 30
+      magnification: 50.0
+      led_brightness: 80
+      focus_mode: auto
+
+  # USB Camera 2 (Full HD Webcam) - Windows host via HTTP proxy
+  usb_camera_2_microscope:  # Name kept for backward compatibility
+    type: webcam
+    params:
+      device_id: 1  # Full HD camera on device 1
+      resolution: 1920x1080  # Full HD capability confirmed
+      fps: 30
 web:
   enabled: true
   host: 0.0.0.0
@@ -57,7 +72,7 @@ energy:
   tapo_p115:
     account:
       email: sandraschipal@hotmail.com
-      password: Sec0860ta#
+      password: Sec1060ta#
     devices:
     - host: 192.168.0.17
       device_id: tapo_p115_aircon
@@ -74,6 +89,87 @@ energy:
       name: Server
       location: Server Room
       readonly: true
+
+# iKettle smart kettle integration
+ikettle:
+  enabled: true
+  host: 192.168.0.50  # IP address of your iKettle
+  # username: ""  # Usually not required
+  # password: ""  # Usually not required
+  name: "Morning Coffee Kettle"
+  morning_routine:
+    enabled: true
+    wake_time: "07:00"  # When to have coffee ready
+    coffee_temperature: 95  # Celsius - perfect for coffee
+    preheat_minutes: 5  # Start heating this many minutes before wake time
+
+# Public Vienna webcams for weather monitoring
+public_webcams:
+  enabled: true
+  vienna_webcams:
+    # Stephansdom (St. Stephen's Cathedral) - Iconic Vienna landmark
+    stephansdom:
+      name: "Stephansdom Cathedral"
+      type: "public_webcam"
+      url: "https://www.donauinselfest.at/webcam/stephansdom.jpg"
+      location: "Stephansplatz, Vienna 1st district"
+      description: "Live view of Vienna's most famous cathedral"
+
+    # Rathaus (City Hall) - Beautiful architecture, great for weather
+    rathaus:
+      name: "Rathaus City Hall"
+      type: "public_webcam"
+      url: "https://www.wien.gv.at/webcam/images/rathaus.jpg"
+      location: "Rathausplatz, Vienna 1st district"
+      description: "Vienna City Hall with Rathauspark - perfect for snow/rain views"
+
+    # Donau City - Modern skyline, Danube River
+    donaucity:
+      name: "Donau City Skyline"
+      type: "public_webcam"
+      url: "https://www.foto-webcam.eu/webcam/wien/current.jpg"
+      location: "Donau City, Vienna 22nd district"
+      description: "Modern Vienna skyline with UNO City and Danube views"
+
+    # Prater Ferris Wheel - Iconic landmark
+    prater:
+      name: "Prater Riesenrad"
+      type: "public_webcam"
+      url: "https://webcam.wien.gv.at/webcam/riesenrad/current.jpg"
+      location: "Prater, Vienna 2nd district"
+      description: "The famous Wiener Riesenrad ferris wheel"
+
+    # Schönbrunn Palace Gardens
+    schoenbrunn:
+      name: "Schönbrunn Gardens"
+      type: "public_webcam"
+      url: "https://www.schoenbrunn.at/en/webcam/webcam.jpg"
+      location: "Schönbrunn Palace, Vienna 13th district"
+      description: "Beautiful palace gardens - great for seasonal weather"
+
+    # Naschmarkt - Famous food market
+    naschmarkt:
+      name: "Naschmarkt"
+      type: "public_webcam"
+      url: "https://www.naschmarkt.at/webcam/live.jpg"
+      location: "Naschmarkt, Vienna 6th district"
+      description: "Vienna's famous food market and cultural hub"
+
+    # Augarten - Royal gardens
+    augarten:
+      name: "Augarten Royal Gardens"
+      type: "public_webcam"
+      url: "https://cam.xest.at/augarten.jpg"
+      location: "Augarten, Vienna 2nd district"
+      description: "Beautiful royal gardens and park"
+
+    # Danube Canal
+    danube_canal:
+      name: "Danube Canal"
+      type: "public_webcam"
+      url: "https://www.wien.gv.at/webcam/donau.jpg"
+      location: "Danube Canal, Vienna city center"
+      description: "Danube Canal views through Vienna"
     discovery:
       enabled: false
       timeout: 4
@@ -106,6 +202,16 @@ lighting:
     bridge_ip: 192.168.0.83
     username: J1A3OQ1OMzJDtidSNQWWGmCBuAxZC3lxEjT9qnVc
     auto_discover: true
+  tapo_lighting:
+    account:
+      email: sandraschipal@hotmail.com
+      password: Sec1060ta#
+    devices:
+    - host: 192.168.0.174
+      device_id: tapo_l900_lightstrip
+      name: Lightstrip L900
+      location: Living Room
+      readonly: false
 weather:
   integrations:
     netatmo:
@@ -185,3 +291,10 @@ alerts:
     meteoalarm:
       enabled: true
       # European weather alert system
+
+# Robotics MCP Server Integration
+robotics_mcp:
+  enabled: true
+  server_url: "http://localhost:8080"  # Robotics MCP HTTP API endpoint
+  timeout: 30
+  auto_discover_robots: true  # Load robots from robotics-mcp server

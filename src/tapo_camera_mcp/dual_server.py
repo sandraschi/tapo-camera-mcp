@@ -88,13 +88,15 @@ class TapoCameraDualServer:
 
         @asynccontextmanager
         async def lifespan(_app: FastAPI):
-            # Startup
-            logger.info("Starting Tapo Camera REST API server")
-            self.core_server = await TapoCameraServer.get_instance()
+            # Startup - NO hardware initialization to allow immediate dashboard access
+            logger.info("Starting Tapo Camera REST API server (lazy hardware init)")
+            # self.core_server will be initialized on-demand when first API call is made
             yield
             # Shutdown
             logger.info("Shutting down Tapo Camera REST API server")
             # Core server cleanup handled by singleton
+            if hasattr(self, 'core_server') and self.core_server:
+                await self.core_server.cleanup()
 
         app = FastAPI(
             title="Tapo Camera MCP API",
@@ -126,6 +128,11 @@ class TapoCameraDualServer:
         @app.get("/api/system/status", response_model=SystemStatus)
         async def get_system_status():
             """Get system status"""
+            # Lazy initialization of core server
+            if not hasattr(self, 'core_server') or self.core_server is None:
+                logger.info("Initializing core server on-demand for system status")
+                self.core_server = await TapoCameraServer.get_instance()
+
             cameras = await self.core_server.list_cameras()
             cameras_data = cameras.get("cameras", [])
             online_count = sum(1 for cam in cameras_data if cam.get("status") == "online")
@@ -141,6 +148,11 @@ class TapoCameraDualServer:
         @app.get("/api/cameras/status")
         async def get_cameras_status():
             """Legacy endpoint for dashboard compatibility"""
+            # Lazy initialization of core server
+            if not hasattr(self, 'core_server') or self.core_server is None:
+                logger.info("Initializing core server on-demand for cameras status")
+                self.core_server = await TapoCameraServer.get_instance()
+
             cameras = await self.core_server.list_cameras()
             cameras_data = cameras.get("cameras", [])
             online_count = sum(1 for cam in cameras_data if cam.get("status") == "online")
@@ -155,6 +167,11 @@ class TapoCameraDualServer:
         @app.get("/api/events/recent")
         async def get_recent_events():
             """Get recent events for dashboard compatibility"""
+            # Lazy initialization of core server
+            if not hasattr(self, 'core_server') or self.core_server is None:
+                logger.info("Initializing core server on-demand for events")
+                self.core_server = await TapoCameraServer.get_instance()
+
             # For now, return empty list - in full implementation would return actual events
             return {"events": [], "total": 0}
 
@@ -163,6 +180,11 @@ class TapoCameraDualServer:
         async def list_cameras():
             """List all cameras"""
             try:
+                # Lazy initialization of core server
+                if not hasattr(self, 'core_server') or self.core_server is None:
+                    logger.info("Initializing core server on-demand for list cameras")
+                    self.core_server = await TapoCameraServer.get_instance()
+
                 result = await self.core_server.list_cameras()
                 cameras_data = result.get("cameras", [])
 
@@ -189,6 +211,11 @@ class TapoCameraDualServer:
         async def get_camera(camera_id: str):
             """Get camera details"""
             try:
+                # Lazy initialization of core server
+                if not hasattr(self, 'core_server') or self.core_server is None:
+                    logger.info("Initializing core server on-demand for get camera")
+                    self.core_server = await TapoCameraServer.get_instance()
+
                 result = await self.core_server.list_cameras()
                 cameras_data = result.get("cameras", [])
 
@@ -216,6 +243,11 @@ class TapoCameraDualServer:
         async def get_camera_stream(camera_id: str):
             """Get camera live stream URL"""
             try:
+                # Lazy initialization of core server
+                if not hasattr(self, 'core_server') or self.core_server is None:
+                    logger.info("Initializing core server on-demand for camera stream")
+                    self.core_server = await TapoCameraServer.get_instance()
+
                 # For now, return a placeholder stream URL
                 # In a full implementation, this would get the actual RTSP stream URL
                 stream_url = f"rtsp://placeholder/stream/{camera_id}"
@@ -233,6 +265,11 @@ class TapoCameraDualServer:
         async def capture_snapshot(camera_id: str):
             """Capture a snapshot from the camera"""
             try:
+                # Lazy initialization of core server
+                if not hasattr(self, 'core_server') or self.core_server is None:
+                    logger.info("Initializing core server on-demand for snapshot")
+                    self.core_server = await TapoCameraServer.get_instance()
+
                 # Find the camera
                 result = await self.core_server.list_cameras()
                 cameras_data = result.get("cameras", [])

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,33 +11,32 @@
     <style>
         .webcam-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 2rem;
+            padding-bottom: 2rem;
         }
 
         .webcam-card {
-            background-color: var(--card-bg);
-            border-radius: 0.75rem;
-            box-shadow: var(--shadow-md);
+            background: var(--glass-bg);
+            border-radius: 1.5rem;
             overflow: hidden;
-            border: 1px solid var(--border-color);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: var(--glass-blur);
+            position: relative;
         }
 
         .webcam-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border-color: rgba(212, 175, 55, 0.3);
         }
 
         .webcam-image-container {
             position: relative;
-            width: 100%;
-            height: 250px;
-            background-color: var(--bg-secondary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            aspect-ratio: 16/9;
+            background: #000;
             overflow: hidden;
         }
 
@@ -44,75 +44,217 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: opacity 0.3s ease;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .webcam-image.loading {
-            opacity: 0.5;
+        .webcam-card:hover .webcam-image {
+            transform: scale(1.08);
         }
 
-        .webcam-placeholder {
-            color: var(--text-color-secondary);
-            font-size: 1rem;
-            text-align: center;
+        .badge-live {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(239, 68, 68, 0.85);
+            color: white;
+            padding: 0.35rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.6875rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .badge-live::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(0.95);
+                opacity: 0.8;
+            }
         }
 
         .webcam-info {
-            padding: 1rem;
+            padding: 1.5rem;
+            background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.4));
         }
 
         .webcam-title {
             font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-color-primary);
-            margin-bottom: 0.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 0.5rem 0;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .webcam-location {
-            color: var(--text-color-secondary);
             font-size: 0.875rem;
-            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 500;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.375rem;
         }
 
-        .location-icon {
-            width: 16px;
-            height: 16px;
-            opacity: 0.6;
+        .webcam-location::before {
+            content: '\e0c8';
+            /* Material icon point */
+            font-family: 'Material Icons';
+            font-size: 1rem;
+            color: var(--accent-gold);
         }
 
-        .webcam-description {
-            color: var(--text-color-tertiary);
-            font-size: 0.875rem;
-            margin-bottom: 1rem;
-            line-height: 1.4;
+        .refresh-indicator {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: var(--accent-gold);
+            width: 0%;
+            transition: width linear;
+            z-index: 20;
         }
 
-        .webcam-actions {
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
             display: flex;
-            gap: 0.75rem;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
+            z-index: 30;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
         }
 
-        .webcam-status {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
+        .loading-overlay.active {
+            opacity: 1;
         }
 
-        .status-indicator {
-            width: 8px;
-            height: 8px;
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(212, 175, 55, 0.1);
+            border-top-color: var(--accent-gold);
             border-radius: 50%;
-            background-color: #6b7280;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 1rem;
         }
 
-        .status-online { background-color: #10b981; }
-        .status-offline { background-color: #dc2626; }
-        .status-loading { background-color: #f59e0b; }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: var(--accent-gold);
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .btn-refresh-all {
+            background: var(--accent-gold);
+            color: #000;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 800;
+            font-size: 0.8125rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+        }
+
+        .btn-refresh-all:hover {
+            background: var(--accent-gold-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-refresh-all:active {
+            transform: translateY(0);
+        }
+
+        .error-state {
+            grid-column: 1 / -1;
+            padding: 4rem;
+            text-align: center;
+            background: var(--glass-bg);
+            border-radius: 1.5rem;
+            border: 1px dashed var(--accent-danger);
+        }
+
+        .error-title {
+            color: var(--accent-danger);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .error-message {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .status-online {
+            background-color: #10b981;
+        }
+
+        .status-offline {
+            background-color: #dc2626;
+        }
+
+        .status-loading {
+            background-color: #f59e0b;
+        }
 
         .btn {
             padding: 0.5rem 1rem;
@@ -133,7 +275,9 @@
             color: white;
         }
 
-        .btn-primary:hover { background-color: var(--color-blue-dark); }
+        .btn-primary:hover {
+            background-color: var(--color-blue-dark);
+        }
 
         .btn-secondary {
             background-color: var(--button-bg-secondary);
@@ -141,7 +285,9 @@
             border: 1px solid var(--border-color);
         }
 
-        .btn-secondary:hover { background-color: var(--button-bg-secondary-hover); }
+        .btn-secondary:hover {
+            background-color: var(--button-bg-secondary-hover);
+        }
 
         .weather-highlight {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -195,6 +341,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header class="header">
@@ -218,28 +365,35 @@
         <main class="main-content">
             <div class="page-header">
                 <h1>🌤️ Vienna Public Webcams</h1>
-                <p class="page-description">Live views of Vienna's most beautiful landmarks and weather monitoring cameras. Perfect for watching snow, rain, or just enjoying the city!</p>
+                <p class="page-description">Live views of Vienna's most beautiful landmarks and weather monitoring
+                    cameras. Perfect for watching snow, rain, or just enjoying the city!</p>
             </div>
 
             <div class="weather-highlight">
                 <h2>❄️ Perfect for Weather Watching!</h2>
-                <p>Watch Vienna's iconic landmarks in rain, snow, fog, or sunshine. Great for monitoring winter weather and seasonal changes.</p>
+                <p>Watch Vienna's iconic landmarks in rain, snow, fog, or sunshine. Great for monitoring winter weather
+                    and seasonal changes.</p>
             </div>
 
-            <div class="refresh-controls">
-                <button class="btn btn-primary" onclick="refreshAllWebcams()">
-                    🔄 Refresh All
-                </button>
-                <button class="btn btn-secondary" onclick="testConnections()">
-                    🔗 Test Connections
-                </button>
-                <div class="last-updated" id="last-updated">
-                    Last updated: Never
+            <div class="controls-header">
+                <div>
+                    <h1 class="page-title">Vienna Webcams</h1>
+                    <p class="section-description">Real-time surveillance provided by the City of Vienna (Stadt Wien).
+                        High-fidelity visual data for environmental monitoring.</p>
                 </div>
+                <button class="btn-refresh-all" onclick="refreshAllWebcams()">
+                    <span class="material-icons">refresh</span>
+                    Refresh All
+                </button>
             </div>
 
-            <div class="webcam-grid" id="webcam-grid">
+            <div id="webcam-grid" class="webcam-grid">
                 <!-- Webcams will be loaded here -->
+                <div class="loading-state" style="grid-column: 1 / -1; text-align: center; padding: 5rem;">
+                    <div class="spinner" style="margin: 0 auto 1.5rem;"></div>
+                    <p style="color: var(--text-secondary); font-weight: 600;">Initializing High-Fidelity Data
+                        Streams...</p>
+                </div>
             </div>
         </main>
 
@@ -251,52 +405,60 @@
     <script>
         const webcamData = {
             stephansdom: {
-                name: "Stephansdom Cathedral",
+                id: "stephansdom",
+                title: "Stephansdom Cathedral",
                 location: "Stephansplatz, Vienna 1st district",
                 description: "Live view of Vienna's most famous cathedral - watch the weather around St. Stephen's!",
-                url: "https://www.donauinselfest.at/webcam/stephansdom.jpg"
+                image_url: "https://www.donauinselfest.at/webcam/stephansdom.jpg"
             },
             rathaus: {
-                name: "Rathaus City Hall",
+                id: "rathaus",
+                title: "Rathaus City Hall",
                 location: "Rathausplatz, Vienna 1st district",
                 description: "Vienna City Hall with Rathauspark - perfect for snow/rain views and seasonal weather",
-                url: "https://www.wien.gv.at/webcam/images/rathaus.jpg"
+                image_url: "https://www.wien.gv.at/webcam/images/rathaus.jpg"
             },
             donaucity: {
-                name: "Donau City Skyline",
+                id: "donaucity",
+                title: "Donau City Skyline",
                 location: "Donau City, Vienna 22nd district",
                 description: "Modern Vienna skyline with UNO City and Danube River views",
-                url: "https://www.foto-webcam.eu/webcam/wien/current.jpg"
+                image_url: "https://www.foto-webcam.eu/webcam/wien/current.jpg"
             },
             prater: {
-                name: "Prater Riesenrad",
+                id: "prater",
+                title: "Prater Riesenrad",
                 location: "Prater, Vienna 2nd district",
                 description: "The famous Wiener Riesenrad ferris wheel - iconic Vienna landmark",
-                url: "https://webcam.wien.gv.at/webcam/riesenrad/current.jpg"
+                image_url: "https://webcam.wien.gv.at/webcam/riesenrad/current.jpg"
             },
             schoenbrunn: {
-                name: "Schönbrunn Gardens",
+                id: "schoenbrunn",
+                title: "Schönbrunn Gardens",
                 location: "Schönbrunn Palace, Vienna 13th district",
                 description: "Beautiful palace gardens - great for seasonal weather and garden views",
-                url: "https://www.schoenbrunn.at/en/webcam/webcam.jpg"
+                image_url: "https://www.schoenbrunn.at/en/webcam/webcam.jpg"
             },
             naschmarkt: {
-                name: "Naschmarkt",
+                id: "naschmarkt",
+                title: "Naschmarkt",
                 location: "Naschmarkt, Vienna 6th district",
                 description: "Vienna's famous food market and cultural hub - watch the lively atmosphere",
-                url: "https://www.naschmarkt.at/webcam/live.jpg"
+                image_url: "https://www.naschmarkt.at/webcam/live.jpg"
             },
             augarten: {
-                name: "Augarten Royal Gardens",
+                id: "augarten",
+                title: "Augarten Royal Gardens",
                 location: "Augarten, Vienna 2nd district",
                 description: "Beautiful royal gardens and park - perfect for peaceful weather watching",
-                url: "https://cam.xest.at/augarten.jpg"
+                image_url: "https://cam.xest.at/augarten.jpg"
             },
             danube_canal: {
-                name: "Danube Canal",
+                id: "danube_canal",
+                title: "Danube Canal",
                 location: "Danube Canal, Vienna city center",
                 description: "Danube Canal views through Vienna - watch the water and weather",
-                url: "https://www.wien.gv.at/webcam/donau.jpg"
+                image_url: "https://www.wien.gv.at/webcam/donau.jpg"
             }
         };
 
@@ -313,7 +475,7 @@
             if (!webcam) return false;
 
             try {
-                const response = await fetch(webcam.url, { method: 'HEAD', mode: 'no-cors' });
+                const response = await fetch(webcam.image_url, { method: 'HEAD', mode: 'no-cors' });
                 return true; // If we get here, it's accessible
             } catch (error) {
                 console.warn(`Connection test failed for ${webcamId}:`, error);
@@ -321,59 +483,111 @@
             }
         }
 
+        function handleImageError(imgElement, webcamId) {
+            console.warn(`Failed to load image for ${webcamId}. Setting status to offline.`);
+            imgElement.style.display = 'none'; // Hide the broken image icon
+            const container = imgElement.closest('.webcam-image-container');
+            if (container) {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'webcam-placeholder';
+                placeholder.textContent = `Image for ${webcamData[webcamId].title} failed to load.`;
+                container.appendChild(placeholder);
+            }
+            updateWebcamStatus(webcamId, 'offline');
+            const loadingOverlay = imgElement.closest('.webcam-card').querySelector('.loading-overlay');
+            if (loadingOverlay) loadingOverlay.classList.remove('active');
+        }
+
         async function loadWebcamImage(webcamId) {
             const webcam = webcamData[webcamId];
-            const container = document.querySelector(`[data-webcam="${webcamId}"] .webcam-image-container`);
-            const img = container.querySelector('.webcam-image');
-            const placeholder = container.querySelector('.webcam-placeholder');
+            const card = document.getElementById(`webcam-${webcamId}`);
+            if (!card || !webcam) return;
 
-            if (!img || !webcam) return;
+            const img = card.querySelector('.webcam-image');
+            const loadingOverlay = card.querySelector('.loading-overlay');
+            const refreshIndicator = card.querySelector('.refresh-indicator');
 
-            img.classList.add('loading');
-            placeholder.style.display = 'none';
+            // Reset state
+            img.style.display = 'none';
+            img.src = ''; // Clear previous src
+            const existingPlaceholder = card.querySelector('.webcam-placeholder');
+            if (existingPlaceholder) existingPlaceholder.remove();
+            loadingOverlay.classList.add('active');
+            refreshIndicator.style.width = '0%';
+            updateWebcamStatus(webcamId, 'loading');
+
+            // Start refresh indicator animation
+            let startTime = Date.now();
+            const duration = 10000; // 10 seconds for full refresh
+            const animateIndicator = () => {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                refreshIndicator.style.width = `${progress * 100}%`;
+                if (progress < 1 && loadingOverlay.classList.contains('active')) {
+                    requestAnimationFrame(animateIndicator);
+                } else {
+                    refreshIndicator.style.width = '0%'; // Reset after loading or timeout
+                }
+            };
+            requestAnimationFrame(animateIndicator);
 
             try {
-                // Add timestamp to prevent caching
-                const url = `${webcam.url}?t=${Date.now()}`;
+                const url = `${webcam.image_url}?t=${Date.now()}`;
                 img.src = url;
+                img.style.display = 'block'; // Show image once src is set
 
                 await new Promise((resolve, reject) => {
-                    img.onload = resolve;
-                    img.onerror = reject;
-                    setTimeout(reject, 10000); // 10 second timeout
+                    img.onload = () => {
+                        loadingOverlay.classList.remove('active');
+                        updateWebcamStatus(webcamId, 'online');
+                        resolve();
+                    };
+                    img.onerror = () => {
+                        handleImageError(img, webcamId);
+                        reject(new Error('Image load error'));
+                    };
+                    setTimeout(() => {
+                        if (loadingOverlay.classList.contains('active')) { // If still loading after timeout
+                            handleImageError(img, webcamId);
+                            reject(new Error('Image load timeout'));
+                        }
+                    }, duration);
                 });
 
-                img.classList.remove('loading');
-                updateWebcamStatus(webcamId, 'online');
-
             } catch (error) {
-                console.warn(`Failed to load image for ${webcamId}:`, error);
-                img.classList.remove('loading');
-                placeholder.style.display = 'block';
-                updateWebcamStatus(webcamId, 'offline');
+                console.error(`Error during webcam image load for ${webcamId}:`, error);
+                // handleImageError already called by onerror or timeout
+            } finally {
+                refreshIndicator.style.width = '0%'; // Ensure indicator resets
             }
         }
 
         function updateWebcamStatus(webcamId, status) {
             webcamStatuses[webcamId] = status;
 
-            const indicator = document.querySelector(`[data-webcam="${webcamId}"] .status-indicator`);
-            const statusText = document.querySelector(`[data-webcam="${webcamId}"] .status-text`);
+            const card = document.getElementById(`webcam-${webcamId}`);
+            if (!card) return;
 
-            if (indicator && statusText) {
-                indicator.className = 'status-indicator';
+            const statusIndicator = card.querySelector('.webcam-status .status-indicator');
+            const statusText = card.querySelector('.webcam-status .status-text');
+            const badgeLive = card.querySelector('.badge-live');
+
+            if (statusIndicator && statusText) {
+                statusIndicator.className = 'status-indicator'; // Reset classes
+                badgeLive.style.display = 'none'; // Hide by default
 
                 switch (status) {
                     case 'online':
-                        indicator.classList.add('status-online');
+                        statusIndicator.classList.add('status-online');
                         statusText.textContent = 'Live';
+                        badgeLive.style.display = 'flex';
                         break;
                     case 'offline':
-                        indicator.classList.add('status-offline');
+                        statusIndicator.classList.add('status-offline');
                         statusText.textContent = 'Offline';
                         break;
                     case 'loading':
-                        indicator.classList.add('status-loading');
+                        statusIndicator.classList.add('status-loading');
                         statusText.textContent = 'Loading...';
                         break;
                 }
@@ -381,36 +595,38 @@
         }
 
         function createWebcamCard(webcamId, webcam) {
-            return `
-                <div class="webcam-card" data-webcam="${webcamId}">
-                    <div class="webcam-image-container">
-                        <img class="webcam-image" alt="${webcam.name}" style="display: none;">
-                        <div class="webcam-placeholder">Loading ${webcam.name}...</div>
+            const card = document.createElement('div');
+            card.className = 'webcam-card';
+            card.id = `webcam-${webcamId}`;
+
+            card.innerHTML = `
+                <div class="badge-live">Live</div>
+                <div class="webcam-image-container">
+                    <img src="${webcam.image_url}?t=${Date.now()}" 
+                         alt="${webcam.title}" 
+                         class="webcam-image"
+                         onload="this.closest('.webcam-card').querySelector('.loading-overlay').classList.remove('active'); updateWebcamStatus('${webcamId}', 'online')"
+                         onerror="handleImageError(this, '${webcamId}')">
+                    
+                    <div class="loading-overlay active">
+                        <div class="spinner"></div>
+                        <span class="loading-text">Synchronizing Stream</span>
                     </div>
-                    <div class="webcam-info">
-                        <h3 class="webcam-title">${webcam.name}</h3>
-                        <div class="webcam-location">
-                            <svg class="location-icon" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
-                            </svg>
-                            ${webcam.location}
-                        </div>
-                        <p class="webcam-description">${webcam.description}</p>
-                        <div class="webcam-actions">
-                            <div class="webcam-status">
-                                <div class="status-indicator status-loading"></div>
-                                <span class="status-text">Loading...</span>
-                            </div>
-                            <button class="btn btn-primary" onclick="loadWebcamImage('${webcamId}')">
-                                📷 Refresh
-                            </button>
-                            <a class="btn btn-secondary" href="${webcam.url}" target="_blank">
-                                🔗 Direct Link
-                            </a>
-                        </div>
+                    
+                    <div class="refresh-indicator" id="indicator-${webcamId}"></div>
+                </div>
+                
+                <div class="webcam-info">
+                    <h3 class="webcam-title">${webcam.title}</h3>
+                    <div class="webcam-location">${webcam.location}</div>
+                    <div class="webcam-status" style="margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);">
+                        <div class="status-indicator status-loading"></div>
+                        <span class="status-text">Synchronizing</span>
                     </div>
                 </div>
             `;
+
+            return card;
         }
 
         async function loadAllWebcams() {
@@ -418,10 +634,8 @@
             grid.innerHTML = '';
 
             for (const [webcamId, webcam] of Object.entries(webcamData)) {
-                grid.insertAdjacentHTML('beforeend', createWebcamCard(webcamId, webcam));
-                updateWebcamStatus(webcamId, 'loading');
-
-                // Load image after a short delay to prevent overwhelming the servers
+                grid.appendChild(createWebcamCard(webcamId, webcam));
+                // loadWebcamImage will be called by the refresh logic or manually
                 setTimeout(() => loadWebcamImage(webcamId), Math.random() * 1000);
             }
 
@@ -429,11 +643,6 @@
         }
 
         async function refreshAllWebcams() {
-            // Show loading state for all webcams
-            for (const webcamId of Object.keys(webcamData)) {
-                updateWebcamStatus(webcamId, 'loading');
-            }
-
             // Refresh all images
             for (const webcamId of Object.keys(webcamData)) {
                 setTimeout(() => loadWebcamImage(webcamId), Math.random() * 2000);
@@ -468,21 +677,5 @@
         });
     </script>
 </body>
+
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

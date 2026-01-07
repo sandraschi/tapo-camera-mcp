@@ -5,8 +5,21 @@
 ### **Product Name**
 Home Security Dashboard MCP - Dual Architecture Platform
 
-### **Product Vision**
-A production-ready security monitoring platform with dual MCP architecture: serving as both individual camera/sensor MCP servers AND a unified security dashboard that orchestrates multiple MCP servers for comprehensive home security monitoring.
+## Vision
+To create the definitive 2026 SOTA home management platform that unifies surveillance, robotics, environmental monitoring, and medical-grade diagnostics into a single, high-contrast, zero-friction interface.
+
+## Scope
+### Phase 1: Core Surveillance (Complete)
+- Tapo, Ring, Nest, USB webcam integration.
+- Live dashboard (7777).
+
+### Phase 2: Environmental & Utility (Complete)
+- Netatmo, OpenMeteo, Shelly Energy monitoring.
+
+### Phase 3: Robotics & Municipal (Active/Staging)
+- Unitree Go2, Moorebot Scout tactical control.
+- Vienna Municipal webcam proxies.
+- Medical-grade optical diagnostics (Otoscope/Microscope).
 
 ### **Target Users**
 - **🏠 Home Security Professionals**: Users with comprehensive security ecosystems (cameras + sensors)

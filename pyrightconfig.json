@@ -1,0 +1,21 @@
+{
+  "include": ["src"],
+  "exclude": ["**/node_modules", "**/__pycache__", "**/build_venv"],
+  "pythonVersion": "3.10",
+  "pythonPath": "D:/Dev/repos/tapo-camera-mcp/build_venv/Scripts/python.exe",
+  "executionEnvironments": [
+    {
+      "root": "src",
+      "python": "D:/Dev/repos/tapo-camera-mcp/build_venv/Scripts/python.exe"
+    }
+  ],
+  "typeCheckingMode": "basic",
+  "reportMissingImports": "warning",
+  "reportMissingTypeStubs": "warning",
+  "reportImportCycles": "error",
+  "reportUnusedImport": "warning",
+  "reportUnusedClass": "warning",
+  "reportUnusedFunction": "warning",
+  "reportUnusedVariable": "warning",
+  "reportDuplicateImport": "warning"
+}

@@ -4,13 +4,17 @@ Sensor API endpoints for real-world ingestion data.
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
+from ...config import get_config
 from ...db import TimeSeriesDB
 from ...tools.energy.tapo_plug_tools import tapo_plug_manager
+
+logger = logging.getLogger(__name__)
 
 
 class ToggleRequest(BaseModel):
@@ -41,6 +45,17 @@ async def list_tapo_p115_devices() -> dict[str, Any]:
     """
     Return all Tapo P115 smart plugs with realtime metrics.
     """
+    # Ensure manager is initialized
+    if not tapo_plug_manager._initialized:
+        logger.info("Initializing Tapo plug manager for API call...")
+        config = get_config()
+        tapo_cfg = config.get("energy", {}).get("tapo_p115", {})
+        account_cfg = tapo_cfg.get("account", {})
+        if account_cfg:
+            success = await tapo_plug_manager.initialize(account_cfg)
+            if not success:
+                logger.warning("Failed to initialize Tapo plug manager")
+
     devices = await tapo_plug_manager.get_all_devices()
     response = []
     for device in devices:

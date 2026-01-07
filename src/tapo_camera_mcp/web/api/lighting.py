@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from ...config import ConfigManager, get_config
+# Import managers lazily to avoid initialization on module load
 from ...tools.lighting.hue_tools import hue_manager
 from ...tools.lighting.tapo_lighting_tools import tapo_lighting_manager
 
@@ -504,46 +505,72 @@ async def control_tapo_light(light_id: str, request: LightControlRequest) -> dic
 async def list_all_lights(refresh: bool = False) -> dict[str, Any]:
     """List all lights from all lighting systems."""
     try:
+        logger.info("list_all_lights called")
         all_lights = []
         hue_count = 0
         tapo_count = 0
 
         # Get Hue lights
         try:
-            if not hue_manager._initialized:
-                await hue_manager.initialize()
+            logger.info(f"hue_manager exists: {hasattr(hue_manager, '_initialized')}")
+            if hasattr(hue_manager, '_initialized'):
+                logger.info(f"hue_manager initialized: {hue_manager._initialized}")
+                if not hue_manager._initialized:
+                    logger.info("Initializing hue_manager...")
+                    await hue_manager.initialize()
+                    logger.info("hue_manager initialized successfully")
 
-            if refresh:
-                await hue_manager.rescan_devices()
+                if refresh:
+                    await hue_manager.rescan_devices()
 
-            hue_lights = await hue_manager.get_all_lights()
-            all_lights.extend([_model_dump(light) for light in hue_lights])
-            hue_count = len(hue_lights)
+                hue_lights = await hue_manager.get_all_lights()
+                all_lights.extend([_model_dump(light) for light in hue_lights])
+                hue_count = len(hue_lights)
+                logger.info(f"Got {hue_count} Hue lights")
+            else:
+                logger.warning("hue_manager has no _initialized attribute")
         except Exception as e:
             logger.warning(f"Failed to get Hue lights: {e}")
 
         # Get Tapo lights
         try:
-            if not tapo_lighting_manager._initialized:
-                await tapo_lighting_manager.initialize()
+            logger.info(f"tapo_lighting_manager exists: {hasattr(tapo_lighting_manager, '_initialized')}")
+            if hasattr(tapo_lighting_manager, '_initialized'):
+                logger.info(f"tapo_lighting_manager initialized: {tapo_lighting_manager._initialized}")
+                if not tapo_lighting_manager._initialized:
+                    logger.info("Initializing tapo_lighting_manager...")
+                    await tapo_lighting_manager.initialize()
+                    logger.info("tapo_lighting_manager initialized successfully")
 
-            if refresh:
-                await tapo_lighting_manager.rescan_devices()
+                if refresh:
+                    await tapo_lighting_manager.rescan_devices()
 
-            tapo_lights = await tapo_lighting_manager.get_all_lights()
-            all_lights.extend([_model_dump(light) for light in tapo_lights])
-            tapo_count = len(tapo_lights)
+                tapo_lights = await tapo_lighting_manager.get_all_lights()
+                all_lights.extend([_model_dump(light) for light in tapo_lights])
+                tapo_count = len(tapo_lights)
+                logger.info(f"Got {tapo_count} Tapo lights")
+            else:
+                logger.warning("tapo_lighting_manager has no _initialized attribute")
         except Exception as e:
             logger.warning(f"Failed to get Tapo lights: {e}")
 
-        return {
-            "success": True,
+        result = {
             "lights": all_lights,
             "count": len(all_lights),
             "hue_count": hue_count,
-            "tapo_count": tapo_count
+            "tapo_count": tapo_count,
+            "success": True,
         }
+        logger.info(f"Returning {len(all_lights)} total lights")
+        return result
     except Exception as e:
-        logger.exception("Failed to list all lights")
-        raise HTTPException(status_code=500, detail=f"Failed to list lights: {e!s}")
+        logger.exception(f"Error in list_all_lights: {e}")
+        return {
+            "lights": [],
+            "count": 0,
+            "hue_count": 0,
+            "tapo_count": 0,
+            "success": False,
+            "error": str(e),
+        }
 

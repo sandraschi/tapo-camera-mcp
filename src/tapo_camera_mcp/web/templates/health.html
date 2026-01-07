@@ -5,31 +5,22 @@
 {% block extra_css %}
 <style>
     .health-section {
-        background: white;
-        border-radius: 0.75rem;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        border: 1px solid #e5e7eb;
-    }
-
-    [data-theme="dark"] .health-section {
-        background: #374151;
-        border-color: #4b5563;
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--border-primary);
     }
 
     .health-section h3 {
         font-size: 1.125rem;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-primary);
         margin-bottom: 1rem;
         display: flex;
         align-items: center;
         gap: 0.5rem;
-    }
-
-    [data-theme="dark"] .health-section h3 {
-        color: #f9fafb;
     }
 
     .health-grid {
@@ -39,15 +30,10 @@
     }
 
     .health-card {
-        background: #f9fafb;
+        background: var(--bg-primary);
         border-radius: 0.5rem;
         padding: 1rem;
-        border: 1px solid #e5e7eb;
-    }
-
-    [data-theme="dark"] .health-card {
-        background: #4b5563;
-        border-color: #6b7280;
+        border: 1px solid var(--border-secondary);
     }
 
     .health-card-header {
@@ -59,12 +45,8 @@
 
     .health-card-title {
         font-weight: 500;
-        color: #374151;
+        color: var(--text-primary);
         font-size: 0.875rem;
-    }
-
-    [data-theme="dark"] .health-card-title {
-        color: #d1d5db;
     }
 
     .health-status-badge {
@@ -93,36 +75,24 @@
     .health-value {
         font-size: 1.5rem;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-primary);
         margin-bottom: 0.25rem;
-    }
-
-    [data-theme="dark"] .health-value {
-        color: #f9fafb;
     }
 
     .health-label {
         font-size: 0.75rem;
-        color: #6b7280;
+        color: var(--text-secondary);
         text-transform: uppercase;
         letter-spacing: 0.05em;
-    }
-
-    [data-theme="dark"] .health-label {
-        color: #9ca3af;
     }
 
     .progress-bar {
         width: 100%;
         height: 8px;
-        background: #e5e7eb;
+        background: var(--hover-bg);
         border-radius: 4px;
         overflow: hidden;
         margin-top: 0.5rem;
-    }
-
-    [data-theme="dark"] .progress-bar {
-        background: #4b5563;
     }
 
     .progress-fill {
@@ -131,15 +101,15 @@
     }
 
     .progress-healthy {
-        background: #10b981;
+        background: var(--success-color);
     }
 
     .progress-warning {
-        background: #f59e0b;
+        background: var(--warning-color);
     }
 
     .progress-critical {
-        background: #ef4444;
+        background: var(--error-color);
     }
 
     .metric-row {
@@ -147,11 +117,7 @@
         justify-content: space-between;
         align-items: center;
         padding: 0.5rem 0;
-        border-bottom: 1px solid #e5e7eb;
-    }
-
-    [data-theme="dark"] .metric-row {
-        border-bottom-color: #4b5563;
+        border-bottom: 1px solid var(--border-secondary);
     }
 
     .metric-row:last-child {
@@ -159,21 +125,13 @@
     }
 
     .metric-label {
-        color: #6b7280;
+        color: var(--text-secondary);
         font-size: 0.875rem;
-    }
-
-    [data-theme="dark"] .metric-label {
-        color: #9ca3af;
     }
 
     .metric-value {
         font-weight: 500;
-        color: #1f2937;
-    }
-
-    [data-theme="dark"] .metric-value {
-        color: #f9fafb;
+        color: var(--text-primary);
     }
 
     .issues-list {
@@ -190,62 +148,40 @@
     }
 
     .issue-critical {
-        background: #fee2e2;
-        border-color: #ef4444;
-        color: #991b1b;
+        background: var(--hover-bg);
+        border-color: var(--error-color);
+        color: var(--text-primary);
     }
 
     .issue-warning {
-        background: #fef3c7;
-        border-color: #f59e0b;
-        color: #92400e;
-    }
-
-    [data-theme="dark"] .issue-critical {
-        background: rgba(239, 68, 68, 0.2);
-        color: #fca5a5;
-    }
-
-    [data-theme="dark"] .issue-warning {
-        background: rgba(245, 158, 11, 0.2);
-        color: #fcd34d;
+        background: var(--hover-bg);
+        border-color: var(--warning-color);
+        color: var(--text-primary);
     }
 
     .overall-status {
         text-align: center;
         padding: 2rem;
-        border-radius: 0.75rem;
-        margin-bottom: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 24px;
     }
 
     .overall-status.healthy {
-        background: #d1fae5;
-        color: #065f46;
+        background: var(--card-bg);
+        color: var(--success-color);
+        border: 1px solid var(--success-color);
     }
 
     .overall-status.warning {
-        background: #fef3c7;
-        color: #92400e;
+        background: var(--card-bg);
+        color: var(--warning-color);
+        border: 1px solid var(--warning-color);
     }
 
     .overall-status.critical {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-
-    [data-theme="dark"] .overall-status.healthy {
-        background: rgba(16, 185, 129, 0.2);
-        color: #6ee7b7;
-    }
-
-    [data-theme="dark"] .overall-status.warning {
-        background: rgba(245, 158, 11, 0.2);
-        color: #fcd34d;
-    }
-
-    [data-theme="dark"] .overall-status.critical {
-        background: rgba(239, 68, 68, 0.2);
-        color: #fca5a5;
+        background: var(--card-bg);
+        color: var(--error-color);
+        border: 1px solid var(--error-color);
     }
 
     .overall-status-icon {
@@ -500,7 +436,7 @@
     function updateStatusBadge(elementId, status) {
         const element = document.getElementById(elementId);
         if (!element) return;
-        
+
         element.className = 'health-status-badge';
         if (status === 'healthy' || status === 'ok' || status === 'reachable') {
             element.className += ' status-healthy';
@@ -517,7 +453,7 @@
     function updateProgressBar(elementId, percent, status) {
         const element = document.getElementById(elementId);
         if (!element) return;
-        
+
         element.style.width = percent + '%';
         element.className = 'progress-fill';
         if (percent > 95 || status === 'critical') {
@@ -532,12 +468,12 @@
     function updateOverallStatus(status, issues) {
         const overallDiv = document.getElementById('overall-status');
         if (!overallDiv) return;
-        
+
         overallDiv.className = 'overall-status ' + status;
         const icon = overallDiv.querySelector('.overall-status-icon i');
         const text = overallDiv.querySelector('.overall-status-text');
         const subtext = overallDiv.querySelector('.overall-status-subtext');
-        
+
         if (status === 'healthy') {
             icon.className = 'fas fa-check-circle';
             text.textContent = 'System Healthy';
@@ -555,10 +491,10 @@
 
     function updateHealthData(data) {
         healthData = data;
-        
+
         // Overall status
         updateOverallStatus(data.status, data.issues || []);
-        
+
         // CPU
         const cpu = data.system.cpu;
         document.getElementById('cpu-value').textContent = cpu.percent + '%';
@@ -566,7 +502,7 @@
         document.getElementById('cpu-process').textContent = cpu.process_percent + '%';
         updateProgressBar('cpu-progress', cpu.percent, cpu.percent > 90 ? 'critical' : cpu.percent > 80 ? 'warning' : 'healthy');
         updateStatusBadge('cpu-status', cpu.percent > 90 ? 'critical' : cpu.percent > 80 ? 'warning' : 'healthy');
-        
+
         // Memory
         const memory = data.system.memory;
         document.getElementById('memory-value').textContent = memory.percent + '%';
@@ -575,7 +511,7 @@
         document.getElementById('memory-process').textContent = memory.process_mb + ' MB';
         updateProgressBar('memory-progress', memory.percent, memory.percent > 95 ? 'critical' : memory.percent > 85 ? 'warning' : 'healthy');
         updateStatusBadge('memory-status', memory.percent > 95 ? 'critical' : memory.percent > 85 ? 'warning' : 'healthy');
-        
+
         // Disk
         const disk = data.system.disk;
         document.getElementById('disk-value').textContent = disk.percent + '%';
@@ -584,40 +520,40 @@
         document.getElementById('disk-free').textContent = disk.free_gb + ' GB';
         updateProgressBar('disk-progress', disk.percent, disk.percent > 95 ? 'critical' : disk.percent > 90 ? 'warning' : 'healthy');
         updateStatusBadge('disk-status', disk.percent > 95 ? 'critical' : disk.percent > 90 ? 'warning' : 'healthy');
-        
+
         // Uptime
         document.getElementById('uptime-value').textContent = formatUptime(data.system.uptime);
-        
+
         // Last update
         const lastUpdate = new Date(data.timestamp);
         document.getElementById('last-update').textContent = lastUpdate.toLocaleString();
-        
+
         // PostgreSQL
         const postgres = data.databases.postgres;
         document.getElementById('postgres-status-text').textContent = postgres.status;
         document.getElementById('postgres-host').textContent = postgres.host || 'N/A';
         updateStatusBadge('postgres-status', postgres.status);
-        
+
         // SQLite
         const sqlite = data.databases.timeseries;
         document.getElementById('sqlite-status-text').textContent = sqlite.status;
         document.getElementById('sqlite-size').textContent = sqlite.size_mb ? sqlite.size_mb + ' MB' : 'N/A';
         updateStatusBadge('sqlite-status', sqlite.status);
-        
+
         // Cameras
         const cameras = data.cameras;
         document.getElementById('cameras-total').textContent = cameras.total;
         document.getElementById('cameras-online').textContent = cameras.online;
         document.getElementById('cameras-offline').textContent = cameras.offline;
         updateStatusBadge('cameras-status', cameras.total > 0 && cameras.online === 0 ? 'critical' : cameras.offline > 0 ? 'warning' : 'healthy');
-        
+
         // Network
         if (data.network) {
             document.getElementById('network-section').style.display = 'block';
             document.getElementById('network-sent').textContent = formatBytes(data.network.bytes_sent);
             document.getElementById('network-recv').textContent = formatBytes(data.network.bytes_recv);
         }
-        
+
         // Issues
         if (data.issues && data.issues.length > 0) {
             document.getElementById('issues-section').style.display = 'block';
@@ -647,10 +583,9 @@
     }
 
     // Load health data on page load and refresh every 10 seconds
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         loadHealthData();
         setInterval(loadHealthData, 10000);
     });
 </script>
 {% endblock %}
-

@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 class MessageSeverity(str, Enum):
     """Message severity levels."""
+
     INFO = "info"
     WARNING = "warning"
     ALARM = "alarm"
@@ -33,17 +34,20 @@ class MessageSeverity(str, Enum):
 
 class MessageCategory(str, Enum):
     """Message categories for filtering."""
+
     DEVICE_CONNECTION = "device_connection"
     DEVICE_STATUS = "device_status"
     SENSOR_READING = "sensor_reading"
     ENERGY_ALERT = "energy_alert"
     SECURITY_EVENT = "security_event"
     SYSTEM_EVENT = "system_event"
+    MEDIA_EVENT = "media_event"
 
 
 @dataclass
 class Message:
     """Alert message with monitoring metadata."""
+
     id: str
     timestamp: datetime
     severity: MessageSeverity
@@ -67,7 +71,9 @@ class Message:
             "description": self.description,
             "details": self.details,
             "acknowledged": self.acknowledged,
-            "ack_timestamp": self.ack_timestamp.isoformat() if self.ack_timestamp else None
+            "ack_timestamp": self.ack_timestamp.isoformat()
+            if self.ack_timestamp
+            else None,
         }
 
     def to_prometheus_labels(self) -> Dict[str, str]:
@@ -76,31 +82,33 @@ class Message:
             "severity": self.severity.value,
             "category": self.category.value,
             "source": self.source,
-            "device_type": self.details.get("device_type", "unknown")
+            "device_type": self.details.get("device_type", "unknown"),
         }
 
     def to_loki_entry(self) -> str:
         """Convert to Loki JSON log entry."""
-        return json.dumps({
-            "timestamp": self.timestamp.isoformat(),
-            "level": self.severity.value.upper(),
-            "category": self.category.value,
-            "source": self.source,
-            "message": f"{self.title}: {self.description}",
-            "details": self.details,
-            "labels": {
-                "app": "tapo_camera_mcp",
-                "severity": self.severity.value,
+        return json.dumps(
+            {
+                "timestamp": self.timestamp.isoformat(),
+                "level": self.severity.value.upper(),
                 "category": self.category.value,
-                "source": self.source
+                "source": self.source,
+                "message": f"{self.title}: {self.description}",
+                "details": self.details,
+                "labels": {
+                    "app": "tapo_camera_mcp",
+                    "severity": self.severity.value,
+                    "category": self.category.value,
+                    "source": self.source,
+                },
             }
-        })
+        )
 
 
 class MessagingService:
     """
     Central messaging service for alerts and notifications.
-    
+
     Features:
     - Three severity levels (info, warning, alarm)
     - In-memory circular buffer (last N messages)
@@ -113,7 +121,7 @@ class MessagingService:
     def __init__(self, max_messages: int = 1000):
         """
         Initialize messaging service.
-        
+
         Args:
             max_messages: Max messages to keep in memory (older ones dropped)
         """
@@ -123,7 +131,7 @@ class MessagingService:
             "info_count": 0,
             "warning_count": 0,
             "alarm_count": 0,
-            "total_count": 0
+            "total_count": 0,
         }
 
         # Prometheus metrics (for future integration)
@@ -136,11 +144,11 @@ class MessagingService:
         source: str,
         title: str,
         description: str,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[Dict[str, Any]] = None,
     ) -> Message:
         """
         Add a new message to the system.
-        
+
         Args:
             severity: Message severity level
             category: Message category
@@ -148,7 +156,7 @@ class MessagingService:
             title: Short message title
             description: Detailed description
             details: Additional metadata
-            
+
         Returns:
             Created message object
         """
@@ -163,7 +171,7 @@ class MessagingService:
             source=source,
             title=title,
             description=description,
-            details=details or {}
+            details=details or {},
         )
 
         self.messages.append(message)
@@ -178,25 +186,56 @@ class MessagingService:
             self._metrics["alarm_count"] += 1
 
         # Log to standard logging (for Promtail/Loki)
-        log_level = logging.INFO if severity == MessageSeverity.INFO else \
-                   logging.WARNING if severity == MessageSeverity.WARNING else \
-                   logging.ERROR
+        log_level = (
+            logging.INFO
+            if severity == MessageSeverity.INFO
+            else logging.WARNING
+            if severity == MessageSeverity.WARNING
+            else logging.ERROR
+        )
 
         logger.log(log_level, message.to_loki_entry())
 
         return message
 
-    def info(self, category: MessageCategory, source: str, title: str, description: str, **details):
+    def info(
+        self,
+        category: MessageCategory,
+        source: str,
+        title: str,
+        description: str,
+        **details,
+    ):
         """Convenience method for INFO messages."""
-        return self.add_message(MessageSeverity.INFO, category, source, title, description, details)
+        return self.add_message(
+            MessageSeverity.INFO, category, source, title, description, details
+        )
 
-    def warning(self, category: MessageCategory, source: str, title: str, description: str, **details):
+    def warning(
+        self,
+        category: MessageCategory,
+        source: str,
+        title: str,
+        description: str,
+        **details,
+    ):
         """Convenience method for WARNING messages."""
-        return self.add_message(MessageSeverity.WARNING, category, source, title, description, details)
+        return self.add_message(
+            MessageSeverity.WARNING, category, source, title, description, details
+        )
 
-    def alarm(self, category: MessageCategory, source: str, title: str, description: str, **details):
+    def alarm(
+        self,
+        category: MessageCategory,
+        source: str,
+        title: str,
+        description: str,
+        **details,
+    ):
         """Convenience method for ALARM messages."""
-        return self.add_message(MessageSeverity.ALARM, category, source, title, description, details)
+        return self.add_message(
+            MessageSeverity.ALARM, category, source, title, description, details
+        )
 
     def get_messages(
         self,
@@ -205,11 +244,11 @@ class MessagingService:
         source: Optional[str] = None,
         since: Optional[datetime] = None,
         limit: int = 100,
-        acknowledged: Optional[bool] = None
+        acknowledged: Optional[bool] = None,
     ) -> List[Message]:
         """
         Get messages with optional filtering.
-        
+
         Args:
             severity: Filter by severity
             category: Filter by category
@@ -217,7 +256,7 @@ class MessagingService:
             since: Only messages after this time
             limit: Max messages to return
             acknowledged: Filter by ack status (None = all)
-            
+
         Returns:
             List of matching messages (newest first)
         """
@@ -277,7 +316,13 @@ class MessagingService:
         recent_hour = [m for m in self.messages if m.timestamp >= last_hour]
         recent_day = [m for m in self.messages if m.timestamp >= last_day]
 
-        unacked_alarms = len([m for m in self.messages if m.severity == MessageSeverity.ALARM and not m.acknowledged])
+        unacked_alarms = len(
+            [
+                m
+                for m in self.messages
+                if m.severity == MessageSeverity.ALARM and not m.acknowledged
+            ]
+        )
 
         return {
             # Lifetime counts
@@ -285,25 +330,28 @@ class MessagingService:
             "info_total": self._metrics["info_count"],
             "warning_total": self._metrics["warning_count"],
             "alarm_total": self._metrics["alarm_count"],
-
             # Recent activity
             "messages_last_hour": len(recent_hour),
             "messages_last_day": len(recent_day),
-
             # Current state
             "messages_in_buffer": len(self.messages),
             "unacknowledged_alarms": unacked_alarms,
-
             # By severity (current buffer)
-            "info_current": len([m for m in self.messages if m.severity == MessageSeverity.INFO]),
-            "warning_current": len([m for m in self.messages if m.severity == MessageSeverity.WARNING]),
-            "alarm_current": len([m for m in self.messages if m.severity == MessageSeverity.ALARM]),
+            "info_current": len(
+                [m for m in self.messages if m.severity == MessageSeverity.INFO]
+            ),
+            "warning_current": len(
+                [m for m in self.messages if m.severity == MessageSeverity.WARNING]
+            ),
+            "alarm_current": len(
+                [m for m in self.messages if m.severity == MessageSeverity.ALARM]
+            ),
         }
 
     def export_prometheus_metrics(self) -> str:
         """
         Export metrics in Prometheus text format.
-        
+
         Returns metrics that Prometheus can scrape from /metrics endpoint.
         """
         metrics = self.get_metrics()
@@ -317,12 +365,12 @@ class MessagingService:
             "",
             "# HELP tapo_unacknowledged_alarms Number of unacknowledged alarms",
             "# TYPE tapo_unacknowledged_alarms gauge",
-            f'tapo_unacknowledged_alarms {metrics["unacknowledged_alarms"]}',
+            f"tapo_unacknowledged_alarms {metrics['unacknowledged_alarms']}",
             "",
             "# HELP tapo_messages_last_hour Messages in last hour",
             "# TYPE tapo_messages_last_hour gauge",
-            f'tapo_messages_last_hour {metrics["messages_last_hour"]}',
-            ""
+            f"tapo_messages_last_hour {metrics['messages_last_hour']}",
+            "",
         ]
 
         return "\n".join(lines)
@@ -338,4 +386,3 @@ def get_messaging_service() -> MessagingService:
     if _messaging_service is None:
         _messaging_service = MessagingService(max_messages=1000)
     return _messaging_service
-

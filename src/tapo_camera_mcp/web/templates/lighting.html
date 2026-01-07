@@ -51,11 +51,22 @@
         margin-bottom: 30px;
     }
     
+    .lights-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+        gap: 16px;
+    }
+
+    @media (max-width: 1024px) {
+        .lights-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
     .light-card, .group-card, .scene-card {
         background: #f9fafb;
         border-radius: 8px;
         padding: 20px;
-        margin-bottom: 16px;
         border: 1px solid #e5e7eb;
         transition: all 0.2s ease;
     }
@@ -729,6 +740,15 @@ async function globalEffect(effect) {
     setTimeout(() => loadData(), 1000);
 }
 
+// Helper function to get control endpoint for light
+function getLightControlEndpoint(light) {
+    if (light.light_type === 'tapo') {
+        return `/api/lighting/tapo/lights/${light.light_id || light.device_id}/control`;
+    } else {
+        return `/api/lighting/hue/lights/${light.light_id}/control`;
+    }
+}
+
 // Load all data (from cache - fast)
 async function loadData(forceRescan = false) {
     try {
@@ -795,14 +815,6 @@ async function loadData(forceRescan = false) {
             }
         });
 
-        // Helper function to get control endpoint for light
-        function getLightControlEndpoint(light) {
-            if (light.light_type === 'tapo') {
-                return `/api/lighting/tapo/lights/${light.light_id || light.device_id}/control`;
-            } else {
-                return `/api/lighting/hue/lights/${light.light_id}/control`;
-            }
-        }
         
         // Load groups (Hue only for now)
         try {
@@ -963,7 +975,9 @@ function renderLights() {
         return 0;  // Keep original order for others
     });
 
-    container.innerHTML = sortedLights.map(light => {
+    container.innerHTML = `
+        <div class="lights-container">
+            ${sortedLights.map(light => {
         // Unified light ID that works for both Hue (light_id) and Tapo (device_id)
         const unifiedLightId = light.light_id || light.device_id;
 
@@ -1087,7 +1101,9 @@ function renderLights() {
             ` : ''}
         </div>
     `;
-    }).join('');
+    }).join('')}
+        </div>
+    `;
 }
 
 async function toggleLight(lightId, turnOn) {
@@ -1423,12 +1439,17 @@ async function activateScene(sceneId, groupId) {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-    // Initial load
-    loadData();
-    
+    // Show loading state initially
+    updateOverview();
+
+    // Delay initial data load to allow dashboard to render first
+    setTimeout(() => {
+        loadData();
+    }, 100); // Small delay to let DOM render
+
     // Refresh every 15 seconds (lights can be toggled externally)
     setInterval(loadData, 15000);
-    
+
     // Full rescan every 2 minutes to catch wall switch/remote changes
     setInterval(() => {
         console.log('Periodic rescan...');

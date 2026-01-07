@@ -5,7 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.0] - 2026-01-07 🤖 **Controlled Development & Robotics Integration**
+
+### 🆕 **FEATURES**
+
+#### **Controlled Development Protocol**
+- **Approval Gate**: Implemented mandatory `implementation_plan.md` review for all architectural shifts.
+- **Staging**: Granular task tracking via `task.md` for peer-to-peer verification.
+- **Assent Logic**: Removed automated "assent" assumptions to maintain architect control.
+
+#### **Robotics Tactical Dashboard (V12.1 Integration)**
+- **Unitree Go2 Support**: Telemetry and control grid for humanoid/quadruped platforms.
+- **Moorebot Scout Integration**: AI home patrol coordination.
+- **Mobile Surveillance**: Robots treated as mobile optical nodes in the surveillance matrix.
+
+#### **Vienna Municipal Integration**
+- **Public Webcam Grid**: Aggregation of Vienna city webcams for environmental monitoring.
+- **SOTA 2026 Standards**: Aligned with Vienna Alsergrund localized data requirements.
+
+### 📋 **DOCUMENTATION**
+- **README & PRD Overhaul**: Updated core documents to reflect the unified robotics/surveillance architecture.
+- **Git Formalization**: Staged and committed all "stray" templates and modules from the rapid expansion phase.
+
 ## [1.16.0] - 2025-12-18 🌤️ **Vienna Public Webcams Integration**
+
 
 ### 🆕 **FEATURES**
 
