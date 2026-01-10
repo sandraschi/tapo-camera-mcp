@@ -2,75 +2,81 @@
 
 {% block title %}System Alerts - Tapo Camera MCP{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', path='/css/alerts.css') }}?v=20251203">
+{% endblock %}
+
 {% block content %}
-<div style="padding: 20px; max-width: 1400px; margin: 0 auto;">
-    <div style="background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); color: white; padding: 24px; border-radius: 12px; margin-bottom: 30px;">
-        <h1 style="margin: 0 0 8px 0; font-size: 28px;">🚨 System Alerts & Messages</h1>
-        <p style="margin: 0; opacity: 0.9;">Info, warnings, and alarms from all devices - Ready for Prometheus/Loki integration</p>
+<div class="alerts-dashboard">
+    <div class="alerts-header">
+        <h1>🚨 System Alerts & Messages</h1>
+        <p>Info, warnings, and alarms from all devices - Ready for Prometheus/Loki integration</p>
     </div>
-    
+
     <!-- Alert Summary -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 30px;">
-        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid #3b82f6;">
-            <div style="font-size: 13px; color: #6b7280; margin-bottom: 8px;">💬 Info Messages</div>
-            <div style="font-size: 28px; font-weight: 700; color: #3b82f6;" id="info-count">0</div>
+    <div class="alert-summary">
+        <div class="summary-card info">
+            <div class="summary-label">💬 Info Messages</div>
+            <div class="summary-value" id="info-count">0</div>
         </div>
-        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid #f59e0b;">
-            <div style="font-size: 13px; color: #6b7280; margin-bottom: 8px;">⚠️ Warnings</div>
-            <div style="font-size: 28px; font-weight: 700; color: #f59e0b;" id="warning-count">0</div>
+        <div class="summary-card warning">
+            <div class="summary-label">⚠️ Warnings</div>
+            <div class="summary-value" id="warning-count">0</div>
         </div>
-        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid #ef4444;">
-            <div style="font-size: 13px; color: #6b7280; margin-bottom: 8px;">🚨 Alarms</div>
-            <div style="font-size: 28px; font-weight: 700; color: #ef4444;" id="alarm-count">0</div>
+        <div class="summary-card alarm">
+            <div class="summary-label">🚨 Alarms</div>
+            <div class="summary-value" id="alarm-count">0</div>
         </div>
-        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 4px solid #dc2626;">
-            <div style="font-size: 13px; color: #6b7280; margin-bottom: 8px;">🔔 Unacknowledged</div>
-            <div style="font-size: 28px; font-weight: 700; color: #dc2626;" id="unack-count">0</div>
+        <div class="summary-card unack">
+            <div class="summary-label">🔔 Unacknowledged</div>
+            <div class="summary-value" id="unack-count">0</div>
         </div>
     </div>
-    
+
     <!-- Monitoring Integration Info -->
-    <div style="background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); border-left: 4px solid #3b82f6; padding: 20px; border-radius: 12px; margin-bottom: 30px;">
-        <h3 style="margin: 0 0 12px 0; color: #1f2937;">📊 Monitoring Stack Integration</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; font-size: 14px;">
-            <div>
+    <div class="monitoring-integration">
+        <h3>📊 Monitoring Stack Integration</h3>
+        <div class="monitoring-grid">
+            <div class="monitoring-item">
                 <strong>Prometheus Metrics:</strong>
-                <div style="margin-top: 4px;"><code style="background: white; padding: 2px 6px; border-radius: 4px;">/api/messages/prometheus</code></div>
+                <div class="monitoring-code"><code>/api/messages/prometheus</code></div>
             </div>
-            <div>
+            <div class="monitoring-item">
                 <strong>Loki Logs:</strong>
-                <div style="margin-top: 4px; color: #6b7280;">Structured JSON logs ready for Promtail</div>
+                <div class="monitoring-description">Structured JSON logs ready for Promtail</div>
             </div>
-            <div>
+            <div class="monitoring-item">
                 <strong>Grafana Dashboards:</strong>
-                <div style="margin-top: 4px; color: #6b7280;">Query via Prometheus & Loki datasources</div>
+                <div class="monitoring-description">Query via Prometheus & Loki datasources</div>
             </div>
         </div>
     </div>
     
     <!-- Filters & Actions -->
-    <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+    <div class="alerts-filters">
+        <div class="filters-header">
+            <h3>Filter Messages</h3>
+            <div class="filter-buttons">
                 <button onclick="filterBySeverity('all')" class="filter-btn active" id="filter-all">All Messages</button>
                 <button onclick="filterBySeverity('alarm')" class="filter-btn" id="filter-alarm">🚨 Alarms</button>
                 <button onclick="filterBySeverity('warning')" class="filter-btn" id="filter-warning">⚠️ Warnings</button>
                 <button onclick="filterBySeverity('info')" class="filter-btn" id="filter-info">💬 Info</button>
                 <button onclick="filterByAck(false)" class="filter-btn" id="filter-unack">🔔 Unacknowledged</button>
             </div>
-            <div style="display: flex; gap: 12px;">
-                <button onclick="acknowledgeAll()" class="btn btn-primary">✓ Acknowledge All</button>
-                <button onclick="refreshMessages()" class="btn btn-secondary">🔄 Refresh</button>
-            </div>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 16px;">
+            <button onclick="acknowledgeAll()" class="btn btn-primary">✓ Acknowledge All</button>
+            <button onclick="refreshMessages()" class="btn btn-secondary">🔄 Refresh</button>
         </div>
     </div>
-    
+
     <!-- Messages List -->
-    <div id="messages-container">
-        <p style="text-align: center; color: #6b7280; padding: 60px; background: white; border-radius: 12px;">
-            <i class="fas fa-spinner fa-spin" style="font-size: 32px; margin-bottom: 16px; display: block;"></i>
-            Loading messages...
-        </p>
+    <div id="messages-container" class="alerts-container">
+        <div class="empty-alerts">
+            <div class="empty-alerts-icon">⏳</div>
+            <div class="empty-alerts-title">Loading Messages...</div>
+            <div class="empty-alerts-message">Please wait while we fetch the latest alerts and notifications.</div>
+        </div>
     </div>
 </div>
 

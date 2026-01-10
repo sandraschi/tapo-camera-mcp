@@ -1,11 +1,13 @@
 """Audio streaming API for cameras."""
 
 import logging
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+
+from ...mcp_client import call_mcp_tool
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +16,7 @@ router = APIRouter(prefix="/api/audio", tags=["audio"])
 
 class AudioStreamRequest(BaseModel):
     """Request for audio stream."""
+
     camera_id: str
 
 
@@ -22,37 +25,23 @@ _active_streams: dict = {}
 
 
 async def get_camera_rtsp_url(camera_id: str) -> Optional[str]:
-    """Get RTSP URL for a camera with authentication."""
-    from tapo_camera_mcp.core.server import TapoCameraServer
+    """Get RTSP URL for a camera with authentication via MCP."""
+    try:
+        result = await call_mcp_tool(
+            "media_management", {"action": "get_stream_url", "camera_name": camera_id}
+        )
 
-    server = await TapoCameraServer.get_instance()
-    camera = await server.camera_manager.get_camera(camera_id)
-
-    if not camera:
+        if result.get("success"):
+            return result.get("stream_url")
+        logger.warning(f"Failed to get stream URL for {camera_id}: {result.get('error')}")
+        return None
+    except Exception:
+        logger.exception(f"Error getting stream URL for {camera_id}")
         return None
 
-    if not await camera.is_connected():
-        await camera.connect()
 
-    # Get base RTSP URL
-    stream_url = await camera.get_stream_url()
-    if not stream_url:
-        return None
-
-    # Add auth credentials
-    from urllib.parse import urlparse
-    parsed = urlparse(stream_url)
-    username = camera.config.params.get("username", "")
-    password = camera.config.params.get("password", "")
-
-    if username and password:
-        return f"rtsp://{username}:{password}@{parsed.hostname}:{parsed.port or 554}{parsed.path}"
-
-    return stream_url
-
-
-@router.get("/info/{camera_id}")
-async def get_audio_info(camera_id: str):
+@router.get("/info/{camera_id}", response_model=Dict[str, Any])
+async def get_audio_info(camera_id: str) -> Dict[str, Any]:
     """Get audio stream information for a camera.
 
     Returns RTSP URL and audio capability info.
@@ -61,10 +50,13 @@ async def get_audio_info(camera_id: str):
     rtsp_url = await get_camera_rtsp_url(camera_id)
 
     if not rtsp_url:
-        raise HTTPException(status_code=404, detail=f"Camera {camera_id} not found or not connected")
+        raise HTTPException(
+            status_code=404, detail=f"Camera {camera_id} not found or not connected"
+        )
 
     # Mask password in response
     from urllib.parse import urlparse
+
     parsed = urlparse(rtsp_url)
     safe_url = f"rtsp://{parsed.hostname}:{parsed.port or 554}{parsed.path}"
 
@@ -78,8 +70,8 @@ async def get_audio_info(camera_id: str):
         "playback_options": {
             "vlc": f"vlc {rtsp_url}",
             "ffplay": f"ffplay -i {rtsp_url}",
-            "browser": f"/api/audio/hls/{camera_id}/stream.m3u8"
-        }
+            "browser": f"/api/audio/hls/{camera_id}/stream.m3u8",
+        },
     }
 
 
@@ -434,8 +426,8 @@ async def hls_stream_manifest(camera_id: str):
     raise HTTPException(
         status_code=501,
         detail=f"HLS transcoding not implemented for {camera_id}. "
-               "Use VLC or ffplay for audio streaming. "
-               "RTSP streams can be opened directly in VLC Media Player."
+        "Use VLC or ffplay for audio streaming. "
+        "RTSP streams can be opened directly in VLC Media Player.",
     )
 
 
@@ -446,19 +438,18 @@ async def get_audio_capabilities():
         "onvif_cameras": {
             "listen_audio": True,
             "two_way_audio": False,
-            "note": "ONVIF Profile S does not support audio backchannel (two-way audio)"
+            "note": "ONVIF Profile S does not support audio backchannel (two-way audio)",
         },
         "ring_doorbell": {
             "listen_audio": True,
             "two_way_audio": True,
-            "note": "Ring supports two-way audio via WebRTC"
+            "note": "Ring supports two-way audio via WebRTC",
         },
         "tapo_app": {
             "listen_audio": True,
             "two_way_audio": True,
-            "note": "Full two-way audio available in official Tapo app"
+            "note": "Full two-way audio available in official Tapo app",
         },
         "recommendation": "For two-way audio with Tapo cameras, use the Tapo app. "
-                         "For listening only, use VLC with the RTSP URL."
+        "For listening only, use VLC with the RTSP URL.",
     }
-

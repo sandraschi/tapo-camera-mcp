@@ -9,10 +9,9 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 
-from ...config import get_config
 from ...db import TimeSeriesDB
 from ...ingest import IngestionUnavailableError, WienEnergieIngestionService
-from ...tools.energy.tapo_plug_tools import tapo_plug_manager
+from ...mcp_client import call_mcp_tool
 
 router = APIRouter(prefix="/api/energy", tags=["energy"])
 _db = TimeSeriesDB()
@@ -42,71 +41,33 @@ async def list_energy_devices() -> dict[str, Any]:
     """
     devices = []
 
-    # Get Tapo P115 devices with fresh API data
+    # Get Tapo P115 devices via MCP
     try:
-        tapo_devices = await tapo_plug_manager.get_all_devices()
-        for device in tapo_devices:
-            device_id = device.device_id
-            host = tapo_plug_manager.get_device_host(device_id)
-
-            # Get fresh data from Tapo API if we have credentials and host
-            current_power = 0.0
-            voltage = 0.0
-            current = 0.0
-            today_energy = 0.0
-            month_energy = 0.0
-            power_state = False
-
-            if host:
-                try:
-                    # Get fresh data directly from Tapo API
-                    account_email = config.get('energy', {}).get('tapo_p115', {}).get('account', {}).get('email')
-                    account_password = config.get('energy', {}).get('tapo_p115', {}).get('account', {}).get('password')
-
-                    if account_email and account_password:
-                        import tapo
-                        client = await tapo.ApiClient(account_email, account_password).p115(host)
-                        device_info = await client.get_device_info()
-                        energy_usage = await client.get_energy_usage()
-
-                        # Get real-time current power (Tapo P115 DOES provide this!)
-                        current_power_result = await client.get_current_power()
-                        current_power = current_power_result.current_power if hasattr(current_power_result, 'current_power') else 0.0
-
-                        # Get energy usage data
-                        power_state = device_info.device_on if hasattr(device_info, 'device_on') else False
-                        today_energy = energy_usage.today_energy if hasattr(energy_usage, 'today_energy') else 0
-                        month_energy = energy_usage.month_energy if hasattr(energy_usage, 'month_energy') else 0
-
-                        # Voltage and current are not provided by Tapo P115 API
-                        voltage = 0.0
-                        current = 0.0
-
-                except Exception as e:
-                    # If API call fails, use cached device data
-                    current_power = device.current_power
-                    voltage = device.voltage
-                    current = device.current
-                    today_energy = device.daily_energy
-                    month_energy = device.monthly_energy
-                    power_state = device.power_state
-
-            devices.append({
-                "device_id": device.device_id,
-                "name": device.name,
-                "location": device.location,
-                "type": "tapo_p115",
-                "device_model": device.device_model,
-                "power_state": power_state,
-                "current_power": current_power,  # Always 0.0 for Tapo P115 (not supported)
-                "voltage": voltage,
-                "current": current,
-                "daily_energy": today_energy,
-                "monthly_energy": month_energy,
-                "daily_cost": device.daily_cost,
-                "monthly_cost": device.monthly_cost,
-                "last_seen": device.last_seen,
-            })
+        result = await call_mcp_tool("energy_management", {"action": "status"})
+        if result.get("success"):
+            tapo_devices = result.get("data", {}).get("devices", [])
+            for device in tapo_devices:
+                devices.append(
+                    {
+                        "device_id": device.get("device_id", ""),
+                        "name": device.get("name", ""),
+                        "location": device.get("location", ""),
+                        "type": "tapo_p115",
+                        "device_model": device.get("device_model", ""),
+                        "power_state": device.get("power_state", False),
+                        "current_power": device.get("current_power", 0.0),
+                        "voltage": device.get("voltage", 0.0),
+                        "current": device.get("current", 0.0),
+                        "daily_energy": device.get("daily_energy", 0.0),
+                        "monthly_energy": device.get("monthly_energy", 0.0),
+                        "daily_cost": device.get("daily_cost", 0.0),
+                        "monthly_cost": device.get("monthly_cost", 0.0),
+                        "last_seen": device.get("last_seen", ""),
+                    }
+                )
+        else:
+            # Log error but continue
+            pass
     except Exception:
         # Continue even if Tapo devices fail
         pass
@@ -121,23 +82,29 @@ async def list_energy_devices() -> dict[str, Any]:
                 tariff_info = await service.get_tariff_info()
                 cost = service.calculate_energy_cost(reading.get("daily_energy_kwh", 0))
 
-                devices.append({
-                    "device_id": "wien_energie_smart_meter",
-                    "name": "Wien Energie Smart Meter",
-                    "location": "Main",
-                    "type": "smart_meter",
-                    "device_model": "Wiener Netze Smart Meter",
-                    "power_state": reading.get("active_power_w", 0) > 0,
-                    "current_power": reading.get("active_power_w", 0),
-                    "voltage": reading.get("voltage_v", 230),
-                    "current": reading.get("current_a", 0),
-                    "daily_energy": reading.get("daily_energy_kwh", 0),
-                    "monthly_energy": reading.get("total_energy_kwh", 0) / 30 if reading.get("total_energy_kwh") else 0,
-                    "daily_cost": cost,
-                    "monthly_cost": cost * 30,
-                    "last_seen": reading.get("timestamp", datetime.now(timezone.utc).isoformat()),
-                    "tariff": tariff_info,
-                })
+                devices.append(
+                    {
+                        "device_id": "wien_energie_smart_meter",
+                        "name": "Wien Energie Smart Meter",
+                        "location": "Main",
+                        "type": "smart_meter",
+                        "device_model": "Wiener Netze Smart Meter",
+                        "power_state": reading.get("active_power_w", 0) > 0,
+                        "current_power": reading.get("active_power_w", 0),
+                        "voltage": reading.get("voltage_v", 230),
+                        "current": reading.get("current_a", 0),
+                        "daily_energy": reading.get("daily_energy_kwh", 0),
+                        "monthly_energy": reading.get("total_energy_kwh", 0) / 30
+                        if reading.get("total_energy_kwh")
+                        else 0,
+                        "daily_cost": cost,
+                        "monthly_cost": cost * 30,
+                        "last_seen": reading.get(
+                            "timestamp", datetime.now(timezone.utc).isoformat()
+                        ),
+                        "tariff": tariff_info,
+                    }
+                )
     except Exception:
         # Continue even if smart meter fails
         pass
@@ -159,7 +126,7 @@ async def get_smart_meter_status() -> dict[str, Any]:
     if not service:
         raise HTTPException(
             status_code=503,
-            detail="Smart meter service not available. Check configuration and adapter connection."
+            detail="Smart meter service not available. Check configuration and adapter connection.",
         )
 
     try:
@@ -167,14 +134,13 @@ async def get_smart_meter_status() -> dict[str, Any]:
         if not meter_info:
             raise HTTPException(
                 status_code=503,
-                detail="Unable to discover smart meter. Check adapter connection and security key."
+                detail="Unable to discover smart meter. Check adapter connection and security key.",
             )
 
         reading = await service.fetch_current_reading()
         if not reading:
             raise HTTPException(
-                status_code=503,
-                detail="Unable to fetch current reading from smart meter."
+                status_code=503, detail="Unable to fetch current reading from smart meter."
             )
 
         tariff_info = await service.get_tariff_info()
@@ -199,18 +165,12 @@ async def get_smart_meter_current() -> dict[str, Any]:
     """
     service = get_smart_meter_service()
     if not service:
-        raise HTTPException(
-            status_code=503,
-            detail="Smart meter service not available."
-        )
+        raise HTTPException(status_code=503, detail="Smart meter service not available.")
 
     try:
         reading = await service.fetch_current_reading()
         if not reading:
-            raise HTTPException(
-                status_code=503,
-                detail="Unable to fetch current reading."
-            )
+            raise HTTPException(status_code=503, detail="Unable to fetch current reading.")
 
         return {
             "success": True,
@@ -234,10 +194,7 @@ async def get_smart_meter_history(
     """
     service = get_smart_meter_service()
     if not service:
-        raise HTTPException(
-            status_code=503,
-            detail="Smart meter service not available."
-        )
+        raise HTTPException(status_code=503, detail="Smart meter service not available.")
 
     try:
         if start_date and end_date:
@@ -271,10 +228,7 @@ async def calculate_smart_meter_cost(
     """
     service = get_smart_meter_service()
     if not service:
-        raise HTTPException(
-            status_code=503,
-            detail="Smart meter service not available."
-        )
+        raise HTTPException(status_code=503, detail="Smart meter service not available.")
 
     try:
         tariff_info = await service.get_tariff_info()
@@ -295,7 +249,7 @@ async def calculate_smart_meter_cost(
             else:
                 raise HTTPException(
                     status_code=400,
-                    detail="Unable to fetch current reading. Please provide energy_kwh parameter."
+                    detail="Unable to fetch current reading. Please provide energy_kwh parameter.",
                 )
 
         cost = service.calculate_energy_cost(energy_kwh)
@@ -324,20 +278,23 @@ async def get_current_usage() -> dict[str, Any]:
     total_daily_energy = 0.0
     total_daily_cost = 0.0
 
-    # Get Tapo P115 devices
+    # Get Tapo P115 devices via MCP
     try:
-        tapo_devices = await tapo_plug_manager.get_all_devices()
-        for device in tapo_devices:
-            devices.append({
-                "device_id": device.device_id,
-                "name": device.name,
-                "power": device.current_power,
-                "daily_energy": device.daily_energy,
-                "daily_cost": device.daily_cost,
-            })
-            total_power += device.current_power
-            total_daily_energy += device.daily_energy
-            total_daily_cost += device.daily_cost
+        result = await call_mcp_tool("energy_management", {"action": "consumption"})
+        if result.get("success"):
+            tapo_devices = result.get("data", {}).get("devices", [])
+            for device in tapo_devices:
+                device_data = {
+                    "device_id": device.get("device_id", ""),
+                    "name": device.get("name", ""),
+                    "power": device.get("current_power", 0.0),
+                    "daily_energy": device.get("daily_energy", 0.0),
+                    "daily_cost": device.get("daily_cost", 0.0),
+                }
+                devices.append(device_data)
+                total_power += device_data["power"]
+                total_daily_energy += device_data["daily_energy"]
+                total_daily_cost += device_data["daily_cost"]
     except Exception:
         pass
 
@@ -349,13 +306,15 @@ async def get_current_usage() -> dict[str, Any]:
             if reading:
                 daily_energy = reading.get("daily_energy_kwh", 0)
                 cost = service.calculate_energy_cost(daily_energy)
-                devices.append({
-                    "device_id": "wien_energie_smart_meter",
-                    "name": "Wien Energie Smart Meter",
-                    "power": reading.get("active_power_w", 0),
-                    "daily_energy": daily_energy,
-                    "daily_cost": cost,
-                })
+                devices.append(
+                    {
+                        "device_id": "wien_energie_smart_meter",
+                        "name": "Wien Energie Smart Meter",
+                        "power": reading.get("active_power_w", 0),
+                        "daily_energy": daily_energy,
+                        "daily_cost": cost,
+                    }
+                )
                 total_power += reading.get("active_power_w", 0)
                 total_daily_energy += daily_energy
                 total_daily_cost += cost
@@ -404,29 +363,38 @@ async def get_energy_stats() -> dict[str, Any]:
     Get energy statistics summary.
     """
     try:
-        devices = await tapo_plug_manager.get_all_devices()
-        total_devices = len(devices)
-        active_devices = sum(1 for d in devices if d.power_state)
-        total_power = sum(d.current_power for d in devices)
-        daily_cost = sum(d.daily_cost for d in devices)
+        # Get stats via MCP
+        result = await call_mcp_tool("energy_management", {"action": "cost"})
+        if result.get("success"):
+            data = result.get("data", {})
+            stats = {
+                "total_devices": data.get("total_devices", 0),
+                "active_devices": data.get("active_devices", 0),
+                "current_power": data.get("current_power", 0.0),
+                "daily_cost": data.get("daily_cost", 0.0),
+            }
+        else:
+            stats = {
+                "total_devices": 0,
+                "active_devices": 0,
+                "current_power": 0.0,
+                "daily_cost": 0.0,
+            }
 
-        # Add smart meter if available
+        # Add smart meter stats if available (keeping direct call for now)
         service = get_smart_meter_service()
         if service:
             reading = await service.fetch_current_reading()
             if reading:
-                total_devices += 1
+                stats["total_devices"] += 1
                 if reading.get("active_power_w", 0) > 0:
-                    active_devices += 1
-                total_power += reading.get("active_power_w", 0)
-                daily_cost += service.calculate_energy_cost(reading.get("daily_energy_kwh", 0))
+                    stats["active_devices"] += 1
+                stats["current_power"] += reading.get("active_power_w", 0)
+                stats["daily_cost"] += service.calculate_energy_cost(
+                    reading.get("daily_energy_kwh", 0)
+                )
 
-        return {
-            "total_devices": total_devices,
-            "active_devices": active_devices,
-            "current_power": total_power,
-            "daily_cost": daily_cost,
-        }
+        return stats
     except Exception as e:
         return {
             "total_devices": 0,
@@ -435,5 +403,3 @@ async def get_energy_stats() -> dict[str, Any]:
             "daily_cost": 0,
             "error": str(e),
         }
-
-

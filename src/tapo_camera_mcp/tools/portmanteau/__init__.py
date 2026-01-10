@@ -13,7 +13,9 @@ import logging
 from fastmcp import FastMCP
 
 from .ai_analysis import register_ai_analysis_tool
+from .alerts_management import register_alerts_management_tool
 from .analytics_management import register_analytics_management_tool
+from .appliance_monitor_management import register_appliance_monitor_management_tool
 from .audio_management import register_audio_management_tool
 from .automation_management import register_automation_management_tool
 from .camera_management import register_camera_management_tool
@@ -24,20 +26,18 @@ from .home_assistant_management import register_home_assistant_management_tool
 from .kitchen_management import register_kitchen_management_tool
 from .lighting_management import register_lighting_management_tool
 from .media_management import register_media_management_tool
+from .medical_management import register_medical_management_tool
+from .messages_management import register_messages_management_tool
 from .motion_management import register_motion_management_tool
 from .ptz_management import register_ptz_management_tool
 from .ring_management import register_ring_management_tool
 from .robotics_management import register_robotics_management_tool
 from .security_management import register_security_management_tool
+from .shelly_management import register_shelly_management_tool
 from .system_management import register_system_management_tool
 from .tapo_control import register_tapo_control_tool
-from .weather_management import register_weather_management_tool
-from .medical_management import register_medical_management_tool
-from .shelly_management import register_shelly_management_tool
 from .thermal_management import register_thermal_management_tool
-from .appliance_monitor_management import register_appliance_monitor_management_tool
-from .alerts_management import register_alerts_management_tool
-from .messages_management import register_messages_management_tool
+from .weather_management import register_weather_management_tool
 
 logger = logging.getLogger(__name__)
 
@@ -85,4 +85,3 @@ def register_all_portmanteau_tools(mcp: FastMCP) -> None:
 
 # Export the registration function
 __all__ = ["register_all_portmanteau_tools"]
-

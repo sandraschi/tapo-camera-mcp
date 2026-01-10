@@ -37,22 +37,17 @@ class ONVIFEventSubscription:
             # Connect to camera
             loop = asyncio.get_event_loop()
             self._camera = await loop.run_in_executor(
-                None,
-                lambda: ONVIFCamera(self.host, self.port, self.username, self.password)
+                None, lambda: ONVIFCamera(self.host, self.port, self.username, self.password)
             )
 
             # Create events service
             self._events_service = await loop.run_in_executor(
-                None,
-                self._camera.create_events_service
+                None, self._camera.create_events_service
             )
 
             # Create PullPointSubscription
             try:
-                self._pullpoint = await loop.run_in_executor(
-                    None,
-                    self._create_pullpoint
-                )
+                self._pullpoint = await loop.run_in_executor(None, self._create_pullpoint)
                 logger.info("ONVIF event subscription created for %s", self.camera_id)
             except Exception as e:
                 logger.warning("Camera %s may not support ONVIF events: %s", self.camera_id, e)
@@ -91,10 +86,7 @@ class ONVIFEventSubscription:
                 loop = asyncio.get_event_loop()
 
                 # Pull messages
-                messages = await loop.run_in_executor(
-                    None,
-                    self._pull_messages
-                )
+                messages = await loop.run_in_executor(None, self._pull_messages)
 
                 # Process events
                 if messages:
@@ -154,7 +146,7 @@ class ONVIFEventSubscription:
                     "event_type": "motion",
                     "timestamp": datetime.now().isoformat(),
                     "topic": topic,
-                    "source": "onvif"
+                    "source": "onvif",
                 }
 
                 # Try to extract more details
@@ -195,6 +187,7 @@ class ONVIFEventSubscription:
 
 # Module-level functions
 
+
 def register_event_callback(callback: Callable):
     """Register a callback to be notified of camera events."""
     if callback not in _event_callbacks:
@@ -208,11 +201,7 @@ def unregister_event_callback(callback: Callable):
 
 
 async def subscribe_to_camera(
-    camera_id: str,
-    host: str,
-    port: int,
-    username: str,
-    password: str
+    camera_id: str, host: str, port: int, username: str, password: str
 ) -> bool:
     """Subscribe to motion events from a camera."""
     if camera_id in _subscriptions:
@@ -243,11 +232,11 @@ async def get_subscription_status() -> Dict:
             {
                 "camera_id": sub.camera_id,
                 "running": sub._running,
-                "last_event": sub._last_event_time.isoformat() if sub._last_event_time else None
+                "last_event": sub._last_event_time.isoformat() if sub._last_event_time else None,
             }
             for sub in _subscriptions.values()
         ],
-        "callback_count": len(_event_callbacks)
+        "callback_count": len(_event_callbacks),
     }
 
 
@@ -273,4 +262,3 @@ def get_recent_events(camera_id: Optional[str] = None, limit: int = 20) -> List[
 
 # Auto-register storage callback
 register_event_callback(_store_event)
-

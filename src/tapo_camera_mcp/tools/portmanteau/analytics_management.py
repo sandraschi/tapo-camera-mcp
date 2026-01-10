@@ -155,4 +155,7 @@ def register_analytics_management_tool(mcp: FastMCP) -> None:
 
         except Exception as e:
             logger.error(f"Error in analytics management action '{action}': {e}", exc_info=True)
-            return {"success": False, "error": f"Failed to execute analytics action '{action}': {e!s}"}
+            return {
+                "success": False,
+                "error": f"Failed to execute analytics action '{action}': {e!s}",
+            }

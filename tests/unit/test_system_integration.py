@@ -153,7 +153,9 @@ def test_full_system_integration():
         assert False
 
 
-@pytest.mark.skip(reason="# TODO: Fix test_webcam_connection_simulation - currently has assert False")
+@pytest.mark.skip(
+    reason="# TODO: Fix test_webcam_connection_simulation - currently has assert False"
+)
 def test_webcam_connection_simulation():
     """Test webcam connection simulation."""
     try:

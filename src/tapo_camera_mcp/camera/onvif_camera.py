@@ -40,6 +40,7 @@ class ONVIFCameraWrapper:
             # Create fresh connection (no caching - always re-authenticate)
             # Set shorter timeout to prevent 20+ second delays
             import zeep
+
             transport = zeep.transports.Transport(timeout=10)  # 10 second timeout
             self._camera = ONVIFCamera(
                 self.host, self.port, self.username, self.password, transport=transport
@@ -150,7 +151,7 @@ class ONVIFCameraWrapper:
         velocity = {
             "PanTilt": {
                 "x": pan,  # Pan velocity (-1.0 to 1.0)
-                "y": tilt  # Tilt velocity (-1.0 to 1.0)
+                "y": tilt,  # Tilt velocity (-1.0 to 1.0)
             }
         }
 
@@ -167,7 +168,7 @@ class ONVIFCameraWrapper:
 
     def relative_move(self, pan_normalized: float = 0, tilt_normalized: float = 0, zoom: float = 0):
         """Move PTZ camera relatively using normalized ONVIF coordinates (-1.0 to 1.0)."""
-        ptz = self.get_ptz_service()
+        self.get_ptz_service()  # Ensure PTZ service is available
         profiles = self.get_media_profiles()
         if not profiles:
             raise RuntimeError("No media profiles for PTZ")
@@ -181,17 +182,19 @@ class ONVIFCameraWrapper:
             return
 
         # Calculate new position using normalized coordinates
-        new_pan = current_pos.get('pan', 0) + pan_normalized
-        new_tilt = current_pos.get('tilt', 0) + tilt_normalized
-        new_zoom = current_pos.get('zoom', 0) + zoom
+        new_pan = current_pos.get("pan", 0) + pan_normalized
+        new_tilt = current_pos.get("tilt", 0) + tilt_normalized
+        new_zoom = current_pos.get("zoom", 0) + zoom
 
         # Clamp to valid ONVIF ranges (-1.0 to 1.0)
         new_pan = max(-1.0, min(1.0, new_pan))
         new_tilt = max(-1.0, min(1.0, new_tilt))
         new_zoom = max(0.0, min(1.0, new_zoom))  # Zoom is usually 0.0 to 1.0
 
-        logger.debug(f"Relative move: current=({current_pos.get('pan', 0):.3f}, {current_pos.get('tilt', 0):.3f}) -> "
-                    f"target=({new_pan:.3f}, {new_tilt:.3f})")
+        logger.debug(
+            f"Relative move: current=({current_pos.get('pan', 0):.3f}, {current_pos.get('tilt', 0):.3f}) -> "
+            f"target=({new_pan:.3f}, {new_tilt:.3f})"
+        )
 
         # Use goto_position for absolute movement
         self.goto_position(new_pan, new_tilt, new_zoom)
@@ -240,14 +243,14 @@ class ONVIFCameraWrapper:
 
         try:
             status = ptz.GetStatus(profiles[0].token)
-            position = status.Position if hasattr(status, 'Position') else {}
+            position = status.Position if hasattr(status, "Position") else {}
 
             result = {}
-            if hasattr(position, 'PanTilt'):
-                result['pan'] = getattr(position.PanTilt, 'x', 0)
-                result['tilt'] = getattr(position.PanTilt, 'y', 0)
-            if hasattr(position, 'Zoom'):
-                result['zoom'] = getattr(position.Zoom, 'x', 0)
+            if hasattr(position, "PanTilt"):
+                result["pan"] = getattr(position.PanTilt, "x", 0)
+                result["tilt"] = getattr(position.PanTilt, "y", 0)
+            if hasattr(position, "Zoom"):
+                result["zoom"] = getattr(position.Zoom, "x", 0)
 
             return result
         except Exception as e:
@@ -263,10 +266,7 @@ class ONVIFCameraWrapper:
 
         request = ptz.create_type("AbsoluteMove")
         request.ProfileToken = profiles[0].token
-        request.Position = {
-            "PanTilt": {"x": pan, "y": tilt},
-            "Zoom": {"x": zoom}
-        }
+        request.Position = {"PanTilt": {"x": pan, "y": tilt}, "Zoom": {"x": zoom}}
         ptz.AbsoluteMove(request)
 
 
@@ -315,9 +315,7 @@ class ONVIFBasedCamera(BaseCamera):
             host = self.config.params.get("host", "unknown")
             error_msg = str(e)
             logger.exception("Failed to connect to ONVIF camera at %s", host)
-            raise ConnectionError(
-                f"Failed to connect to ONVIF camera {host}: {error_msg}"
-            ) from e
+            raise ConnectionError(f"Failed to connect to ONVIF camera {host}: {error_msg}") from e
 
     async def disconnect(self) -> None:
         """Close connection to the camera."""
@@ -328,7 +326,7 @@ class ONVIFBasedCamera(BaseCamera):
 
     async def capture_still(self, save_path: Optional[str] = None) -> Image.Image:
         """Capture a still image from the camera via RTSP stream.
-        
+
         Note: Tapo cameras don't support ONVIF GetSnapshotUri, so we grab
         a frame from the RTSP stream using OpenCV.
         """
@@ -350,7 +348,9 @@ class ONVIFBasedCamera(BaseCamera):
             password = self.config.params["password"]
             # Parse and rebuild URL with auth
             parsed = urlparse(stream_url)
-            auth_url = f"rtsp://{username}:{password}@{parsed.hostname}:{parsed.port or 554}{parsed.path}"
+            auth_url = (
+                f"rtsp://{username}:{password}@{parsed.hostname}:{parsed.port or 554}{parsed.path}"
+            )
 
             # Capture frame from RTSP in thread pool
             def grab_frame():
@@ -388,10 +388,14 @@ class ONVIFBasedCamera(BaseCamera):
                 logger.info(f"Connecting to {self.config.name} to get stream URL...")
                 await asyncio.wait_for(self.connect(), timeout=15.0)
             except asyncio.TimeoutError:
-                logger.error(f"Camera {self.config.name} connection timed out when getting stream URL")
+                logger.exception(
+                    f"Camera {self.config.name} connection timed out when getting stream URL"
+                )
                 return None
-            except Exception as e:
-                logger.error(f"Camera {self.config.name} connection failed when getting stream URL: {e}")
+            except Exception:
+                logger.exception(
+                    f"Camera {self.config.name} connection failed when getting stream URL"
+                )
                 return None
 
         # Use cached URL if available and we're connected (stream URLs don't change frequently)
@@ -407,8 +411,7 @@ class ONVIFBasedCamera(BaseCamera):
         try:
             loop = asyncio.get_event_loop()
             stream_url = await asyncio.wait_for(
-                loop.run_in_executor(None, self._camera.get_stream_uri),
-                timeout=10.0
+                loop.run_in_executor(None, self._camera.get_stream_uri), timeout=10.0
             )
             if stream_url:
                 logger.info(f"Got stream URL for {self.config.name}: {stream_url[:50]}...")
@@ -417,7 +420,7 @@ class ONVIFBasedCamera(BaseCamera):
             logger.error(f"Camera {self.config.name} returned None stream URL")
             return None
         except asyncio.TimeoutError:
-            logger.error(f"Failed to get ONVIF stream URI for {self.config.name} - timed out")
+            logger.exception(f"Failed to get ONVIF stream URI for {self.config.name} - timed out")
             self._stream_url = None
             return None
         except Exception:
@@ -444,22 +447,18 @@ class ONVIFBasedCamera(BaseCamera):
 
         try:
             loop = asyncio.get_event_loop()
-            device_info = await loop.run_in_executor(
-                None, self._camera.get_device_info
-            )
+            device_info = await loop.run_in_executor(None, self._camera.get_device_info)
 
             # Check PTZ capability
             ptz_capable = False
             try:
                 await loop.run_in_executor(None, self._camera.get_ptz_service)
                 ptz_capable = True
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"PTZ service not available for {self.config.name}: {e}")
 
             # Get profiles for resolution info
-            profiles = await loop.run_in_executor(
-                None, self._camera.get_media_profiles
-            )
+            profiles = await loop.run_in_executor(None, self._camera.get_media_profiles)
             resolution = "Unknown"
             if profiles and hasattr(profiles[0], "VideoEncoderConfiguration"):
                 vec = profiles[0].VideoEncoderConfiguration
@@ -512,9 +511,7 @@ class ONVIFBasedCamera(BaseCamera):
             if await self.is_connected():
                 try:
                     loop = asyncio.get_event_loop()
-                    device_info = await loop.run_in_executor(
-                        None, self._camera.get_device_info
-                    )
+                    device_info = await loop.run_in_executor(None, self._camera.get_device_info)
                     info.update(
                         {
                             "model": device_info.get("model"),
@@ -554,7 +551,7 @@ class ONVIFBasedCamera(BaseCamera):
 
         # Quick connection check - if this fails, try reconnect
         try:
-            if hasattr(self._camera, '_camera') and self._camera._camera:
+            if hasattr(self._camera, "_camera") and self._camera._camera:
                 # Test if the underlying connection is still valid
                 self._camera._camera.devicemgmt.GetDeviceInformation()
             else:
@@ -565,30 +562,35 @@ class ONVIFBasedCamera(BaseCamera):
 
         # Use normalized ONVIF coordinates (-1.0 to 1.0)
         # Larger values give bigger movements
-        pan_normalized = pan * 0.3   # 0.3 = reasonable movement size
-        tilt_normalized = tilt * 0.3 # 0.3 = reasonable movement size
-        zoom_relative = zoom * 0.1   # Reasonable zoom steps
+        pan_normalized = pan * 0.3  # 0.3 = reasonable movement size
+        tilt_normalized = tilt * 0.3  # 0.3 = reasonable movement size
+        zoom_relative = zoom * 0.1  # Reasonable zoom steps
 
         # Log PTZ movement for debugging
-        logger.debug(f"PTZ move requested: pan={pan} ({pan_normalized:.3f} normalized), tilt={tilt} ({tilt_normalized:.3f} normalized), zoom={zoom}")
+        logger.debug(
+            f"PTZ move requested: pan={pan} ({pan_normalized:.3f} normalized), tilt={tilt} ({tilt_normalized:.3f} normalized), zoom={zoom}"
+        )
 
         loop = asyncio.get_event_loop()
         try:
             # Use relative movement instead of continuous
             await asyncio.wait_for(
                 loop.run_in_executor(
-                    None, lambda: self._camera.relative_move(pan_normalized, tilt_normalized, zoom_relative)
+                    None,
+                    lambda: self._camera.relative_move(
+                        pan_normalized, tilt_normalized, zoom_relative
+                    ),
                 ),
-                timeout=8.0  # Longer timeout for positioning
+                timeout=8.0,  # Longer timeout for positioning
             )
-            logger.debug(f"PTZ relative move executed successfully")
+            logger.debug("PTZ relative move executed successfully")
         except asyncio.TimeoutError:
-            logger.error("PTZ move timed out after 8 seconds")
+            logger.exception("PTZ move timed out after 8 seconds")
             # Reset connection state on timeout
             self._is_connected = False
             raise Exception("PTZ operation timed out")
-        except Exception as e:
-            logger.error(f"PTZ move failed: {e}")
+        except Exception:
+            logger.exception("PTZ move failed")
             # Reset connection state on any error
             self._is_connected = False
             raise
@@ -607,9 +609,7 @@ class ONVIFBasedCamera(BaseCamera):
             await self.connect()
 
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(
-            None, lambda: self._camera.go_to_preset(preset_token)
-        )
+        await loop.run_in_executor(None, lambda: self._camera.go_to_preset(preset_token))
 
     async def ptz_get_current_position(self) -> dict:
         """Get current PTZ position asynchronously."""
@@ -625,9 +625,7 @@ class ONVIFBasedCamera(BaseCamera):
             await self.connect()
 
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(
-            None, lambda: self._camera.goto_position(pan, tilt, zoom)
-        )
+        await loop.run_in_executor(None, lambda: self._camera.goto_position(pan, tilt, zoom))
 
     async def ptz_get_presets(self) -> list:
         """Get PTZ presets."""
@@ -636,4 +634,3 @@ class ONVIFBasedCamera(BaseCamera):
 
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self._camera.get_presets)
-

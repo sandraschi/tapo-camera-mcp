@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class Go2Status(str, Enum):
     """Go2 robot status states"""
+
     IDLE = "idle"
     STANDING = "standing"
     WALKING = "walking"
@@ -32,6 +33,7 @@ class Go2Status(str, Enum):
 @dataclass
 class Go2SensorData:
     """Sensor readings from Go2"""
+
     imu_orientation: Tuple[float, float, float, float]  # quaternion (x, y, z, w)
     imu_angular_velocity: Tuple[float, float, float]  # rad/s
     imu_linear_acceleration: Tuple[float, float, float]  # m/s^2
@@ -46,6 +48,7 @@ class Go2SensorData:
 @dataclass
 class Go2Position:
     """Go2 position and orientation"""
+
     x: float  # meters
     y: float  # meters
     z: float  # meters (height)
@@ -92,12 +95,7 @@ class UnitreeGo2Client:
         await client.move(0.5, 0.0, 0.0)  # Forward at 0.5 m/s
     """
 
-    def __init__(
-        self,
-        ip_address: str,
-        port: int = 8082,
-        mock_mode: bool = True
-    ):
+    def __init__(self, ip_address: str, port: int = 8082, mock_mode: bool = True):
         self.ip_address = ip_address
         self.port = port
         self.mock_mode = mock_mode
@@ -106,10 +104,7 @@ class UnitreeGo2Client:
         self._battery_level = 100
         self._position = Go2Position(0.0, 0.0, 0.4, 0.0, 0.0, 0.0)  # Standing height ~0.4m
 
-        logger.info(
-            f"Unitree Go2 client initialized: {ip_address}:{port} "
-            f"(mock_mode={mock_mode})"
-        )
+        logger.info(f"Unitree Go2 client initialized: {ip_address}:{port} (mock_mode={mock_mode})")
 
     async def connect(self) -> Dict:
         """
@@ -127,7 +122,7 @@ class UnitreeGo2Client:
                 "ip_address": self.ip_address,
                 "mock_mode": True,
                 "sdk_version": "1.0.0",
-                "firmware_version": "mock-go2-v1.0.0"
+                "firmware_version": "mock-go2-v1.0.0",
             }
 
         # TODO: Real SDK connection when hardware arrives
@@ -137,17 +132,10 @@ class UnitreeGo2Client:
             # await self.sdk.connect()
             self._connected = True
             self._status = Go2Status.IDLE
-            return {
-                "success": True,
-                "ip_address": self.ip_address,
-                "mock_mode": False
-            }
+            return {"success": True, "ip_address": self.ip_address, "mock_mode": False}
         except Exception as e:
             logger.error(f"Failed to connect to Unitree Go2: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     async def disconnect(self):
         """Disconnect from robot"""
@@ -163,13 +151,11 @@ class UnitreeGo2Client:
             Status dict with battery, position, sensors, etc.
         """
         if not self._connected:
-            return {
-                "success": False,
-                "error": "Not connected to robot"
-            }
+            return {"success": False, "error": "Not connected to robot"}
 
         if self.mock_mode:
             import random
+
             self._battery_level = max(15, self._battery_level - random.randint(0, 3))
 
             return {
@@ -184,12 +170,12 @@ class UnitreeGo2Client:
                     "roll": self._position.roll,
                     "pitch": self._position.pitch,
                     "yaw": self._position.yaw,
-                    "room": self._position.room
+                    "room": self._position.room,
                 },
                 "wifi_signal": -50,  # dBm
                 "uptime": 7200,  # seconds
                 "temperature": 45.0,  # CPU temperature
-                "mock_mode": True
+                "mock_mode": True,
             }
 
         # TODO: Real status from SDK
@@ -209,12 +195,7 @@ class UnitreeGo2Client:
             logger.info("Mock: Go2 standing up")
             self._status = Go2Status.STANDING
             self._position.z = 0.4  # Standing height
-            return {
-                "success": True,
-                "action": "stand",
-                "height": 0.4,
-                "mock_mode": True
-            }
+            return {"success": True, "action": "stand", "height": 0.4, "mock_mode": True}
 
         # TODO: SDK stand command
         return {"success": True}
@@ -233,12 +214,7 @@ class UnitreeGo2Client:
             logger.info("Mock: Go2 sitting down")
             self._status = Go2Status.IDLE
             self._position.z = 0.2  # Sitting height
-            return {
-                "success": True,
-                "action": "sit",
-                "height": 0.2,
-                "mock_mode": True
-            }
+            return {"success": True, "action": "sit", "height": 0.2, "mock_mode": True}
 
         # TODO: SDK sit command
         return {"success": True}
@@ -248,7 +224,7 @@ class UnitreeGo2Client:
         linear_x: float = 0.0,
         linear_y: float = 0.0,
         angular_z: float = 0.0,
-        gait: str = "trot"
+        gait: str = "trot",
     ) -> Dict:
         """
         Move robot with specified velocities.
@@ -288,7 +264,7 @@ class UnitreeGo2Client:
                 "linear_y": linear_y,
                 "angular_z": angular_z,
                 "gait": gait,
-                "mock_mode": True
+                "mock_mode": True,
             }
 
         # TODO: SDK movement command
@@ -319,7 +295,7 @@ class UnitreeGo2Client:
                 "route": route,
                 "waypoints": 8,
                 "estimated_duration": 600,  # seconds
-                "mock_mode": True
+                "mock_mode": True,
             }
 
         # TODO: SDK patrol command
@@ -347,21 +323,18 @@ class UnitreeGo2Client:
         if self.mock_mode:
             logger.info("Mock: Go2 returning to dock")
             import random
+
             success = random.random() > 0.2  # 80% success rate
 
             if success:
                 self._status = Go2Status.CHARGING
                 self._battery_level = min(100, self._battery_level + 15)
-                return {
-                    "success": True,
-                    "docking_status": "success",
-                    "mock_mode": True
-                }
+                return {"success": True, "docking_status": "success", "mock_mode": True}
             return {
                 "success": False,
                 "error": "Docking failed - navigation issue",
                 "suggestion": "Clear path to dock",
-                "mock_mode": True
+                "mock_mode": True,
             }
 
         # TODO: SDK return to dock
@@ -376,10 +349,10 @@ class UnitreeGo2Client:
         """
         if self.mock_mode:
             # Return 1x1 black pixel as mock
-            return b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xdb\x00C\x00\x08\x06\x06\x07\x06\x05\x08\x07\x07\x07\t\t\x08\n\x0c\x14\r\x0c\x0b\x0b\x0c\x19\x12\x13\x0f\x14\x1d\x1a\x1f\x1e\x1d\x1a\x1c\x1c $.\' ",#\x1c\x1c(7),01444\x1f\'9=82<.342\xff\xc0\x00\x0b\x08\x00\x01\x00\x01\x01\x01\x11\x00\xff\xc4\x00\x1f\x00\x00\x01\x05\x01\x01\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\xff\xc4\x00\xb5\x10\x00\x02\x01\x03\x03\x02\x04\x03\x05\x05\x04\x04\x00\x00\x01}\x01\x02\x03\x00\x04\x11\x05\x12!1A\x06\x13Qa\x07"q\x142\x81\x91\xa1\x08#B\xb1\xc1\x15R\xd1\xf0$3br\x82\t\n\x16\x17\x18\x19\x1a%&\'()*456789:CDEFGHIJSTUVWXYZcdefghijstuvwxyz\x83\x84\x85\x86\x87\x88\x89\x8a\x92\x93\x94\x95\x96\x97\x98\x99\x9a\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xff\xda\x00\x08\x01\x01\x00\x00?\x00\xff\xd9'
+            return b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xdb\x00C\x00\x08\x06\x06\x07\x06\x05\x08\x07\x07\x07\t\t\x08\n\x0c\x14\r\x0c\x0b\x0b\x0c\x19\x12\x13\x0f\x14\x1d\x1a\x1f\x1e\x1d\x1a\x1c\x1c $.' \",#\x1c\x1c(7),01444\x1f'9=82<.342\xff\xc0\x00\x0b\x08\x00\x01\x00\x01\x01\x01\x11\x00\xff\xc4\x00\x1f\x00\x00\x01\x05\x01\x01\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\xff\xc4\x00\xb5\x10\x00\x02\x01\x03\x03\x02\x04\x03\x05\x05\x04\x04\x00\x00\x01}\x01\x02\x03\x00\x04\x11\x05\x12!1A\x06\x13Qa\x07\"q\x142\x81\x91\xa1\x08#B\xb1\xc1\x15R\xd1\xf0$3br\x82\t\n\x16\x17\x18\x19\x1a%&'()*456789:CDEFGHIJSTUVWXYZcdefghijstuvwxyz\x83\x84\x85\x86\x87\x88\x89\x8a\x92\x93\x94\x95\x96\x97\x98\x99\x9a\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xff\xda\x00\x08\x01\x01\x00\x00?\x00\xff\xd9"
 
         # TODO: Get frame from HD camera
-        return b''
+        return b""
 
     async def get_video_stream_url(self) -> str:
         """
@@ -403,7 +376,7 @@ class UnitreeGo2Client:
                 "points": 46080,  # Typical for Go2 LiDAR
                 "ranges": [0.5, 1.0, 1.5, 2.0, 2.5, 3.0],  # Sample ranges
                 "angles": list(range(0, 360, 5)),  # 5-degree increments
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         # TODO: Get real LiDAR data from SDK

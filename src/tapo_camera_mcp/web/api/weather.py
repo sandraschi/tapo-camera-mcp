@@ -68,7 +68,7 @@ from ...integrations.netatmo_client import NetatmoService
 
 async def _get_netatmo_service() -> NetatmoService:
     """Get the singleton Netatmo service instance.
-    
+
     Uses NetatmoService.get_instance() to ensure only one instance exists
     across all components (web API, hardware_init, connection_supervisor).
     """
@@ -94,16 +94,21 @@ async def get_weather_stations(
 ) -> List[WeatherStationResponse]:
     """Get all available Netatmo weather stations."""
     try:
-        logger.info(f"Getting weather stations (include_offline={include_offline}, force_refresh={force_refresh})")
+        logger.info(
+            f"Getting weather stations (include_offline={include_offline}, force_refresh={force_refresh})"
+        )
 
         cfg = get_model(WeatherSettings)
         use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
 
         if use_netatmo:
             import asyncio
+
             try:
                 service = await _get_netatmo_service()
-                raw = await asyncio.wait_for(service.list_stations(force_refresh=force_refresh), timeout=15.0)
+                raw = await asyncio.wait_for(
+                    service.list_stations(force_refresh=force_refresh), timeout=15.0
+                )
             except asyncio.TimeoutError:
                 logger.warning("Netatmo list_stations timed out")
                 raw = []
@@ -146,20 +151,25 @@ async def get_station_weather_data(
 ) -> WeatherDataResponse:
     """Get current weather data from a specific station."""
     try:
-        logger.info(f"Getting weather data for station {station_id}, module type: {module_type}, force_refresh={force_refresh}")
+        logger.info(
+            f"Getting weather data for station {station_id}, module type: {module_type}, force_refresh={force_refresh}"
+        )
 
         cfg = get_model(WeatherSettings)
         use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
 
         if use_netatmo:
             import asyncio
+
             try:
                 service = await _get_netatmo_service()
                 # Force refresh by calling refresh before getting data
                 if force_refresh:
                     logger.info("Forcing Netatmo data refresh...")
                     await asyncio.wait_for(service.list_stations(force_refresh=True), timeout=10.0)
-                data, ts = await asyncio.wait_for(service.current_data(station_id, module_type), timeout=15.0)
+                data, ts = await asyncio.wait_for(
+                    service.current_data(station_id, module_type), timeout=15.0
+                )
             except asyncio.TimeoutError:
                 logger.warning(f"Netatmo current_data timed out for {station_id}")
                 raise HTTPException(status_code=503, detail="Weather data request timed out")
@@ -191,15 +201,19 @@ async def get_station_historical_data(
     ),
     time_range: str = Query("24h", description="Time range (1h, 6h, 24h, 7d, 30d, 90d, 1y, 2y)"),
     module_type: str = Query("indoor", description="Module type (indoor, extra_bathroom, outdoor)"),
-    source: str = Query("local", description="Data source (local=cached DB, netatmo=fetch from Netatmo API)"),
+    source: str = Query(
+        "local", description="Data source (local=cached DB, netatmo=fetch from Netatmo API)"
+    ),
 ) -> HistoricalDataResponse:
     """Get historical weather data from a specific station and module.
-    
+
     Use source=netatmo to fetch directly from Netatmo API (up to 2 years).
     Use source=local for cached data from local database.
     """
     try:
-        logger.info(f"Getting historical data for {station_id}, {data_type}, {time_range}, module={module_type}, source={source}")
+        logger.info(
+            f"Getting historical data for {station_id}, {data_type}, {time_range}, module={module_type}, source={source}"
+        )
 
         cfg = get_model(WeatherSettings)
         use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
@@ -239,6 +253,7 @@ async def get_station_historical_data(
             )
 
             import time as time_module
+
             return HistoricalDataResponse(
                 station_id=station_id,
                 data_type=data_type,
@@ -283,6 +298,7 @@ async def get_station_historical_data(
         ]
 
         import time as time_module
+
         return HistoricalDataResponse(
             station_id=station_id,
             data_type=data_type,
@@ -381,9 +397,12 @@ async def get_station_health_report(
         use_netatmo = bool(cfg.integrations.get("netatmo", {}).get("enabled", False))
 
         if not use_netatmo:
-            raise HTTPException(status_code=503, detail="Netatmo not enabled - cannot generate health report")
+            raise HTTPException(
+                status_code=503, detail="Netatmo not enabled - cannot generate health report"
+            )
 
         import asyncio
+
         service = await _get_netatmo_service()
         data, _ = await asyncio.wait_for(service.current_data(station_id, "all"), timeout=10.0)
 
@@ -403,10 +422,14 @@ async def get_station_health_report(
                 scores["temperature"] = 100
             elif 18 <= temp < 20 or 24 < temp <= 26:
                 scores["temperature"] = 80
-                recommendations.append(f"Temperature ({temp}°C) slightly outside optimal range (20-24°C)")
+                recommendations.append(
+                    f"Temperature ({temp}°C) slightly outside optimal range (20-24°C)"
+                )
             else:
                 scores["temperature"] = 50
-                recommendations.append(f"Temperature ({temp}°C) outside comfortable range (20-24°C)")
+                recommendations.append(
+                    f"Temperature ({temp}°C) outside comfortable range (20-24°C)"
+                )
         else:
             scores["temperature"] = 0
 
@@ -416,7 +439,9 @@ async def get_station_health_report(
                 scores["humidity"] = 100
             elif 30 <= humidity < 40 or 60 < humidity <= 70:
                 scores["humidity"] = 80
-                recommendations.append(f"Humidity ({humidity}%) slightly outside optimal range (40-60%)")
+                recommendations.append(
+                    f"Humidity ({humidity}%) slightly outside optimal range (40-60%)"
+                )
             else:
                 scores["humidity"] = 50
                 recommendations.append(f"Humidity ({humidity}%) outside comfortable range (40-60%)")
@@ -452,9 +477,18 @@ async def get_station_health_report(
 
         # Calculate overall score
         overall_score = int(sum(scores.values()) / len(scores)) if scores else 0
-        status = "Excellent" if overall_score >= 90 else "Good" if overall_score >= 70 else "Fair" if overall_score >= 50 else "Poor"
+        status = (
+            "Excellent"
+            if overall_score >= 90
+            else "Good"
+            if overall_score >= 70
+            else "Fair"
+            if overall_score >= 50
+            else "Poor"
+        )
 
         import time
+
         return HealthReportResponse(
             station_id=station_id,
             overall_score=overall_score,
@@ -487,7 +521,7 @@ async def configure_station_alerts(station_id: str, alert_config: Dict[str, Any]
         # For now, return error - no mock data
         raise HTTPException(
             status_code=501,
-            detail="Alert configuration not yet implemented. This feature requires database storage."
+            detail="Alert configuration not yet implemented. This feature requires database storage.",
         )
 
     except HTTPException:
@@ -511,6 +545,7 @@ async def get_station_modules(station_id: str) -> Dict[str, Any]:
             raise HTTPException(status_code=503, detail="Netatmo not enabled - cannot get modules")
 
         import asyncio
+
         service = await _get_netatmo_service()
         stations = await asyncio.wait_for(service.list_stations(), timeout=10.0)
 
@@ -557,9 +592,12 @@ async def get_weather_overview(
         if use_netatmo:
             try:
                 import asyncio
+
                 # Get real data from Netatmo
                 service = await _get_netatmo_service()
-                stations = await asyncio.wait_for(service.list_stations(force_refresh=force_refresh), timeout=15.0)
+                stations = await asyncio.wait_for(
+                    service.list_stations(force_refresh=force_refresh), timeout=15.0
+                )
 
                 if stations:
                     total_stations = len(stations)
@@ -568,7 +606,9 @@ async def get_weather_overview(
                     # Get data from first station
                     station_id = stations[0]["station_id"]
                     # Don't force refresh again for the data call since list_stations likely handled it
-                    data, ts = await asyncio.wait_for(service.current_data(station_id, "all"), timeout=10.0)
+                    data, ts = await asyncio.wait_for(
+                        service.current_data(station_id, "all"), timeout=10.0
+                    )
 
                     # Count total modules across all stations
                     total_modules = sum(len(s.get("modules", [])) for s in stations)
@@ -595,7 +635,9 @@ async def get_weather_overview(
                 logger.warning(f"Failed to get real Netatmo data: {e}")
 
         # No Netatmo or failed to fetch - return empty data (NO placeholder/mock data)
-        logger.warning("Netatmo not enabled or unavailable - returning empty data (no placeholder/mock data)")
+        logger.warning(
+            "Netatmo not enabled or unavailable - returning empty data (no placeholder/mock data)"
+        )
         return {
             "total_stations": 0,
             "online_stations": 0,
@@ -663,8 +705,11 @@ async def get_external_weather(
         logger.info(f"Getting external weather for {location} ({lat}, {lon})")
 
         import asyncio
+
         try:
-            weather = await asyncio.wait_for(openmeteo_client.get_current_weather(lat, lon, location), timeout=10.0)
+            weather = await asyncio.wait_for(
+                openmeteo_client.get_current_weather(lat, lon, location), timeout=10.0
+            )
         except asyncio.TimeoutError:
             logger.warning("Open-Meteo weather request timed out")
             raise HTTPException(status_code=503, detail="Weather service timeout")
@@ -707,8 +752,11 @@ async def get_external_forecast(
         logger.info(f"Getting {days}-day forecast for ({lat}, {lon})")
 
         import asyncio
+
         try:
-            forecast = await asyncio.wait_for(openmeteo_client.get_forecast(lat, lon, days), timeout=10.0)
+            forecast = await asyncio.wait_for(
+                openmeteo_client.get_forecast(lat, lon, days), timeout=10.0
+            )
         except asyncio.TimeoutError:
             logger.warning("Open-Meteo forecast request timed out")
             return []
@@ -747,11 +795,16 @@ async def get_combined_weather(
         if use_netatmo:
             try:
                 import asyncio
+
                 service = await _get_netatmo_service()
-                stations = await asyncio.wait_for(service.list_stations(force_refresh=force_refresh), timeout=15.0)
+                stations = await asyncio.wait_for(
+                    service.list_stations(force_refresh=force_refresh), timeout=15.0
+                )
                 if stations:
                     station_id = stations[0]["station_id"]
-                    data, ts = await asyncio.wait_for(service.current_data(station_id, "all"), timeout=10.0)
+                    data, ts = await asyncio.wait_for(
+                        service.current_data(station_id, "all"), timeout=10.0
+                    )
                     internal_data = {
                         "station_name": stations[0].get("station_name", "Netatmo"),
                         "location": stations[0].get("location", "Home"),
@@ -767,7 +820,9 @@ async def get_combined_weather(
             logger.info("Fetching external Vienna weather from Open-Meteo...")
             weather = await openmeteo_client.get_current_weather()
             if weather:
-                logger.info(f"Successfully fetched Vienna weather: {weather.temperature}°C, {weather.humidity}% humidity")
+                logger.info(
+                    f"Successfully fetched Vienna weather: {weather.temperature}°C, {weather.humidity}% humidity"
+                )
                 external_data = {
                     "location": weather.location,
                     "temperature": weather.temperature,

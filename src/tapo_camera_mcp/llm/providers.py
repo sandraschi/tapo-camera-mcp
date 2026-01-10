@@ -73,12 +73,14 @@ class OllamaProvider(LLMProvider):
             data = response.json()
             models = []
             for model in data.get("models", []):
-                models.append({
-                    "name": model.get("name", ""),
-                    "size": model.get("size", 0),
-                    "modified_at": model.get("modified_at", ""),
-                    "provider": "ollama",
-                })
+                models.append(
+                    {
+                        "name": model.get("name", ""),
+                        "size": model.get("size", 0),
+                        "modified_at": model.get("modified_at", ""),
+                        "provider": "ollama",
+                    }
+                )
             return models
         except Exception:
             logger.exception("Failed to list Ollama models")
@@ -103,11 +105,14 @@ class OllamaProvider(LLMProvider):
         """Unload current Ollama model."""
         try:
             # Ollama doesn't have explicit unload, but we can free memory
-            await self._client.post(f"{self.base_url}/api/generate", json={
-                "model": "",
-                "prompt": "",
-                "stream": False,
-            })
+            await self._client.post(
+                f"{self.base_url}/api/generate",
+                json={
+                    "model": "",
+                    "prompt": "",
+                    "stream": False,
+                },
+            )
             # This is a workaround - Ollama doesn't have explicit unload
             return True
         except Exception:
@@ -135,6 +140,7 @@ class OllamaProvider(LLMProvider):
                 prompt += f"Assistant: {msg.get('content')}\n\n"
 
         if stream:
+
             async def generate():
                 async with self._client.stream(
                     "POST",
@@ -148,6 +154,7 @@ class OllamaProvider(LLMProvider):
                     async for line in response.aiter_lines():
                         if line:
                             import json
+
                             try:
                                 data = json.loads(line)
                                 if "response" in data:
@@ -184,11 +191,13 @@ class LMStudioProvider(LLMProvider):
             data = response.json()
             models = []
             for model in data.get("data", []):
-                models.append({
-                    "name": model.get("id", ""),
-                    "provider": "lm_studio",
-                    "object": model.get("object", "model"),
-                })
+                models.append(
+                    {
+                        "name": model.get("id", ""),
+                        "provider": "lm_studio",
+                        "object": model.get("object", "model"),
+                    }
+                )
             return models
         except Exception:
             logger.exception("Failed to list LM Studio models")
@@ -247,10 +256,12 @@ class LMStudioProvider(LLMProvider):
             response.raise_for_status()
 
             if stream:
+
                 async def generate():
                     async for line in response.aiter_lines():
                         if line.startswith("data: "):
                             import json
+
                             try:
                                 data = json.loads(line[6:])
                                 if data.get("choices"):
@@ -291,11 +302,13 @@ class OpenAIProvider(LLMProvider):
             models = []
             for model in data.get("data", []):
                 if model.get("id", "").startswith("gpt-"):
-                    models.append({
-                        "name": model.get("id", ""),
-                        "provider": "openai",
-                        "object": model.get("object", "model"),
-                    })
+                    models.append(
+                        {
+                            "name": model.get("id", ""),
+                            "provider": "openai",
+                            "object": model.get("object", "model"),
+                        }
+                    )
             return models
         except Exception:
             logger.exception("Failed to list OpenAI models")
@@ -330,12 +343,14 @@ class OpenAIProvider(LLMProvider):
             response.raise_for_status()
 
             if stream:
+
                 async def generate():
                     async for line in response.aiter_lines():
                         if line.startswith("data: "):
                             if line == "data: [DONE]":
                                 break
                             import json
+
                             try:
                                 data = json.loads(line[6:])
                                 if data.get("choices"):
@@ -353,4 +368,3 @@ class OpenAIProvider(LLMProvider):
         except Exception:
             logger.exception("Failed to chat with OpenAI")
             raise
-

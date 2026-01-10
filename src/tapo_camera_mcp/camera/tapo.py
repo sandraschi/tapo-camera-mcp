@@ -174,7 +174,9 @@ class TapoCamera(BaseCamera):
 
     async def get_stream_url(self) -> Optional[str]:
         """Get the RTSP stream URL for the camera."""
-        logger.info(f"get_stream_url called for {self.config.name}, current _stream_url: {self._stream_url}")
+        logger.info(
+            f"get_stream_url called for {self.config.name}, current _stream_url: {self._stream_url}"
+        )
         if not await self.is_connected():
             await self.connect()
 
@@ -182,90 +184,100 @@ class TapoCamera(BaseCamera):
         username = self.config.params.get("username", "admin")
         password = self.config.params.get("password", "")
         try:
-                # For Tapo cameras, RTSP is typically enabled by default
-                # Check if RTSP is enabled (some Tapo cameras may have this setting)
-                rtsp_enabled = True  # Assume RTSP is enabled for Tapo cameras
+            # For Tapo cameras, RTSP is typically enabled by default
+            # Check if RTSP is enabled (some Tapo cameras may have this setting)
+            rtsp_enabled = True  # Assume RTSP is enabled for Tapo cameras
 
-                # Some older Tapo implementations might have RTSP config
+            # Some older Tapo implementations might have RTSP config
+            try:
+                rtsp_config = await asyncio.get_event_loop().run_in_executor(
+                    None, lambda: self._camera.get_rtsp_config()
+                )
+                rtsp_enabled = rtsp_config.get("enabled", True) if rtsp_config else True
+            except AttributeError:
+                # get_rtsp_config doesn't exist, assume RTSP is enabled
+                rtsp_enabled = True
+            except Exception:
+                # Any other error, assume RTSP is enabled
+                rtsp_enabled = True
+
+            if rtsp_enabled:
+                # Try to get stream URL from Tapo API first
                 try:
-                    rtsp_config = await asyncio.get_event_loop().run_in_executor(
-                        None, lambda: self._camera.get_rtsp_config()
+                    stream_url = await asyncio.get_event_loop().run_in_executor(
+                        None, lambda: self._camera.getStreamURL()
                     )
-                    rtsp_enabled = rtsp_config.get("enabled", True) if rtsp_config else True
-                except AttributeError:
-                    # get_rtsp_config doesn't exist, assume RTSP is enabled
-                    rtsp_enabled = True
-                except Exception:
-                    # Any other error, assume RTSP is enabled
-                    rtsp_enabled = True
-
-                if rtsp_enabled:
-                    # Try to get stream URL from Tapo API first
-                    try:
-                        stream_url = await asyncio.get_event_loop().run_in_executor(
-                            None, lambda: self._camera.getStreamURL()
-                        )
-                        if stream_url:
-                            # Check if it's already a full URL or just host:port
-                            if stream_url.startswith('http'):
-                                # Use HTTP stream URL directly (Tapo cameras may support HTTP MJPEG)
-                                self._stream_url = stream_url
-                                logger.info(f"Using HTTP stream URL directly: {stream_url}")
-                            elif ':' in stream_url:
-                                # host:port format
-                                host, port = stream_url.split(':')
-                                rtsp_url = f"rtsp://{username}:{password}@{host}:{port}/stream1"
-                                self._stream_url = rtsp_url
-                            else:
-                                # Just host, assume RTSP port 554
-                                self._stream_url = f"rtsp://{stream_url}:554/stream1"
-                            logger.info(f"Converted Tapo API stream URL for {self.config.name}: {self._stream_url}")
+                    if stream_url:
+                        # Check if it's already a full URL or just host:port
+                        if stream_url.startswith("http"):
+                            # Use HTTP stream URL directly (Tapo cameras may support HTTP MJPEG)
+                            self._stream_url = stream_url
+                            logger.info(f"Using HTTP stream URL directly: {stream_url}")
+                        elif ":" in stream_url:
+                            # host:port format
+                            host, port = stream_url.split(":")
+                            rtsp_url = f"rtsp://{username}:{password}@{host}:{port}/stream1"
+                            self._stream_url = rtsp_url
                         else:
-                            raise ValueError("Empty stream URL from API")
-                    except Exception as e:
-                        logger.warning(f"Failed to get stream URL from Tapo API for {self.config.name}: {e}, falling back to RTSP")
+                            # Just host, assume RTSP port 554
+                            self._stream_url = f"rtsp://{stream_url}:554/stream1"
+                        logger.info(
+                            f"Converted Tapo API stream URL for {self.config.name}: {self._stream_url}"
+                        )
+                    else:
+                        raise ValueError("Empty stream URL from API")
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to get stream URL from Tapo API for {self.config.name}: {e}, falling back to RTSP"
+                    )
 
-                        # Fallback to RTSP URLs
-                        host = self.config.params["host"]
+                    # Fallback to RTSP URLs
+                    host = self.config.params["host"]
 
-                        # URL encode password for RTSP URLs
-                        from urllib.parse import quote
-                        encoded_password = quote(password, safe='')
+                    # URL encode password for RTSP URLs
+                    from urllib.parse import quote
 
-                        # Try different RTSP URL formats for Tapo cameras
-                        rtsp_urls = [
-                            f"rtsp://{username}:{encoded_password}@{host}:554/stream1",
-                            f"rtsp://{username}:{encoded_password}@{host}:554/live",
-                            f"rtsp://{username}:{encoded_password}@{host}/stream1",
-                            f"rtsp://{username}:{encoded_password}@{host}/live",
-                            f"rtsp://{username}:{password}@{host}:554/stream1",  # Try unencoded too
-                            f"rtsp://{host}:554/stream1",  # No auth
-                            f"rtsp://{host}/stream1"  # No auth
-                        ]
+                    encoded_password = quote(password, safe="")
 
-                        # Test each URL format (quick test)
-                        import cv2
-                        for url in rtsp_urls:
-                            logger.debug(f"Testing RTSP URL: {url[:40]}...")
-                            try:
-                                cap = cv2.VideoCapture(url)
-                                if cap.isOpened():
-                                    ret, frame = cap.read()
-                                    cap.release()
-                                    if ret and frame is not None:
-                                        self._stream_url = url
-                                        logger.info(f"Found working RTSP URL for {self.config.name}: {url[:40]}...")
-                                        break
-                                else:
-                                    cap.release()
-                            except Exception as e:
-                                logger.debug(f"Failed to test RTSP URL {url[:40]}...: {e}")
-                                continue
+                    # Try different RTSP URL formats for Tapo cameras
+                    rtsp_urls = [
+                        f"rtsp://{username}:{encoded_password}@{host}:554/stream1",
+                        f"rtsp://{username}:{encoded_password}@{host}:554/live",
+                        f"rtsp://{username}:{encoded_password}@{host}/stream1",
+                        f"rtsp://{username}:{encoded_password}@{host}/live",
+                        f"rtsp://{username}:{password}@{host}:554/stream1",  # Try unencoded too
+                        f"rtsp://{host}:554/stream1",  # No auth
+                        f"rtsp://{host}/stream1",  # No auth
+                    ]
 
-                        # Fallback if no URL works
-                        if not self._stream_url:
-                            self._stream_url = f"rtsp://{username}:{password}@{host}:554/stream1"
-                            logger.warning(f"No working RTSP URL found for {self.config.name}, using fallback: {self._stream_url[:40]}...")
+                    # Test each URL format (quick test)
+                    import cv2
+
+                    for url in rtsp_urls:
+                        logger.debug(f"Testing RTSP URL: {url[:40]}...")
+                        try:
+                            cap = cv2.VideoCapture(url)
+                            if cap.isOpened():
+                                ret, frame = cap.read()
+                                cap.release()
+                                if ret and frame is not None:
+                                    self._stream_url = url
+                                    logger.info(
+                                        f"Found working RTSP URL for {self.config.name}: {url[:40]}..."
+                                    )
+                                    break
+                            else:
+                                cap.release()
+                        except Exception as e:
+                            logger.debug(f"Failed to test RTSP URL {url[:40]}...: {e}")
+                            continue
+
+                    # Fallback if no URL works
+                    if not self._stream_url:
+                        self._stream_url = f"rtsp://{username}:{password}@{host}:554/stream1"
+                        logger.warning(
+                            f"No working RTSP URL found for {self.config.name}, using fallback: {self._stream_url[:40]}..."
+                        )
         except Exception as e:
             raise RuntimeError(f"Failed to get stream URL: {e}") from e
 
@@ -395,8 +407,8 @@ class TapoCamera(BaseCamera):
         try:
             # Convert normalized values to ONVIF format
             self._onvif_camera.continuous_move(pan=pan, tilt=tilt, zoom=zoom)
-        except Exception as e:
-            logger.error("PTZ move failed: %s", e)
+        except Exception:
+            logger.exception("PTZ move failed")
             raise
 
     async def ptz_stop(self):
@@ -406,8 +418,8 @@ class TapoCamera(BaseCamera):
 
         try:
             self._onvif_camera.stop_move()
-        except Exception as e:
-            logger.error("PTZ stop failed: %s", e)
+        except Exception:
+            logger.exception("PTZ stop failed")
             raise
 
     async def ptz_go_to_preset(self, preset_token: str):
@@ -417,8 +429,8 @@ class TapoCamera(BaseCamera):
 
         try:
             self._onvif_camera.go_to_preset(preset_token)
-        except Exception as e:
-            logger.error("PTZ go to preset failed: %s", e)
+        except Exception:
+            logger.exception("PTZ go to preset failed")
             raise
 
     async def ptz_get_current_position(self) -> dict:
@@ -428,8 +440,8 @@ class TapoCamera(BaseCamera):
 
         try:
             return self._onvif_camera.get_current_position()
-        except Exception as e:
-            logger.error("PTZ get position failed: %s", e)
+        except Exception:
+            logger.exception("PTZ get position failed")
             raise
 
     async def ptz_goto_position(self, pan: float, tilt: float, zoom: float = 0):
@@ -439,8 +451,8 @@ class TapoCamera(BaseCamera):
 
         try:
             self._onvif_camera.goto_position(pan=pan, tilt=tilt, zoom=zoom)
-        except Exception as e:
-            logger.error("PTZ goto position failed: %s", e)
+        except Exception:
+            logger.exception("PTZ goto position failed")
             raise
 
     async def ptz_get_presets(self) -> list:
@@ -450,6 +462,6 @@ class TapoCamera(BaseCamera):
 
         try:
             return self._onvif_camera.get_presets()
-        except Exception as e:
-            logger.error("PTZ get presets failed: %s", e)
+        except Exception:
+            logger.exception("PTZ get presets failed")
             raise

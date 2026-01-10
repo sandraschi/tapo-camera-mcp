@@ -14,7 +14,9 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 
-@pytest.mark.skip(reason="# TODO: Fix test_camera_implementations_creation - currently has assert False")
+@pytest.mark.skip(
+    reason="# TODO: Fix test_camera_implementations_creation - currently has assert False"
+)
 def test_camera_implementations_creation():
     """Test creation of all camera implementation classes."""
     try:
@@ -51,7 +53,9 @@ def test_camera_implementations_creation():
         assert False
 
 
-@pytest.mark.skip(reason="# TODO: Fix test_camera_factory_registration - currently has assert False")
+@pytest.mark.skip(
+    reason="# TODO: Fix test_camera_factory_registration - currently has assert False"
+)
 def test_camera_factory_registration():
     """Test camera factory registration system."""
     try:
@@ -191,7 +195,9 @@ def test_camera_status_reporting():
         assert False
 
 
-@pytest.mark.skip(reason="# TODO: Fix test_camera_streaming_functionality - currently has assert False")
+@pytest.mark.skip(
+    reason="# TODO: Fix test_camera_streaming_functionality - currently has assert False"
+)
 def test_camera_streaming_functionality():
     """Test camera streaming functionality (mocked)."""
     try:
@@ -253,7 +259,9 @@ def test_ring_camera_implementation():
         assert False
 
 
-@pytest.mark.skip(reason="# TODO: Fix test_furbo_camera_implementation - currently has assert False")
+@pytest.mark.skip(
+    reason="# TODO: Fix test_furbo_camera_implementation - currently has assert False"
+)
 def test_furbo_camera_implementation():
     """Test Furbo camera implementation (if available)."""
     try:

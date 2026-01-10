@@ -11,10 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Zap,
-  DollarSign,
-  TrendingUp,
+import { 
+  Zap, 
+  DollarSign, 
+  TrendingUp, 
   TrendingDown,
   Power,
   Clock,
@@ -131,10 +131,10 @@ export const EnergyDashboard: React.FC<EnergyDashboardProps> = ({ className }) =
   };
 
   const getPowerStatusColor = (power: number) => {
-    if (power === 0) return 'text-gray-500 dark:text-gray-400';
-    if (power < 50) return 'text-green-500 dark:text-green-400';
-    if (power < 200) return 'text-yellow-500 dark:text-yellow-400';
-    return 'text-red-500 dark:text-red-400';
+    if (power === 0) return 'text-gray-500';
+    if (power < 50) return 'text-green-500';
+    if (power < 200) return 'text-yellow-500';
+    return 'text-red-500';
   };
 
   const getCostTrend = () => {
@@ -163,7 +163,7 @@ export const EnergyDashboard: React.FC<EnergyDashboardProps> = ({ className }) =
   if (loading) {
     return (
       <div className={`flex items-center justify-center h-64 ${className}`}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -171,7 +171,7 @@ export const EnergyDashboard: React.FC<EnergyDashboardProps> = ({ className }) =
   if (error) {
     return (
       <div className={`text-center py-8 ${className}`}>
-        <div className="text-red-500 dark:text-red-400 mb-4">Error loading energy data: {error}</div>
+        <div className="text-red-500 mb-4">Error loading energy data: {error}</div>
         <Button onClick={fetchEnergyData} variant="outline">
           Retry
         </Button>
@@ -192,28 +192,28 @@ export const EnergyDashboard: React.FC<EnergyDashboardProps> = ({ className }) =
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              <div className="text-2xl font-bold text-blue-600">
                 {getTotalCurrentPower().toFixed(1)}W
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Current Power</div>
+              <div className="text-sm text-gray-600">Current Power</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+              <div className="text-2xl font-bold text-green-600">
                 ${getTotalDailyCost().toFixed(2)}
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Today's Cost</div>
+              <div className="text-sm text-gray-600">Today's Cost</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              <div className="text-2xl font-bold text-purple-600">
                 ${getTotalMonthlyCost().toFixed(2)}
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">This Month</div>
+              <div className="text-sm text-gray-600">This Month</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+              <div className="text-2xl font-bold text-orange-600">
                 {getActiveDevicesCount()}/{smartPlugs.length}
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Active Devices</div>
+              <div className="text-sm text-gray-600">Active Devices</div>
             </div>
           </div>
         </CardContent>
@@ -290,30 +290,30 @@ export const EnergyDashboard: React.FC<EnergyDashboardProps> = ({ className }) =
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="text-center">
-                    <div className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                    <div className="text-lg font-semibold text-blue-600">
                       {energyData?.averagePower.toFixed(1)}W
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Average Power</div>
+                    <div className="text-sm text-gray-600">Average Power</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-lg font-semibold text-red-600 dark:text-red-400">
+                    <div className="text-lg font-semibold text-red-600">
                       {energyData?.peakPower.toFixed(1)}W
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Peak Power</div>
+                    <div className="text-sm text-gray-600">Peak Power</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                    <div className="text-lg font-semibold text-green-600">
                       ${energyData?.totalCost.toFixed(2)}
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Total Cost</div>
+                    <div className="text-sm text-gray-600">Total Cost</div>
                   </div>
                 </div>
                 {/* Simple chart representation */}
-                <div className="h-32 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 flex items-end gap-1">
+                <div className="h-32 bg-gray-50 rounded-lg p-4 flex items-end gap-1">
                   {usageHistory.slice(-24).map((data, index) => (
                     <div
                       key={index}
-                      className="bg-blue-500 dark:bg-blue-400 rounded-t"
+                      className="bg-blue-500 rounded-t"
                       style={{
                         height: `${(data.totalPower / Math.max(...usageHistory.map(d => d.totalPower))) * 100}%`,
                         width: '4px'
@@ -352,9 +352,9 @@ export const EnergyDashboard: React.FC<EnergyDashboardProps> = ({ className }) =
         </CardHeader>
         <CardContent>
           <div className="text-center py-16">
-            <Activity className="h-16 w-16 mx-auto mb-4 text-purple-500 dark:text-purple-400" />
+            <Activity className="h-16 w-16 mx-auto mb-4 text-purple-500" />
             <h2 className="text-2xl font-bold mb-2">Advanced Analytics</h2>
-            <p className="text-gray-600 dark:text-gray-400">Detailed energy analytics and reporting features coming soon!</p>
+            <p className="text-gray-600">Detailed energy analytics and reporting features coming soon!</p>
           </div>
         </CardContent>
       </Card>
@@ -390,7 +390,7 @@ export const EnergyDashboard: React.FC<EnergyDashboardProps> = ({ className }) =
                     )}
                   </div>
                 </div>
-
+                
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Model:</span>
@@ -456,122 +456,214 @@ export const EnergyDashboard: React.FC<EnergyDashboardProps> = ({ className }) =
     );
   }
 
-  {/* Power Usage Chart */ }
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5" />
-          Power Usage Trend
-        </div>
-        <div className="flex gap-2">
-          {(['day', 'week', 'month'] as const).map((period) => (
-            <Button
-              key={period}
-              variant={selectedPeriod === period ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedPeriod(period)}
-            >
-              {period.charAt(0).toUpperCase() + period.slice(1)}
-            </Button>
-          ))}
-        </div>
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      {usageHistory.length > 0 ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="text-lg font-semibold text-blue-600">
-                {energyData?.averagePower.toFixed(1)}W
-              </div>
-              <div className="text-sm text-gray-600">Average Power</div>
+      {/* Power Usage Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Power Usage Trend
             </div>
-            <div className="text-center">
-              <div className="text-lg font-semibold text-red-600">
-                {energyData?.peakPower.toFixed(1)}W
-              </div>
-              <div className="text-sm text-gray-600">Peak Power</div>
+            <div className="flex gap-2">
+              {(['day', 'week', 'month'] as const).map((period) => (
+                <Button
+                  key={period}
+                  variant={selectedPeriod === period ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedPeriod(period)}
+                >
+                  {period.charAt(0).toUpperCase() + period.slice(1)}
+                </Button>
+              ))}
             </div>
-            <div className="text-center">
-              <div className="text-lg font-semibold text-green-600">
-                ${energyData?.totalCost.toFixed(2)}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {usageHistory.length > 0 ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-blue-600">
+                    {energyData?.averagePower.toFixed(1)}W
+                  </div>
+                  <div className="text-sm text-gray-600">Average Power</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-red-600">
+                    {energyData?.peakPower.toFixed(1)}W
+                  </div>
+                  <div className="text-sm text-gray-600">Peak Power</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-green-600">
+                    ${energyData?.totalCost.toFixed(2)}
+                  </div>
+                  <div className="text-sm text-gray-600">Total Cost</div>
+                </div>
               </div>
-              <div className="text-sm text-gray-600">Total Cost</div>
+              {/* Simple chart representation */}
+              <div className="h-32 bg-gray-50 rounded-lg p-4 flex items-end gap-1">
+                {usageHistory.slice(-24).map((data, index) => (
+                  <div
+                    key={index}
+                    className="bg-blue-500 rounded-t"
+                    style={{
+                      height: `${(data.totalPower / Math.max(...usageHistory.map(d => d.totalPower))) * 100}%`,
+                      width: '4px'
+                    }}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-          {/* Simple chart representation */}
-          <div className="h-32 bg-gray-50 rounded-lg p-4 flex items-end gap-1">
-            {usageHistory.slice(-24).map((data, index) => (
-              <div
-                key={index}
-                className="bg-blue-500 rounded-t"
-                style={{
-                  height: `${(data.totalPower / Math.max(...usageHistory.map(d => d.totalPower))) * 100}%`,
-                  width: '4px'
-                }}
-              />
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <BarChart3 className="h-12 w-12 mx-auto mb-2" />
+              <p>No usage data available</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Smart Plugs Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Power className="h-5 w-5" />
+            Smart Plugs Status
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {smartPlugs.map((device) => (
+              <Card key={device.id} className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    {getDeviceIcon(device.name)}
+                    <h4 className="font-semibold">{device.name}</h4>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={device.powerState ? 'default' : 'outline'}>
+                      {device.powerState ? 'On' : 'Off'}
+                    </Badge>
+                    {device.automationEnabled && (
+                      <Badge variant="secondary" className="text-xs">
+                        Auto
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Model:</span>
+                    <span className="font-medium">{device.deviceModel}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Location:</span>
+                    <span>{device.location}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Current Power:</span>
+                    <span className={getPowerStatusColor(device.currentPower)}>
+                      {device.powerState ? `${device.currentPower}W` : '0W'}
+                    </span>
+                  </div>
+                  {device.powerState && (
+                    <>
+                      <div className="flex justify-between">
+                        <span>Voltage:</span>
+                        <span>{device.voltage.toFixed(1)}V</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Current:</span>
+                        <span>{device.current.toFixed(2)}A</span>
+                      </div>
+                    </>
+                  )}
+                  <div className="flex justify-between">
+                    <span>Daily Usage:</span>
+                    <span>{device.dailyEnergy.toFixed(2)} kWh</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Daily Cost:</span>
+                    <span className="font-semibold">${device.dailyCost.toFixed(2)}</span>
+                  </div>
+                  {device.powerSchedule && (
+                    <div className="flex justify-between">
+                      <span>Schedule:</span>
+                      <span className="text-xs">{device.powerSchedule}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span>Last Seen:</span>
+                    <span className="text-xs">{new Date(device.lastSeen).toLocaleTimeString()}</span>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-3 border-t">
+                  <Button
+                    variant={device.powerState ? 'destructive' : 'default'}
+                    size="sm"
+                    onClick={() => toggleDevice(device.id, device.powerState)}
+                    className="w-full"
+                  >
+                    {device.powerState ? 'Turn Off' : 'Turn On'}
+                  </Button>
+                </div>
+              </Card>
             ))}
           </div>
-        </div>
-      ) : (
-        <div className="text-center py-8 text-gray-500">
-          <BarChart3 className="h-12 w-12 mx-auto mb-2" />
-          <p>No usage data available</p>
-        </div>
-      )}
-    </CardContent>
-  </Card>
+        </CardContent>
+      </Card>
 
-  {/* Energy Savings Tips */ }
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <Lightbulb className="h-5 w-5" />
-        Energy Saving Tips
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <h4 className="font-semibold text-green-600 dark:text-green-400">💡 Quick Wins</h4>
-          <ul className="text-sm space-y-1 text-gray-600 dark:text-gray-400">
-            <li>• Turn off devices when not in use</li>
-            <li>• Use smart scheduling for high-power devices</li>
-            <li>• Enable automation for lights and entertainment</li>
-            <li>• Monitor vampire power consumption</li>
-          </ul>
-        </div>
-        <div className="space-y-2">
-          <h4 className="font-semibold text-blue-600 dark:text-blue-400">📊 This Month's Savings</h4>
-          <div className="text-lg font-bold text-green-600 dark:text-green-400">
-            ${(getTotalMonthlyCost() * 0.15).toFixed(2)}
+      {/* Energy Savings Tips */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lightbulb className="h-5 w-5" />
+            Energy Saving Tips
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <h4 className="font-semibold text-green-600">💡 Quick Wins</h4>
+              <ul className="text-sm space-y-1 text-gray-600">
+                <li>• Turn off devices when not in use</li>
+                <li>• Use smart scheduling for high-power devices</li>
+                <li>• Enable automation for lights and entertainment</li>
+                <li>• Monitor vampire power consumption</li>
+              </ul>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-semibold text-blue-600">📊 This Month's Savings</h4>
+              <div className="text-lg font-bold text-green-600">
+                ${(getTotalMonthlyCost() * 0.15).toFixed(2)}
+              </div>
+              <div className="text-sm text-gray-600">
+                Potential savings with optimized usage
+              </div>
+            </div>
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Potential savings with optimized usage
-          </div>
-        </div>
+        </CardContent>
+      </Card>
+
+      {/* Action Buttons */}
+      <div className="flex gap-4">
+        <Button onClick={fetchEnergyData} variant="outline">
+          <Wifi className="h-4 w-4 mr-2" />
+          Refresh Status
+        </Button>
+        <Button variant="outline">
+          <Settings className="h-4 w-4 mr-2" />
+          Configure Automation
+        </Button>
+        <Button variant="outline">
+          <BarChart3 className="h-4 w-4 mr-2" />
+          View Detailed Analytics
+        </Button>
       </div>
-    </CardContent>
-  </Card>
-
-  {/* Action Buttons */ }
-  <div className="flex gap-4">
-    <Button onClick={fetchEnergyData} variant="outline">
-      <Wifi className="h-4 w-4 mr-2" />
-      Refresh Status
-    </Button>
-    <Button variant="outline">
-      <Settings className="h-4 w-4 mr-2" />
-      Configure Automation
-    </Button>
-    <Button variant="outline">
-      <BarChart3 className="h-4 w-4 mr-2" />
-      View Detailed Analytics
-    </Button>
-  </div>
-    </div >
+    </div>
   );
 };
 

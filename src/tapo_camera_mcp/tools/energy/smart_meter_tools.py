@@ -178,8 +178,7 @@ class SmartMeterConsumptionTool(BaseTool):
 
             # Calculate statistics
             total_energy = sum(
-                point.get("daily_energy_kwh", 0) or point.get("energy_kwh", 0)
-                for point in history
+                point.get("daily_energy_kwh", 0) or point.get("energy_kwh", 0) for point in history
             )
             avg_power = (
                 sum(point.get("power_w", 0) or 0 for point in history) / len(history)
@@ -250,7 +249,7 @@ class SmartMeterCostTool(BaseTool):
                     "success": False,
                     "error": "Smart meter service not available.",
                     "timestamp": time.time(),
-            }
+                }
 
             # Get tariff info
             tariff_info = await service.get_tariff_info()
@@ -301,5 +300,3 @@ class SmartMeterCostTool(BaseTool):
                 "error": str(e),
                 "timestamp": time.time(),
             }
-
-

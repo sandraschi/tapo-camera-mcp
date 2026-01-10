@@ -100,6 +100,7 @@ class NestClient:
     def _adjust_token_path(token_file: str) -> Path:
         """Adjust token file path for Docker environment."""
         import os
+
         token_path = Path(token_file)
 
         # In Docker, use mounted volume for token persistence
@@ -117,9 +118,7 @@ class NestClient:
     async def initialize(self) -> bool:
         """Initialize the Nest client."""
         try:
-            self._session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=30)
-            )
+            self._session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30))
 
             # Try to load cached token
             if self.token_file.exists():
@@ -128,9 +127,7 @@ class NestClient:
                 self.refresh_token = token_data.get("refresh_token")
 
             if not self.refresh_token:
-                logger.warning(
-                    "No Nest refresh token. Run OAuth flow to authenticate."
-                )
+                logger.warning("No Nest refresh token. Run OAuth flow to authenticate.")
                 return False
 
             # Get access token
@@ -332,9 +329,7 @@ class NestClient:
             "online_count": sum(1 for d in devices if d.is_online),
             "smoke_status": "ok" if smoke_ok else "alert",
             "co_status": "ok" if co_ok else "alert",
-            "battery_warnings": [
-                d.name for d in devices if d.battery_health != "ok"
-            ],
+            "battery_warnings": [d.name for d in devices if d.battery_health != "ok"],
             "all_ok": smoke_ok and co_ok and all_online,
             "devices": [d.to_dict() for d in devices],
         }
@@ -342,9 +337,7 @@ class NestClient:
     def save_token(self) -> None:
         """Save refresh token to cache file."""
         if self.refresh_token:
-            self.token_file.write_text(
-                json.dumps({"refresh_token": self.refresh_token})
-            )
+            self.token_file.write_text(json.dumps({"refresh_token": self.refresh_token}))
 
     @classmethod
     def get_oauth_url(cls, redirect_uri: str = "urn:ietf:wg:oauth:2.0:oob") -> str:
@@ -428,4 +421,3 @@ async def init_nest_client(
 def get_nest_client() -> Optional[NestClient]:
     """Get the global Nest client instance."""
     return _nest_client
-

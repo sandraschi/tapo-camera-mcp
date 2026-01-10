@@ -7,120 +7,143 @@
     .events-dashboard {
         padding: 20px;
     }
-
+    
     .events-overview {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 20px;
         margin-bottom: 30px;
     }
-
+    
     .event-card {
+        background: white;
         border-radius: 12px;
         padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
     }
-
+    
     .event-card h3 {
         margin: 0 0 16px 0;
-        color: var(--text-primary);
+        color: #1f2937;
         font-size: 18px;
         font-weight: 600;
     }
-
+    
     .event-value {
         font-size: 32px;
         font-weight: 700;
-        color: var(--accent-gold);
+        color: #2563eb;
         margin-bottom: 8px;
     }
-
+    
     .events-timeline {
+        background: white;
         border-radius: 12px;
         padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
         margin-bottom: 20px;
     }
-
+    
     .event-item {
-        background: var(--glass-bg);
-        backdrop-filter: blur(5px);
+        background: #f9fafb;
         border-radius: 8px;
         padding: 16px;
         margin-bottom: 12px;
-        border-left: 4px solid var(--accent-gold);
+        border-left: 4px solid #2563eb;
         transition: all 0.2s ease;
     }
-
+    
     .event-item:hover {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         transform: translateX(4px);
     }
-
+    
     .event-item.motion {
-        border-left-color: var(--accent-gold);
+        border-left-color: #10b981;
     }
-
+    
     .event-item.alert {
         border-left-color: #f59e0b;
     }
-
+    
     .event-item.error {
-        border-left-color: var(--error-color);
+        border-left-color: #dc2626;
     }
-
-    .event-item.media-event {
-        border-left-color: var(--accent-gold);
-        background: var(--glass-bg);
-    }
-
+    
     .event-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 8px;
     }
-
+    
     .event-type {
         font-size: 14px;
         font-weight: 600;
-        color: var(--accent-gold);
+        color: #1f2937;
         text-transform: uppercase;
     }
-
+    
     .event-timestamp {
         font-size: 12px;
-        color: var(--text-secondary);
+        color: #6b7280;
     }
-
+    
     .event-message {
-        color: var(--text-primary);
+        color: #374151;
         margin-bottom: 4px;
     }
-
+    
     .event-details {
         font-size: 12px;
-        color: var(--text-secondary);
+        color: #6b7280;
         display: flex;
         gap: 16px;
     }
-
+    
     .events-by-type {
+        background: white;
         border-radius: 12px;
         padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
     }
-
+    
     .event-type-group {
         margin-bottom: 24px;
     }
-
+    
     .event-type-group h4 {
         margin: 0 0 12px 0;
-        color: var(--text-primary);
+        color: #1f2937;
         font-size: 16px;
         font-weight: 600;
         text-transform: capitalize;
     }
-
-    /* Removed redundant data-theme media-event colors as they are now mapped to variables */
+    
+    [data-theme="dark"] .event-card,
+    [data-theme="dark"] .events-timeline,
+    [data-theme="dark"] .events-by-type {
+        background: #374151;
+        border-color: #4b5563;
+        color: #f9fafb;
+    }
+    
+    [data-theme="dark"] .event-item {
+        background: #4b5563;
+        border-color: #6b7280;
+    }
+    
+    [data-theme="dark"] .event-card h3,
+    [data-theme="dark"] .event-type-group h4 {
+        color: #f9fafb;
+    }
+    
+    [data-theme="dark"] .event-message {
+        color: #d1d5db;
+    }
 </style>
 {% endblock %}
 
@@ -129,9 +152,7 @@
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold">📋 Events Timeline</h1>
         <div class="flex gap-2">
-            <button id="refresh-events"
-                class="bg-gold hover:bg-gold-hover text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                style="background: var(--accent-gold); border-color: var(--accent-gold);">
+            <button id="refresh-events" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                 <i class="fas fa-sync-alt mr-2"></i>Refresh
             </button>
         </div>
@@ -139,15 +160,15 @@
 
     <!-- Events Overview -->
     <div class="events-overview mb-6">
-        <div class="event-card glass">
+        <div class="event-card">
             <h3>Total Events</h3>
             <div class="event-value">{{ total_events }}</div>
             <p class="text-sm text-gray-500">All time</p>
         </div>
-
+        
         {% if events_by_type %}
         {% for event_type, type_events in events_by_type.items() %}
-        <div class="event-card glass">
+        <div class="event-card">
             <h3>{{ event_type|replace('_', ' ')|title }} Events</h3>
             <div class="event-value">{{ type_events|length }}</div>
             <p class="text-sm text-gray-500">Recent events</p>
@@ -157,9 +178,9 @@
     </div>
 
     <!-- Events Timeline -->
-    <div class="events-timeline glass">
+    <div class="events-timeline">
         <h2 class="text-xl font-semibold mb-4">Recent Events</h2>
-
+        
         {% if events %}
         <div id="events-list">
             {% for event in events %}
@@ -193,9 +214,9 @@
 
     <!-- Events by Type -->
     {% if events_by_type %}
-    <div class="events-by-type glass">
+    <div class="events-by-type">
         <h2 class="text-xl font-semibold mb-4">Events by Type</h2>
-
+        
         {% for event_type, type_events in events_by_type.items() %}
         <div class="event-type-group">
             <h4>{{ event_type|replace('_', ' ')|title }} ({{ type_events|length }})</h4>
@@ -225,3 +246,4 @@
     });
 </script>
 {% endblock %}
+

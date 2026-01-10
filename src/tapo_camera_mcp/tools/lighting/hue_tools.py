@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 # Try to import phue library
 try:
     from phue import Bridge
+
     PHUE_AVAILABLE = True
 except ImportError:
     PHUE_AVAILABLE = False
@@ -44,7 +45,9 @@ class HueLight(BaseModel):
     rgb: List[int] = Field(default_factory=list, description="RGB color values (0-255)")
     reachable: bool = Field(..., description="Whether light is reachable")
     last_seen: str = Field(..., description="Last communication timestamp")
-    energy_usage: Optional[float] = Field(default=None, description="Power consumption in watts (if available)")
+    energy_usage: Optional[float] = Field(
+        default=None, description="Power consumption in watts (if available)"
+    )
 
 
 class HueGroup(BaseModel):
@@ -71,7 +74,7 @@ class HueScene(BaseModel):
 
 class HueManager:
     """Manager for Philips Hue lights, groups, and scenes.
-    
+
     Uses caching to avoid slow bridge queries on every operation.
     Call rescan() to refresh the cache when needed.
     """
@@ -92,7 +95,9 @@ class HueManager:
         """Initialize connection to Philips Hue Bridge."""
         try:
             if not PHUE_AVAILABLE:
-                self._connection_error = "phue library not installed. Install with: pip install phue"
+                self._connection_error = (
+                    "phue library not installed. Install with: pip install phue"
+                )
                 logger.warning(self._connection_error)
                 return False
 
@@ -134,7 +139,9 @@ class HueManager:
             self._initialized = True
             self._cache_loaded = True
             self._last_scan_time = datetime.now()
-            logger.info(f"Philips Hue initialized: {len(self.lights)} lights, {len(self.groups)} groups, {len(self.scenes)} scenes")
+            logger.info(
+                f"Philips Hue initialized: {len(self.lights)} lights, {len(self.groups)} groups, {len(self.scenes)} scenes"
+            )
             return True
 
         except Exception as e:
@@ -156,7 +163,9 @@ class HueManager:
                     light_data = self._create_light_from_bridge(light)
                     self.lights[light_data.light_id] = light_data
                 except Exception as e:
-                    logger.warning(f"Failed to process light {getattr(light, 'light_id', 'unknown')}: {e}")
+                    logger.warning(
+                        f"Failed to process light {getattr(light, 'light_id', 'unknown')}: {e}"
+                    )
                     # Continue with other lights even if one fails
 
             # Discover groups
@@ -168,7 +177,9 @@ class HueManager:
                         group_data = self._create_group_from_bridge(group)
                         self.groups[group_data.group_id] = group_data
                     except Exception as e:
-                        logger.warning(f"Failed to process group {getattr(group, 'group_id', 'unknown')}: {e}")
+                        logger.warning(
+                            f"Failed to process group {getattr(group, 'group_id', 'unknown')}: {e}"
+                        )
             except Exception as e:
                 logger.warning(f"Failed to discover groups: {e}")
 
@@ -181,11 +192,15 @@ class HueManager:
                         scene_data = self._create_scene_from_bridge(scene)
                         self.scenes[scene_data.scene_id] = scene_data
                     except Exception as e:
-                        logger.warning(f"Failed to process scene {getattr(scene, 'scene_id', 'unknown')}: {e}")
+                        logger.warning(
+                            f"Failed to process scene {getattr(scene, 'scene_id', 'unknown')}: {e}"
+                        )
             except Exception as e:
                 logger.warning(f"Failed to discover scenes: {e}")
 
-            logger.info(f"Discovered {len(self.lights)} lights, {len(self.groups)} groups, {len(self.scenes)} scenes")
+            logger.info(
+                f"Discovered {len(self.lights)} lights, {len(self.groups)} groups, {len(self.scenes)} scenes"
+            )
 
         except Exception:
             logger.exception("Failed to discover Hue devices")
@@ -193,7 +208,7 @@ class HueManager:
 
     def _create_light_from_bridge(self, light: Any) -> HueLight:
         """Create HueLight from phue Light object.
-        
+
         Note: phue raises exceptions when accessing properties that don't exist
         for certain light types (e.g., colormode on white-only bulbs). We wrap
         all property accesses in try/except to handle this gracefully.
@@ -202,8 +217,8 @@ class HueManager:
         brightness = 0
         try:
             brightness = light.brightness
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Could not get brightness for light {light.name}: {e}")
         brightness_percent = int((brightness / 254) * 100) if brightness > 0 else 0
 
         # Get color temperature safely (not all lights support this)
@@ -211,12 +226,12 @@ class HueManager:
         color_temp_mireds = 0
         try:
             color_temp = light.colortemp_k
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Could not get color temp K for light {light.name}: {e}")
         try:
             color_temp_mireds = light.colortemp
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Could not get color temp mireds for light {light.name}: {e}")
 
         # Get XY color coordinates safely (color bulbs only)
         xy = []
@@ -227,16 +242,16 @@ class HueManager:
                 xy = list(xy_value) if isinstance(xy_value, (list, tuple)) else []
                 # Convert XY to RGB for display
                 rgb = self._xy_to_rgb(xy[0], xy[1], brightness) if len(xy) >= 2 else [255, 255, 255]
-        except Exception:
-            pass  # White-only bulbs don't support xy
+        except Exception as e:
+            logger.debug(f"Could not get XY color for light {light.name}: {e}")
 
         # Get hue and saturation safely (color bulbs only)
         hue = 0
         saturation = 0
         try:
             hue = light.hue
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Could not get hue for light {light.name}: {e}")
         try:
             saturation = light.saturation
         except Exception:
@@ -292,7 +307,7 @@ class HueManager:
 
     def _create_group_from_bridge(self, group: Any) -> HueGroup:
         """Create HueGroup from phue Group object.
-        
+
         Note: phue raises exceptions when accessing certain properties,
         so we wrap all accesses in try/except.
         """
@@ -345,12 +360,12 @@ class HueManager:
 
     def _create_scene_from_bridge(self, scene: Any) -> HueScene:
         """Create HueScene from phue Scene object."""
-        light_ids = [str(lid) for lid in scene.lights] if hasattr(scene, 'lights') else []
+        light_ids = [str(lid) for lid in scene.lights] if hasattr(scene, "lights") else []
 
         return HueScene(
             scene_id=scene.scene_id,
             name=scene.name,
-            group=getattr(scene, 'group', ''),
+            group=getattr(scene, "group", ""),
             lights=light_ids,
             active=False,  # Would need to check current state
         )
@@ -383,7 +398,7 @@ class HueManager:
 
     def _xy_to_rgb(self, x: float, y: float, brightness: int = 254) -> List[int]:
         """Convert CIE 1931 XY color space to RGB for Hue lights.
-        
+
         Converts XY coordinates back to RGB for display purposes.
         Uses sRGB color space with D65 white point.
         """
@@ -429,7 +444,7 @@ class HueManager:
 
     def _rgb_to_xy(self, r: int, g: int, b: int) -> List[float] | None:
         """Convert RGB (0-255) to CIE 1931 XY color space for Hue lights.
-        
+
         Based on Philips Hue API specification for RGB to XY conversion.
         Uses sRGB color space with D65 white point.
         """
@@ -528,7 +543,7 @@ class HueManager:
                     light.xy = xy
                     # Also set colormode to 'xy' for color bulbs
                     try:
-                        light.colormode = 'xy'
+                        light.colormode = "xy"
                     except Exception:
                         pass  # Some lights may not support setting colormode
 
@@ -553,7 +568,7 @@ class HueManager:
                     xy = self._rgb_to_xy(rgb[0], rgb[1], rgb[2])
                     if xy:
                         self.lights[light_id].xy = xy
-                        self.lights[light_id].color_mode = 'xy'
+                        self.lights[light_id].color_mode = "xy"
 
             return True
 
@@ -652,11 +667,11 @@ class HueManager:
                 target_group_id = int(group_id)
             else:
                 # Get scene's associated group
-                scene_group = getattr(scene, 'group', None)
+                scene_group = getattr(scene, "group", None)
                 if scene_group:
                     target_group_id = int(scene_group)
                 # If scene has no group, find a group that contains the scene's lights
-                elif hasattr(scene, 'lights') and scene.lights:
+                elif hasattr(scene, "lights") and scene.lights:
                     scene_light_ids = set(str(lid) for lid in scene.lights)
                     for grp in self._bridge.groups:
                         if grp.group_id != 0:  # Skip group 0 (all lights)
@@ -674,7 +689,7 @@ class HueManager:
             # Activate scene using the bridge's set_group method
             # The phue Group object's .scene property doesn't work for activation
             # Must use bridge.set_group(group_id, 'scene', scene_id)
-            self._bridge.set_group(target_group_id, 'scene', scene_id)
+            self._bridge.set_group(target_group_id, "scene", scene_id)
 
             logger.info(f"Activated scene {scene_id} on group {target_group_id}")
             return True
@@ -767,4 +782,3 @@ class ControlHueGroupTool(BaseTool):
             brightness=self.brightness,
         )
         return {"success": success}
-

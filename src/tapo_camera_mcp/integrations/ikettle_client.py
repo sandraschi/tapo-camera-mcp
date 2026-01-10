@@ -1,10 +1,9 @@
 """iKettle smart kettle integration client."""
 
-import asyncio
 import logging
-from typing import Dict, Optional, List
+from typing import Dict, Optional
+
 import aiohttp
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +39,8 @@ class IKettleClient:
                 self._connected = True
                 logger.info(f"Connected to iKettle at {self.host}")
                 return True
-            else:
-                logger.warning(f"Failed to connect to iKettle at {self.host}")
-                return False
+            logger.warning(f"Failed to connect to iKettle at {self.host}")
+            return False
 
         except Exception as e:
             logger.exception(f"Error connecting to iKettle: {e}")
@@ -56,7 +54,9 @@ class IKettleClient:
             self.session = None
         self._connected = False
 
-    async def _make_request(self, endpoint: str, method: str = "GET", data: Dict = None) -> Optional[Dict]:
+    async def _make_request(
+        self, endpoint: str, method: str = "GET", data: Dict = None
+    ) -> Optional[Dict]:
         """Make HTTP request to iKettle API."""
         if not self.session:
             await self.connect()
@@ -70,16 +70,14 @@ class IKettleClient:
                 async with self.session.get(url) as response:
                     if response.status == 200:
                         return await response.json()
-                    else:
-                        logger.error(f"iKettle API error: {response.status} - {await response.text()}")
-                        return None
+                    logger.error(f"iKettle API error: {response.status} - {await response.text()}")
+                    return None
             elif method == "POST":
                 async with self.session.post(url, json=data) as response:
                     if response.status in [200, 204]:
                         return await response.json() if response.status == 200 else {}
-                    else:
-                        logger.error(f"iKettle API error: {response.status} - {await response.text()}")
-                        return None
+                    logger.error(f"iKettle API error: {response.status} - {await response.text()}")
+                    return None
 
         except Exception as e:
             logger.exception(f"Error making request to iKettle: {e}")
@@ -102,7 +100,7 @@ class IKettleClient:
         """Start boiling water to specified temperature (Celsius)."""
         try:
             # Convert Celsius to Fahrenheit for iKettle API
-            temp_f = int((temperature * 9/5) + 32)
+            temp_f = int((temperature * 9 / 5) + 32)
 
             # Ensure temperature is within iKettle range (68°F to 212°F)
             temp_f = max(68, min(212, temp_f))
@@ -123,12 +121,12 @@ class IKettleClient:
         """Set keep warm mode."""
         try:
             # Convert to Fahrenheit
-            temp_f = int((temperature * 9/5) + 32)
+            temp_f = int((temperature * 9 / 5) + 32)
             temp_f = max(68, min(212, temp_f))
 
             data = {
                 "temperature": temp_f,
-                "duration": duration  # minutes
+                "duration": duration,  # minutes
             }
 
             result = await self._make_request("keepwarm", method="POST", data=data)
@@ -179,18 +177,17 @@ class IKettleClient:
     async def schedule_boil(self, temperature: int = 100, delay_minutes: int = 0) -> bool:
         """Schedule a boil operation."""
         try:
-            temp_f = int((temperature * 9/5) + 32)
+            temp_f = int((temperature * 9 / 5) + 32)
             temp_f = max(68, min(212, temp_f))
 
-            data = {
-                "temperature": temp_f,
-                "delay": delay_minutes
-            }
+            data = {"temperature": temp_f, "delay": delay_minutes}
 
             result = await self._make_request("schedule", method="POST", data=data)
 
             if result is not None:
-                logger.info(f"iKettle: Scheduled boil to {temperature}°C in {delay_minutes} minutes")
+                logger.info(
+                    f"iKettle: Scheduled boil to {temperature}°C in {delay_minutes} minutes"
+                )
                 return True
             return False
 
@@ -200,11 +197,11 @@ class IKettleClient:
 
     def get_temperature_celsius(self, temp_f: int) -> float:
         """Convert Fahrenheit to Celsius."""
-        return round((temp_f - 32) * 5/9, 1)
+        return round((temp_f - 32) * 5 / 9, 1)
 
     def get_temperature_fahrenheit(self, temp_c: int) -> int:
         """Convert Celsius to Fahrenheit."""
-        return int((temp_c * 9/5) + 32)
+        return int((temp_c * 9 / 5) + 32)
 
     async def get_water_level(self) -> Optional[str]:
         """Get current water level status."""
@@ -232,10 +229,7 @@ class IKettleClient:
         status = await self.get_status()
 
         if not status:
-            return {
-                "connected": False,
-                "error": "Unable to get status"
-            }
+            return {"connected": False, "error": "Unable to get status"}
 
         # Convert temperatures to Celsius
         current_temp_c = None
@@ -257,7 +251,7 @@ class IKettleClient:
             "mode": status.get("mode", "unknown"),
             "keep_warm_active": status.get("keep_warm", False),
             "keep_warm_minutes": status.get("keep_warm_minutes", 0),
-            "last_updated": status.get("timestamp")
+            "last_updated": status.get("timestamp"),
         }
 
     async def setup_morning_routine(self, wake_time: str = "07:00", coffee_temp: int = 95) -> Dict:
@@ -267,7 +261,7 @@ class IKettleClient:
             from datetime import datetime, timedelta
 
             now = datetime.now()
-            wake_hour, wake_minute = map(int, wake_time.split(':'))
+            wake_hour, wake_minute = map(int, wake_time.split(":"))
             wake_datetime = now.replace(hour=wake_hour, minute=wake_minute, second=0, microsecond=0)
 
             # If wake time has passed today, schedule for tomorrow
@@ -285,34 +279,10 @@ class IKettleClient:
                     "message": f"Morning coffee scheduled for {wake_time} (in {delay_minutes} minutes)",
                     "wake_time": wake_time,
                     "coffee_temperature": coffee_temp,
-                    "delay_minutes": delay_minutes
+                    "delay_minutes": delay_minutes,
                 }
-            else:
-                return {
-                    "success": False,
-                    "error": "Failed to schedule morning coffee"
-                }
+            return {"success": False, "error": "Failed to schedule morning coffee"}
 
         except Exception as e:
             logger.exception(f"Error setting up morning routine: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            return {"success": False, "error": str(e)}

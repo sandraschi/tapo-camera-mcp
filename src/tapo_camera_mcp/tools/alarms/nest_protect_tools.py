@@ -105,7 +105,9 @@ class NestProtectManager:
             logger.warning(f"Failed to load real Nest Protect devices: {e}")
 
         # No real devices found - return empty
-        logger.warning("No Nest Protect devices found. Configure Nest Protect integration in config.yaml")
+        logger.warning(
+            "No Nest Protect devices found. Configure Nest Protect integration in config.yaml"
+        )
         self.devices.clear()
 
     async def get_all_devices(self) -> List[NestProtectDevice]:

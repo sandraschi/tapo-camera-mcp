@@ -89,4 +89,3 @@ def test_get_tapo_p115_history(client: TestClient) -> None:
     datapoint = payload["data_points"][0]
     assert datapoint["power_consumption"] == 40.0
     assert datapoint["energy_consumption"] == 0.04
-

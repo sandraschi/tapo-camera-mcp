@@ -217,7 +217,9 @@ def test_webcam_streaming():
         assert False
 
 
-@pytest.mark.skip(reason="# TODO: Fix test_server_with_camera_integration - currently has assert False")
+@pytest.mark.skip(
+    reason="# TODO: Fix test_server_with_camera_integration - currently has assert False"
+)
 def test_server_with_camera_integration():
     """Test server functionality with camera integration."""
     try:

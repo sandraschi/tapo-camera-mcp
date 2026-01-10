@@ -187,7 +187,8 @@ class MediaMetadataDB:
         conn = self._get_connection()
         try:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO recordings (
                     recording_id, camera_id, file_path, file_size_bytes,
                     duration_seconds, recording_type, timestamp,
@@ -202,18 +203,20 @@ class MediaMetadataDB:
                     is_unusual = EXCLUDED.is_unusual,
                     metadata = EXCLUDED.metadata
                 RETURNING *
-            """, (
-                recording_id,
-                camera_id,
-                file_path,
-                file_size_bytes,
-                duration_seconds,
-                recording_type,
-                timestamp,
-                is_emergency,
-                is_unusual,
-                metadata or {},
-            ))
+            """,
+                (
+                    recording_id,
+                    camera_id,
+                    file_path,
+                    file_size_bytes,
+                    duration_seconds,
+                    recording_type,
+                    timestamp,
+                    is_emergency,
+                    is_unusual,
+                    metadata or {},
+                ),
+            )
 
             result = cursor.fetchone()
             conn.commit()
@@ -243,7 +246,8 @@ class MediaMetadataDB:
         conn = self._get_connection()
         try:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO snapshots (
                     snapshot_id, camera_id, file_path, file_size_bytes,
                     timestamp, metadata
@@ -253,14 +257,16 @@ class MediaMetadataDB:
                     file_size_bytes = EXCLUDED.file_size_bytes,
                     metadata = EXCLUDED.metadata
                 RETURNING *
-            """, (
-                snapshot_id,
-                camera_id,
-                file_path,
-                file_size_bytes,
-                timestamp,
-                metadata or {},
-            ))
+            """,
+                (
+                    snapshot_id,
+                    camera_id,
+                    file_path,
+                    file_size_bytes,
+                    timestamp,
+                    metadata or {},
+                ),
+            )
 
             result = cursor.fetchone()
             conn.commit()
@@ -290,20 +296,23 @@ class MediaMetadataDB:
         conn = self._get_connection()
         try:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO ai_analysis (
                     media_id, media_type, analysis_type,
                     confidence, detected_at, details
                 ) VALUES (%s, %s, %s, %s, %s, %s)
                 RETURNING *
-            """, (
-                media_id,
-                media_type,
-                analysis_type,
-                confidence,
-                detected_at,
-                details or {},
-            ))
+            """,
+                (
+                    media_id,
+                    media_type,
+                    analysis_type,
+                    confidence,
+                    detected_at,
+                    details or {},
+                ),
+            )
 
             result = cursor.fetchone()
             conn.commit()
@@ -369,10 +378,13 @@ class MediaMetadataDB:
                 recording_ids = [r["recording_id"] for r in results]
                 if recording_ids:
                     placeholders = ",".join(["%s"] * len(recording_ids))
-                    cursor.execute(f"""
+                    cursor.execute(
+                        f"""
                         SELECT * FROM ai_analysis
                         WHERE media_type = 'recording' AND media_id IN ({placeholders})
-                    """, recording_ids)
+                    """,
+                        recording_ids,
+                    )
                     ai_results: dict[str, list[dict[str, Any]]] = {rid: [] for rid in recording_ids}
                     for row in cursor.fetchall():
                         media_id = row["media_id"]
@@ -425,10 +437,13 @@ class MediaMetadataDB:
                 snapshot_ids = [r["snapshot_id"] for r in results]
                 if snapshot_ids:
                     placeholders = ",".join(["%s"] * len(snapshot_ids))
-                    cursor.execute(f"""
+                    cursor.execute(
+                        f"""
                         SELECT * FROM ai_analysis
                         WHERE media_type = 'snapshot' AND media_id IN ({placeholders})
-                    """, snapshot_ids)
+                    """,
+                        snapshot_ids,
+                    )
                     ai_results: dict[str, list[dict[str, Any]]] = {sid: [] for sid in snapshot_ids}
                     for row in cursor.fetchall():
                         media_id = row["media_id"]
@@ -500,10 +515,13 @@ class MediaMetadataDB:
             cursor = conn.cursor()
 
             # Delete AI analysis first
-            cursor.execute("""
+            cursor.execute(
+                """
                 DELETE FROM ai_analysis
                 WHERE media_type = 'recording' AND media_id = %s
-            """, (recording_id,))
+            """,
+                (recording_id,),
+            )
 
             # Delete recording
             cursor.execute("DELETE FROM recordings WHERE recording_id = %s", (recording_id,))
@@ -527,10 +545,13 @@ class MediaMetadataDB:
             cursor = conn.cursor()
 
             # Delete AI analysis first
-            cursor.execute("""
+            cursor.execute(
+                """
                 DELETE FROM ai_analysis
                 WHERE media_type = 'snapshot' AND media_id = %s
-            """, (snapshot_id,))
+            """,
+                (snapshot_id,),
+            )
 
             # Delete snapshot
             cursor.execute("DELETE FROM snapshots WHERE snapshot_id = %s", (snapshot_id,))
@@ -595,4 +616,3 @@ class MediaMetadataDB:
             raise
         finally:
             self._return_connection(conn)
-

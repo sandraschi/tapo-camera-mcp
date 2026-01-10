@@ -22,7 +22,9 @@ def print_error(message):
     """Print an error message."""
 
 
-@pytest.mark.skip(reason="TODO: Fix test_server - mock object doesn't match actual server structure")
+@pytest.mark.skip(
+    reason="TODO: Fix test_server - mock object doesn't match actual server structure"
+)
 async def test_server():
     """Test the TapoCameraServer class directly."""
 

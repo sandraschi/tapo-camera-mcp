@@ -2,26 +2,28 @@
 Log rotation and sanitization utilities for Tapo Camera MCP
 """
 
-import os
 import gzip
 import logging
 import shutil
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, List, Dict, Any
-from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class LogConfig:
     """Configuration for log management"""
+
     max_size_mb: float = 10.0  # Maximum size before rotation (MB)
     max_files: int = 5  # Maximum number of rotated files to keep
     compress_after_days: int = 1  # Compress files older than X days
     delete_after_days: int = 30  # Delete files older than X days
     log_directory: Optional[str] = None  # Directory to manage (defaults to script dir)
     enabled: bool = True
+
 
 class LogManager:
     """Manages log file rotation, compression, and cleanup"""
@@ -119,11 +121,11 @@ class LogManager:
             rotated_files = sorted(
                 self.log_dir.glob("*.log_*"),
                 key=lambda x: x.stat().st_mtime,
-                reverse=True  # Newest first
+                reverse=True,  # Newest first
             )
 
             if len(rotated_files) > self.config.max_files:
-                files_to_delete = rotated_files[self.config.max_files:]
+                files_to_delete = rotated_files[self.config.max_files :]
                 for old_file in files_to_delete:
                     old_file.unlink()
                     deleted_count += 1
@@ -142,11 +144,7 @@ class LogManager:
 
         logger.info("Starting log sanitization process")
 
-        results = {
-            "rotated": 0,
-            "compressed": 0,
-            "deleted": 0
-        }
+        results = {"rotated": 0, "compressed": 0, "deleted": 0}
 
         try:
             # Rotate specified log files or all .log files
@@ -185,17 +183,13 @@ class LogManager:
                 "total_size_mb": 0.0,
                 "oldest_file": None,
                 "newest_file": None,
-                "files_by_type": {
-                    "active_logs": 0,
-                    "rotated_logs": 0,
-                    "compressed_logs": 0
-                }
+                "files_by_type": {"active_logs": 0, "rotated_logs": 0, "compressed_logs": 0},
             }
 
             if not self.log_dir.exists():
                 return stats
 
-            oldest_time = float('inf')
+            oldest_time = float("inf")
             newest_time = 0
 
             for log_file in self.log_dir.glob("*.log*"):
@@ -208,9 +202,9 @@ class LogManager:
                 newest_time = max(newest_time, file_time)
 
                 # Categorize files
-                if log_file.name.endswith('.gz'):
+                if log_file.name.endswith(".gz"):
                     stats["files_by_type"]["compressed_logs"] += 1
-                elif '_' in log_file.name:
+                elif "_" in log_file.name:
                     stats["files_by_type"]["rotated_logs"] += 1
                 else:
                     stats["files_by_type"]["active_logs"] += 1
@@ -228,10 +222,10 @@ class LogManager:
     def _compress_file(self, file_path: Path) -> bool:
         """Compress a file using gzip"""
         try:
-            compressed_path = file_path.with_suffix(file_path.suffix + '.gz')
+            compressed_path = file_path.with_suffix(file_path.suffix + ".gz")
 
-            with file_path.open('rb') as f_in:
-                with gzip.open(compressed_path, 'wb') as f_out:
+            with file_path.open("rb") as f_in:
+                with gzip.open(compressed_path, "wb") as f_out:
                     shutil.copyfileobj(f_in, f_out)
 
             # Remove original file after successful compression
@@ -244,16 +238,20 @@ class LogManager:
             logger.error(f"Failed to compress file {file_path}: {e}")
             return False
 
+
 def create_log_manager(config: Optional[LogConfig] = None) -> LogManager:
     """Factory function to create a LogManager instance"""
     return LogManager(config)
 
+
 # Default log manager instance
 default_log_manager = LogManager()
+
 
 def sanitize_logs_now(log_files: Optional[List[str]] = None) -> Dict[str, int]:
     """Convenience function to sanitize logs immediately"""
     return default_log_manager.sanitize_logs(log_files)
+
 
 def get_log_stats() -> Dict[str, Any]:
     """Convenience function to get log statistics"""

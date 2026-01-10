@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 # Done AFTER logging is configured so messages are visible
 try:
     from . import patch_ring_doorbell
+
     patch_ring_doorbell.patch_ring_doorbell()
 except Exception as e:
     logger.warning(f"Ring patch skipped: {e}")
@@ -84,7 +85,6 @@ def main():
 
             # Import Tapo library BEFORE starting asyncio to avoid PyO3 initialization issues
             logger.info("Importing Tapo library...")
-            from tapo_camera_mcp.camera.tapo import Tapo
 
             import asyncio
 

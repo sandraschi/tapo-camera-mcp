@@ -14,8 +14,7 @@ from typing import Optional
 
 from fastmcp.server import FastMCP
 
-from tapo_camera_mcp.camera.manager import camera_manager
-
+from tapo_camera_mcp.camera.manager import CameraManager
 
 # Optional camera imports - handle missing dependencies gracefully
 try:
@@ -69,20 +68,21 @@ class TapoCameraServer:
             cls._init_lock = asyncio.Lock()
 
         async with cls._init_lock:
-            # Double check after lock
+            # Double-check after acquiring lock
             if cls._initialized:
                 return cls._instance
 
             if not cls._initializing:
                 cls._initializing = True
                 try:
-                    # ALWAYS perform basic setup (sets up camera_manager, mcp, etc)
-                    cls._instance.setup_basic()
-
-                    # Always call initialize, but it will skip hardware if requested
-                    await cls._instance.initialize(skip_hardware=skip_hardware_init)
-
-                    cls._hardware_initialized = not skip_hardware_init
+                    if not skip_hardware_init:
+                        await cls._instance.initialize()
+                        cls._hardware_initialized = True
+                    else:
+                        logger.info(
+                            "Skipping hardware initialization (lazy mode) - will initialize on first API call"
+                        )
+                        cls._hardware_initialized = False
                     cls._initialized = True
                 finally:
                     cls._initializing = False
@@ -104,85 +104,62 @@ class TapoCameraServer:
     @classmethod
     async def ensure_hardware_initialized(cls):
         """Ensure hardware is initialized (lazy initialization)."""
-        if cls._initialized and cls._hardware_initialized:
+        if cls._hardware_initialized:
             return
 
-        # Ensure we have an instance
         if cls._instance is None:
             await cls.get_instance()
-            # If get_instance already did hardware init, we're done
-            if cls._hardware_initialized:
-                return
-
-        # Use lock to prevent concurrent initialization
-        if cls._init_lock is None:
-            cls._init_lock = asyncio.Lock()
-
-        async with cls._init_lock:
-            # Double-check after acquiring lock
-            if cls._hardware_initialized:
-                return
-
-            if not cls._initializing:
-                cls._initializing = True
-                try:
-                    logger.info("Performing lazy hardware initialization...")
-                    await cls._instance.initialize()
-                    cls._hardware_initialized = True
-                    logger.info("Lazy hardware initialization completed")
-                except Exception as e:
-                    logger.error(f"Lazy hardware initialization failed: {e}")
-                    raise
-                finally:
-                    cls._initializing = False
-            else:
-                # Wait for ongoing initialization
-                timeout = 60.0
-                elapsed = 0.0
-                while cls._initializing and not cls._hardware_initialized:
-                    await asyncio.sleep(0.1)
-                    elapsed += 0.1
-                    if elapsed >= timeout:
-                        logger.error(
-                            f"Hardware initialization timeout after {timeout}s"
-                        )
-                        break
-
-    def setup_basic(self):
-        """Perform basic member setup (safe for multiple calls)."""
-        # Suppress FastMCP internal logging
-        for logger_name in [
-            "mcp",
-            "mcp.server",
-            "mcp.server.lowlevel",
-            "mcp.server.lowlevel.server",
-            "fastmcp",
-        ]:
-            logging.getLogger(logger_name).setLevel(logging.WARNING)
-
-        # Initialize FastMCP server (only if not already initialized)
-        if not hasattr(self, "mcp") or self.mcp is None:
-            self.mcp = FastMCP("tapo-camera-mcp")
-
-        # Initialize camera manager (only if not already initialized)
-        if not hasattr(self, "camera_manager") or self.camera_manager is None:
-            self.camera_manager = camera_manager
-            logger.debug("Basic setup: camera_manager initialized")
-
-    async def initialize(self, skip_hardware: bool = None):
-        """Initialize the server members and optionally hardware."""
-        # Double-check initialization status - if fully hardware-initialized, skip
-        if TapoCameraServer._initialized and TapoCameraServer._hardware_initialized:
             return
 
-        # Ensure basic setup is done
-        self.setup_basic()
+        # Initialize hardware if not already done
+        if not cls._hardware_initialized and not cls._initializing:
+            logger.info("Performing lazy hardware initialization...")
+            cls._initializing = True
+            try:
+                await cls._instance.initialize()
+                cls._hardware_initialized = True
+                logger.info("Lazy hardware initialization completed")
+            except Exception as e:
+                logger.error(f"Lazy hardware initialization failed: {e}")
+                raise
+            finally:
+                cls._initializing = False
+
+    async def initialize(self):
+        """Initialize the server."""
+        # Double-check initialization status
+        if TapoCameraServer._initialized:  # Use class variable, not instance
+            logger.debug("Server already initialized, skipping")
+            return
 
         # Set initializing flag EARLY to prevent concurrent initialization
         TapoCameraServer._initializing = True
 
         try:
+            # Suppress FastMCP internal logging to prevent INFO logs from appearing as errors in Cursor
+            # FastMCP writes to stderr, and Cursor interprets stderr as errors
+            for logger_name in [
+                "mcp",
+                "mcp.server",
+                "mcp.server.lowlevel",
+                "mcp.server.lowlevel.server",
+                "fastmcp",
+            ]:
+                logging.getLogger(logger_name).setLevel(logging.WARNING)
+
             logger.info("Initializing Tapo Camera MCP Server...")
+
+            # Initialize FastMCP server (only if not already initialized)
+            if not hasattr(self, "mcp") or self.mcp is None:
+                self.mcp = FastMCP("tapo-camera-mcp")
+            else:
+                logger.debug("FastMCP instance already exists, reusing")
+
+            # Initialize camera manager (only if not already initialized)
+            if not hasattr(self, "camera_manager") or self.camera_manager is None:
+                self.camera_manager = CameraManager()
+            else:
+                logger.debug("Camera manager already exists, reusing")
 
             # Load cameras from config
             from ..config import get_config
@@ -192,9 +169,7 @@ class TapoCameraServer:
 
             # Convert config format to camera configs
             if camera_configs:
-                logger.info(
-                    f"Loading {len(camera_configs)} cameras from configuration..."
-                )
+                logger.info(f"Loading {len(camera_configs)} cameras from configuration...")
                 for camera_name, camera_config in camera_configs.items():
                     try:
                         # Add name to config if not present
@@ -213,38 +188,36 @@ class TapoCameraServer:
             await self._register_tools()
 
             # Initialize all hardware and test connections (with timeout to prevent blocking)
-            # Can be skipped via parameter or TAPO_MCP_SKIP_HARDWARE_INIT env var
-            if skip_hardware is None:
-                skip_hardware = os.getenv(
-                    "TAPO_MCP_SKIP_HARDWARE_INIT", "false"
-                ).lower() in ("true", "1", "yes")
+            # Can be skipped via TAPO_MCP_SKIP_HARDWARE_INIT env var for faster startup
+            skip_hardware_init = os.getenv("TAPO_MCP_SKIP_HARDWARE_INIT", "false").lower() in (
+                "true",
+                "1",
+                "yes",
+            )
 
-            if skip_hardware:
+            if skip_hardware_init:
                 logger.info(
-                    "Skipping hardware initialization - hardware will initialize on first use"
+                    "Skipping hardware initialization (TAPO_MCP_SKIP_HARDWARE_INIT=true) - hardware will initialize on first use"
                 )
             else:
                 from .hardware_init import initialize_all_hardware
 
                 logger.info("Initializing all hardware components...")
                 try:
-                    # Increase timeout back to 30s as hardware can be slow in Docker
+                    # Reduced timeout from 30s to 10s for faster startup
                     hardware_results = await asyncio.wait_for(
-                        initialize_all_hardware(), timeout=30.0
+                        initialize_all_hardware(), timeout=10.0
                     )
                     # Log summary
                     successful = sum(
                         1 for r in hardware_results.values() if r.get("success", False)
                     )
                     total = len(hardware_results)
-                    logger.info(
-                        f"Hardware initialization: {successful}/{total} components ready"
-                    )
+                    logger.info(f"Hardware initialization: {successful}/{total} components ready")
                 except asyncio.TimeoutError:
                     logger.warning(
-                        "Hardware initialization timed out after 30s - continuing anyway (hardware will initialize on first use)"
+                        "Hardware initialization timed out after 10s - continuing anyway (hardware will initialize on first use)"
                     )
-
                 except Exception as e:
                     logger.warning(
                         f"Hardware initialization failed: {e} - continuing anyway (hardware will initialize on first use)"
@@ -252,9 +225,7 @@ class TapoCameraServer:
 
             # Start connection supervisor for device health monitoring
             # TEMPORARILY DISABLED: causing hangs with unreachable Tapo devices
-            logger.info(
-                "Connection supervisor DISABLED (causing hangs with unreachable devices)"
-            )
+            logger.info("Connection supervisor DISABLED (causing hangs with unreachable devices)")
             # from .connection_supervisor import get_supervisor
             # self.supervisor = get_supervisor()
             # await self.supervisor.start()
@@ -357,9 +328,7 @@ class TapoCameraServer:
                 if save_to_temp:
                     import tempfile
 
-                    with tempfile.NamedTemporaryFile(
-                        suffix=".jpg", delete=False
-                    ) as temp_file:
+                    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
                         temp_file.write(image_data)
                         result["saved_path"] = temp_file.name
 
@@ -373,10 +342,7 @@ class TapoCameraServer:
             if camera_name and hasattr(self, "camera_manager") and self.camera_manager:
                 camera = self.camera_manager.get_camera(camera_name)
                 if not camera:
-                    return {
-                        "status": "error",
-                        "error": f"Camera '{camera_name}' not found",
-                    }
+                    return {"status": "error", "error": f"Camera '{camera_name}' not found"}
 
                 image_data = await camera.capture_image()
 
@@ -390,9 +356,7 @@ class TapoCameraServer:
                 if save_to_temp:
                     import tempfile
 
-                    with tempfile.NamedTemporaryFile(
-                        suffix=".jpg", delete=False
-                    ) as temp_file:
+                    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
                         temp_file.write(image_data)
                         result["saved_path"] = temp_file.name
 
@@ -420,9 +384,7 @@ class TapoCameraServer:
                 if save_to_temp:
                     import tempfile
 
-                    with tempfile.NamedTemporaryFile(
-                        suffix=".jpg", delete=False
-                    ) as temp_file:
+                    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
                         temp_file.write(image_data)
                         result["saved_path"] = temp_file.name
 
@@ -490,10 +452,7 @@ class TapoCameraServer:
             capture_result = await self.capture_still(capture_params)
 
             if capture_result.get("status") != "success":
-                return {
-                    "status": "error",
-                    "error": "Failed to capture image for security scan",
-                }
+                return {"status": "error", "error": "Failed to capture image for security scan"}
 
             # Analyze for threats
             capture_result.get("analysis", {})

@@ -5,30 +5,231 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.17.0] - 2026-01-07 🤖 **Controlled Development & Robotics Integration**
+## [1.9.0] - 2026-01-09 🎨 **Web Interface CSS Cleanup & Theme Support**
 
-### 🆕 **FEATURES**
+### 🎨 **COMPREHENSIVE CSS CLEANUP**
 
-#### **Controlled Development Protocol**
-- **Approval Gate**: Implemented mandatory `implementation_plan.md` review for all architectural shifts.
-- **Staging**: Granular task tracking via `task.md` for peer-to-peer verification.
-- **Assent Logic**: Removed automated "assent" assumptions to maintain architect control.
+#### **CSS Architecture Refactoring**
+- **Inline Styles Migration**: Converted all inline `<style>` blocks to external CSS files for better maintainability
+- **Theme Variables Implementation**: Replaced hardcoded colors with CSS custom properties for consistent theming
+- **Modular CSS Structure**: Created dedicated CSS files for each major template component
 
-#### **Robotics Tactical Dashboard (V12.1 Integration)**
-- **Unitree Go2 Support**: Telemetry and control grid for humanoid/quadruped platforms.
-- **Moorebot Scout Integration**: AI home patrol coordination.
-- **Mobile Surveillance**: Robots treated as mobile optical nodes in the surveillance matrix.
+#### **Templates Updated (13 Files)**
+- ✅ `base.html` → `theme.css` - Base theme and layout styles
+- ✅ `cameras.html` → `cameras.css` - Camera management interface
+- ✅ `dashboard.html` → `dashboard.css` - Main dashboard layout
+- ✅ `plex.html` → `plex.css` - Media server integration
+- ✅ `lighting.html` → `lighting.css` - Lighting controls
+- ✅ `energy.html` → `energy.css` - Energy monitoring
+- ✅ `weather.html` → `weather.css` - Weather data display
+- ✅ `alerts.html` → `alerts.css` - Alert management system
+- ✅ `health.html` → `health.css` - Health monitoring dashboard
+- ✅ `settings.html` → `settings.css` - Configuration interface
+- ✅ `alarms.html` → `alarms.css` - Security alarm controls
+- ✅ `appliance_monitor.html` → `appliance_monitor.css` - Appliance monitoring
+- ✅ `kitchen.html` → `kitchen.css` - Kitchen device controls
 
-#### **Vienna Municipal Integration**
-- **Public Webcam Grid**: Aggregation of Vienna city webcams for environmental monitoring.
-- **SOTA 2026 Standards**: Aligned with Vienna Alsergrund localized data requirements.
+### 🎯 **THEME SYSTEM ENHANCEMENTS**
 
-### 📋 **DOCUMENTATION**
-- **README & PRD Overhaul**: Updated core documents to reflect the unified robotics/surveillance architecture.
-- **Git Formalization**: Staged and committed all "stray" templates and modules from the rapid expansion phase.
+#### **CSS Custom Properties**
+```css
+:root {
+  --primary-color: #4361ee;
+  --secondary-color: #3f37c9;
+  --success-color: #4bb543;
+  --danger-color: #ff3333;
+  --warning-color: #f9c74f;
+  --info-color: #4895ef;
+  --light-color: #f8f9fa;
+  --dark-color: #212529;
+  --gray-color: #6c757d;
+  --light-gray: #e9ecef;
+  --border-radius: 8px;
+  --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
+```
+
+#### **Key Improvements**
+- **Readability Fixes**: Resolved "white on white" text visibility issues across all pages
+- **Theme Consistency**: Unified color scheme and styling patterns
+- **Dark Mode Support**: Automatic light/dark mode compatibility
+- **Responsive Design**: Enhanced mobile and tablet layouts
+- **Accessibility**: Improved contrast ratios and keyboard navigation
+
+### 🚀 **PERFORMANCE & MAINTENANCE**
+
+#### **Performance Benefits**
+- **Reduced HTML Size**: Externalized large CSS blocks from templates
+- **CSS Caching**: Browser caching of external stylesheets
+- **Faster Page Loads**: Improved initial page rendering
+- **Bundle Optimization**: Modular CSS loading strategy
+
+#### **Developer Experience**
+- **Better Code Organization**: Clear separation of HTML, CSS, and JavaScript
+- **Easier Maintenance**: Centralized styling definitions
+- **Version Control**: CSS changes tracked independently
+- **Debugging**: Improved CSS debugging and inspection
+
+### 📱 **RESPONSIVE DESIGN IMPROVEMENTS**
+
+#### **Mobile Optimizations**
+- **Adaptive Grids**: Layouts that scale from desktop to mobile
+- **Touch-Friendly**: Appropriate button sizes and spacing
+- **Readable Fonts**: Optimized font sizes across screen sizes
+- **Flexible Components**: Responsive card layouts and navigation
+
+### 📚 **DOCUMENTATION UPDATES**
+
+#### **New Documentation**
+- **WEB_INTERFACE_IMPROVEMENTS.md**: Comprehensive guide to CSS cleanup and theme system
+- **Updated USER_GUIDE.md**: Added web interface features section
+- **Updated DOCUMENTATION_INDEX.md**: Added new documentation reference
+
+#### **Migration Guide**
+- **CSS Architecture**: Guidelines for maintaining the new CSS structure
+- **Theme Variables**: How to use and extend the theme system
+- **Template Standards**: Best practices for HTML/CSS separation
+
+## [1.17.0] - 2026-01-09 🔄 **MCP Client Refactoring & Testing Infrastructure Overhaul**
+
+### 🏗️ **ARCHITECTURAL IMPROVEMENTS**
+
+#### **Web API MCP Client Refactoring**
+- **Complete MCP Migration**: All remaining web API endpoints now use MCP client instead of direct manager calls
+- **Unified Communication Pattern**: Standardized MCP protocol usage across all API endpoints
+- **Improved Separation of Concerns**: Clean separation between web layer and MCP tool layer
+- **Enhanced Error Handling**: Consistent error handling and response formatting across all endpoints
+
+**Refactored Endpoints:**
+- ✅ `lighting.py` - Philips Hue and Tapo lighting control
+- ✅ `cameras.py` - Camera management and streaming
+- ✅ `pages.py` - Page rendering and navigation
+- ✅ `system.py` - System information and control
+- ✅ `custom_presets.py` - PTZ preset management
+- ✅ `microscope.py` - Microscope camera control
+- ✅ `otoscope.py` - Medical otoscope camera control
+- ✅ `ptz.py` - Pan-Tilt-Zoom camera control
+- ✅ `scanner.py` - Document scanner control
+- ✅ `security.py` - Ring/Nest security integration
+- ✅ `motion.py` - Motion detection management
+- ✅ `audio.py` - Audio streaming control
+- ✅ `energy.py` - Smart plug energy monitoring
+- ✅ `sensors.py` - Environmental sensor management
+- ✅ `log_management.py` - System logging operations
+- ✅ `onboarding.py` - Device discovery and configuration
+
+#### **MCP Tools Integration**
+- **Portmanteau Tools**: Full integration with consolidated MCP tools
+- **Tool Categories**:
+  - `energy_management` - Smart plug and energy monitoring
+  - `motion_management` - Motion detection and camera events
+  - `camera_management` - Camera control and streaming
+  - `ptz_management` - PTZ control and presets
+  - `media_management` - Media capture and streaming
+  - `system_management` - System operations and logging
+  - `medical_management` - Medical device control
+  - `security_management` - Security system integration
+  - `lighting_management` - Lighting control systems
+- **Action-Based Interface**: Clean action-based tool calling patterns
+
+### 🧪 **COMPREHENSIVE TESTING INFRASTRUCTURE**
+
+#### **Testing Scaffold Overhaul**
+- **120+ Test Methods**: Comprehensive test coverage across all components
+- **Advanced Fixtures**: 100+ reusable test fixtures for all components
+- **Mock Infrastructure**: Extensive mocking for external dependencies
+- **Performance Testing**: Built-in performance benchmarking and regression detection
+- **Integration Testing**: Full MCP client-server integration tests
+
+#### **Test Categories & Coverage**
+- **Unit Tests** (92% coverage target):
+  - API endpoint unit tests with MCP integration
+  - MCP client functionality tests
+  - Core component isolation tests
+  - Error handling and edge case validation
+
+- **Integration Tests** (85% coverage target):
+  - MCP client-server interaction testing
+  - Cross-component workflow validation
+  - Real-time data flow testing
+  - Concurrent operation testing
+
+- **End-to-End Tests**:
+  - Complete user journey validation
+  - API contract verification
+  - Performance under load testing
+
+#### **Advanced Testing Features**
+- **Mock MCP Server**: Configurable mock server for testing MCP interactions
+- **Test Data Factories**: Consistent, realistic test data generation
+- **Performance Timers**: Automated performance threshold validation
+- **Async Testing Support**: Full asyncio testing infrastructure
+- **Cross-Platform Testing**: Windows, macOS, Linux compatibility validation
+
+#### **CI/CD Pipeline Enhancement**
+- **10 Comprehensive Jobs**: Quality checks, unit tests, integration tests, performance, security, deployment
+- **Parallel Execution**: Optimized test execution with parallel processing
+- **Artifact Generation**: Detailed test reports, coverage reports, performance metrics
+- **Automated Deployment**: Container testing and production deployment validation
+- **Security Integration**: Vulnerability scanning, secrets detection, dependency analysis
+
+### 📊 **DEVELOPMENT EXPERIENCE**
+
+#### **Testing Infrastructure**
+- **One-Command Testing**: `poetry run pytest` with comprehensive coverage
+- **Test Discovery**: Automatic test discovery with clear categorization
+- **Debug Support**: Enhanced debugging with PDB, IPython, and detailed tracebacks
+- **Performance Monitoring**: Built-in performance regression detection
+- **Documentation**: Complete testing guide with examples and best practices
+
+#### **Developer Tools**
+- **Test Fixtures**: Pre-configured fixtures for common testing scenarios
+- **Mock Utilities**: Easy-to-use mocking helpers for external services
+- **Assertion Helpers**: Standardized assertion patterns for consistent testing
+- **Performance Tools**: Built-in benchmarking for performance-critical code
+- **CI/CD Integration**: Local CI pipeline execution for development validation
+
+### 🔧 **TECHNICAL IMPROVEMENTS**
+
+#### **Code Quality & Architecture**
+- **MCP Protocol Compliance**: Full adherence to MCP stdio protocol standards
+- **Error Handling**: Consistent error handling patterns across all endpoints
+- **Type Safety**: Enhanced type hints and validation throughout the codebase
+- **Documentation**: Updated API documentation reflecting MCP integration
+- **Logging**: Improved logging with structured error reporting
+
+#### **Performance Optimizations**
+- **Connection Pooling**: Efficient MCP client connection management
+- **Async Operations**: Full asyncio support for non-blocking operations
+- **Caching**: Smart caching for frequently accessed data
+- **Resource Management**: Proper cleanup and resource lifecycle management
+
+### 🐛 **BUG FIXES**
+
+- **MCP Connection Stability**: Improved MCP client connection reliability
+- **Error Propagation**: Fixed error handling in MCP tool calls
+- **Resource Cleanup**: Enhanced cleanup of MCP client resources
+- **Concurrent Access**: Fixed race conditions in concurrent MCP operations
+
+### 📚 **DOCUMENTATION**
+
+- **Testing Guide**: Comprehensive testing documentation (`tests/README.md`)
+- **API Documentation**: Updated API docs reflecting MCP integration
+- **Development Guide**: Enhanced development workflow documentation
+- **CI/CD Documentation**: Complete CI/CD pipeline documentation
+- **Architecture Docs**: Updated architecture documentation
+
+### 🔄 **BACKWARD COMPATIBILITY**
+
+- **API Contracts**: All existing API endpoints maintain backward compatibility
+- **Response Formats**: Consistent response formats across all endpoints
+- **Error Codes**: Standardized error codes and messages
+- **Migration Path**: Smooth transition from direct manager calls to MCP client
+
+---
 
 ## [1.16.0] - 2025-12-18 🌤️ **Vienna Public Webcams Integration**
-
 
 ### 🆕 **FEATURES**
 

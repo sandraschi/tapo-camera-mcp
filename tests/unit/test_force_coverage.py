@@ -172,7 +172,9 @@ def test_server_functionality():
         assert False
 
 
-@pytest.mark.skip(reason="# TODO: Fix test_camera_creation_and_methods - currently has assert False")
+@pytest.mark.skip(
+    reason="# TODO: Fix test_camera_creation_and_methods - currently has assert False"
+)
 def test_camera_creation_and_methods():
     """Test camera creation and method calls."""
     try:

@@ -98,13 +98,15 @@ class NetatmoWeatherTool(BaseTool):
 
                         # Add modules (only real ones - no fake outdoor module)
                         for module in station.get("modules", []):
-                            station_data["modules"].append({
-                                "module_id": module.get("module_id"),
-                                "name": module.get("module_name"),
-                                "type": module.get("module_type", "indoor"),
-                                "battery_level": module.get("battery_percent"),
-                                "signal_strength": None,  # Not available in API response
-                            })
+                            station_data["modules"].append(
+                                {
+                                    "module_id": module.get("module_id"),
+                                    "name": module.get("module_name"),
+                                    "type": module.get("module_type", "indoor"),
+                                    "battery_level": module.get("battery_percent"),
+                                    "signal_strength": None,  # Not available in API response
+                                }
+                            )
 
                         stations.append(station_data)
 
@@ -161,7 +163,9 @@ class NetatmoWeatherTool(BaseTool):
                             "co2": data["indoor"].get("co2"),
                             "noise": data["indoor"].get("noise"),
                             "pressure": data["indoor"].get("pressure"),
-                            "health_index": "Good" if data["indoor"].get("co2", 1000) < 1000 else "Fair",
+                            "health_index": "Good"
+                            if data["indoor"].get("co2", 1000) < 1000
+                            else "Fair",
                         }
 
                     # Only add outdoor data if it actually exists (real outdoor module)

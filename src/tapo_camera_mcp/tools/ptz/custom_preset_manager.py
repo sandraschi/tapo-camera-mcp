@@ -1,11 +1,10 @@
 """Custom PTZ Preset Manager for storing favorite positions."""
 
 import json
-import os
 import logging
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
-from dataclasses import dataclass, asdict
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +12,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CustomPTZPreset:
     """Custom PTZ preset position data."""
+
     name: str
     camera_name: str
     pan: float
@@ -24,7 +24,7 @@ class CustomPTZPreset:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'CustomPTZPreset':
+    def from_dict(cls, data: dict) -> "CustomPTZPreset":
         return cls(**data)
 
 
@@ -35,19 +35,23 @@ class CustomPTZPresetManager:
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(exist_ok=True)
         self.presets_file = self.data_dir / "custom_ptz_presets.json"
-        self._presets: Dict[str, Dict[str, CustomPTZPreset]] = {}  # camera_name -> {preset_name -> preset}
+        self._presets: Dict[
+            str, Dict[str, CustomPTZPreset]
+        ] = {}  # camera_name -> {preset_name -> preset}
         self._load_presets()
 
     def _load_presets(self):
         """Load presets from file."""
         if self.presets_file.exists():
             try:
-                with open(self.presets_file, 'r', encoding='utf-8') as f:
+                with open(self.presets_file, encoding="utf-8") as f:
                     data = json.load(f)
                     for camera_name, presets_data in data.items():
                         self._presets[camera_name] = {}
                         for preset_name, preset_data in presets_data.items():
-                            self._presets[camera_name][preset_name] = CustomPTZPreset.from_dict(preset_data)
+                            self._presets[camera_name][preset_name] = CustomPTZPreset.from_dict(
+                                preset_data
+                            )
                 logger.info(f"Loaded custom PTZ presets for {len(self._presets)} cameras")
             except Exception as e:
                 logger.error(f"Failed to load custom PTZ presets: {e}")
@@ -62,14 +66,21 @@ class CustomPTZPresetManager:
                 for preset_name, preset in presets.items():
                     data[camera_name][preset_name] = preset.to_dict()
 
-            with open(self.presets_file, 'w', encoding='utf-8') as f:
+            with open(self.presets_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
             logger.debug("Saved custom PTZ presets")
         except Exception as e:
             logger.error(f"Failed to save custom PTZ presets: {e}")
 
-    def save_preset(self, camera_name: str, preset_name: str, pan: float, tilt: float,
-                   zoom: float = 0.0, description: str = "") -> bool:
+    def save_preset(
+        self,
+        camera_name: str,
+        preset_name: str,
+        pan: float,
+        tilt: float,
+        zoom: float = 0.0,
+        description: str = "",
+    ) -> bool:
         """Save a PTZ preset position."""
         try:
             if camera_name not in self._presets:
@@ -81,7 +92,7 @@ class CustomPTZPresetManager:
                 pan=pan,
                 tilt=tilt,
                 zoom=zoom,
-                description=description
+                description=description,
             )
 
             self._presets[camera_name][preset_name] = preset
@@ -129,7 +140,9 @@ class CustomPTZPresetManager:
                 del self._presets[camera_name][old_name]
                 self._presets[camera_name][new_name] = preset
                 self._save_presets()
-                logger.info(f"Renamed custom PTZ preset '{old_name}' to '{new_name}' for camera '{camera_name}'")
+                logger.info(
+                    f"Renamed custom PTZ preset '{old_name}' to '{new_name}' for camera '{camera_name}'"
+                )
                 return True
             return False
         except Exception as e:
@@ -140,26 +153,10 @@ class CustomPTZPresetManager:
 # Global preset manager instance
 _preset_manager = None
 
+
 def get_custom_preset_manager() -> CustomPTZPresetManager:
     """Get the global custom preset manager instance."""
     global _preset_manager
     if _preset_manager is None:
         _preset_manager = CustomPTZPresetManager()
     return _preset_manager
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

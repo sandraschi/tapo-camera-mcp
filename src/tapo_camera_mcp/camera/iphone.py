@@ -1,9 +1,9 @@
 """iPhone camera implementation for repurposed iPhones as webcams."""
 
 import logging
-import asyncio
 from typing import Dict, Optional
 
+from .base import CameraFactory, CameraType
 from .webcam import Webcam
 
 logger = logging.getLogger(__name__)
@@ -17,9 +17,15 @@ class IPhoneCamera(Webcam):
         super().__init__(config, mock_webcam)
         self._iphone_model = self.config.params.get("iphone_model", "Unknown iPhone")
         self._ios_version = self.config.params.get("ios_version", "Unknown")
-        self._connection_method = self.config.params.get("connection_method", "wifi")  # wifi, usb, continuity
-        self._webcam_app = self.config.params.get("webcam_app", "continuity")  # continuity, epoccam, manycam, etc.
-        self._camera_lens = self.config.params.get("camera_lens", "wide")  # wide, ultra_wide, telephoto
+        self._connection_method = self.config.params.get(
+            "connection_method", "wifi"
+        )  # wifi, usb, continuity
+        self._webcam_app = self.config.params.get(
+            "webcam_app", "continuity"
+        )  # continuity, epoccam, manycam, etc.
+        self._camera_lens = self.config.params.get(
+            "camera_lens", "wide"
+        )  # wide, ultra_wide, telephoto
 
         # iPhone-specific settings
         self._hdr_mode = self.config.params.get("hdr_mode", False)
@@ -45,15 +51,19 @@ class IPhoneCamera(Webcam):
                 "iphone_capable": True,
                 "ptz_capable": False,  # iPhones don't have PTZ
                 "digital_zoom_capable": True,  # Digital zoom always available
-                "optical_zoom_capable": self._camera_lens == "telephoto",  # Only telephoto lens has optical zoom
+                "optical_zoom_capable": self._camera_lens
+                == "telephoto",  # Only telephoto lens has optical zoom
             }
         )
         return status
 
-    async def set_camera_mode(self, hdr: Optional[bool] = None,
-                            portrait: Optional[bool] = None,
-                            live_photos: Optional[bool] = None,
-                            stabilization: Optional[bool] = None) -> None:
+    async def set_camera_mode(
+        self,
+        hdr: Optional[bool] = None,
+        portrait: Optional[bool] = None,
+        live_photos: Optional[bool] = None,
+        stabilization: Optional[bool] = None,
+    ) -> None:
         """Set iPhone camera modes."""
         if hdr is not None:
             self._hdr_mode = hdr
@@ -64,9 +74,11 @@ class IPhoneCamera(Webcam):
         if stabilization is not None:
             self._stabilization = stabilization
 
-        logger.info(f"iPhone {self.config.name}: Camera modes updated - HDR: {self._hdr_mode}, "
-                   f"Portrait: {self._portrait_mode}, Live: {self._live_photos}, "
-                   f"Stabilization: {self._stabilization}")
+        logger.info(
+            f"iPhone {self.config.name}: Camera modes updated - HDR: {self._hdr_mode}, "
+            f"Portrait: {self._portrait_mode}, Live: {self._live_photos}, "
+            f"Stabilization: {self._stabilization}"
+        )
 
     async def switch_camera_lens(self, lens: str) -> None:
         """Switch between iPhone camera lenses."""
@@ -145,7 +157,7 @@ class IPhoneCamera(Webcam):
                 "portrait_mode": self._portrait_mode,
                 "live_photos": self._live_photos,
                 "stabilization": self._stabilization,
-            }
+            },
         }
 
     async def test_iphone_connection(self) -> Dict:
@@ -170,7 +182,7 @@ class IPhoneCamera(Webcam):
                 "success": True,
                 "connection_test": connection_test,
                 "recommendations": self._get_setup_recommendations(),
-                "troubleshooting": self._get_troubleshooting_steps()
+                "troubleshooting": self._get_troubleshooting_steps(),
             }
 
         except Exception as e:
@@ -178,7 +190,7 @@ class IPhoneCamera(Webcam):
             return {
                 "success": False,
                 "error": str(e),
-                "troubleshooting": self._get_troubleshooting_steps()
+                "troubleshooting": self._get_troubleshooting_steps(),
             }
 
     def _estimate_setup_difficulty(self) -> str:
@@ -186,60 +198,69 @@ class IPhoneCamera(Webcam):
         if self._connection_method == "continuity":
             # macOS Continuity Camera - easiest
             return "easy"
-        elif self._connection_method == "wifi" and self._webcam_app in ["epoccam", "manycam"]:
+        if self._connection_method == "wifi" and self._webcam_app in ["epoccam", "manycam"]:
             # Wireless apps - still easy
             return "easy"
-        elif self._connection_method == "usb":
+        if self._connection_method == "usb":
             # USB connection - medium difficulty
             return "medium"
-        else:
-            return "unknown"
+        return "unknown"
 
     def _get_setup_recommendations(self) -> list:
         """Get setup recommendations based on connection method and app."""
         recommendations = []
 
         if self._connection_method == "continuity":
-            recommendations.extend([
-                "Ensure iPhone and Mac are on same WiFi network",
-                "Sign into same iCloud account on both devices",
-                "Enable Handoff in System Settings > General",
-                "Bluetooth must be enabled on both devices",
-                "Keep devices within Bluetooth range initially"
-            ])
+            recommendations.extend(
+                [
+                    "Ensure iPhone and Mac are on same WiFi network",
+                    "Sign into same iCloud account on both devices",
+                    "Enable Handoff in System Settings > General",
+                    "Bluetooth must be enabled on both devices",
+                    "Keep devices within Bluetooth range initially",
+                ]
+            )
 
         elif self._webcam_app == "epoccam":
-            recommendations.extend([
-                "Download EpocCam app on iPhone from App Store",
-                "Download EpocCam drivers on computer",
-                "Connect iPhone and computer to same WiFi network",
-                "Launch EpocCam app on iPhone and select computer",
-                "Ensure firewall allows EpocCam connections"
-            ])
+            recommendations.extend(
+                [
+                    "Download EpocCam app on iPhone from App Store",
+                    "Download EpocCam drivers on computer",
+                    "Connect iPhone and computer to same WiFi network",
+                    "Launch EpocCam app on iPhone and select computer",
+                    "Ensure firewall allows EpocCam connections",
+                ]
+            )
 
         elif self._webcam_app == "manycam":
-            recommendations.extend([
-                "Download ManyCam app on iPhone from App Store",
-                "Download ManyCam software on computer",
-                "Connect both devices to same network",
-                "Configure ManyCam virtual webcam in your applications"
-            ])
+            recommendations.extend(
+                [
+                    "Download ManyCam app on iPhone from App Store",
+                    "Download ManyCam software on computer",
+                    "Connect both devices to same network",
+                    "Configure ManyCam virtual webcam in your applications",
+                ]
+            )
 
         elif self._connection_method == "usb":
-            recommendations.extend([
-                "Connect iPhone to computer with Lightning/USB-C cable",
-                "Trust computer when prompted on iPhone",
-                "Ensure iOS is updated to latest version",
-                "Check that webcam app supports USB mode"
-            ])
+            recommendations.extend(
+                [
+                    "Connect iPhone to computer with Lightning/USB-C cable",
+                    "Trust computer when prompted on iPhone",
+                    "Ensure iOS is updated to latest version",
+                    "Check that webcam app supports USB mode",
+                ]
+            )
 
         # Add general iPhone recommendations
-        recommendations.extend([
-            "Ensure iPhone battery is sufficiently charged",
-            "Close other camera-using apps on iPhone",
-            "Grant camera permissions to webcam app",
-            "Keep iPhone screen on during use (Settings > Display & Brightness > Auto-Lock)"
-        ])
+        recommendations.extend(
+            [
+                "Ensure iPhone battery is sufficiently charged",
+                "Close other camera-using apps on iPhone",
+                "Grant camera permissions to webcam app",
+                "Keep iPhone screen on during use (Settings > Display & Brightness > Auto-Lock)",
+            ]
+        )
 
         return recommendations
 
@@ -255,22 +276,5 @@ class IPhoneCamera(Webcam):
             "Reset network settings on iPhone if needed",
             "Try USB connection as fallback",
             "Check iOS version compatibility",
-            "Ensure no other apps are using camera"
+            "Ensure no other apps are using camera",
         ]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

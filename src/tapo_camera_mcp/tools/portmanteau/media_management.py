@@ -30,7 +30,15 @@ def register_media_management_tool(mcp: FastMCP) -> None:
 
     @mcp.tool()
     async def media_management(
-        action: Literal["capture", "capture_still", "analyze", "start_recording", "stop_recording", "get_stream_url", "capabilities"],
+        action: Literal[
+            "capture",
+            "capture_still",
+            "analyze",
+            "start_recording",
+            "stop_recording",
+            "get_stream_url",
+            "capabilities",
+        ],
         camera_name: str | None = None,
         quality: str | None = None,
         save_to_temp: bool = False,
@@ -56,21 +64,21 @@ def register_media_management_tool(mcp: FastMCP) -> None:
                 - "start_recording": Start video recording (requires: camera_name, duration)
                 - "stop_recording": Stop video recording (requires: camera_name)
                 - "get_stream_url": Get stream URL (requires: camera_name)
-            
+
             camera_name (str | None): Camera name/ID. Required for: all operations.
-            
+
             quality (str | None): Image/video quality. Used by: capture, capture_still, start_recording operations.
                 Default: "high". Valid: "low", "medium", "high", "ultra"
-            
+
             save_to_temp (bool): Save to temporary file. Used by: capture, capture_still operations. Default: False
-            
+
             analyze (bool): Analyze captured image. Used by: capture, capture_still operations. Default: False
-            
+
             prompt (str | None): Analysis prompt for image analysis. Required for: analyze operation.
                 Example: "Detect people and objects"
-            
+
             duration (int | None): Recording duration in seconds. Required for: start_recording operation.
-            
+
             output_dir (str | None): Output directory for recordings. Used by: start_recording operation.
                 Default: current directory
 
@@ -133,7 +141,10 @@ def register_media_management_tool(mcp: FastMCP) -> None:
 
                 if action == "start_recording":
                     if not duration:
-                        return {"success": False, "error": "duration is required for start_recording action"}
+                        return {
+                            "success": False,
+                            "error": "duration is required for start_recording action",
+                        }
 
                 tool = VideoRecordingTool()
                 operation_map = {
@@ -167,4 +178,3 @@ def register_media_management_tool(mcp: FastMCP) -> None:
         except Exception as e:
             logger.error(f"Error in media management action '{action}': {e}", exc_info=True)
             return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
-

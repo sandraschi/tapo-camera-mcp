@@ -37,7 +37,9 @@ def test_web_server_creation():
 def test_web_routes():
     """Test web server routes and endpoints."""
     try:
-        TapoWebServer()
+        from tapo_camera_mcp.web.server import WebServer
+        
+        WebServer()
 
         # Test that server has required routes
 

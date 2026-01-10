@@ -84,26 +84,26 @@ def register_camera_management_tool(mcp: FastMCP) -> None:
                 - "status": Get camera status (requires: camera_name or camera_id)
                 - "set_active": Set a camera as active (requires: camera_name or camera_id)
                 - "manage_groups": Manage camera groups (requires: group_action, optionally group_name and camera_name)
-            
+
             camera_name (str | None): Name of the camera. Required for: add, remove, connect, disconnect, info, status,
                 set_active operations. Alternative to camera_id.
-            
+
             camera_id (str | None): ID of the camera. Required for: remove, connect, disconnect, info, status,
                 set_active operations. Alternative to camera_name.
-            
+
             camera_type (str | None): Camera type for adding. Required for: add operation.
                 Examples: "Tapo", "Ring", "Webcam"
-            
+
             host (str | None): IP address or hostname for new cameras. Required for: add operation.
                 Example: "192.168.1.100"
-            
+
             username (str | None): Username for camera authentication. Required for: add operation.
-            
+
             password (str | None): Password for camera authentication. Required for: add operation.
-            
+
             group_action (str | None): Action for group management. Required for: manage_groups operation.
                 Valid: "list", "create", "add", "remove"
-            
+
             group_name (str | None): Group name for group operations. Required for: manage_groups operation when
                 group_action is "create". Optional for: manage_groups operation when group_action is "add" or "remove"
 
@@ -451,4 +451,3 @@ async def _handle_manage_groups(
             "action": "manage_groups",
             "error": f"Failed to manage groups: {e!s}",
         }
-

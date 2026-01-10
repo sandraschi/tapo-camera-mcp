@@ -8,9 +8,7 @@ from pathlib import Path
 
 # Suppress websocket deprecation warnings
 warnings.filterwarnings("ignore", message="websockets.legacy is deprecated")
-warnings.filterwarnings(
-    "ignore", message="websockets.server.WebSocketServerProtocol is deprecated"
-)
+warnings.filterwarnings("ignore", message="websockets.server.WebSocketServerProtocol is deprecated")
 
 from ..utils.logging import setup_logging
 from .server import WebServer
@@ -21,9 +19,7 @@ if __name__ == "__main__":
     try:
         parser = argparse.ArgumentParser(description="Tapo Camera MCP Web Server")
         parser.add_argument(
-            "--host",
-            default=None,
-            help="Host to bind the server to (default: from config)",
+            "--host", default=None, help="Host to bind the server to (default: from config)"
         )
         parser.add_argument(
             "--port",
@@ -46,8 +42,7 @@ if __name__ == "__main__":
         if is_docker:
             # In Docker: Log to stdout (Docker json-file driver) and mounted volume
             # Promtail reads from /app/logs/tapo_mcp.log (mounted to host)
-            log_file = "/app/logs/tapo_mcp.log"
-            setup_logging(log_file=log_file)
+            setup_logging(log_file="/app/logs/tapo_mcp.log")
         else:
             # Native: Log to project root
             log_file = Path(__file__).parent.parent.parent.parent / "tapo_mcp.log"

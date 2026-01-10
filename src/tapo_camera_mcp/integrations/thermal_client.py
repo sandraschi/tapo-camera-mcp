@@ -24,15 +24,17 @@ logger = logging.getLogger(__name__)
 
 class ThermalSensorType(Enum):
     """Thermal sensor types."""
+
     MLX90640 = "mlx90640"  # 32x24 = 768 pixels
     MLX90641 = "mlx90641"  # 16x12 = 192 pixels
-    AMG8833 = "amg8833"    # 8x8 = 64 pixels
+    AMG8833 = "amg8833"  # 8x8 = 64 pixels
     UNKNOWN = "unknown"
 
 
 @dataclass
 class ThermalHotSpot:
     """Hot spot detection result."""
+
     temperature_c: float
     temperature_f: float
     x: int  # pixel x coordinate
@@ -52,6 +54,7 @@ class ThermalHotSpot:
 @dataclass
 class ThermalFrame:
     """Complete thermal frame data."""
+
     width: int
     height: int
     min_temp_c: float
@@ -79,6 +82,7 @@ class ThermalFrame:
 @dataclass
 class ThermalSensor:
     """Thermal sensor device info."""
+
     id: str
     name: str
     ip: str
@@ -287,7 +291,7 @@ class ThermalClient:
         hotspot_data = data.get("hotspot", {})
         hotspot = ThermalHotSpot(
             temperature_c=hotspot_data.get("temp_c", max_temp),
-            temperature_f=hotspot_data.get("temp_f", max_temp * 9/5 + 32),
+            temperature_f=hotspot_data.get("temp_f", max_temp * 9 / 5 + 32),
             x=hotspot_data.get("x", 0),
             y=hotspot_data.get("y", 0),
         )
@@ -357,4 +361,3 @@ async def init_thermal_client(
     )
     await thermal_client.initialize()
     return thermal_client
-

@@ -67,6 +67,7 @@ class WebCamera(BaseCamera):
                     # Try to detect if camera is in use by another application
                     # On Windows, this often happens with Teams, Zoom, etc.
                     import platform
+
                     if platform.system() == "Windows":
                         # Try to read a frame to see if we get a specific error
                         try:
@@ -80,14 +81,20 @@ class WebCamera(BaseCamera):
                         except Exception as read_error:
                             # Check error message for common patterns
                             error_str = str(read_error).lower()
-                            if "access" in error_str or "busy" in error_str or "in use" in error_str:
+                            if (
+                                "access" in error_str
+                                or "busy" in error_str
+                                or "in use" in error_str
+                            ):
                                 self._in_use_by_another_app = True
                                 self._in_use_error_message = f"USB camera device {self._device_id} is locked by another application. Close Microsoft Teams, Zoom, or other video apps and try again."
                                 logger.warning(self._in_use_error_message)
                                 raise RuntimeError(self._in_use_error_message) from read_error
 
                     # Generic error if we can't determine the cause
-                    raise RuntimeError(f"Could not open webcam device {self._device_id}. Camera may be in use by another application or not available.")
+                    raise RuntimeError(
+                        f"Could not open webcam device {self._device_id}. Camera may be in use by another application or not available."
+                    )
 
                 # Test if we can actually read frames (camera might be "opened" but locked)
                 try:
@@ -107,7 +114,9 @@ class WebCamera(BaseCamera):
                     error_str = str(test_error).lower()
                     if "access" in error_str or "busy" in error_str:
                         self._in_use_by_another_app = True
-                        self._in_use_error_message = f"USB camera device {self._device_id} is locked by another application."
+                        self._in_use_error_message = (
+                            f"USB camera device {self._device_id} is locked by another application."
+                        )
                         logger.warning(self._in_use_error_message)
                         if self._cap:
                             self._cap.release()
@@ -129,7 +138,10 @@ class WebCamera(BaseCamera):
 
             # Check if error suggests camera is in use
             error_str = str(e).lower()
-            if any(keyword in error_str for keyword in ["access", "busy", "in use", "locked", "exclusive"]):
+            if any(
+                keyword in error_str
+                for keyword in ["access", "busy", "in use", "locked", "exclusive"]
+            ):
                 self._in_use_by_another_app = True
                 self._in_use_error_message = f"USB camera device {self._device_id} appears to be in use by another application (Microsoft Teams, Zoom, etc.). Close the other application and try again."
                 logger.warning(self._in_use_error_message)
@@ -208,13 +220,13 @@ class WebCamera(BaseCamera):
                     temp_cap = cv2.VideoCapture(self._device_id)
                     if temp_cap.isOpened():
                         # Try to set configured resolution first
-                        config_res = self.config.get('params', {}).get('resolution', '640x480')
+                        config_res = self.config.get("params", {}).get("resolution", "640x480")
                         try:
-                            conf_width, conf_height = map(int, config_res.split('x'))
+                            conf_width, conf_height = map(int, config_res.split("x"))
                             temp_cap.set(cv2.CAP_PROP_FRAME_WIDTH, conf_width)
                             temp_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, conf_height)
-                        except:
-                            pass  # Ignore config parsing errors
+                        except Exception as e:
+                            logger.debug(f"Config resolution parsing failed: {e}")
 
                         # Get actual resolution
                         width = int(temp_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -244,8 +256,13 @@ class WebCamera(BaseCamera):
         # Add in-use detection status
         if self._in_use_by_another_app:
             status["in_use_by_another_app"] = True
-            status["in_use_error"] = self._in_use_error_message or f"USB camera device {self._device_id} is in use by another application"
-            status["warning"] = "Camera is locked by another application (e.g., Microsoft Teams, Zoom). Close the other app to use this camera."
+            status["in_use_error"] = (
+                self._in_use_error_message
+                or f"USB camera device {self._device_id} is in use by another application"
+            )
+            status["warning"] = (
+                "Camera is locked by another application (e.g., Microsoft Teams, Zoom). Close the other app to use this camera."
+            )
         else:
             status["in_use_by_another_app"] = False
 

@@ -6,9 +6,8 @@ AMG8833, and other thermal sensors used for hot spot detection and
 temperature monitoring.
 """
 
-import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastmcp import FastMCP
 
@@ -94,7 +93,7 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                         "frame_rate_hz": 8,
                         "current_max_temp": 45.2,
                         "current_min_temp": 22.1,
-                        "alert_threshold": 150.0
+                        "alert_threshold": 150.0,
                     },
                     {
                         "id": "mlx90640_server",
@@ -109,7 +108,7 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                         "frame_rate_hz": 8,
                         "current_max_temp": 38.7,
                         "current_min_temp": 21.8,
-                        "alert_threshold": 50.0
+                        "alert_threshold": 50.0,
                     },
                     {
                         "id": "amg8833_office",
@@ -124,8 +123,8 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                         "frame_rate_hz": 10,
                         "current_max_temp": 24.5,
                         "current_min_temp": 20.2,
-                        "alert_threshold": 35.0
-                    }
+                        "alert_threshold": 35.0,
+                    },
                 ]
 
                 return {
@@ -135,9 +134,12 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                     "count": len(sensors),
                 }
 
-            elif action == "get_sensor_status":
+            if action == "get_sensor_status":
                 if not sensor_id:
-                    return {"success": False, "error": "sensor_id is required for get_sensor_status"}
+                    return {
+                        "success": False,
+                        "error": "sensor_id is required for get_sensor_status",
+                    }
 
                 # Mock sensor status
                 sensor_status = {
@@ -150,7 +152,7 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                     "connection_quality": "excellent",
                     "temperature_accuracy": "±1.5°C",
                     "power_consumption_mw": 45,
-                    "operating_temperature": 28.5
+                    "operating_temperature": 28.5,
                 }
 
                 return {
@@ -159,9 +161,12 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                     "sensor": sensor_status,
                 }
 
-            elif action == "get_temperature_data":
+            if action == "get_temperature_data":
                 if not sensor_id:
-                    return {"success": False, "error": "sensor_id is required for get_temperature_data"}
+                    return {
+                        "success": False,
+                        "error": "sensor_id is required for get_temperature_data",
+                    }
 
                 # Mock thermal data
                 thermal_data = {
@@ -173,7 +178,7 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                         "min_celsius": 22.1,
                         "avg_celsius": 28.7,
                         "median_celsius": 26.8,
-                        "std_dev_celsius": 3.2
+                        "std_dev_celsius": 3.2,
                     },
                     "hotspots": [
                         {
@@ -181,18 +186,18 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                             "y": 8,
                             "temperature_celsius": 45.2,
                             "confidence": 0.95,
-                            "description": "Oven heating element"
+                            "description": "Oven heating element",
                         },
                         {
                             "x": 22,
                             "y": 12,
                             "temperature_celsius": 38.7,
                             "confidence": 0.87,
-                            "description": "Server CPU"
-                        }
+                            "description": "Server CPU",
+                        },
                     ],
                     "thermal_image_available": True,
-                    "frame_rate_hz": 8
+                    "frame_rate_hz": 8,
                 }
 
                 return {
@@ -201,7 +206,7 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                     "thermal_data": thermal_data,
                 }
 
-            elif action == "detect_hotspots":
+            if action == "detect_hotspots":
                 if not sensor_id:
                     return {"success": False, "error": "sensor_id is required for detect_hotspots"}
 
@@ -219,7 +224,7 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                         "confidence": 0.95,
                         "description": "Potential fire hazard - oven overheating",
                         "timestamp": "2025-12-27T04:00:00Z",
-                        "actions_taken": ["alert_generated", "notification_sent"]
+                        "actions_taken": ["alert_generated", "notification_sent"],
                     },
                     {
                         "id": "hotspot_002",
@@ -231,8 +236,8 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                         "confidence": 0.87,
                         "description": "Server temperature elevated",
                         "timestamp": "2025-12-27T04:00:00Z",
-                        "actions_taken": ["logged"]
-                    }
+                        "actions_taken": ["logged"],
+                    },
                 ]
 
                 detection_result = {
@@ -241,7 +246,7 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                     "hotspots_found": len(hotspots_detected),
                     "scan_duration_ms": 250,
                     "hotspots": hotspots_detected,
-                    "timestamp": "2025-12-27T04:00:00Z"
+                    "timestamp": "2025-12-27T04:00:00Z",
                 }
 
                 return {
@@ -250,9 +255,12 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                     "detection": detection_result,
                 }
 
-            elif action == "set_thresholds":
+            if action == "set_thresholds":
                 if not sensor_id or threshold_celsius is None:
-                    return {"success": False, "error": "sensor_id and threshold_celsius are required for set_thresholds"}
+                    return {
+                        "success": False,
+                        "error": "sensor_id and threshold_celsius are required for set_thresholds",
+                    }
 
                 # Mock threshold setting
                 threshold_config = {
@@ -263,7 +271,7 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                     "hysteresis_celsius": 2.0,
                     "alert_cooldown_minutes": 5,
                     "notifications_enabled": True,
-                    "timestamp": "2025-12-27T04:00:00Z"
+                    "timestamp": "2025-12-27T04:00:00Z",
                 }
 
                 return {
@@ -272,9 +280,12 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                     "thresholds": threshold_config,
                 }
 
-            elif action == "get_thermal_image":
+            if action == "get_thermal_image":
                 if not sensor_id:
-                    return {"success": False, "error": "sensor_id is required for get_thermal_image"}
+                    return {
+                        "success": False,
+                        "error": "sensor_id is required for get_thermal_image",
+                    }
 
                 # Mock thermal image capture
                 thermal_image = {
@@ -282,12 +293,14 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                     "timestamp": "2025-12-27T04:00:00Z",
                     "resolution": resolution,
                     "image_format": "thermal_array",
-                    "dimensions": {"width": 32, "height": 24} if resolution == "high" else {"width": 16, "height": 12},
+                    "dimensions": {"width": 32, "height": 24}
+                    if resolution == "high"
+                    else {"width": 16, "height": 12},
                     "temperature_range": {"min_celsius": 22.1, "max_celsius": 45.2},
                     "data_points": 768,  # 32x24
                     "file_size_kb": 15,
                     "processing_time_ms": 45,
-                    "quality_score": 0.92
+                    "quality_score": 0.92,
                 }
 
                 return {
@@ -296,7 +309,7 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                     "thermal_image": thermal_image,
                 }
 
-            elif action == "calibrate_sensor":
+            if action == "calibrate_sensor":
                 if not sensor_id:
                     return {"success": False, "error": "sensor_id is required for calibrate_sensor"}
 
@@ -309,7 +322,7 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                     "accuracy_improvement_percent": 15.2,
                     "drift_compensation_applied": True,
                     "next_calibration_due": "2026-03-27T04:00:00Z",
-                    "timestamp": "2025-12-27T04:00:00Z"
+                    "timestamp": "2025-12-27T04:00:00Z",
                 }
 
                 return {
@@ -318,9 +331,12 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                     "calibration": calibration_result,
                 }
 
-            elif action == "get_temperature_history":
+            if action == "get_temperature_history":
                 if not sensor_id:
-                    return {"success": False, "error": "sensor_id is required for get_temperature_history"}
+                    return {
+                        "success": False,
+                        "error": "sensor_id is required for get_temperature_history",
+                    }
 
                 # Mock historical data
                 history_data = {
@@ -330,7 +346,7 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                     "temperature_range": {
                         "max_celsius": 48.5,
                         "min_celsius": 20.8,
-                        "avg_celsius": 28.2
+                        "avg_celsius": 28.2,
                     },
                     "hotspot_events": 3,
                     "alert_events": 1,
@@ -339,8 +355,8 @@ def register_thermal_management_tool(mcp: FastMCP) -> None:
                     "samples": [
                         {"timestamp": "2025-12-27T03:00:00Z", "max_temp": 42.1, "avg_temp": 26.8},
                         {"timestamp": "2025-12-27T03:30:00Z", "max_temp": 45.2, "avg_temp": 28.1},
-                        {"timestamp": "2025-12-27T04:00:00Z", "max_temp": 38.7, "avg_temp": 27.5}
-                    ]
+                        {"timestamp": "2025-12-27T04:00:00Z", "max_temp": 38.7, "avg_temp": 27.5},
+                    ],
                 }
 
                 return {

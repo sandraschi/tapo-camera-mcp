@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "home-security-mcp-platform"
-version = "1.16.0"  # Vienna Webcams - Public landmark cameras for weather watching
+version = "1.17.0"  # MCP Client Refactoring - Web API endpoints now use MCP client instead of direct manager calls
 description = "🏠 Beta home security MCP platform with unified surveillance dashboard, multi-device support (Tapo, Ring, Nest Protect, USB webcams), and Claude Desktop integration"
 readme = "README.md"
 requires-python = ">=3.8"

@@ -157,7 +157,7 @@ class RecordingStore:
         if self.use_postgres and self.db:
             # Use PostgreSQL
             file_path = str(video_path) if video_path else ""
-            result = self.db.add_recording(
+            self.db.add_recording(
                 recording_id=recording_id,
                 camera_id=camera_id,
                 file_path=file_path,
@@ -230,20 +230,24 @@ class RecordingStore:
             # Convert to expected format
             recordings = []
             for row in results:
-                recordings.append({
-                    "id": row.get("recording_id", ""),
-                    "recording_id": row.get("recording_id", ""),
-                    "timestamp": row.get("timestamp").isoformat() if row.get("timestamp") else "",
-                    "camera_id": row.get("camera_id", ""),
-                    "video_path": row.get("file_path", ""),
-                    "duration_seconds": row.get("duration_seconds", 0.0),
-                    "size_bytes": row.get("file_size_bytes", 0),
-                    "recording_type": row.get("recording_type", "automatic"),
-                    "is_emergency": row.get("is_emergency", False),
-                    "is_unusual": row.get("is_unusual", False),
-                    "metadata": row.get("metadata", {}),
-                    "ai_analysis": row.get("ai_analysis", []),
-                })
+                recordings.append(
+                    {
+                        "id": row.get("recording_id", ""),
+                        "recording_id": row.get("recording_id", ""),
+                        "timestamp": row.get("timestamp").isoformat()
+                        if row.get("timestamp")
+                        else "",
+                        "camera_id": row.get("camera_id", ""),
+                        "video_path": row.get("file_path", ""),
+                        "duration_seconds": row.get("duration_seconds", 0.0),
+                        "size_bytes": row.get("file_size_bytes", 0),
+                        "recording_type": row.get("recording_type", "automatic"),
+                        "is_emergency": row.get("is_emergency", False),
+                        "is_unusual": row.get("is_unusual", False),
+                        "metadata": row.get("metadata", {}),
+                        "ai_analysis": row.get("ai_analysis", []),
+                    }
+                )
             return recordings
         # Fallback to JSONL
         recordings = []

@@ -25,10 +25,14 @@ async def _ptz_prank_nod(tool: PTZControlTool, camera_name: str, duration: float
 
     while asyncio.get_event_loop().time() < end_time:
         # Look up
-        await tool.execute(operation="move", camera_id=camera_name, pan=0, tilt=0.8, zoom=0, speed=8)
+        await tool.execute(
+            operation="move", camera_id=camera_name, pan=0, tilt=0.8, zoom=0, speed=8
+        )
         await asyncio.sleep(0.2)
         # Look down
-        await tool.execute(operation="move", camera_id=camera_name, pan=0, tilt=-0.8, zoom=0, speed=8)
+        await tool.execute(
+            operation="move", camera_id=camera_name, pan=0, tilt=-0.8, zoom=0, speed=8
+        )
         await asyncio.sleep(0.2)
         cycles += 1
 
@@ -37,17 +41,23 @@ async def _ptz_prank_nod(tool: PTZControlTool, camera_name: str, duration: float
     return {"mode": "nod", "cycles": cycles}
 
 
-async def _ptz_prank_shake(tool: PTZControlTool, camera_name: str, duration: float) -> dict[str, Any]:
+async def _ptz_prank_shake(
+    tool: PTZControlTool, camera_name: str, duration: float
+) -> dict[str, Any]:
     """Shake mode - rapid left/right like 'no no no!'."""
     end_time = asyncio.get_event_loop().time() + duration
     cycles = 0
 
     while asyncio.get_event_loop().time() < end_time:
         # Look left
-        await tool.execute(operation="move", camera_id=camera_name, pan=-0.7, tilt=0, zoom=0, speed=8)
+        await tool.execute(
+            operation="move", camera_id=camera_name, pan=-0.7, tilt=0, zoom=0, speed=8
+        )
         await asyncio.sleep(0.15)
         # Look right
-        await tool.execute(operation="move", camera_id=camera_name, pan=0.7, tilt=0, zoom=0, speed=8)
+        await tool.execute(
+            operation="move", camera_id=camera_name, pan=0.7, tilt=0, zoom=0, speed=8
+        )
         await asyncio.sleep(0.15)
         cycles += 1
 
@@ -56,7 +66,9 @@ async def _ptz_prank_shake(tool: PTZControlTool, camera_name: str, duration: flo
     return {"mode": "shake", "cycles": cycles}
 
 
-async def _ptz_prank_dizzy(tool: PTZControlTool, camera_name: str, duration: float) -> dict[str, Any]:
+async def _ptz_prank_dizzy(
+    tool: PTZControlTool, camera_name: str, duration: float
+) -> dict[str, Any]:
     """Dizzy mode - circular motion like camera is drunk."""
     end_time = asyncio.get_event_loop().time() + duration
     cycles = 0
@@ -66,7 +78,9 @@ async def _ptz_prank_dizzy(tool: PTZControlTool, camera_name: str, duration: flo
         # Circular motion using sin/cos
         pan = 0.6 * math.sin(angle)
         tilt = 0.6 * math.cos(angle)
-        await tool.execute(operation="move", camera_id=camera_name, pan=pan, tilt=tilt, zoom=0, speed=6)
+        await tool.execute(
+            operation="move", camera_id=camera_name, pan=pan, tilt=tilt, zoom=0, speed=6
+        )
         angle += 0.5
         if angle >= 2 * math.pi:
             angle = 0
@@ -78,7 +92,9 @@ async def _ptz_prank_dizzy(tool: PTZControlTool, camera_name: str, duration: flo
     return {"mode": "dizzy", "cycles": cycles}
 
 
-async def _ptz_prank_chaos(tool: PTZControlTool, camera_name: str, duration: float) -> dict[str, Any]:
+async def _ptz_prank_chaos(
+    tool: PTZControlTool, camera_name: str, duration: float
+) -> dict[str, Any]:
     """Chaos mode - random crazy movements."""
     end_time = asyncio.get_event_loop().time() + duration
     moves = 0
@@ -88,13 +104,16 @@ async def _ptz_prank_chaos(tool: PTZControlTool, camera_name: str, duration: flo
         tilt = random.uniform(-1.0, 1.0)
         zoom = random.uniform(0, 0.5)
         speed = random.randint(5, 8)
-        await tool.execute(operation="move", camera_id=camera_name, pan=pan, tilt=tilt, zoom=zoom, speed=speed)
+        await tool.execute(
+            operation="move", camera_id=camera_name, pan=pan, tilt=tilt, zoom=zoom, speed=speed
+        )
         await asyncio.sleep(random.uniform(0.1, 0.3))
         moves += 1
 
     # Return to center
     await tool.execute(operation="move", camera_id=camera_name, pan=0, tilt=0, zoom=0, speed=5)
     return {"mode": "chaos", "moves": moves}
+
 
 PTZ_ACTIONS = {
     "move": "Move PTZ camera",
@@ -115,7 +134,15 @@ def register_ptz_management_tool(mcp: FastMCP) -> None:
     @mcp.tool()
     async def ptz_management(
         action: Literal[
-            "move", "position", "stop", "save_preset", "recall_preset", "list_presets", "delete_preset", "home", "prank"
+            "move",
+            "position",
+            "stop",
+            "save_preset",
+            "recall_preset",
+            "list_presets",
+            "delete_preset",
+            "home",
+            "prank",
         ],
         camera_name: str | None = None,
         pan: float | None = None,
@@ -213,12 +240,14 @@ def register_ptz_management_tool(mcp: FastMCP) -> None:
                     "camera_id": camera_name,
                 }
                 if action == "move":
-                    execute_params.update({
-                        "pan": pan or 0.0,
-                        "tilt": tilt or 0.0,
-                        "zoom": zoom or 0.0,
-                        "speed": speed or 5,
-                    })
+                    execute_params.update(
+                        {
+                            "pan": pan or 0.0,
+                            "tilt": tilt or 0.0,
+                            "zoom": zoom or 0.0,
+                            "speed": speed or 5,
+                        }
+                    )
                 result = await tool.execute(**execute_params)
                 return {"success": True, "action": action, "data": result}
 
@@ -228,10 +257,16 @@ def register_ptz_management_tool(mcp: FastMCP) -> None:
 
                 if action == "save_preset":
                     if not preset_name:
-                        return {"success": False, "error": "preset_name is required for save_preset action"}
+                        return {
+                            "success": False,
+                            "error": "preset_name is required for save_preset action",
+                        }
                 elif action in ["recall_preset", "delete_preset"]:
                     if not preset_name and not preset_id:
-                        return {"success": False, "error": "preset_name or preset_id is required for this action"}
+                        return {
+                            "success": False,
+                            "error": "preset_name or preset_id is required for this action",
+                        }
 
                 tool = PTZPresetTool()
                 operation_map = {
@@ -253,12 +288,17 @@ def register_ptz_management_tool(mcp: FastMCP) -> None:
                 if not camera_name:
                     return {"success": False, "error": "camera_name is required for prank action"}
                 if not prank_mode:
-                    return {"success": False, "error": "prank_mode is required (nod, shake, dizzy, chaos)"}
+                    return {
+                        "success": False,
+                        "error": "prank_mode is required (nod, shake, dizzy, chaos)",
+                    }
 
                 # Cap duration at 10 seconds for safety
                 safe_duration = min(max(1, duration), 10)
 
-                logger.info(f"Starting PTZ prank mode '{prank_mode}' on {camera_name} for {safe_duration} seconds")
+                logger.info(
+                    f"Starting PTZ prank mode '{prank_mode}' on {camera_name} for {safe_duration} seconds"
+                )
 
                 tool = PTZControlTool()
 
@@ -284,4 +324,3 @@ def register_ptz_management_tool(mcp: FastMCP) -> None:
         except Exception as e:
             logger.error(f"Error in PTZ management action '{action}': {e}", exc_info=True)
             return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
-

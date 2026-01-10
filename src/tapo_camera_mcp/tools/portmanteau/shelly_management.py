@@ -14,9 +14,8 @@ not commonly used in Austria. This tool serves as a template/example only
 and should not be used in production Austrian deployments.
 """
 
-import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastmcp import FastMCP
 
@@ -100,7 +99,7 @@ def register_shelly_management_tool(mcp: FastMCP) -> None:
                         "capabilities": ["temperature", "relay", "energy_monitoring"],
                         "current_temperature": -18.5,
                         "relay_state": "off",
-                        "firmware_version": "1.2.3"
+                        "firmware_version": "1.2.3",
                     },
                     {
                         "id": "shelly_plus_2",
@@ -113,7 +112,7 @@ def register_shelly_management_tool(mcp: FastMCP) -> None:
                         "capabilities": ["temperature", "relay", "energy_monitoring"],
                         "current_temperature": 4.2,
                         "relay_state": "off",
-                        "firmware_version": "1.2.3"
+                        "firmware_version": "1.2.3",
                     },
                     {
                         "id": "shelly_1pm",
@@ -126,8 +125,8 @@ def register_shelly_management_tool(mcp: FastMCP) -> None:
                         "capabilities": ["relay", "energy_monitoring", "power_monitoring"],
                         "relay_state": "on",
                         "power_watts": 45.8,
-                        "energy_today_kwh": 1.12
-                    }
+                        "energy_today_kwh": 1.12,
+                    },
                 ]
 
                 return {
@@ -137,9 +136,12 @@ def register_shelly_management_tool(mcp: FastMCP) -> None:
                     "count": len(devices),
                 }
 
-            elif action == "get_device_status":
+            if action == "get_device_status":
                 if not device_id:
-                    return {"success": False, "error": "device_id is required for get_device_status"}
+                    return {
+                        "success": False,
+                        "error": "device_id is required for get_device_status",
+                    }
 
                 # Mock device status
                 device_status = {
@@ -155,7 +157,7 @@ def register_shelly_management_tool(mcp: FastMCP) -> None:
                     "relay_state": "on",
                     "power_watts": 12.5,
                     "energy_today_kwh": 0.8,
-                    "voltage": 230.1
+                    "voltage": 230.1,
                 }
 
                 return {
@@ -164,12 +166,18 @@ def register_shelly_management_tool(mcp: FastMCP) -> None:
                     "device": device_status,
                 }
 
-            elif action == "control_relay":
+            if action == "control_relay":
                 if not device_id or not relay_state:
-                    return {"success": False, "error": "device_id and relay_state are required for control_relay"}
+                    return {
+                        "success": False,
+                        "error": "device_id and relay_state are required for control_relay",
+                    }
 
                 if relay_state not in ["on", "off", "toggle"]:
-                    return {"success": False, "error": "relay_state must be 'on', 'off', or 'toggle'"}
+                    return {
+                        "success": False,
+                        "error": "relay_state must be 'on', 'off', or 'toggle'",
+                    }
 
                 # Mock relay control
                 new_state = relay_state
@@ -182,7 +190,7 @@ def register_shelly_management_tool(mcp: FastMCP) -> None:
                     "requested_state": relay_state,
                     "actual_state": new_state,
                     "timestamp": "2025-12-27T04:00:00Z",
-                    "power_changed": True
+                    "power_changed": True,
                 }
 
                 return {
@@ -191,7 +199,7 @@ def register_shelly_management_tool(mcp: FastMCP) -> None:
                     "control": control_result,
                 }
 
-            elif action == "get_temperature":
+            if action == "get_temperature":
                 if not device_id:
                     return {"success": False, "error": "device_id is required for get_temperature"}
 
@@ -203,7 +211,7 @@ def register_shelly_management_tool(mcp: FastMCP) -> None:
                     "humidity_percent": 65.8,
                     "timestamp": "2025-12-27T04:00:00Z",
                     "sensor_quality": "good",
-                    "last_calibration": "2025-12-01T00:00:00Z"
+                    "last_calibration": "2025-12-01T00:00:00Z",
                 }
 
                 return {
@@ -212,24 +220,27 @@ def register_shelly_management_tool(mcp: FastMCP) -> None:
                     "temperature": temperature_data,
                 }
 
-            elif action == "set_temperature_thresholds":
+            if action == "set_temperature_thresholds":
                 if not device_id:
-                    return {"success": False, "error": "device_id is required for set_temperature_thresholds"}
+                    return {
+                        "success": False,
+                        "error": "device_id is required for set_temperature_thresholds",
+                    }
 
                 thresholds = {}
                 if high_threshold is not None:
                     thresholds["high_celsius"] = high_threshold
-                    thresholds["high_fahrenheit"] = (high_threshold * 9/5) + 32
+                    thresholds["high_fahrenheit"] = (high_threshold * 9 / 5) + 32
                 if low_threshold is not None:
                     thresholds["low_celsius"] = low_threshold
-                    thresholds["low_fahrenheit"] = (low_threshold * 9/5) + 32
+                    thresholds["low_fahrenheit"] = (low_threshold * 9 / 5) + 32
 
                 threshold_result = {
                     "device_id": device_id,
                     "thresholds_set": thresholds,
                     "unit": temperature_unit,
                     "timestamp": "2025-12-27T04:00:00Z",
-                    "notifications_enabled": True
+                    "notifications_enabled": True,
                 }
 
                 return {
@@ -238,7 +249,7 @@ def register_shelly_management_tool(mcp: FastMCP) -> None:
                     "thresholds": threshold_result,
                 }
 
-            elif action == "get_energy":
+            if action == "get_energy":
                 if not device_id:
                     return {"success": False, "error": "device_id is required for get_energy"}
 
@@ -252,7 +263,7 @@ def register_shelly_management_tool(mcp: FastMCP) -> None:
                     "energy_month_kwh": 32.5,
                     "cost_today_usd": 0.28,
                     "cost_month_usd": 8.13,
-                    "timestamp": "2025-12-27T04:00:00Z"
+                    "timestamp": "2025-12-27T04:00:00Z",
                 }
 
                 return {
@@ -261,7 +272,7 @@ def register_shelly_management_tool(mcp: FastMCP) -> None:
                     "energy": energy_data,
                 }
 
-            elif action == "reboot_device":
+            if action == "reboot_device":
                 if not device_id:
                     return {"success": False, "error": "device_id is required for reboot_device"}
 
@@ -270,7 +281,7 @@ def register_shelly_management_tool(mcp: FastMCP) -> None:
                     "action": "reboot_initiated",
                     "estimated_reboot_time_seconds": 30,
                     "timestamp": "2025-12-27T04:00:00Z",
-                    "reason": "manual_reboot"
+                    "reason": "manual_reboot",
                 }
 
                 return {
@@ -279,7 +290,7 @@ def register_shelly_management_tool(mcp: FastMCP) -> None:
                     "reboot": reboot_result,
                 }
 
-            elif action == "update_firmware":
+            if action == "update_firmware":
                 if not device_id:
                     return {"success": False, "error": "device_id is required for update_firmware"}
 
@@ -290,7 +301,7 @@ def register_shelly_management_tool(mcp: FastMCP) -> None:
                     "update_status": "scheduled",
                     "estimated_duration_minutes": 5,
                     "timestamp": "2025-12-27T04:00:00Z",
-                    "auto_reboot": True
+                    "auto_reboot": True,
                 }
 
                 return {

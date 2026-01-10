@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DeviceHealth:
     """Health status for a device."""
+
     device_id: str
     device_type: str  # camera, plug, light, weather, ring
     name: str
@@ -59,6 +60,7 @@ class ConnectionSupervisor:
 
         # Messaging service integration
         from .messaging_service import MessageCategory, MessageSeverity, get_messaging_service
+
         self.messaging = get_messaging_service()
         self.MessageSeverity = MessageSeverity
         self.MessageCategory = MessageCategory
@@ -106,7 +108,7 @@ class ConnectionSupervisor:
             self._check_hue_bridge(),
             self._check_netatmo(),
             self._check_ring(),
-            return_exceptions=True  # Don't let one failure crash others
+            return_exceptions=True,  # Don't let one failure crash others
         )
 
     async def _check_cameras(self):
@@ -116,53 +118,66 @@ class ConnectionSupervisor:
 
             # Add timeout to prevent blocking
             try:
-                server = await asyncio.wait_for(
-                    TapoCameraServer.get_instance(),
-                    timeout=5.0
-                )
-                cameras = await asyncio.wait_for(
-                    server.camera_manager.list_cameras(),
-                    timeout=5.0
-                )
+                server = await asyncio.wait_for(TapoCameraServer.get_instance(), timeout=5.0)
+                cameras = await asyncio.wait_for(server.camera_manager.list_cameras(), timeout=5.0)
             except asyncio.TimeoutError:
-                logger.warning("Camera manager access timed out - skipping camera checks this cycle")
+                logger.warning(
+                    "Camera manager access timed out - skipping camera checks this cycle"
+                )
                 return
 
             for cam in cameras:
                 device_id = f"camera_{cam['name']}"
-                status = cam.get('status', {})
-                connected = status.get('connected', False) if isinstance(status, dict) else False
-                cam_type = cam.get('type', 'unknown')
+                status = cam.get("status", {})
+                connected = status.get("connected", False) if isinstance(status, dict) else False
+                cam_type = cam.get("type", "unknown")
 
                 # Check if USB camera is in use by another application
-                in_use = status.get('in_use_by_another_app', False) if isinstance(status, dict) else False
-                in_use_error = status.get('in_use_error') or status.get('warning') if isinstance(status, dict) else None
+                in_use = (
+                    status.get("in_use_by_another_app", False)
+                    if isinstance(status, dict)
+                    else False
+                )
+                in_use_error = (
+                    status.get("in_use_error") or status.get("warning")
+                    if isinstance(status, dict)
+                    else None
+                )
 
                 # Determine error message
                 error_msg = None
                 if in_use:
-                    error_msg = in_use_error or "Camera in use by another application (e.g., Microsoft Teams, Zoom)"
+                    error_msg = (
+                        in_use_error
+                        or "Camera in use by another application (e.g., Microsoft Teams, Zoom)"
+                    )
                 elif not connected:
                     error_msg = "Camera offline"
 
                 self._update_health(
                     device_id=device_id,
                     device_type="camera",
-                    name=cam['name'],
+                    name=cam["name"],
                     connected=connected and not in_use,  # Mark as not connected if in use
                     error=error_msg,
                     details={
-                        'model': status.get('model', 'Unknown') if isinstance(status, dict) else 'Unknown',
-                        'type': cam_type,
-                        'streaming': status.get('streaming', False) if isinstance(status, dict) else False,
-                        'in_use_by_another_app': in_use,
-                        'device_id': status.get('device_id') if isinstance(status, dict) else None
-                    }
+                        "model": status.get("model", "Unknown")
+                        if isinstance(status, dict)
+                        else "Unknown",
+                        "type": cam_type,
+                        "streaming": status.get("streaming", False)
+                        if isinstance(status, dict)
+                        else False,
+                        "in_use_by_another_app": in_use,
+                        "device_id": status.get("device_id") if isinstance(status, dict) else None,
+                    },
                 )
 
                 # Log warning and send alert if camera is in use
                 if in_use:
-                    device_id_display = status.get('device_id', '?') if isinstance(status, dict) else '?'
+                    device_id_display = (
+                        status.get("device_id", "?") if isinstance(status, dict) else "?"
+                    )
                     warning_msg = f"Camera {cam['name']} (USB device {device_id_display}) is in use by another application. Close Microsoft Teams, Zoom, or other video apps."
                     logger.warning(warning_msg)
 
@@ -173,6 +188,7 @@ class ConnectionSupervisor:
                             MessageSeverity,
                             get_messaging_service,
                         )
+
                         messaging = get_messaging_service()
                         messaging.add_message(
                             severity=MessageSeverity.WARNING,
@@ -183,22 +199,24 @@ class ConnectionSupervisor:
                             details={
                                 "device_type": "camera",
                                 "device_id": device_id,
-                                "camera_name": cam['name'],
-                                "usb_device_id": status.get('device_id') if isinstance(status, dict) else None,
-                                "in_use_by_another_app": True
-                            }
+                                "camera_name": cam["name"],
+                                "usb_device_id": status.get("device_id")
+                                if isinstance(status, dict)
+                                else None,
+                                "in_use_by_another_app": True,
+                            },
                         )
-                    except Exception:
-                        pass  # Don't fail if messaging service unavailable
+                    except Exception as e:
+                        logger.debug(f"Messaging service unavailable: {e}")
 
                 # Auto-reconnect if offline (but not if in use - that requires user action)
-                if not connected and not in_use and cam_type in ['onvif', 'tapo']:
+                if not connected and not in_use and cam_type in ["onvif", "tapo"]:
                     logger.warning(f"Camera {cam['name']} offline, attempting reconnect...")
                     try:
                         # Try to reconnect camera
                         pass  # Camera manager handles reconnection
-                    except Exception as e:
-                        logger.error(f"Failed to reconnect {cam['name']}: {e}")
+                    except Exception:
+                        logger.exception(f"Failed to reconnect {cam['name']}")
 
         except Exception:
             logger.exception("Error checking cameras")
@@ -209,9 +227,7 @@ class ConnectionSupervisor:
             # Check if tapo library available
             try:
                 import tapo
-                tapo_available = True
             except ImportError:
-                tapo_available = False
                 logger.warning("tapo library not installed - cannot check P115 plugs")
                 self._update_health(
                     device_id="plugs_system",
@@ -219,23 +235,34 @@ class ConnectionSupervisor:
                     name="Tapo P115 System",
                     connected=False,
                     error="tapo library not installed",
-                    details={'library_missing': True}
+                    details={"library_missing": True},
                 )
                 return
 
             from ..config import get_config
+
             config = get_config()
-            plugs_config = config.get('energy', {}).get('tapo_p115', {}).get('devices', [])
+            plugs_config = config.get("energy", {}).get("tapo_p115", {}).get("devices", [])
 
             for plug_cfg in plugs_config:
-                device_id = plug_cfg.get('device_id', 'unknown')
-                name = plug_cfg.get('name', device_id)
-                host = plug_cfg.get('host')
+                device_id = plug_cfg.get("device_id", "unknown")
+                name = plug_cfg.get("name", device_id)
+                host = plug_cfg.get("host")
 
                 # Try to query plug
                 try:
-                    account_email = config.get('energy', {}).get('tapo_p115', {}).get('account', {}).get('email')
-                    account_password = config.get('energy', {}).get('tapo_p115', {}).get('account', {}).get('password')
+                    account_email = (
+                        config.get("energy", {})
+                        .get("tapo_p115", {})
+                        .get("account", {})
+                        .get("email")
+                    )
+                    account_password = (
+                        config.get("energy", {})
+                        .get("tapo_p115", {})
+                        .get("account", {})
+                        .get("password")
+                    )
 
                     if not account_email or not account_password:
                         raise ValueError("Missing Tapo account credentials")
@@ -253,12 +280,12 @@ class ConnectionSupervisor:
                         connected=True,
                         error=None,
                         details={
-                            'power': 0.0,  # Real-time power not available from Tapo P115
-                            'today_energy': energy.today_energy if energy else 0,
-                            'month_energy': energy.month_energy if energy else 0,
-                            'host': host,
-                            'model': info.model if info else 'P115'
-                        }
+                            "power": 0.0,  # Real-time power not available from Tapo P115
+                            "today_energy": energy.today_energy if energy else 0,
+                            "month_energy": energy.month_energy if energy else 0,
+                            "host": host,
+                            "model": info.model if info else "P115",
+                        },
                     )
                 except Exception as e:
                     self._update_health(
@@ -267,7 +294,7 @@ class ConnectionSupervisor:
                         name=name,
                         connected=False,
                         error=str(e),
-                        details={'host': host}
+                        details={"host": host},
                     )
                     logger.warning(f"Plug {name} offline: {e}")
 
@@ -282,16 +309,14 @@ class ConnectionSupervisor:
             # Check if phue available
             try:
                 import phue
-                phue_available = True
             except ImportError:
-                phue_available = False
                 self._update_health(
                     device_id="hue_bridge",
                     device_type="light",
                     name="Philips Hue Bridge",
                     connected=False,
                     error="phue library not installed",
-                    details={'library_missing': True}
+                    details={"library_missing": True},
                 )
                 return
 
@@ -308,11 +333,11 @@ class ConnectionSupervisor:
                 connected=connected,
                 error=hue_manager._connection_error if not connected else None,
                 details={
-                    'bridge_ip': hue_manager._bridge_ip,
-                    'lights_count': len(hue_manager.lights),
-                    'groups_count': len(hue_manager.groups),
-                    'scenes_count': len(hue_manager.scenes)
-                }
+                    "bridge_ip": hue_manager._bridge_ip,
+                    "lights_count": len(hue_manager.lights),
+                    "groups_count": len(hue_manager.groups),
+                    "scenes_count": len(hue_manager.scenes),
+                },
             )
 
         except Exception:
@@ -324,20 +349,19 @@ class ConnectionSupervisor:
             # Check if pyatmo available
             try:
                 import pyatmo
-                pyatmo_available = True
             except ImportError:
-                pyatmo_available = False
                 self._update_health(
                     device_id="netatmo_weather",
                     device_type="weather",
                     name="Netatmo Weather Station",
                     connected=False,
                     error="pyatmo library not installed",
-                    details={'library_missing': True}
+                    details={"library_missing": True},
                 )
                 return
 
             from ..integrations.netatmo_client import NetatmoService
+
             service = None
             try:
                 # Use singleton pattern to share instance with web API
@@ -350,7 +374,7 @@ class ConnectionSupervisor:
                         # Add timeout to prevent DNS hangs
                         stations = await asyncio.wait_for(service.list_stations(), timeout=5.0)
                         station_count = len(stations)
-                        module_count = sum(len(s.get('modules', [])) for s in stations)
+                        module_count = sum(len(s.get("modules", [])) for s in stations)
 
                         self._update_health(
                             device_id="netatmo_weather",
@@ -358,10 +382,7 @@ class ConnectionSupervisor:
                             name="Netatmo Weather Station",
                             connected=True,
                             error=None,
-                            details={
-                                'stations': station_count,
-                                'modules': module_count
-                            }
+                            details={"stations": station_count, "modules": module_count},
                         )
 
                         # Collect weather data every 10 minutes (when counter reaches interval)
@@ -377,7 +398,10 @@ class ConnectionSupervisor:
                         error_type = type(e).__name__
 
                         # Handle DNS/network errors with specific messages
-                        if "getaddrinfo failed" in error_msg or "ClientConnectorDNSError" in error_type:
+                        if (
+                            "getaddrinfo failed" in error_msg
+                            or "ClientConnectorDNSError" in error_type
+                        ):
                             error_msg = "DNS resolution failed (network issue)"
                         elif "Cannot connect to host" in error_msg:
                             error_msg = "Cannot connect to api.netatmo.com (network/firewall issue)"
@@ -393,7 +417,7 @@ class ConnectionSupervisor:
                             name="Netatmo Weather Station",
                             connected=False,
                             error=error_msg,
-                            details={'error_type': error_type, 'network_error': True}
+                            details={"error_type": error_type, "network_error": True},
                         )
                 else:
                     self._update_health(
@@ -402,15 +426,15 @@ class ConnectionSupervisor:
                         name="Netatmo Weather Station",
                         connected=False,
                         error="Not initialized or no account",
-                        details={}
+                        details={},
                     )
             finally:
                 # Always close service if it was created
                 if service:
                     try:
                         await service.close()
-                    except Exception:
-                        pass  # Ignore errors during cleanup
+                    except Exception as e:
+                        logger.debug(f"Error closing service: {e}")
 
         except Exception as e:
             # Catch all exceptions including network errors
@@ -421,7 +445,7 @@ class ConnectionSupervisor:
                 name="Netatmo Weather Station",
                 connected=False,
                 error=str(e),
-                details={'unexpected_error': True}
+                details={"unexpected_error": True},
             )
 
     async def _collect_weather_data(self, service, stations):
@@ -430,7 +454,7 @@ class ConnectionSupervisor:
             logger.debug("Weather data collection: Starting for all stations")
 
             for station in stations:
-                station_id = station.get('_id', station.get('station_id', station.get('id')))
+                station_id = station.get("_id", station.get("station_id", station.get("id")))
                 if not station_id:
                     logger.warning(f"Station missing ID: {station}")
                     continue
@@ -438,45 +462,50 @@ class ConnectionSupervisor:
                 # Collect data for indoor module
                 try:
                     data, timestamp = await asyncio.wait_for(
-                        service.current_data(station_id, "indoor"),
-                        timeout=10.0
+                        service.current_data(station_id, "indoor"), timeout=10.0
                     )
                     if data:
-                        logger.debug(f"Weather data collected: {station_id} indoor - {len(data)} readings")
+                        logger.debug(
+                            f"Weather data collected: {station_id} indoor - {len(data)} readings"
+                        )
                 except Exception as e:
                     logger.warning(f"Failed to collect indoor weather data for {station_id}: {e}")
 
                 # Collect data for outdoor module (if available)
                 try:
                     data, timestamp = await asyncio.wait_for(
-                        service.current_data(station_id, "outdoor"),
-                        timeout=10.0
+                        service.current_data(station_id, "outdoor"), timeout=10.0
                     )
                     if data:
-                        logger.debug(f"Weather data collected: {station_id} outdoor - {len(data)} readings")
-                except Exception:
+                        logger.debug(
+                            f"Weather data collected: {station_id} outdoor - {len(data)} readings"
+                        )
+                except Exception as e:
                     # Outdoor module might not exist, this is normal
-                    pass
+                    logger.debug(f"Outdoor weather module not available: {e}")
 
                 # Collect data for additional modules (bathroom, etc.)
-                modules = station.get('modules', [])
+                modules = station.get("modules", [])
                 for module in modules:
-                    module_id = module.get('_id', module.get('module_id', module.get('id')))
+                    module_id = module.get("_id", module.get("module_id", module.get("id")))
                     if module_id and module_id != station_id:  # Skip if same as station
                         try:
                             data, timestamp = await asyncio.wait_for(
-                                service.current_data(station_id, module_id),
-                                timeout=10.0
+                                service.current_data(station_id, module_id), timeout=10.0
                             )
                             if data:
-                                logger.debug(f"Weather data collected: {station_id}/{module_id} - {len(data)} readings")
+                                logger.debug(
+                                    f"Weather data collected: {station_id}/{module_id} - {len(data)} readings"
+                                )
                         except Exception as e:
-                            logger.warning(f"Failed to collect weather data for module {module_id}: {e}")
+                            logger.warning(
+                                f"Failed to collect weather data for module {module_id}: {e}"
+                            )
 
             logger.info("Weather data collection completed for all stations")
 
-        except Exception as e:
-            logger.error(f"Error during weather data collection: {e}")
+        except Exception:
+            logger.exception("Error during weather data collection")
 
         except Exception as e:
             # Catch all exceptions including network errors
@@ -487,7 +516,9 @@ class ConnectionSupervisor:
             if "getaddrinfo failed" in error_msg or "ClientConnectorDNSError" in error_type:
                 error_msg = "DNS resolution failed (Python/aiohttp resolver issue - may be IPv6/IPv4 conflict)"
             elif "Cannot connect to host" in error_msg:
-                error_msg = "Cannot connect to api.netatmo.com (firewall/proxy blocking or IPv6 issue)"
+                error_msg = (
+                    "Cannot connect to api.netatmo.com (firewall/proxy blocking or IPv6 issue)"
+                )
             elif "timeout" in error_msg.lower():
                 error_msg = "Connection timeout to Netatmo API"
             elif "SSL" in error_type or "certificate" in error_msg.lower():
@@ -500,7 +531,7 @@ class ConnectionSupervisor:
                 name="Netatmo Weather Station",
                 connected=False,
                 error=error_msg,
-                details={'error_type': error_type, 'raw_error': str(e)}
+                details={"error_type": error_type, "raw_error": str(e)},
             )
 
     async def _check_ring(self):
@@ -512,7 +543,7 @@ class ConnectionSupervisor:
             if client and client.is_initialized:
                 try:
                     summary = await client.get_summary()
-                    doorbell_count = summary.get('doorbell_count', 0)
+                    doorbell_count = summary.get("doorbell_count", 0)
 
                     self._update_health(
                         device_id="ring_doorbell",
@@ -521,9 +552,9 @@ class ConnectionSupervisor:
                         connected=True,
                         error=None,
                         details={
-                            'doorbells': doorbell_count,
-                            'alarm_capable': summary.get('alarm_capable', False)
-                        }
+                            "doorbells": doorbell_count,
+                            "alarm_capable": summary.get("alarm_capable", False),
+                        },
                     )
                 except Exception as e:
                     self._update_health(
@@ -532,7 +563,7 @@ class ConnectionSupervisor:
                         name="Ring Doorbell",
                         connected=False,
                         error=f"API call failed: {e}",
-                        details={}
+                        details={},
                     )
             else:
                 self._update_health(
@@ -541,14 +572,21 @@ class ConnectionSupervisor:
                     name="Ring Doorbell",
                     connected=False,
                     error="Not initialized - run 2FA setup",
-                    details={'needs_setup': True}
+                    details={"needs_setup": True},
                 )
 
         except Exception:
             logger.exception("Error checking Ring")
 
-    def _update_health(self, device_id: str, device_type: str, name: str,
-                      connected: bool, error: Optional[str], details: Dict[str, Any]):
+    def _update_health(
+        self,
+        device_id: str,
+        device_type: str,
+        name: str,
+        connected: bool,
+        error: Optional[str],
+        details: Dict[str, Any],
+    ):
         """Update health status for a device and generate alerts."""
         now = datetime.now()
 
@@ -568,7 +606,7 @@ class ConnectionSupervisor:
                         title=f"{name} Reconnected",
                         description=f"{device_type.upper()} device reconnected successfully",
                         device_type=device_type,
-                        device_name=name
+                        device_name=name,
                     )
                     logger.info(f"Device {name} reconnected")
 
@@ -586,7 +624,7 @@ class ConnectionSupervisor:
                         description=f"{device_type.upper()} device connection lost: {error}",
                         device_type=device_type,
                         device_name=name,
-                        error=error
+                        error=error,
                     )
                     logger.warning(f"Device {name} went offline: {error}")
 
@@ -603,7 +641,7 @@ class ConnectionSupervisor:
                         device_type=device_type,
                         device_name=name,
                         error_count=3,
-                        duration_seconds=3 * self.poll_interval
+                        duration_seconds=3 * self.poll_interval,
                     )
                     logger.error(f"Device {name} CRITICAL - offline for {3 * self.poll_interval}s")
 
@@ -619,7 +657,7 @@ class ConnectionSupervisor:
                 last_success=now if connected else None,
                 error_count=0 if connected else 1,
                 last_error=None if connected else error,
-                details=details
+                details=details,
             )
 
             # Generate discovery message
@@ -630,7 +668,7 @@ class ConnectionSupervisor:
                     title=f"{name} Discovered",
                     description=f"New {device_type.upper()} device detected and connected",
                     device_type=device_type,
-                    device_name=name
+                    device_name=name,
                 )
 
     def get_health_summary(self) -> Dict[str, Any]:
@@ -644,33 +682,35 @@ class ConnectionSupervisor:
         for health in self.device_health.values():
             device_type = health.device_type
             if device_type not in by_type:
-                by_type[device_type] = {'online': 0, 'offline': 0}
+                by_type[device_type] = {"online": 0, "offline": 0}
 
             if health.connected:
-                by_type[device_type]['online'] += 1
+                by_type[device_type]["online"] += 1
             else:
-                by_type[device_type]['offline'] += 1
+                by_type[device_type]["offline"] += 1
 
         return {
-            'total_devices': total_devices,
-            'online': online_devices,
-            'offline': offline_devices,
-            'health_percentage': round((online_devices / total_devices * 100) if total_devices > 0 else 0, 1),
-            'by_type': by_type,
-            'devices': [
+            "total_devices": total_devices,
+            "online": online_devices,
+            "offline": offline_devices,
+            "health_percentage": round(
+                (online_devices / total_devices * 100) if total_devices > 0 else 0, 1
+            ),
+            "by_type": by_type,
+            "devices": [
                 {
-                    'device_id': h.device_id,
-                    'type': h.device_type,
-                    'name': h.name,
-                    'connected': h.connected,
-                    'last_check': h.last_check.isoformat(),
-                    'last_success': h.last_success.isoformat() if h.last_success else None,
-                    'error_count': h.error_count,
-                    'last_error': h.last_error,
-                    'details': h.details
+                    "device_id": h.device_id,
+                    "type": h.device_type,
+                    "name": h.name,
+                    "connected": h.connected,
+                    "last_check": h.last_check.isoformat(),
+                    "last_success": h.last_success.isoformat() if h.last_success else None,
+                    "error_count": h.error_count,
+                    "last_error": h.last_error,
+                    "details": h.details,
                 }
                 for h in self.device_health.values()
-            ]
+            ],
         }
 
     def get_offline_devices(self) -> List[DeviceHealth]:
@@ -681,15 +721,15 @@ class ConnectionSupervisor:
         """Get device status as list of dicts for API/metrics export."""
         return [
             {
-                'device_id': h.device_id,
-                'type': h.device_type,
-                'name': h.name,
-                'connected': h.connected,
-                'last_check': int(h.last_check.timestamp()) if h.last_check else 0,
-                'last_success': int(h.last_success.timestamp()) if h.last_success else 0,
-                'error_count': h.error_count,
-                'last_error': h.last_error,
-                'details': h.details
+                "device_id": h.device_id,
+                "type": h.device_type,
+                "name": h.name,
+                "connected": h.connected,
+                "last_check": int(h.last_check.timestamp()) if h.last_check else 0,
+                "last_success": int(h.last_success.timestamp()) if h.last_success else 0,
+                "error_count": h.error_count,
+                "last_error": h.last_error,
+                "details": h.details,
             }
             for h in self.device_health.values()
         ]
@@ -705,4 +745,3 @@ def get_supervisor() -> ConnectionSupervisor:
     if _supervisor is None:
         _supervisor = ConnectionSupervisor(poll_interval=60)
     return _supervisor
-

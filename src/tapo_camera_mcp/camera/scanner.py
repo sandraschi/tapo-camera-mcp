@@ -2,7 +2,6 @@
 
 import asyncio
 import logging
-import os
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -20,8 +19,12 @@ class ScannerCamera(WebCamera):
 
     def __init__(self, config, mock_webcam=None):
         super().__init__(config, mock_webcam)
-        self._scanner_type = self.config.params.get("scanner_type", "flatbed")  # flatbed, slide, auto
-        self._color_mode = self.config.params.get("color_mode", "color")  # color, grayscale, monochrome
+        self._scanner_type = self.config.params.get(
+            "scanner_type", "flatbed"
+        )  # flatbed, slide, auto
+        self._color_mode = self.config.params.get(
+            "color_mode", "color"
+        )  # color, grayscale, monochrome
         self._dpi = int(self.config.params.get("dpi", 300))  # Default DPI
         self._output_dir = Path(self.config.params.get("output_dir", "scans"))
         self._output_dir.mkdir(parents=True, exist_ok=True)
@@ -82,7 +85,7 @@ class ScannerCamera(WebCamera):
 
         except Exception as e:
             logger.exception(f"Scanner {self.config.name}: Failed to scan document")
-            raise RuntimeError(f"Scan failed: {str(e)}") from e
+            raise RuntimeError(f"Scan failed: {e!s}") from e
 
     async def _process_scan(self, frame):
         """Process the scanned image with scanner-specific enhancements."""
@@ -95,7 +98,9 @@ class ScannerCamera(WebCamera):
 
         # Apply brightness and contrast adjustments
         if self._brightness != 0 or self._contrast != 0:
-            frame = cv2.convertScaleAbs(frame, alpha=1 + self._contrast/100.0, beta=self._brightness)
+            frame = cv2.convertScaleAbs(
+                frame, alpha=1 + self._contrast / 100.0, beta=self._brightness
+            )
 
         # Auto deskew (simplified)
         if self._deskew and len(frame.shape) > 2:  # Only for color images
@@ -118,17 +123,20 @@ class ScannerCamera(WebCamera):
 
             # Process for preview (lower quality)
             preview = cv2.resize(frame, (640, 480))
-            _, buffer = cv2.imencode('.jpg', preview, [cv2.IMWRITE_JPEG_QUALITY, 80])
+            _, buffer = cv2.imencode(".jpg", preview, [cv2.IMWRITE_JPEG_QUALITY, 80])
             return buffer.tobytes()
 
         except Exception as e:
             logger.exception(f"Scanner {self.config.name}: Failed to get preview")
-            raise RuntimeError(f"Preview failed: {str(e)}") from e
+            raise RuntimeError(f"Preview failed: {e!s}") from e
 
-    async def set_scan_settings(self, dpi: Optional[int] = None,
-                              color_mode: Optional[str] = None,
-                              brightness: Optional[int] = None,
-                              contrast: Optional[int] = None) -> None:
+    async def set_scan_settings(
+        self,
+        dpi: Optional[int] = None,
+        color_mode: Optional[str] = None,
+        brightness: Optional[int] = None,
+        contrast: Optional[int] = None,
+    ) -> None:
         """Set scanner settings."""
         if dpi is not None:
             self._dpi = max(75, min(1200, dpi))  # Reasonable DPI range
@@ -139,14 +147,16 @@ class ScannerCamera(WebCamera):
         if contrast is not None:
             self._contrast = max(-100, min(100, contrast))
 
-        logger.info(f"Scanner {self.config.name}: Settings updated - DPI: {self._dpi}, Color: {self._color_mode}, "
-                   f"Brightness: {self._brightness}, Contrast: {self._contrast}")
+        logger.info(
+            f"Scanner {self.config.name}: Settings updated - DPI: {self._dpi}, Color: {self._color_mode}, "
+            f"Brightness: {self._brightness}, Contrast: {self._contrast}"
+        )
 
     async def get_scan_history(self) -> list:
         """Get list of recent scans."""
         try:
             scan_files = []
-            for ext in ['*.png', '*.jpg', '*.jpeg', '*.tiff', '*.pdf']:
+            for ext in ["*.png", "*.jpg", "*.jpeg", "*.tiff", "*.pdf"]:
                 scan_files.extend(self._output_dir.glob(ext))
 
             # Sort by modification time, most recent first
@@ -158,12 +168,12 @@ class ScannerCamera(WebCamera):
                     "path": str(f),
                     "size": f.stat().st_size,
                     "modified": f.stat().st_mtime,
-                    "type": f.suffix.upper()[1:] if f.suffix else "UNKNOWN"
+                    "type": f.suffix.upper()[1:] if f.suffix else "UNKNOWN",
                 }
                 for f in scan_files[:20]  # Last 20 scans
             ]
 
-        except Exception as e:
+        except Exception:
             logger.exception(f"Scanner {self.config.name}: Failed to get scan history")
             return []
 
@@ -175,11 +185,10 @@ class ScannerCamera(WebCamera):
                 file_path.unlink()
                 logger.info(f"Scanner {self.config.name}: Deleted scan {filename}")
                 return True
-            else:
-                logger.warning(f"Scanner {self.config.name}: Scan file {filename} not found")
-                return False
+            logger.warning(f"Scanner {self.config.name}: Scan file {filename} not found")
+            return False
 
-        except Exception as e:
+        except Exception:
             logger.exception(f"Scanner {self.config.name}: Failed to delete scan {filename}")
             return False
 
@@ -196,7 +205,7 @@ class ScannerCamera(WebCamera):
                 "text": "OCR processing would extract text here...",
                 "confidence": 0.85,
                 "language": language,
-                "word_count": 42
+                "word_count": 42,
             }
 
             logger.info(f"Scanner {self.config.name}: OCR completed for {scan_path}")
@@ -204,7 +213,7 @@ class ScannerCamera(WebCamera):
 
         except Exception as e:
             logger.exception(f"Scanner {self.config.name}: OCR scan failed")
-            raise RuntimeError(f"OCR scan failed: {str(e)}") from e
+            raise RuntimeError(f"OCR scan failed: {e!s}") from e
 
     async def batch_scan(self, count: int = 5, prefix: str = "batch") -> list:
         """Perform batch scanning of multiple pages."""
@@ -212,33 +221,18 @@ class ScannerCamera(WebCamera):
             scanned_files = []
 
             for i in range(count):
-                filename = f"{prefix}_{i+1:02d}.png"
+                filename = f"{prefix}_{i + 1:02d}.png"
                 scan_path = await self.scan_document(filename)
                 scanned_files.append(scan_path)
 
                 # Small delay between scans
                 await asyncio.sleep(0.5)
 
-            logger.info(f"Scanner {self.config.name}: Batch scan completed - {len(scanned_files)} pages")
+            logger.info(
+                f"Scanner {self.config.name}: Batch scan completed - {len(scanned_files)} pages"
+            )
             return scanned_files
 
         except Exception as e:
             logger.exception(f"Scanner {self.config.name}: Batch scan failed")
-            raise RuntimeError(f"Batch scan failed: {str(e)}") from e
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            raise RuntimeError(f"Batch scan failed: {e!s}") from e

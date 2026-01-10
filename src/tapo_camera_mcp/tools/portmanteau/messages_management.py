@@ -7,7 +7,7 @@ system messages, user notifications, and communication management.
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastmcp import FastMCP
 
@@ -97,7 +97,7 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                         "read": False,
                         "archived": False,
                         "attachments": [],
-                        "actions_available": ["mark_read", "archive", "reply"]
+                        "actions_available": ["mark_read", "archive", "reply"],
                     },
                     {
                         "id": "msg_alert_002",
@@ -112,7 +112,7 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                         "read": False,
                         "archived": False,
                         "attachments": ["camera_footage_0345.mp4"],
-                        "actions_available": ["mark_read", "view_attachment", "escalate"]
+                        "actions_available": ["mark_read", "view_attachment", "escalate"],
                     },
                     {
                         "id": "msg_user_003",
@@ -127,8 +127,8 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                         "read": True,
                         "archived": False,
                         "attachments": ["weekly_report_2025_w52.pdf"],
-                        "actions_available": ["view_attachment", "archive"]
-                    }
+                        "actions_available": ["view_attachment", "archive"],
+                    },
                 ]
 
                 return {
@@ -140,9 +140,12 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                     "unread_count": len([m for m in messages if not m.get("read")]),
                 }
 
-            elif action == "send_message":
+            if action == "send_message":
                 if not recipient or not subject or not body:
-                    return {"success": False, "error": "recipient, subject, and body are required for send_message"}
+                    return {
+                        "success": False,
+                        "error": "recipient, subject, and body are required for send_message",
+                    }
 
                 # Mock message sending
                 sent_message = {
@@ -157,8 +160,10 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                     "timestamp": "2025-12-27T04:00:00Z",
                     "status": "sent",
                     "delivery_channels": [channel],
-                    "estimated_delivery_time": "immediate" if channel == "dashboard" else "2-5 minutes",
-                    "tracking_id": f"track_{asyncio.get_event_loop().time()}"
+                    "estimated_delivery_time": "immediate"
+                    if channel == "dashboard"
+                    else "2-5 minutes",
+                    "tracking_id": f"track_{asyncio.get_event_loop().time()}",
                 }
 
                 return {
@@ -167,9 +172,12 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                     "message": sent_message,
                 }
 
-            elif action == "get_message_details":
+            if action == "get_message_details":
                 if not message_id:
-                    return {"success": False, "error": "message_id is required for get_message_details"}
+                    return {
+                        "success": False,
+                        "error": "message_id is required for get_message_details",
+                    }
 
                 # Mock detailed message info
                 message_details = {
@@ -190,7 +198,7 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                             "filename": "kitchen_motion_0345.mp4",
                             "size_bytes": 2457600,
                             "type": "video/mp4",
-                            "url": "/api/media/camera_footage/kitchen_motion_0345.mp4"
+                            "url": "/api/media/camera_footage/kitchen_motion_0345.mp4",
                         }
                     ],
                     "metadata": {
@@ -198,11 +206,11 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                         "sensor_id": "motion_kitchen_001",
                         "confidence_score": 0.89,
                         "detection_zone": "kitchen_main",
-                        "false_positive_probability": 0.05
+                        "false_positive_probability": 0.05,
                     },
                     "actions_taken": ["notification_sent", "logged"],
                     "escalation_level": 1,
-                    "response_required": True
+                    "response_required": True,
                 }
 
                 return {
@@ -211,7 +219,7 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                     "message": message_details,
                 }
 
-            elif action == "mark_as_read":
+            if action == "mark_as_read":
                 if not message_id:
                     return {"success": False, "error": "message_id is required for mark_as_read"}
 
@@ -222,7 +230,7 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                     "marked_at": "2025-12-27T04:00:00Z",
                     "by_user": "admin",
                     "notification_updated": True,
-                    "unread_count_updated": True
+                    "unread_count_updated": True,
                 }
 
                 return {
@@ -231,7 +239,7 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                     "result": read_result,
                 }
 
-            elif action == "delete_message":
+            if action == "delete_message":
                 if not message_id:
                     return {"success": False, "error": "message_id is required for delete_message"}
 
@@ -244,7 +252,7 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                     "permanent": False,  # Moved to trash, not permanently deleted
                     "attachments_preserved": True,
                     "recovery_possible": True,
-                    "recovery_window_days": 30
+                    "recovery_window_days": 30,
                 }
 
                 return {
@@ -253,7 +261,7 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                     "result": delete_result,
                 }
 
-            elif action == "get_message_stats":
+            if action == "get_message_stats":
                 # Mock messaging statistics
                 stats = {
                     "total_messages": 1247,
@@ -261,31 +269,16 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                     "messages_today": 15,
                     "messages_this_week": 89,
                     "messages_this_month": 345,
-                    "by_type": {
-                        "system": 456,
-                        "alert": 234,
-                        "user": 312,
-                        "notification": 245
-                    },
-                    "by_priority": {
-                        "low": 678,
-                        "normal": 423,
-                        "high": 123,
-                        "urgent": 23
-                    },
-                    "by_channel": {
-                        "dashboard": 892,
-                        "email": 234,
-                        "sms": 89,
-                        "push": 32
-                    },
+                    "by_type": {"system": 456, "alert": 234, "user": 312, "notification": 245},
+                    "by_priority": {"low": 678, "normal": 423, "high": 123, "urgent": 23},
+                    "by_channel": {"dashboard": 892, "email": 234, "sms": 89, "push": 32},
                     "response_times": {
                         "average_response_minutes": 45,
                         "median_response_minutes": 23,
                         "fastest_response_seconds": 12,
-                        "slowest_response_hours": 8
+                        "slowest_response_hours": 8,
                     },
-                    "timestamp": "2025-12-27T04:00:00Z"
+                    "timestamp": "2025-12-27T04:00:00Z",
                 }
 
                 return {
@@ -294,7 +287,7 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                     "stats": stats,
                 }
 
-            elif action == "configure_channels":
+            if action == "configure_channels":
                 # Mock channel configuration
                 channel_config = {
                     "channels": {
@@ -303,35 +296,35 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                             "priority_threshold": "low",
                             "quiet_hours": {"start": "22:00", "end": "08:00"},
                             "batch_notifications": True,
-                            "batch_interval_minutes": 15
+                            "batch_interval_minutes": 15,
                         },
                         "email": {
                             "enabled": True,
                             "priority_threshold": "normal",
                             "smtp_configured": True,
                             "daily_limit": 50,
-                            "rate_limit_per_hour": 10
+                            "rate_limit_per_hour": 10,
                         },
                         "sms": {
                             "enabled": True,
                             "priority_threshold": "high",
                             "provider_configured": True,
                             "daily_limit": 20,
-                            "emergency_override": True
+                            "emergency_override": True,
                         },
                         "push": {
                             "enabled": False,
                             "reason": "Mobile app not configured",
-                            "setup_required": True
-                        }
+                            "setup_required": True,
+                        },
                     },
                     "global_settings": {
                         "timezone": "Europe/Vienna",
                         "language": "en",
                         "quiet_hours_enabled": True,
-                        "auto_archive_after_days": 30
+                        "auto_archive_after_days": 30,
                     },
-                    "updated_at": "2025-12-27T04:00:00Z"
+                    "updated_at": "2025-12-27T04:00:00Z",
                 }
 
                 return {
@@ -340,7 +333,7 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                     "configuration": channel_config,
                 }
 
-            elif action == "test_messaging":
+            if action == "test_messaging":
                 # Mock messaging system test
                 test_results = {
                     "test_timestamp": "2025-12-27T04:00:00Z",
@@ -351,21 +344,21 @@ def register_messages_management_tool(mcp: FastMCP) -> None:
                             "status": "success",
                             "message_id": "test_dashboard_001",
                             "delivery_time_ms": 45,
-                            "visible_in_ui": True
+                            "visible_in_ui": True,
                         },
                         "email": {
                             "status": "success",
                             "message_id": "test_email_001",
                             "delivery_time_ms": 1200,
-                            "smtp_response": "250 OK"
-                        }
+                            "smtp_response": "250 OK",
+                        },
                     },
                     "overall_status": "success",
                     "test_cleanup_performed": True,
                     "recommendations": [
                         "Consider enabling SMS for urgent alerts",
-                        "Test push notifications when mobile app is available"
-                    ]
+                        "Test push notifications when mobile app is available",
+                    ],
                 }
 
                 return {

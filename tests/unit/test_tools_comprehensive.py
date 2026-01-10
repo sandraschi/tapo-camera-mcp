@@ -218,7 +218,9 @@ def test_system_tools_execution():
         assert False
 
 
-@pytest.mark.skip(reason="# TODO: Fix test_tool_validation_integration - currently has assert False")
+@pytest.mark.skip(
+    reason="# TODO: Fix test_tool_validation_integration - currently has assert False"
+)
 def test_tool_validation_integration():
     """Test tool input validation integration."""
     try:

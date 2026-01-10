@@ -21,18 +21,14 @@ class TestLLMManager:
 
     def test_register_ollama_provider(self, manager):
         """Test registering Ollama provider."""
-        result = manager.register_provider(
-            ProviderType.OLLAMA, "http://localhost:11434"
-        )
+        result = manager.register_provider(ProviderType.OLLAMA, "http://localhost:11434")
         assert result is True
         assert ProviderType.OLLAMA in manager.providers
         assert isinstance(manager.providers[ProviderType.OLLAMA], OllamaProvider)
 
     def test_register_lm_studio_provider(self, manager):
         """Test registering LM Studio provider."""
-        result = manager.register_provider(
-            ProviderType.LM_STUDIO, "http://localhost:1234"
-        )
+        result = manager.register_provider(ProviderType.LM_STUDIO, "http://localhost:1234")
         assert result is True
         assert ProviderType.LM_STUDIO in manager.providers
 
@@ -172,4 +168,3 @@ class TestGetLLMManager:
         manager2 = get_llm_manager()
 
         assert manager1 is manager2
-

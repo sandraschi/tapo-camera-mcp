@@ -119,7 +119,7 @@ def register_home_assistant_management_tool(mcp: FastMCP) -> None:
                     "success": False,
                     "action": action,
                     "error": "Home Assistant access token not configured. "
-                             "Add security.integrations.homeassistant.access_token to config.yaml",
+                    "Add security.integrations.homeassistant.access_token to config.yaml",
                 }
 
             headers = {
@@ -161,7 +161,11 @@ def register_home_assistant_management_tool(mcp: FastMCP) -> None:
                             entities = response.json()
                             # Filter by domain if provided
                             if domain:
-                                entities = [e for e in entities if e.get("entity_id", "").startswith(f"{domain}.")]
+                                entities = [
+                                    e
+                                    for e in entities
+                                    if e.get("entity_id", "").startswith(f"{domain}.")
+                                ]
                             return {
                                 "success": True,
                                 "action": action,
@@ -170,7 +174,9 @@ def register_home_assistant_management_tool(mcp: FastMCP) -> None:
                                         {
                                             "entity_id": e.get("entity_id"),
                                             "state": e.get("state"),
-                                            "friendly_name": e.get("attributes", {}).get("friendly_name"),
+                                            "friendly_name": e.get("attributes", {}).get(
+                                                "friendly_name"
+                                            ),
                                         }
                                         for e in entities[:50]  # Limit to 50
                                     ],
@@ -193,7 +199,8 @@ def register_home_assistant_management_tool(mcp: FastMCP) -> None:
                             entities = response.json()
                             # Find Nest Protect entities
                             nest_entities = [
-                                e for e in entities
+                                e
+                                for e in entities
                                 if "nest" in e.get("entity_id", "").lower()
                                 or "protect" in e.get("entity_id", "").lower()
                                 or "smoke" in e.get("entity_id", "").lower()
@@ -208,7 +215,9 @@ def register_home_assistant_management_tool(mcp: FastMCP) -> None:
                                             {
                                                 "entity_id": e.get("entity_id"),
                                                 "state": e.get("state"),
-                                                "friendly_name": e.get("attributes", {}).get("friendly_name"),
+                                                "friendly_name": e.get("attributes", {}).get(
+                                                    "friendly_name"
+                                                ),
                                                 "attributes": e.get("attributes", {}),
                                             }
                                             for e in nest_entities
@@ -223,7 +232,7 @@ def register_home_assistant_management_tool(mcp: FastMCP) -> None:
                                     "devices": [],
                                     "count": 0,
                                     "note": "No Nest Protect entities found. "
-                                            "Ensure Nest integration is set up in Home Assistant.",
+                                    "Ensure Nest integration is set up in Home Assistant.",
                                 },
                             }
                         return {
@@ -242,7 +251,9 @@ def register_home_assistant_management_tool(mcp: FastMCP) -> None:
                             "error": "entity_id is required for get_state action",
                         }
                     try:
-                        response = await client.get(f"{ha_url}/api/states/{entity_id}", headers=headers)
+                        response = await client.get(
+                            f"{ha_url}/api/states/{entity_id}", headers=headers
+                        )
                         if response.status_code == 200:
                             entity = response.json()
                             return {
@@ -284,7 +295,9 @@ def register_home_assistant_management_tool(mcp: FastMCP) -> None:
                                 "data": {
                                     "domain": domain,
                                     "service": service,
-                                    "result": response.json() if response.text else "Service called successfully",
+                                    "result": response.json()
+                                    if response.text
+                                    else "Service called successfully",
                                 },
                             }
                         return {
@@ -300,9 +313,3 @@ def register_home_assistant_management_tool(mcp: FastMCP) -> None:
         except Exception as e:
             logger.exception(f"Error in Home Assistant management action '{action}'")
             return {"success": False, "action": action, "error": str(e)}
-
-
-
-
-
-

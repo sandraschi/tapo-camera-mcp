@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 # Lazy import psutil to avoid import errors if not available
 try:
     import psutil
+
     HAS_PSUTIL = True
 except ImportError:
     psutil = None
@@ -345,18 +346,16 @@ class StatusTool(BaseTool):
                     "bytes_recv_mb": net_io.bytes_recv / (1024 * 1024),
                     "active_connections": len(psutil.net_connections()),
                 }
-            else:
-                return {
-                    "bytes_sent_mb": 0.0,
-                    "bytes_recv_mb": 0.0,
-                    "active_connections": 0,
-                }
-        else:
             return {
                 "bytes_sent_mb": 0.0,
                 "bytes_recv_mb": 0.0,
                 "active_connections": 0,
             }
+        return {
+            "bytes_sent_mb": 0.0,
+            "bytes_recv_mb": 0.0,
+            "active_connections": 0,
+        }
 
     def _format_uptime(self, boot_time: float) -> str:
         """Format system uptime as a human-readable string."""

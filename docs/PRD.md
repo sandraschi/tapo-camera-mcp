@@ -5,50 +5,10 @@
 ### **Product Name**
 Home Security Dashboard MCP - Dual Architecture Platform
 
-## Vision
-To create the definitive 2026 SOTA home management platform that unifies surveillance, robotics, environmental monitoring, and medical-grade diagnostics into a single, high-contrast, zero-friction interface.
-
-## Scope
-### Phase 1: Core Surveillance (Complete)
-- **Tapo Ecosystem**: C100, C200, C210, C310 camera management.
-- **Legacy Integration**: Ring Doorbell, Nest Cam, Nest Protect.
-- **Universal Optical**: USB Webcam auto-detection.
-- **Live Dashboard**: Centralized management at `localhost:7777`.
-
-### Phase 2: Environmental & Utility (Complete)
-- **Netatmo**: Full weather station metrics (Temp, Humidity, Pressure, CO2).
-- **Shelly/Tapo Power**: P115, Shelly 1PM monitoring/control.
-- **Meteorology**: GeoSphere Austria & OpenMeteo integration.
-
-### Phase 3: Robotics & Municipal (Active/Staging)
-- **Tactical Robotics**: Unitree Go2, Moorebot Scout, iKettle, Vbot integration.
-- **Vienna Services**: Public webcam aggregation, Emergency alert monitoring.
-- **Medical Diagnostics**: USB Otoscope/Microscope SOTA 2026 integration.
-- **Lighting**: Philips Hue & Tapo L-series synchronization.
-
-
-### **Reliability & Safety Protocol (SOTA 2026)**
-
-#### **Authentication & Security Status**
-> [!IMPORTANT]
-> **Authentication implementation has not been started**. The system currently operates in a trusted LAN/VPN environment (Tailscale). Logic for multi-tenant auth and device-level credentials is part of the future security roadmap.
-
-#### **Categorized Alert Logic**
-- **🚨 Hard Alarms (100% Uptime)**: Life-safety and security interrupts (**CO, Fire, Burglar**). These require absolute priority, hardware failover (UPS), and dual-link internet (Anti-Sabotage) to guarantee functionality.
-- **🔔 Soft Alarms (Productivity/Environmental)**: Non-critical notifications such as **Antigravity IDE updates**, **Teams/Email alerts**, or **indoor CO2 thresholds**. These use a lower-intensity notification tier.
-
-#### **Infrastructure Stabilization**
-- **Orchestration**: Transitioning to **K8s** to handle node-level failures.
-- **Observability**: Mandatory integration of the **LPG Stack** (Loki/Prometheus/Grafana) for all production nodes.
-
-
-### Phase 4: The Meta-Home (Conceptual/Future)
-- **Digital/Physical Bridge**: Unifying Plex media, communication (Teams/Email), and development workflows (IDE projects) into the central dashboard.
-- **Agentic Sync**: Real-time status of agentic projects acting as "soft" home telemetry.
-
+### **Product Vision**
+A production-ready security monitoring platform with dual MCP architecture: serving as both individual camera/sensor MCP servers AND a unified security dashboard that orchestrates multiple MCP servers for comprehensive home security monitoring.
 
 ### **Target Users**
-
 - **🏠 Home Security Professionals**: Users with comprehensive security ecosystems (cameras + sensors)
 - **🤖 AI Integration Developers**: Developers building MCP-based security systems
 - **🏢 System Administrators**: IT professionals managing multi-vendor security networks

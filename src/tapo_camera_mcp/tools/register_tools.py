@@ -21,7 +21,7 @@ def register_all_tools(mcp: FastMCP, tool_mode: str = "production") -> None:
             - "testing" or "all": Individual + portmanteau tools (for testing)
     """
     # Check if tools are already registered to this FastMCP instance
-    if hasattr(mcp, '_tapo_tools_registered') and mcp._tapo_tools_registered:
+    if hasattr(mcp, "_tapo_tools_registered") and mcp._tapo_tools_registered:
         logger.debug("Tools already registered to this FastMCP instance, skipping")
         return
 
@@ -49,4 +49,3 @@ def _register_individual_tools(mcp: FastMCP) -> None:
     # This would register individual tools if needed for testing
     # For now, we rely on portmanteau tools only
     logger.info("Individual tools registration skipped (using portmanteau tools only)")
-

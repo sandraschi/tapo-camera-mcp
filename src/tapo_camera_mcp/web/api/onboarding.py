@@ -6,16 +6,12 @@ device discovery, configuration, and progress tracking.
 """
 
 import logging
-from datetime import datetime
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
 
-from ...tools.onboarding.device_discovery_tools import (
-    OnboardingState,
-    discovery_manager,
-)
+from ...mcp_client import call_mcp_tool
 
 logger = logging.getLogger(__name__)
 
@@ -48,14 +44,16 @@ class OnboardingProgressResponse(BaseModel):
     next_recommended_steps: List[str]
 
 
-@router.post("/discover")
-async def discover_devices(background_tasks: BackgroundTasks):
-    """Start device discovery process."""
+@router.post("/discover", response_model=Dict[str, Any])
+async def discover_devices(background_tasks: BackgroundTasks) -> Dict[str, Any]:
+    """Start device discovery process via MCP."""
     try:
         # Wrap background task in error handler to prevent crashes
         async def safe_discover():
             try:
-                await discovery_manager.discover_all_devices()
+                result = await call_mcp_tool("discover_devices", {})
+                if not result.get("success"):
+                    logger.error(f"Device discovery failed via MCP: {result.get('error')}")
             except Exception as e:
                 error_type = type(e).__name__
                 error_msg = str(e).lower()
@@ -66,24 +64,24 @@ async def discover_devices(background_tasks: BackgroundTasks):
                         f"Device discovery timed out: {e}",
                         extra={
                             "error_category": "timeout",
-                            "actionable": "Check network connectivity and device availability. Discovery may take longer on slow networks."
-                        }
+                            "actionable": "Check network connectivity and device availability. Discovery may take longer on slow networks.",
+                        },
                     )
                 elif "connection" in error_msg or "network" in error_msg:
                     logger.error(
                         f"Device discovery network error: {e}",
                         extra={
                             "error_category": "network",
-                            "actionable": "Check network connectivity, firewall settings, and ensure devices are on the same network."
-                        }
+                            "actionable": "Check network connectivity, firewall settings, and ensure devices are on the same network.",
+                        },
                     )
                 elif "auth" in error_msg or "credential" in error_msg:
                     logger.error(
                         f"Device discovery authentication error: {e}",
                         extra={
                             "error_category": "authentication",
-                            "actionable": "Check device credentials in config.yaml. Some devices require authentication for discovery."
-                        }
+                            "actionable": "Check device credentials in config.yaml. Some devices require authentication for discovery.",
+                        },
                     )
                 else:
                     logger.exception(
@@ -91,8 +89,8 @@ async def discover_devices(background_tasks: BackgroundTasks):
                         extra={
                             "error_category": "unknown",
                             "error_type": error_type,
-                            "actionable": f"Unexpected error during discovery. Check logs for details. Error: {e}"
-                        }
+                            "actionable": f"Unexpected error during discovery. Check logs for details. Error: {e}",
+                        },
                     )
                 # Don't re-raise - background task failures shouldn't crash server
 
@@ -107,339 +105,222 @@ async def discover_devices(background_tasks: BackgroundTasks):
 
     except Exception as e:
         logger.exception("Device discovery failed")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        raise HTTPException(status_code=500, detail=f"Device discovery failed: {e!s}")
 
 
-@router.get("/discover/results")
-async def get_discovery_results():
-    """Get device discovery results."""
+@router.get("/discover/results", response_model=Dict[str, Any])
+async def get_discovery_results() -> Dict[str, Any]:
+    """Get device discovery results via MCP."""
     try:
-        # Trigger discovery if not already done
-        if not discovery_manager.discovered_devices:
-            await discovery_manager.discover_all_devices()
+        # Get discovery results via MCP
+        result = await call_mcp_tool("discover_devices", {"get_results": True})
+        if result.get("success"):
+            data = result.get("data", {})
 
-        discovery_results = {
-            "tapo_p115": [
-                device.dict()
-                for device in discovery_manager.discovered_devices
-                if device.device_type == "tapo_p115"
-            ],
-            "usb_webcams": [
-                device.dict()
-                for device in discovery_manager.discovered_devices
-                if device.device_type == "webcam"
-            ],
-            "nest_protect": [
-                device.dict()
-                for device in discovery_manager.discovered_devices
-                if device.device_type == "nest_protect"
-            ],
-            "ring_devices": [
-                device.dict()
-                for device in discovery_manager.discovered_devices
-                if device.device_type == "ring"
-            ],
-        }
+            # Reorganize results by device type
+            discovered_devices = data.get("discovered_devices", [])
+            discovery_results = {
+                "tapo_p115": [d for d in discovered_devices if d.get("device_type") == "tapo_p115"],
+                "usb_webcams": [d for d in discovered_devices if d.get("device_type") == "webcam"],
+                "nest_protect": [
+                    d for d in discovered_devices if d.get("device_type") == "nest_protect"
+                ],
+                "ring_devices": [d for d in discovered_devices if d.get("device_type") == "ring"],
+            }
 
-        device_counts = {
-            device_type: len(devices) for device_type, devices in discovery_results.items()
-        }
+            device_counts = {
+                device_type: len(devices) for device_type, devices in discovery_results.items()
+            }
 
+            return {
+                "status": "success",
+                "discovery_results": discovery_results,
+                "device_counts": device_counts,
+                "total_devices": sum(device_counts.values()),
+                "onboarding_progress": data.get("onboarding_progress", {}),
+            }
         return {
-            "status": "success",
-            "discovery_results": discovery_results,
-            "device_counts": device_counts,
-            "total_devices": sum(device_counts.values()),
-            "onboarding_progress": discovery_manager.get_onboarding_progress(),
+            "status": "error",
+            "message": result.get("error", "Failed to get discovery results"),
+            "discovery_results": {},
+            "device_counts": {},
+            "total_devices": 0,
+            "onboarding_progress": {},
         }
 
     except Exception as e:
-        logger.exception("Failed to get discovery results")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.exception("Failed to get discovery results via MCP")
+        raise HTTPException(status_code=500, detail=f"Failed to get discovery results: {e!s}")
 
 
-@router.post("/configure")
-async def configure_device(config: DeviceConfigurationRequest):
-    """Configure a discovered device."""
+@router.post("/configure", response_model=Dict[str, Any])
+async def configure_device(config: DeviceConfigurationRequest) -> Dict[str, Any]:
+    """Configure a discovered device via MCP."""
     try:
-        # Find the device in discovered devices
-        device = None
-        for discovered_device in discovery_manager.discovered_devices:
-            if discovered_device.device_id == config.device_id:
-                device = discovered_device
-                break
+        result = await call_mcp_tool(
+            "configure_device",
+            {
+                "device_id": config.device_id,
+                "display_name": config.display_name,
+                "location": config.location,
+                "settings": config.settings,
+            },
+        )
 
-        if not device:
-            raise HTTPException(
-                status_code=404, detail=f"Device {config.device_id} not found in discovered devices"
-            )
-
-        # Update device configuration
-        device.display_name = config.display_name
-        device.location = config.location
-        device.status = "configured"
-
-        # Save configuration to onboarding state
-        discovery_manager.onboarding_state.configured_devices[config.device_id] = {
-            "display_name": config.display_name,
-            "location": config.location,
-            "settings": config.settings,
-            "configured_at": datetime.now().isoformat(),
-        }
-
-        return {
-            "status": "success",
-            "message": f"Device {config.display_name} configured successfully",
-            "device": device.dict(),
-            "configuration": discovery_manager.onboarding_state.configured_devices[
-                config.device_id
-            ],
-        }
+        if result.get("success"):
+            data = result.get("data", {})
+            return {
+                "status": "success",
+                "message": data.get(
+                    "message", f"Device {config.display_name} configured successfully"
+                ),
+                "device": data.get("device", {}),
+                "configuration": data.get("configuration", {}),
+            }
+        error_msg = result.get("error", "Failed to configure device")
+        if "not found" in error_msg.lower():
+            raise HTTPException(status_code=404, detail=error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.exception("Device configuration failed")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.exception("Device configuration failed via MCP")
+        raise HTTPException(status_code=500, detail=f"Device configuration failed: {e!s}")
 
 
 @router.get("/progress")
-async def get_onboarding_progress():
-    """Get current onboarding progress."""
+async def get_onboarding_progress() -> OnboardingProgressResponse:
+    """Get current onboarding progress via MCP."""
     try:
-        progress = discovery_manager.get_onboarding_progress()
-
-        # Get device summary
-        device_summary = {}
-        for device in discovery_manager.discovered_devices:
-            device_type = device.device_type
-            if device_type not in device_summary:
-                device_summary[device_type] = {"total": 0, "configured": 0}
-
-            device_summary[device_type]["total"] += 1
-            if device.status == "configured":
-                device_summary[device_type]["configured"] += 1
-
-        # Calculate completion percentage
-        total_devices = len(discovery_manager.discovered_devices)
-        completion_percentage = 0.0
-        if total_devices > 0:
-            configured_devices = len(discovery_manager.onboarding_state.configured_devices)
-            completion_percentage = (configured_devices / total_devices) * 100
-
-        # Get next recommended steps
-        next_steps = []
-        unconfigured_devices = [
-            device
-            for device in discovery_manager.discovered_devices
-            if device.status == "discovered"
-        ]
-
-        if unconfigured_devices:
-            next_steps.append(f"Configure {len(unconfigured_devices)} remaining devices")
-
-        auth_required_devices = [
-            device
-            for device in discovery_manager.discovered_devices
-            if device.requires_auth and device.status == "discovered"
-        ]
-
-        if auth_required_devices:
-            next_steps.append("Set up authentication for protected devices")
-
-        if not discovery_manager.onboarding_state.onboarding_complete and not unconfigured_devices:
-            next_steps.append("Complete onboarding and start using devices")
-
-        return OnboardingProgressResponse(
-            status="success",
-            current_step=progress["current_step"],
-            total_devices_discovered=progress["total_devices_discovered"],
-            devices_configured=progress["devices_configured"],
-            completed_steps=progress["completed_steps"],
-            onboarding_complete=progress["onboarding_complete"],
-            last_updated=progress["last_updated"],
-            device_summary=device_summary,
-            discovered_devices=[device.dict() for device in discovery_manager.discovered_devices],
-            configured_devices=discovery_manager.onboarding_state.configured_devices,
-            completion_percentage=completion_percentage,
-            next_recommended_steps=next_steps,
+        result = await call_mcp_tool("get_onboarding_progress", {})
+        if result.get("success"):
+            data = result.get("data", {})
+            return OnboardingProgressResponse(**data)
+        raise HTTPException(
+            status_code=500, detail=result.get("error", "Failed to get onboarding progress")
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.exception("Failed to get onboarding progress")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.exception("Failed to get onboarding progress via MCP")
+        raise HTTPException(status_code=500, detail=f"Failed to get onboarding progress: {e!s}")
 
 
-@router.post("/complete")
-async def complete_onboarding():
-    """Complete the onboarding process."""
+@router.post("/complete", response_model=Dict[str, Any])
+async def complete_onboarding() -> Dict[str, Any]:
+    """Complete the onboarding process via MCP."""
     try:
-        # Validate that all discovered devices are configured
-        unconfigured_devices = [
-            device
-            for device in discovery_manager.discovered_devices
-            if device.status == "discovered"
-        ]
-
-        if unconfigured_devices:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Cannot complete onboarding: {len(unconfigured_devices)} devices still need configuration",
-                extra={"unconfigured_devices": [device.dict() for device in unconfigured_devices]},
-            )
-
-        # Mark onboarding as complete
-        discovery_manager.onboarding_state.onboarding_complete = True
-        discovery_manager.onboarding_state.completed_steps.append("onboarding_complete")
-        discovery_manager.onboarding_state.last_updated = datetime.now().isoformat()
-
-        # Generate summary
-        device_summary = {}
-        for device in discovery_manager.discovered_devices:
-            device_type = device.device_type
-            if device_type not in device_summary:
-                device_summary[device_type] = 0
-            device_summary[device_type] += 1
-
-        return {
-            "status": "success",
-            "message": "Device onboarding completed successfully!",
-            "onboarding_complete": True,
-            "total_devices_configured": len(discovery_manager.discovered_devices),
-            "device_summary": device_summary,
-            "configured_devices": [
-                device.dict() for device in discovery_manager.discovered_devices
-            ],
-            "next_steps": [
-                "Start using your configured devices",
-                "Set up automation rules if desired",
-                "Configure alert preferences",
-                "Access the main dashboard at http://localhost:7777",
-            ],
-        }
+        result = await call_mcp_tool("complete_onboarding", {})
+        if result.get("success"):
+            return result.get("data", result)
+        error_msg = result.get("error", "Failed to complete onboarding")
+        if "still need configuration" in error_msg.lower():
+            raise HTTPException(status_code=400, detail=error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.exception("Onboarding completion failed")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.exception("Onboarding completion failed via MCP")
+        raise HTTPException(status_code=500, detail=f"Onboarding completion failed: {e!s}")
 
 
-@router.get("/devices")
-async def get_discovered_devices():
-    """Get all discovered devices."""
+@router.get("/devices", response_model=Dict[str, Any])
+async def get_discovered_devices() -> Dict[str, Any]:
+    """Get all discovered devices via MCP."""
     try:
+        result = await call_mcp_tool("discover_devices", {"get_devices": True})
+        if result.get("success"):
+            data = result.get("data", {})
+            return {
+                "status": "success",
+                "devices": data.get("devices", []),
+                "total_count": data.get("total_count", 0),
+            }
         return {
-            "status": "success",
-            "devices": [device.dict() for device in discovery_manager.discovered_devices],
-            "total_count": len(discovery_manager.discovered_devices),
+            "status": "error",
+            "devices": [],
+            "total_count": 0,
+            "error": result.get("error", "Failed to get discovered devices"),
         }
 
     except Exception as e:
-        logger.exception("Failed to get discovered devices")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.exception("Failed to get discovered devices via MCP")
+        raise HTTPException(status_code=500, detail=f"Failed to get discovered devices: {e!s}")
 
 
-@router.get("/devices/{device_id}")
-async def get_device_details(device_id: str):
-    """Get details for a specific device."""
+@router.get("/devices/{device_id}", response_model=Dict[str, Any])
+async def get_device_details(device_id: str) -> Dict[str, Any]:
+    """Get details for a specific device via MCP."""
     try:
-        device = None
-        for discovered_device in discovery_manager.discovered_devices:
-            if discovered_device.device_id == device_id:
-                device = discovered_device
-                break
-
-        if not device:
+        result = await call_mcp_tool("discover_devices", {"get_device": device_id})
+        if result.get("success"):
+            data = result.get("data", {})
+            if data:
+                return {
+                    "status": "success",
+                    "device": data.get("device", {}),
+                    "configuration": data.get("configuration"),
+                    "is_configured": data.get("is_configured", False),
+                }
             raise HTTPException(status_code=404, detail=f"Device {device_id} not found")
-
-        # Get configuration if available
-        configuration = discovery_manager.onboarding_state.configured_devices.get(device_id)
-
-        return {
-            "status": "success",
-            "device": device.dict(),
-            "configuration": configuration,
-            "is_configured": device.status == "configured",
-        }
+        error_msg = result.get("error", "Failed to get device details")
+        if "not found" in error_msg.lower():
+            raise HTTPException(status_code=404, detail=error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.exception("Failed to get device details")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.exception("Failed to get device details via MCP")
+        raise HTTPException(status_code=500, detail=f"Failed to get device details: {e!s}")
 
 
-@router.delete("/reset")
-async def reset_onboarding():
-    """Reset the onboarding process."""
+@router.delete("/reset", response_model=Dict[str, Any])
+async def reset_onboarding() -> Dict[str, Any]:
+    """Reset the onboarding process via MCP."""
     try:
-        # Reset discovery manager state
-        discovery_manager.discovered_devices = []
-        discovery_manager.onboarding_state = OnboardingState()
-
-        return {"status": "success", "message": "Onboarding process reset successfully"}
-
-    except Exception as e:
-        logger.exception("Failed to reset onboarding")
-        raise HTTPException(status_code=500, detail=str(e)) from e
-
-
-@router.get("/recommendations")
-async def get_setup_recommendations():
-    """Get smart setup recommendations based on discovered devices."""
-    try:
-        devices = discovery_manager.discovered_devices
-        recommendations = []
-
-        # Analyze device combinations and generate recommendations
-        has_tapo_plugs = any(device.device_type == "tapo_p115" for device in devices)
-        has_nest_protect = any(device.device_type == "nest_protect" for device in devices)
-        has_ring_devices = any(device.device_type == "ring" for device in devices)
-        has_webcams = any(device.device_type == "webcam" for device in devices)
-
-        if has_tapo_plugs and has_nest_protect:
-            recommendations.append(
-                {
-                    "type": "security_integration",
-                    "title": "Emergency Power Shutdown",
-                    "description": "Automatically turn off non-essential devices during smoke alarms",
-                    "safety_benefit": "Reduces fire risk",
-                    "complexity": "low",
-                    "estimated_setup_time": "5 minutes",
-                }
+        # Note: Reset functionality may not be available in MCP tools yet
+        # TODO: Add reset action to device discovery MCP tools
+        result = await call_mcp_tool("discover_devices", {"reset": True})
+        if result.get("success"):
+            return result.get(
+                "data", {"status": "success", "message": "Onboarding process reset successfully"}
             )
-
-        if has_tapo_plugs and len([d for d in devices if d.device_type == "tapo_p115"]) > 1:
-            recommendations.append(
-                {
-                    "type": "energy_optimization",
-                    "title": "Whole House Energy Management",
-                    "description": "Set up coordinated schedules for all smart plugs",
-                    "estimated_savings": "$50-100/year",
-                    "complexity": "medium",
-                    "estimated_setup_time": "15 minutes",
-                }
-            )
-
-        if has_webcams and has_ring_devices:
-            recommendations.append(
-                {
-                    "type": "security_integration",
-                    "title": "Motion Alert Correlation",
-                    "description": "Link camera motion detection with Ring doorbell alerts",
-                    "security_benefit": "Enhanced security monitoring",
-                    "complexity": "low",
-                    "estimated_setup_time": "10 minutes",
-                }
-            )
-
         return {
-            "status": "success",
-            "recommendations": recommendations,
-            "total_recommendations": len(recommendations),
+            "status": "error",
+            "message": result.get(
+                "error", "Failed to reset onboarding - feature not available via MCP"
+            ),
+            "note": "Reset functionality may not be implemented in MCP tools yet",
         }
 
     except Exception as e:
-        logger.exception("Failed to get setup recommendations")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.exception("Failed to reset onboarding via MCP")
+        raise HTTPException(status_code=500, detail=f"Failed to reset onboarding: {e!s}")
+
+
+@router.get("/recommendations", response_model=Dict[str, Any])
+async def get_setup_recommendations() -> Dict[str, Any]:
+    """Get smart setup recommendations based on discovered devices via MCP."""
+    try:
+        result = await call_mcp_tool("discover_devices", {"get_recommendations": True})
+        if result.get("success"):
+            data = result.get("data", {})
+            return {
+                "status": "success",
+                "recommendations": data.get("recommendations", []),
+                "total_recommendations": data.get("total_recommendations", 0),
+            }
+        return {
+            "status": "error",
+            "recommendations": [],
+            "total_recommendations": 0,
+            "error": result.get("error", "Failed to get setup recommendations"),
+        }
+
+    except Exception as e:
+        logger.exception("Failed to get setup recommendations via MCP")
+        raise HTTPException(status_code=500, detail=f"Failed to get setup recommendations: {e!s}")

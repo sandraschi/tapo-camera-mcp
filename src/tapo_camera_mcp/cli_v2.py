@@ -132,13 +132,16 @@ class TapoCameraCLI:
     async def run(self, args=None):
         """Run the CLI."""
         if args is None:
-            import sys
             # Use parse_known_args to handle cases where no subcommand is provided
             args, unknown = self.parser.parse_known_args()
 
             # If no command was specified (which can happen with set_defaults), ensure it's serve
-            if not hasattr(args, 'command') or args.command is None or args.command not in ['serve', 'connect', 'camera', 'help']:
-                args.command = 'serve'
+            if (
+                not hasattr(args, "command")
+                or args.command is None
+                or args.command not in ["serve", "connect", "camera", "help"]
+            ):
+                args.command = "serve"
 
         try:
             # Handle help command
@@ -309,6 +312,7 @@ async def main_async():
 
     # Handle MCP compatibility - if no arguments provided, default to serve
     import sys
+
     if len(sys.argv) == 1:
         # No arguments provided, run server directly for MCP compatibility
         server = await TapoCameraServer.get_instance()
@@ -325,8 +329,8 @@ async def main_async():
             server = await TapoCameraServer.get_instance()
             await server.run(stdio=True, direct=True)
             return 0
-        else:
-            raise
+        raise
+
 
 def main():
     """Entry point for the CLI."""

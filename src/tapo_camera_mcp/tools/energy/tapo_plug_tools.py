@@ -169,7 +169,9 @@ class TapoPlugManager:
                 logger.exception("Failed to load real Tapo P115 data; falling back to mock data.")
 
         # NEVER use mock data - only real devices from ingestion service
-        logger.warning("Real Tapo P115 data unavailable. No devices will be shown. Check ingestion service configuration.")
+        logger.warning(
+            "Real Tapo P115 data unavailable. No devices will be shown. Check ingestion service configuration."
+        )
         # Clear any existing devices (including old mock devices)
         self.devices.clear()
         self._device_hosts.clear()
@@ -425,7 +427,9 @@ class TapoPlugManager:
 
             # Enforce read-only devices cannot be toggled
             if self.is_device_readonly(device_id):
-                logger.warning("Toggle blocked for read-only device %s (%s)", device_id, device.name)
+                logger.warning(
+                    "Toggle blocked for read-only device %s (%s)", device_id, device.name
+                )
                 return False
 
             if self._ingestion and host:

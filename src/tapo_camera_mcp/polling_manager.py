@@ -391,4 +391,3 @@ def get_polling_manager() -> PollingManager:
     if _global_manager is None:
         _global_manager = PollingManager()
     return _global_manager
-

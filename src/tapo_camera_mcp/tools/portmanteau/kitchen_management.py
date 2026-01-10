@@ -26,7 +26,9 @@ def register_kitchen_management_tool(mcp: FastMCP) -> None:
 
     @mcp.tool()
     async def kitchen_management(
-        action: Literal["list_appliances", "control_appliance", "get_appliance_status", "get_energy_usage"],
+        action: Literal[
+            "list_appliances", "control_appliance", "get_appliance_status", "get_energy_usage"
+        ],
         device_id: str | None = None,
         power_state: str | None = None,
         time_range: str = "24h",
@@ -50,13 +52,13 @@ def register_kitchen_management_tool(mcp: FastMCP) -> None:
                 - "control_appliance": Control appliance power (requires: device_id, power_state)
                 - "get_appliance_status": Get appliance status and power consumption (requires: device_id)
                 - "get_energy_usage": Get energy usage data (optional: device_id, time_range)
-            
+
             device_id (str | None): Smart plug device ID. Required for: control_appliance, get_appliance_status operations.
                 Optional for: get_energy_usage operation (filters to specific device).
-            
+
             power_state (str | None): Power state for control. Required for: control_appliance operation.
                 Valid: "on", "off", "toggle"
-            
+
             time_range (str): Time range for energy usage. Used by: get_energy_usage operation.
                 Default: "24h". Valid: "1h", "24h", "7d", "30d"
 
@@ -122,10 +124,16 @@ def register_kitchen_management_tool(mcp: FastMCP) -> None:
 
             if action == "control_appliance":
                 if not device_id:
-                    return {"success": False, "error": "device_id is required for control_appliance action"}
+                    return {
+                        "success": False,
+                        "error": "device_id is required for control_appliance action",
+                    }
 
                 if not power_state:
-                    return {"success": False, "error": "power_state is required for control_appliance action"}
+                    return {
+                        "success": False,
+                        "error": "power_state is required for control_appliance action",
+                    }
 
                 if power_state not in ["on", "off", "toggle"]:
                     return {
@@ -138,7 +146,9 @@ def register_kitchen_management_tool(mcp: FastMCP) -> None:
                 if not device:
                     return {"success": False, "error": f"Device {device_id} not found"}
 
-                is_kitchen = any(keyword.lower() in device.name.lower() for keyword in kitchen_keywords)
+                is_kitchen = any(
+                    keyword.lower() in device.name.lower() for keyword in kitchen_keywords
+                )
                 if not is_kitchen:
                     return {
                         "success": False,
@@ -163,7 +173,9 @@ def register_kitchen_management_tool(mcp: FastMCP) -> None:
                         "action": action,
                         "data": {
                             "device_id": device_id,
-                            "power_state": updated_device.power_state if updated_device else turn_on,
+                            "power_state": updated_device.power_state
+                            if updated_device
+                            else turn_on,
                             "message": f"Appliance turned {'ON' if turn_on else 'OFF'}",
                         },
                     }
@@ -171,7 +183,10 @@ def register_kitchen_management_tool(mcp: FastMCP) -> None:
 
             if action == "get_appliance_status":
                 if not device_id:
-                    return {"success": False, "error": "device_id is required for get_appliance_status action"}
+                    return {
+                        "success": False,
+                        "error": "device_id is required for get_appliance_status action",
+                    }
 
                 device = await tapo_plug_manager.get_device_status(device_id)
                 if not device:
@@ -214,4 +229,3 @@ def register_kitchen_management_tool(mcp: FastMCP) -> None:
         except Exception as e:
             logger.error(f"Error in kitchen management action '{action}': {e}", exc_info=True)
             return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
-

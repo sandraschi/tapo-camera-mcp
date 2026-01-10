@@ -6,6 +6,7 @@ Provides MCP tool interface for Moorebot Scout robot control.
 **Timestamp**: 2025-12-02
 **Status**: Mock mode ready, hardware support when robot arrives
 """
+
 import logging
 from typing import Dict, Optional
 
@@ -33,21 +34,21 @@ def get_moorebot_client() -> MoorebotScoutClient:
 async def moorebot_get_status() -> Dict:
     """
     Get Moorebot Scout robot status.
-    
+
     FEATURES:
     - Battery level and charging status
     - Current position and room
     - Movement status (idle/moving/patrolling/charging)
     - WiFi signal strength
     - Sensor health check
-    
+
     REQUIREMENTS:
     - Robot must be powered on and connected to network
     - Client must be initialized with robot IP address
-    
+
     Returns:
         Status dict with battery, position, sensors, WiFi signal
-    
+
     Examples:
         # Get current status
         status = await moorebot_get_status()
@@ -59,7 +60,7 @@ async def moorebot_get_status() -> Dict:
         #   "position": {"x": 2.5, "y": 1.0, "heading": 45, "room": "living_room"},
         #   "wifi_signal": -45
         # }
-    
+
     Notes:
         - Battery <20% triggers auto-return-to-dock
         - Position is relative to charging dock (home base at 0,0)
@@ -75,50 +76,46 @@ async def moorebot_get_status() -> Dict:
         return {
             "success": False,
             "error": str(e),
-            "suggestion": "Check robot is powered on and connected to network"
+            "suggestion": "Check robot is powered on and connected to network",
         }
 
 
-async def moorebot_move(
-    linear: float = 0.0,
-    angular: float = 0.0,
-    duration: float = 0.0
-) -> Dict:
+async def moorebot_move(linear: float = 0.0, angular: float = 0.0, duration: float = 0.0) -> Dict:
     """
     Move Moorebot Scout with specified velocities.
-    
+
     FEATURES:
     - Omnidirectional movement (mecanum wheels)
     - Precise velocity control
     - Timed movements or continuous
     - Emergency stop capability
-    
+
     REQUIREMENTS:
     - Robot must be in idle state (not charging/patrolling)
     - Velocities within safe limits
     - Clear path (obstacle avoidance is basic)
-    
+
     Args:
         linear: Linear velocity in m/s (forward/backward, range: -0.3 to 0.3)
         angular: Angular velocity in rad/s (rotation, range: -2.0 to 2.0)
         duration: Movement duration in seconds (0 = continuous until stopped)
-    
+
     Returns:
         Movement confirmation dict
-    
+
     Examples:
         # Move forward at 0.2 m/s for 3 seconds
         await moorebot_move(linear=0.2, duration=3.0)
-        
+
         # Rotate in place (clockwise)
         await moorebot_move(angular=-1.0, duration=2.0)
-        
+
         # Strafe right (mecanum wheels!)
         # Note: Requires custom ROS node for lateral movement
-        
+
         # Emergency stop
         await moorebot_move(0.0, 0.0)
-    
+
     Notes:
         - Mecanum wheels allow omnidirectional movement
         - Linear velocity: positive=forward, negative=backward
@@ -133,14 +130,14 @@ async def moorebot_move(
             return {
                 "success": False,
                 "error": "Linear velocity out of range",
-                "valid_range": "-0.3 to 0.3 m/s"
+                "valid_range": "-0.3 to 0.3 m/s",
             }
 
         if not (-2.0 <= angular <= 2.0):
             return {
                 "success": False,
                 "error": "Angular velocity out of range",
-                "valid_range": "-2.0 to 2.0 rad/s"
+                "valid_range": "-2.0 to 2.0 rad/s",
             }
 
         return await client.move(linear, angular, duration)
@@ -152,27 +149,27 @@ async def moorebot_move(
 async def moorebot_patrol(route: str = "default") -> Dict:
     """
     Start autonomous patrol route.
-    
+
     FEATURES:
     - Pre-defined patrol routes (default, perimeter, rooms)
     - Automatic waypoint navigation
     - Obstacle avoidance during patrol
     - Auto-return-to-dock when complete
-    
+
     REQUIREMENTS:
     - Robot must be in idle state
     - Battery >30% recommended
     - Clear floor space (remove obstacles)
-    
+
     Args:
         route: Patrol route name
             - "default": Living room -> Bedroom -> Kitchen -> Home
             - "perimeter": Full apartment perimeter
             - "rooms": Quick check of all rooms
-    
+
     Returns:
         Patrol status with waypoints and estimated duration
-    
+
     Examples:
         # Start default patrol
         result = await moorebot_patrol("default")
@@ -182,10 +179,10 @@ async def moorebot_patrol(route: str = "default") -> Dict:
         #   "waypoints": 4,
         #   "estimated_duration": 240
         # }
-        
+
         # Perimeter security check
         await moorebot_patrol("perimeter")
-    
+
     Notes:
         - Patrol can be stopped with moorebot_stop_patrol()
         - Robot will pause patrol if battery drops below 25%
@@ -203,7 +200,7 @@ async def moorebot_patrol(route: str = "default") -> Dict:
 async def moorebot_stop_patrol() -> Dict:
     """
     Stop current patrol route.
-    
+
     Returns:
         Stop confirmation
     """
@@ -218,21 +215,21 @@ async def moorebot_stop_patrol() -> Dict:
 async def moorebot_return_to_dock() -> Dict:
     """
     Return Moorebot Scout to charging dock.
-    
+
     FEATURES:
     - Automatic navigation to home base
     - IR beacon tracking for dock location
     - Auto-alignment and docking
     - Charging status monitoring
-    
+
     REQUIREMENTS:
     - Charging dock must be powered and in clear space
     - Robot should be within 5m of dock
     - Dock should be on hard floor (not carpet)
-    
+
     Returns:
         Docking status (success or failure with reason)
-    
+
     Examples:
         # Return to dock
         result = await moorebot_return_to_dock()
@@ -241,7 +238,7 @@ async def moorebot_return_to_dock() -> Dict:
         else:
             print(f"Docking failed: {result['error']}")
             print(f"Suggestion: {result['suggestion']}")
-    
+
     Notes:
         - Docking has ~70% success rate (known issue)
         - Common failures: alignment problems, IR interference
@@ -259,20 +256,20 @@ async def moorebot_return_to_dock() -> Dict:
 async def moorebot_get_sensors() -> Dict:
     """
     Get current sensor readings from Moorebot Scout.
-    
+
     FEATURES:
     - Time-of-Flight distance sensor (obstacle detection)
     - IMU data (orientation, acceleration, angular velocity)
     - Light sensor (ambient light level, 2 channels)
     - Timestamp for sensor synchronization
-    
+
     REQUIREMENTS:
     - Robot must be powered on
     - Sensors initialized (automatic on boot)
-    
+
     Returns:
         Sensor data dict with ToF, IMU, and light readings
-    
+
     Examples:
         # Get sensor data
         sensors = await moorebot_get_sensors()
@@ -287,7 +284,7 @@ async def moorebot_get_sensors() -> Dict:
         #   },
         #   "timestamp": "2025-12-02T10:30:45.123456"
         # }
-    
+
     Notes:
         - ToF sensor range: 0.1m to 3.0m
         - IMU provides 6-axis data (gyro + accel)
@@ -307,20 +304,20 @@ async def moorebot_get_sensors() -> Dict:
                     "x": data.imu_orientation[0],
                     "y": data.imu_orientation[1],
                     "z": data.imu_orientation[2],
-                    "w": data.imu_orientation[3]
+                    "w": data.imu_orientation[3],
                 },
                 "angular_velocity": {
                     "x": data.imu_angular_velocity[0],
                     "y": data.imu_angular_velocity[1],
-                    "z": data.imu_angular_velocity[2]
+                    "z": data.imu_angular_velocity[2],
                 },
                 "linear_acceleration": {
                     "x": data.imu_linear_acceleration[0],
                     "y": data.imu_linear_acceleration[1],
-                    "z": data.imu_linear_acceleration[2]
-                }
+                    "z": data.imu_linear_acceleration[2],
+                },
             },
-            "timestamp": data.timestamp.isoformat()
+            "timestamp": data.timestamp.isoformat(),
         }
     except Exception as e:
         logger.error(f"Failed to get sensor data: {e}")
@@ -330,21 +327,21 @@ async def moorebot_get_sensors() -> Dict:
 async def moorebot_get_camera_stream() -> Dict:
     """
     Get Moorebot Scout camera stream URLs.
-    
+
     FEATURES:
     - 1080p H.264 video stream
     - 120° wide-angle lens
     - Infrared night vision
     - Two-way audio (AAC)
-    
+
     REQUIREMENTS:
     - Robot must be powered on
     - Network connectivity required
     - RTSP client for viewing
-    
+
     Returns:
         Stream URLs (RTSP) for video and audio
-    
+
     Examples:
         # Get stream URLs
         streams = await moorebot_get_camera_stream()
@@ -355,10 +352,10 @@ async def moorebot_get_camera_stream() -> Dict:
         #   "resolution": "1080p",
         #   "fps": 30
         # }
-        
+
         # Use with VLC, FFmpeg, or Frigate NVR
         # ffplay rtsp://192.168.1.100:8554/stream
-    
+
     Notes:
         - Stream uses RTSP protocol (port 8554)
         - Can be integrated with Frigate NVR
@@ -377,9 +374,8 @@ async def moorebot_get_camera_stream() -> Dict:
             "resolution": "1080p",
             "fps": 30,
             "codec": "H.264",
-            "night_vision": True
+            "night_vision": True,
         }
     except Exception as e:
         logger.error(f"Failed to get camera stream: {e}")
         return {"success": False, "error": str(e)}
-

@@ -168,6 +168,28 @@ class ListCamerasTool(BaseTool):
                             }
                         )
 
+                # Add Ring cameras if available
+                try:
+                    from ...integrations.ring_client import get_ring_client
+
+                    ring_client = get_ring_client()
+                    if ring_client and ring_client.is_initialized:
+                        doorbells = await asyncio.wait_for(ring_client.get_doorbells(), timeout=3.0)
+                        for doorbell in doorbells:
+                            cameras.append(
+                                {
+                                    "name": f"ring_{doorbell.id}",
+                                    "type": "ring",
+                                    "status": "online" if doorbell.is_online else "offline",
+                                    "model": doorbell.device_type,
+                                    "firmware": doorbell.extra_data.get("firmware", "N/A"),
+                                    "streaming": True,  # Ring uses WebRTC but is considered "streaming"
+                                    "battery_life": doorbell.battery_level,
+                                }
+                            )
+                except Exception as e:
+                    logger.debug(f"Could not add Ring cameras to MCP list: {e}")
+
                 return {"success": True, "cameras": cameras, "total": len(cameras)}
             return {
                 "success": True,

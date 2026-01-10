@@ -1,7 +1,0 @@
----
-- targets:
-    - 192.168.10.21:9100
-  labels:
-    site: backyard
-    exporter: node
-

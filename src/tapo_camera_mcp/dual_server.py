@@ -95,7 +95,7 @@ class TapoCameraDualServer:
             # Shutdown
             logger.info("Shutting down Tapo Camera REST API server")
             # Core server cleanup handled by singleton
-            if hasattr(self, 'core_server') and self.core_server:
+            if hasattr(self, "core_server") and self.core_server:
                 await self.core_server.cleanup()
 
         app = FastAPI(
@@ -129,7 +129,7 @@ class TapoCameraDualServer:
         async def get_system_status():
             """Get system status"""
             # Lazy initialization of core server
-            if not hasattr(self, 'core_server') or self.core_server is None:
+            if not hasattr(self, "core_server") or self.core_server is None:
                 logger.info("Initializing core server on-demand for system status")
                 self.core_server = await TapoCameraServer.get_instance()
 
@@ -149,7 +149,7 @@ class TapoCameraDualServer:
         async def get_cameras_status():
             """Legacy endpoint for dashboard compatibility"""
             # Lazy initialization of core server
-            if not hasattr(self, 'core_server') or self.core_server is None:
+            if not hasattr(self, "core_server") or self.core_server is None:
                 logger.info("Initializing core server on-demand for cameras status")
                 self.core_server = await TapoCameraServer.get_instance()
 
@@ -168,7 +168,7 @@ class TapoCameraDualServer:
         async def get_recent_events():
             """Get recent events for dashboard compatibility"""
             # Lazy initialization of core server
-            if not hasattr(self, 'core_server') or self.core_server is None:
+            if not hasattr(self, "core_server") or self.core_server is None:
                 logger.info("Initializing core server on-demand for events")
                 self.core_server = await TapoCameraServer.get_instance()
 
@@ -181,7 +181,7 @@ class TapoCameraDualServer:
             """List all cameras"""
             try:
                 # Lazy initialization of core server
-                if not hasattr(self, 'core_server') or self.core_server is None:
+                if not hasattr(self, "core_server") or self.core_server is None:
                     logger.info("Initializing core server on-demand for list cameras")
                     self.core_server = await TapoCameraServer.get_instance()
 
@@ -212,7 +212,7 @@ class TapoCameraDualServer:
             """Get camera details"""
             try:
                 # Lazy initialization of core server
-                if not hasattr(self, 'core_server') or self.core_server is None:
+                if not hasattr(self, "core_server") or self.core_server is None:
                     logger.info("Initializing core server on-demand for get camera")
                     self.core_server = await TapoCameraServer.get_instance()
 
@@ -244,7 +244,7 @@ class TapoCameraDualServer:
             """Get camera live stream URL"""
             try:
                 # Lazy initialization of core server
-                if not hasattr(self, 'core_server') or self.core_server is None:
+                if not hasattr(self, "core_server") or self.core_server is None:
                     logger.info("Initializing core server on-demand for camera stream")
                     self.core_server = await TapoCameraServer.get_instance()
 
@@ -266,7 +266,7 @@ class TapoCameraDualServer:
             """Capture a snapshot from the camera"""
             try:
                 # Lazy initialization of core server
-                if not hasattr(self, 'core_server') or self.core_server is None:
+                if not hasattr(self, "core_server") or self.core_server is None:
                     logger.info("Initializing core server on-demand for snapshot")
                     self.core_server = await TapoCameraServer.get_instance()
 
@@ -324,14 +324,69 @@ class TapoCameraDualServer:
             logger.exception("Failed to start REST API server")
             raise
 
-    async def start_dual_server(self, rest_host: str = "0.0.0.0", rest_port: int = 8123):  # nosec B104
+    async def start_dual_server(
+        self,
+        rest_host: str = "0.0.0.0",
+        rest_port: int = 8123,
+        mcp_host: str = "127.0.0.1",
+        mcp_port: int = 8000,
+    ):  # nosec B104
         """Start both MCP and REST servers concurrently"""
         logger.info("Starting dual interface server (MCP + REST API)")
 
-        # For now, just start REST server
-        # MCP integration will be added later
-        logger.info("Starting REST API server (MCP integration pending)")
-        await self.start_rest_server(rest_host, rest_port)
+        async def run_mcp_server():
+            """Run MCP server in background"""
+            try:
+                logger.info(f"Starting MCP server on {mcp_host}:{mcp_port}")
+                from tapo_camera_mcp.core.server import TapoCameraServer
+
+                server = await TapoCameraServer.get_instance()
+                await server.run(
+                    host=mcp_host,
+                    port=mcp_port,
+                    stdio=False,  # Run as HTTP server for MCP client
+                    direct=False,
+                )
+            except Exception as e:
+                logger.exception(f"MCP server failed: {e}")
+                raise
+
+        async def run_rest_server():
+            """Run REST server in background"""
+            try:
+                logger.info(f"Starting REST API server on {rest_host}:{rest_port}")
+                await self.start_rest_server(rest_host, rest_port)
+            except Exception as e:
+                logger.exception(f"REST server failed: {e}")
+                raise
+
+        # Start both servers concurrently
+        try:
+            mcp_task = asyncio.create_task(run_mcp_server())
+            rest_task = asyncio.create_task(run_rest_server())
+
+            # Wait for either to finish (shouldn't happen in normal operation)
+            done, pending = await asyncio.wait(
+                [mcp_task, rest_task], return_when=asyncio.FIRST_COMPLETED
+            )
+
+            # Cancel remaining tasks
+            for task in pending:
+                task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await task
+
+            # Check for exceptions
+            for task in done:
+                try:
+                    await task
+                except Exception as e:
+                    logger.error(f"Server task failed: {e}")
+                    raise
+
+        except Exception:
+            logger.exception("Failed to start dual servers")
+            raise
 
     async def stop(self):
         """Stop all servers"""

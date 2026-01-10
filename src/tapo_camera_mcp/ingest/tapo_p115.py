@@ -204,7 +204,9 @@ class TapoP115IngestionService:
                 today_energy = float(getattr(energy, "today_energy", 0)) / 1000.0
                 month_energy = float(getattr(energy, "month_energy", 0)) / 1000.0
 
-                logger.debug(f"Energy data for {host}: power={current_power}W, voltage={voltage}V, current={current}A, today={today_energy}kWh")
+                logger.debug(
+                    f"Energy data for {host}: power={current_power}W, voltage={voltage}V, current={current}A, today={today_energy}kWh"
+                )
             except Exception as e:
                 logger.warning(f"Energy usage not available for {host}: {e}")
 

@@ -89,15 +89,17 @@ class TestRingSummary:
 
     def test_summary_with_doorbells(self, mock_ring_client, mock_doorbell):
         """Test summary with doorbell data."""
-        mock_ring_client.get_summary = AsyncMock(return_value={
-            "initialized": True,
-            "2fa_pending": False,
-            "doorbells": [{"id": "52772421", "name": "Front Door"}],
-            "doorbell_count": 1,
-            "alarm": None,
-            "recent_events": [],
-            "last_event": None,
-        })
+        mock_ring_client.get_summary = AsyncMock(
+            return_value={
+                "initialized": True,
+                "2fa_pending": False,
+                "doorbells": [{"id": "52772421", "name": "Front Door"}],
+                "doorbell_count": 1,
+                "alarm": None,
+                "recent_events": [],
+                "last_event": None,
+            }
+        )
 
         with patch("tapo_camera_mcp.web.api.ring.get_ring_client", return_value=mock_ring_client):
             import asyncio
@@ -124,26 +126,28 @@ class TestRingEvents:
 
     def test_events_with_data(self, mock_ring_client):
         """Test events with motion/ding data."""
-        mock_ring_client.get_recent_events = AsyncMock(return_value=[
-            {
-                "device_id": "52772421",
-                "device_name": "Front Door",
-                "event_type": "motion",
-                "timestamp": "2025-11-28T20:00:00+01:00",
-                "answered": False,
-                "recording_id": "12345",
-                "duration": 30,
-            },
-            {
-                "device_id": "52772421",
-                "device_name": "Front Door",
-                "event_type": "ding",
-                "timestamp": "2025-11-28T19:00:00+01:00",
-                "answered": True,
-                "recording_id": "12344",
-                "duration": 15,
-            },
-        ])
+        mock_ring_client.get_recent_events = AsyncMock(
+            return_value=[
+                {
+                    "device_id": "52772421",
+                    "device_name": "Front Door",
+                    "event_type": "motion",
+                    "timestamp": "2025-11-28T20:00:00+01:00",
+                    "answered": False,
+                    "recording_id": "12345",
+                    "duration": 30,
+                },
+                {
+                    "device_id": "52772421",
+                    "device_name": "Front Door",
+                    "event_type": "ding",
+                    "timestamp": "2025-11-28T19:00:00+01:00",
+                    "answered": True,
+                    "recording_id": "12344",
+                    "duration": 15,
+                },
+            ]
+        )
 
         with patch("tapo_camera_mcp.web.api.ring.get_ring_client", return_value=mock_ring_client):
             import asyncio
@@ -197,12 +201,14 @@ class TestRingAlarm:
 
     def test_alarm_status(self, mock_ring_client):
         """Test getting alarm status."""
-        mock_ring_client.get_alarm_status = AsyncMock(return_value=MagicMock(
-            mode=MagicMock(value="none"),
-            is_armed=False,
-            sensors=[],
-            to_dict=lambda: {"mode": "none", "is_armed": False, "sensors": []}
-        ))
+        mock_ring_client.get_alarm_status = AsyncMock(
+            return_value=MagicMock(
+                mode=MagicMock(value="none"),
+                is_armed=False,
+                sensors=[],
+                to_dict=lambda: {"mode": "none", "is_armed": False, "sensors": []},
+            )
+        )
 
         with patch("tapo_camera_mcp.web.api.ring.get_ring_client", return_value=mock_ring_client):
             import asyncio
@@ -253,10 +259,11 @@ class TestRingWebRTC:
             from tapo_camera_mcp.web.api.ring import WebRTCOfferRequest, create_webrtc_stream
 
             with pytest.raises(HTTPException):
-                asyncio.run(create_webrtc_stream(WebRTCOfferRequest(
-                    device_id="52772421",
-                    sdp_offer="v=0..."
-                )))
+                asyncio.run(
+                    create_webrtc_stream(
+                        WebRTCOfferRequest(device_id="52772421", sdp_offer="v=0...")
+                    )
+                )
 
     def test_webrtc_offer_device_not_found(self, mock_ring_client):
         """Test WebRTC offer with unknown device."""
@@ -268,16 +275,15 @@ class TestRingWebRTC:
             from tapo_camera_mcp.web.api.ring import WebRTCOfferRequest, create_webrtc_stream
 
             with pytest.raises(HTTPException):
-                asyncio.run(create_webrtc_stream(WebRTCOfferRequest(
-                    device_id="99999999",
-                    sdp_offer="v=0..."
-                )))
+                asyncio.run(
+                    create_webrtc_stream(
+                        WebRTCOfferRequest(device_id="99999999", sdp_offer="v=0...")
+                    )
+                )
 
     def test_ice_servers(self, mock_ring_client, mock_doorbell):
         """Test getting ICE servers."""
-        mock_doorbell.get_ice_servers = MagicMock(return_value=[
-            {"urls": "stun:stun.ring.com:443"}
-        ])
+        mock_doorbell.get_ice_servers = MagicMock(return_value=[{"urls": "stun:stun.ring.com:443"}])
         mock_ring_client._ring.video_devices.return_value = [mock_doorbell]
 
         with patch("tapo_camera_mcp.web.api.ring.get_ring_client", return_value=mock_ring_client):
@@ -291,4 +297,3 @@ class TestRingWebRTC:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

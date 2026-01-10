@@ -104,7 +104,7 @@ def register_motion_management_tool(mcp: FastMCP) -> None:
                         "onvif_cameras": {
                             "motion_detection": "Limited",
                             "note": "Tapo C200 has Events service but no PullPointSubscription. "
-                                    "Use Tapo app for reliable motion alerts.",
+                            "Use Tapo app for reliable motion alerts.",
                         },
                         "ring_doorbell": {
                             "motion_detection": "Full",
@@ -115,7 +115,7 @@ def register_motion_management_tool(mcp: FastMCP) -> None:
                             "note": "Best option for Tapo camera motion alerts with zones and sensitivity.",
                         },
                         "recommendation": "For Tapo cameras, use Tapo app for motion notifications. "
-                                         "This dashboard is best for live viewing and PTZ control.",
+                        "This dashboard is best for live viewing and PTZ control.",
                     },
                 }
 
@@ -201,7 +201,7 @@ def register_motion_management_tool(mcp: FastMCP) -> None:
                             "onvif_events_support": details.get("has_events_service", False),
                             "details": details,
                             "note": "Has Events service but PullPointSubscription may not work. "
-                                    "Use Tapo app for reliable motion alerts.",
+                            "Use Tapo app for reliable motion alerts.",
                         },
                     }
                 except Exception as e:
@@ -273,4 +273,3 @@ def register_motion_management_tool(mcp: FastMCP) -> None:
         except Exception as e:
             logger.exception(f"Error in motion management action '{action}'")
             return {"success": False, "action": action, "error": str(e)}
-

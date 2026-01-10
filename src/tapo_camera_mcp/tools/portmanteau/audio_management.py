@@ -47,6 +47,7 @@ SOUNDDEVICE_AVAILABLE = False
 # 1. Faster-Whisper (SOTA - 4x faster than vanilla Whisper)
 try:
     from faster_whisper import WhisperModel
+
     FASTER_WHISPER_AVAILABLE = True
     logger.info("STT: faster-whisper available (primary)")
 except ImportError:
@@ -55,6 +56,7 @@ except ImportError:
 # 2. Vosk (lightweight, fast fallback)
 try:
     import vosk
+
     VOSK_AVAILABLE = True
     logger.info("STT: vosk available (fallback)")
 except ImportError:
@@ -63,6 +65,7 @@ except ImportError:
 # 3. Vanilla Whisper (fallback)
 try:
     import whisper
+
     WHISPER_AVAILABLE = True
     logger.info("STT: whisper available (fallback)")
 except ImportError:
@@ -77,6 +80,7 @@ STT_AVAILABLE = FASTER_WHISPER_AVAILABLE or VOSK_AVAILABLE or WHISPER_AVAILABLE
 # 1. Piper (SOTA local neural TTS)
 try:
     import piper  # piper-tts package
+
     PIPER_AVAILABLE = True
     logger.info("TTS: piper available (primary)")
 except ImportError:
@@ -85,6 +89,7 @@ except ImportError:
 # 2. Edge-TTS (Microsoft's free TTS, needs internet)
 try:
     import edge_tts
+
     EDGE_TTS_AVAILABLE = True
     logger.info("TTS: edge-tts available (fallback)")
 except ImportError:
@@ -93,6 +98,7 @@ except ImportError:
 # 3. pyttsx3 (offline, uses system SAPI)
 try:
     import pyttsx3
+
     PYTTSX3_AVAILABLE = True
     logger.info("TTS: pyttsx3 available (fallback)")
 except ImportError:
@@ -107,6 +113,7 @@ TTS_AVAILABLE = PIPER_AVAILABLE or EDGE_TTS_AVAILABLE or PYTTSX3_AVAILABLE
 try:
     import sounddevice as sd
     import soundfile as sf
+
     SOUNDDEVICE_AVAILABLE = True
 except ImportError:
     sd = None  # type: ignore[assignment]
@@ -120,6 +127,7 @@ OPENWAKEWORD_AVAILABLE = False
 try:
     import openwakeword
     from openwakeword.model import Model as OWWModel
+
     OPENWAKEWORD_AVAILABLE = True
     logger.info("Wake word: openwakeword available (always-on listening)")
 except ImportError:
@@ -289,6 +297,7 @@ async def _play_audio_bytes(audio_bytes: bytes) -> bool:
         try:
             if os.name == "nt":
                 import winsound
+
                 winsound.PlaySound(temp_path, winsound.SND_FILENAME)
             else:
                 # temp_path is controlled (from tempfile), safe to use
@@ -342,7 +351,12 @@ async def _speak_with_piper(text: str, voice: str | None = None) -> dict[str, An
             sd.wait()
 
         os.unlink(temp_path)
-        return {"success": True, "engine": "piper", "voice": voice or "en_US-lessac-medium", "text": text}
+        return {
+            "success": True,
+            "engine": "piper",
+            "voice": voice or "en_US-lessac-medium",
+            "text": text,
+        }
     except Exception as e:
         logger.warning(f"Piper TTS failed: {e}")
         return {"success": False, "error": str(e)}
@@ -378,7 +392,9 @@ async def _speak_with_edge(text: str, voice: str | None = None) -> dict[str, Any
         return {"success": False, "error": str(e)}
 
 
-async def _speak_with_pyttsx3(text: str, voice: str | None = None, rate: int = 150) -> dict[str, Any]:
+async def _speak_with_pyttsx3(
+    text: str, voice: str | None = None, rate: int = 150
+) -> dict[str, Any]:
     """TTS using pyttsx3 (offline, system voices)."""
     if not PYTTSX3_AVAILABLE:
         return {"success": False, "error": "pyttsx3 not available"}
@@ -402,7 +418,9 @@ async def _speak_with_pyttsx3(text: str, voice: str | None = None, rate: int = 1
         return {"success": False, "error": str(e)}
 
 
-async def _speak_text(text: str, voice: str | None = None, rate: int = 150, use_edge: bool = False) -> dict[str, Any]:
+async def _speak_text(
+    text: str, voice: str | None = None, rate: int = 150, use_edge: bool = False
+) -> dict[str, Any]:
     """
     TTS with automatic fallback chain: Piper -> Edge-TTS -> pyttsx3
 
@@ -459,7 +477,10 @@ async def _transcribe_with_faster_whisper(audio_path: str, model: str = "base") 
 
     try:
         # Lazy load model
-        if _faster_whisper_model is None or getattr(_faster_whisper_model, "_model_size", None) != model:
+        if (
+            _faster_whisper_model is None
+            or getattr(_faster_whisper_model, "_model_size", None) != model
+        ):
             logger.info(f"Loading Faster-Whisper model: {model}")
             _faster_whisper_model = WhisperModel(model, device="cpu", compute_type="int8")
             _faster_whisper_model._model_size = model  # type: ignore[attr-defined]
@@ -579,9 +600,13 @@ async def _transcribe_audio(audio_path: str, model: str = "base") -> dict[str, A
 async def _record_audio(duration: float, sample_rate: int = 16000) -> tuple[str, bytes]:
     """Record audio from microphone."""
     if not SOUNDDEVICE_AVAILABLE:
-        raise RuntimeError("Audio recording requires sounddevice. Install: pip install sounddevice soundfile")
+        raise RuntimeError(
+            "Audio recording requires sounddevice. Install: pip install sounddevice soundfile"
+        )
 
-    recording = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype="int16")
+    recording = sd.rec(
+        int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype="int16"
+    )
     sd.wait()
 
     # Save to temp file (using NamedTemporaryFile for security)
@@ -706,7 +731,9 @@ async def _wake_word_listener_loop(
     try:
         # If OpenWakeWord available, use it for efficient wake word detection
         if OPENWAKEWORD_AVAILABLE and _oww_model is not None:
-            await _wake_listener_with_oww(wake_word, command_duration, threshold, sample_rate, chunk_size)
+            await _wake_listener_with_oww(
+                wake_word, command_duration, threshold, sample_rate, chunk_size
+            )
         else:
             # Fallback: Use Vosk keyword spotting or periodic STT
             await _wake_listener_with_vosk(wake_word, command_duration, sample_rate)
@@ -849,7 +876,9 @@ async def _wake_listener_with_vosk(
         stream.close()
 
 
-async def _start_wake_listener(wake_word: str = "hey tapo", command_duration: float = 5.0) -> dict[str, Any]:
+async def _start_wake_listener(
+    wake_word: str = "hey tapo", command_duration: float = 5.0
+) -> dict[str, Any]:
     """Start the always-on wake word listener in background."""
     global _wake_listener_running, _wake_listener_task
 
@@ -883,9 +912,7 @@ async def _start_wake_listener(wake_word: str = "hey tapo", command_duration: fl
         }
 
     _wake_listener_running = True
-    _wake_listener_task = asyncio.create_task(
-        _wake_word_listener_loop(wake_word, command_duration)
-    )
+    _wake_listener_task = asyncio.create_task(_wake_word_listener_loop(wake_word, command_duration))
 
     return {
         "success": True,
@@ -974,7 +1001,16 @@ def register_audio_management_tool(mcp: FastMCP) -> None:
         use_edge_tts: bool = False,
         # Alarm parameters
         alarm_type: Literal[
-            "siren", "beep", "urgent", "doorbell", "chime", "alarm", "attention", "success", "error", "alert"
+            "siren",
+            "beep",
+            "urgent",
+            "doorbell",
+            "chime",
+            "alarm",
+            "attention",
+            "success",
+            "error",
+            "alert",
         ] = "beep",
         repeat: int = 1,
         # Audio file parameters
@@ -1063,15 +1099,21 @@ def register_audio_management_tool(mcp: FastMCP) -> None:
             if action == "capabilities":
                 # Determine active engines
                 stt_primary = (
-                    "faster-whisper" if FASTER_WHISPER_AVAILABLE
-                    else "vosk" if VOSK_AVAILABLE
-                    else "whisper" if WHISPER_AVAILABLE
+                    "faster-whisper"
+                    if FASTER_WHISPER_AVAILABLE
+                    else "vosk"
+                    if VOSK_AVAILABLE
+                    else "whisper"
+                    if WHISPER_AVAILABLE
                     else None
                 )
                 tts_primary = (
-                    "piper" if PIPER_AVAILABLE
-                    else "edge-tts" if EDGE_TTS_AVAILABLE
-                    else "pyttsx3" if PYTTSX3_AVAILABLE
+                    "piper"
+                    if PIPER_AVAILABLE
+                    else "edge-tts"
+                    if EDGE_TTS_AVAILABLE
+                    else "pyttsx3"
+                    if PYTTSX3_AVAILABLE
                     else None
                 )
 
@@ -1128,7 +1170,11 @@ def register_audio_management_tool(mcp: FastMCP) -> None:
                             "note": "Required for playback and recording",
                         },
                         "wake_word_detection": {
-                            "primary": "openwakeword" if OPENWAKEWORD_AVAILABLE else "vosk" if VOSK_AVAILABLE else None,
+                            "primary": "openwakeword"
+                            if OPENWAKEWORD_AVAILABLE
+                            else "vosk"
+                            if VOSK_AVAILABLE
+                            else None,
                             "openwakeword": {
                                 "available": OPENWAKEWORD_AVAILABLE,
                                 "quality": "⭐⭐⭐⭐⭐",
@@ -1166,13 +1212,21 @@ def register_audio_management_tool(mcp: FastMCP) -> None:
             # ===== TEXT-TO-SPEECH =====
             if action == "speak":
                 if not text:
-                    return {"success": False, "action": action, "error": "text is required for speak action"}
+                    return {
+                        "success": False,
+                        "action": action,
+                        "error": "text is required for speak action",
+                    }
                 result = await _speak_text(text, voice=voice, rate=rate, use_edge=use_edge_tts)
                 return {"success": result["success"], "action": action, "data": result}
 
             if action == "announce":
                 if not text:
-                    return {"success": False, "action": action, "error": "text is required for announce action"}
+                    return {
+                        "success": False,
+                        "action": action,
+                        "error": "text is required for announce action",
+                    }
                 # Play attention chime first
                 chime_sound = _generate_alarm_sound("chime", repeat=1)
                 await _play_audio_bytes(chime_sound)
@@ -1226,9 +1280,17 @@ def register_audio_management_tool(mcp: FastMCP) -> None:
 
             if action == "play_file":
                 if not file_path:
-                    return {"success": False, "action": action, "error": "file_path is required for play_file action"}
+                    return {
+                        "success": False,
+                        "action": action,
+                        "error": "file_path is required for play_file action",
+                    }
                 if not Path(file_path).exists():
-                    return {"success": False, "action": action, "error": f"File not found: {file_path}"}
+                    return {
+                        "success": False,
+                        "action": action,
+                        "error": f"File not found: {file_path}",
+                    }
                 with open(file_path, "rb") as f:
                     audio_bytes = f.read()
                 success = await _play_audio_bytes(audio_bytes)
@@ -1269,7 +1331,11 @@ def register_audio_management_tool(mcp: FastMCP) -> None:
                 if SOUNDDEVICE_AVAILABLE:
                     devices = sd.query_devices()
                     for i, dev in enumerate(devices):
-                        dev_info = {"id": i, "name": dev["name"], "channels": dev["max_input_channels"]}
+                        dev_info = {
+                            "id": i,
+                            "name": dev["name"],
+                            "channels": dev["max_input_channels"],
+                        }
                         if dev["max_input_channels"] > 0:
                             devices_info["input"].append(dev_info)
                         if dev["max_output_channels"] > 0:
@@ -1373,4 +1439,3 @@ def register_audio_management_tool(mcp: FastMCP) -> None:
         except Exception as e:
             logger.exception(f"Error in audio management action '{action}'")
             return {"success": False, "action": action, "error": str(e)}
-

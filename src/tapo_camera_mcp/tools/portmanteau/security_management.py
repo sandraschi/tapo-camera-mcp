@@ -63,29 +63,35 @@ async def _handle_real_nest_action(
         alerts = []
         for d in devices:
             if d.smoke_status.value != "ok":
-                alerts.append({
-                    "device_id": d.device_id,
-                    "device_name": d.name,
-                    "type": "smoke",
-                    "status": d.smoke_status.value,
-                    "timestamp": time.time(),
-                })
+                alerts.append(
+                    {
+                        "device_id": d.device_id,
+                        "device_name": d.name,
+                        "type": "smoke",
+                        "status": d.smoke_status.value,
+                        "timestamp": time.time(),
+                    }
+                )
             if d.co_status.value != "ok":
-                alerts.append({
-                    "device_id": d.device_id,
-                    "device_name": d.name,
-                    "type": "co",
-                    "status": d.co_status.value,
-                    "timestamp": time.time(),
-                })
+                alerts.append(
+                    {
+                        "device_id": d.device_id,
+                        "device_name": d.name,
+                        "type": "co",
+                        "status": d.co_status.value,
+                        "timestamp": time.time(),
+                    }
+                )
             if not d.is_online:
-                alerts.append({
-                    "device_id": d.device_id,
-                    "device_name": d.name,
-                    "type": "offline",
-                    "status": "offline",
-                    "timestamp": time.time(),
-                })
+                alerts.append(
+                    {
+                        "device_id": d.device_id,
+                        "device_name": d.name,
+                        "type": "offline",
+                        "status": "offline",
+                        "timestamp": time.time(),
+                    }
+                )
         return {
             "success": True,
             "operation": "alerts",
@@ -99,12 +105,14 @@ async def _handle_real_nest_action(
         devices = await client.get_devices()
         battery_info = []
         for d in devices:
-            battery_info.append({
-                "device_id": d.device_id,
-                "name": d.name,
-                "battery_health": d.battery_health,
-                "needs_replacement": d.battery_health != "ok",
-            })
+            battery_info.append(
+                {
+                    "device_id": d.device_id,
+                    "name": d.name,
+                    "battery_health": d.battery_health,
+                    "needs_replacement": d.battery_health != "ok",
+                }
+            )
         needs_attention = [b for b in battery_info if b["needs_replacement"]]
         return {
             "success": True,
@@ -160,9 +168,16 @@ def register_security_management_tool(mcp: FastMCP) -> None:
     @mcp.tool()
     async def security_management(
         action: Literal[
-            "nest_status", "nest_alerts", "nest_battery", "test_nest", "correlate_events",
-            "security_scan", "analyze_scene",
-            "nest_oauth_start", "nest_oauth_complete", "nest_oauth_status",
+            "nest_status",
+            "nest_alerts",
+            "nest_battery",
+            "test_nest",
+            "correlate_events",
+            "security_scan",
+            "analyze_scene",
+            "nest_oauth_start",
+            "nest_oauth_complete",
+            "nest_oauth_status",
         ],
         device_id: str | None = None,
         camera_name: str | None = None,
@@ -351,7 +366,13 @@ def register_security_management_tool(mcp: FastMCP) -> None:
                 }
 
             # ===== NEST PROTECT OPERATIONS =====
-            if action in ["nest_status", "nest_alerts", "nest_battery", "test_nest", "correlate_events"]:
+            if action in [
+                "nest_status",
+                "nest_alerts",
+                "nest_battery",
+                "test_nest",
+                "correlate_events",
+            ]:
                 # Try real API first
                 client = get_nest_client() or _nest_client
                 if not client:
@@ -406,4 +427,3 @@ def register_security_management_tool(mcp: FastMCP) -> None:
         except Exception as e:
             logger.exception(f"Error in security management action '{action}'")
             return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
-

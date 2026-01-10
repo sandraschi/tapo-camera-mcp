@@ -46,13 +46,13 @@ def register_energy_management_tool(mcp: FastMCP) -> None:
                 - "control": Control smart plug power (requires: device_id, power_state)
                 - "consumption": Get energy consumption data (optional: device_id, time_range)
                 - "cost": Get energy cost analysis (optional: device_id, time_range)
-            
+
             device_id (str | None): Smart plug device ID. Required for: control operation.
                 Optional for: status, consumption, cost operations (filters to specific device).
-            
+
             power_state (str | None): Power state for control. Required for: control operation.
                 Valid: "on", "off", "toggle"
-            
+
             time_range (str): Time range for consumption/cost analysis. Used by: consumption, cost operations.
                 Default: "24h". Valid: "1h", "24h", "7d", "30d"
 
@@ -97,4 +97,3 @@ def register_energy_management_tool(mcp: FastMCP) -> None:
         except Exception as e:
             logger.error(f"Error in energy management action '{action}': {e}", exc_info=True)
             return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
-

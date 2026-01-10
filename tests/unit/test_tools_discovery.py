@@ -173,7 +173,9 @@ def test_tool_definition():
         assert False
 
 
-@pytest.mark.skip(reason="# TODO: Fix test_tool_discovery_error_handling - currently has assert False")
+@pytest.mark.skip(
+    reason="# TODO: Fix test_tool_discovery_error_handling - currently has assert False"
+)
 def test_tool_discovery_error_handling():
     """Test error handling in tool discovery."""
     try:

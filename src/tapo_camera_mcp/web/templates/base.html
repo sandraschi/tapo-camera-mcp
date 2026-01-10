@@ -1,265 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Tapo Camera MCP{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}?v=20251203">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/theme.css') }}?v=20251203">
     <link rel="stylesheet" href="{{ url_for('static', path='/css/chatbot.css') }}?v=20251203">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-        crossorigin="anonymous">
-    <style>
-        :root {
-            --primary-color: #4361ee;
-            --primary-light: #4895ef;
-            --primary-dark: #3f37c9;
-            --secondary-color: #4cc9f0;
-            --accent-color: #f72585;
-            --accent-gold: #d4af37;
-            --accent-gold-hover: #e5c05b;
-
-            --bg-primary: #f8fafc;
-            --bg-secondary: #ffffff;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --border-primary: #e2e8f0;
-            --card-bg: #ffffff;
-            --sidebar-bg: rgba(255, 255, 255, 0.8);
-            --top-bar-bg: rgba(255, 255, 255, 0.8);
-            --hover-bg: #f1f5f9;
-            --input-bg: #ffffff;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --error-color: #ef4444;
-
-            /* Glassmorphism - Conservative for legibility */
-            --glass-bg: rgba(255, 255, 255, 0.9);
-            --glass-border: rgba(255, 255, 255, 0.4);
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-            --glass-blur: blur(10px);
-
-            /* Legacy compatibility */
-            --bg-color: var(--bg-primary);
-            --text-color: var(--text-primary);
-            --border-color: var(--border-primary);
-        }
-
-        [data-theme="dark"] {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --border-primary: #334155;
-            --card-bg: #1e293b;
-            --sidebar-bg: rgba(30, 41, 59, 0.8);
-            --top-bar-bg: rgba(30, 41, 59, 0.8);
-            --hover-bg: #334155;
-            --input-bg: #1e293b;
-            --success-color: #34d399;
-            --warning-color: #fbbf24;
-            --error-color: #f87171;
-
-            /* Glassmorphism Dark - Conservative for legibility */
-            --glass-bg: rgba(15, 23, 42, 0.8);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        }
-
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .sidebar {
-            background-color: var(--sidebar-bg);
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
-            border-right: 1px solid var(--border-primary);
-            color: var(--text-primary);
-            box-shadow: var(--glass-shadow);
-        }
-
-        .sidebar-header h2 {
-            color: var(--text-primary);
-        }
-
-        .app-version {
-            color: var(--text-secondary);
-            border-top: 1px solid var(--border-primary);
-        }
-
-        .main-content {
-            background-color: var(--bg-primary);
-        }
-
-        .nav-links li a {
-            color: var(--text-primary);
-        }
-
-        .nav-links li.active a,
-        .nav-links li a:hover {
-            background-color: var(--hover-bg);
-            color: var(--accent-gold);
-        }
-
-        .nav-links li.active a i {
-            color: var(--accent-gold);
-        }
-
-        .glass {
-            background: var(--glass-bg);
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--glass-shadow);
-        }
-
-        /* Status Indicators */
-        .status-indicator {
-            display: inline-block;
-            width: 0.75rem;
-            height: 0.75rem;
-            border-radius: 9999px;
-            vertical-align: middle;
-        }
-
-        .indicator-gold {
-            background-color: var(--accent-gold);
-        }
-
-        .indicator-red {
-            background-color: var(--error-color);
-        }
-
-        .indicator-green {
-            background-color: var(--success-color);
-        }
-
-        .indicator-yellow {
-            background-color: var(--warning-color);
-        }
-
-        .indicator-blue {
-            background-color: var(--primary-color);
-        }
-
-        /* Global Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            gap: 0.5rem;
-            border: 1px solid transparent;
-        }
-
-        .btn-primary {
-            background-color: var(--accent-gold);
-            color: #1e293b;
-            border-color: var(--accent-gold);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--accent-gold-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
-        }
-
-        .btn-secondary {
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            border-color: var(--border-primary);
-        }
-
-        .btn-secondary:hover {
-            background-color: var(--hover-bg);
-            border-color: var(--accent-gold);
-            color: var(--accent-gold);
-        }
-
-        .btn-danger {
-            background-color: rgba(239, 68, 68, 0.1);
-            color: var(--error-color);
-            border-color: rgba(239, 68, 68, 0.2);
-        }
-
-        .btn-danger:hover {
-            background-color: var(--error-color);
-            color: white;
-            border-color: var(--error-color);
-        }
-
-        .btn-success {
-            background-color: rgba(16, 185, 129, 0.1);
-            color: var(--success-color);
-            border-color: rgba(16, 185, 129, 0.2);
-        }
-
-        .btn-success:hover {
-            background-color: var(--success-color);
-            color: white;
-            border-color: var(--success-color);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-
-        .search-bar input {
-            background-color: var(--input-bg);
-            color: var(--text-primary);
-            border: 1px solid var(--border-primary);
-        }
-
-        .search-bar i.fas {
-            color: #6b7280 !important;
-            font-family: "Font Awesome 6 Free" !important;
-            font-weight: 900 !important;
-            display: inline-block !important;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        .search-button {
-            background: none !important;
-            border: none !important;
-            color: #6b7280 !important;
-            cursor: pointer;
-            padding: 6px;
-            border-radius: 50%;
-            transition: all 0.2s;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .search-button i.fas {
-            color: #6b7280 !important;
-            font-family: "Font Awesome 6 Free" !important;
-            font-weight: 900 !important;
-            display: inline-block !important;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        .search-button:hover {
-            background-color: rgba(67, 97, 238, 0.1);
-        }
-
-        .search-button:hover i {
-            color: var(--accent-gold) !important;
-        }
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 
         [data-theme="dark"] .search-bar i {
             color: #9ca3af !important;
@@ -282,7 +30,6 @@
             border-color: #4b5563;
             color: var(--text-color);
         }
-
         [data-theme="dark"] .theme-toggle:hover {
             background-color: #4b5563;
             border-color: #6b7280;
@@ -621,21 +368,10 @@
             font-family: "JetBrains Mono", monospace;
         }
 
-        .logger-stat-value.info {
-            color: #60a5fa;
-        }
-
-        .logger-stat-value.warn {
-            color: #fbbf24;
-        }
-
-        .logger-stat-value.error {
-            color: #f87171;
-        }
-
-        .logger-stat-value.total {
-            color: #a5b4fc;
-        }
+        .logger-stat-value.info { color: #60a5fa; }
+        .logger-stat-value.warn { color: #fbbf24; }
+        .logger-stat-value.error { color: #f87171; }
+        .logger-stat-value.total { color: #a5b4fc; }
 
         .logger-stat-label {
             font-size: 0.6rem;
@@ -700,17 +436,8 @@
         }
 
         @keyframes pulse-glow {
-
-            0%,
-            100% {
-                opacity: 1;
-                box-shadow: 0 0 6px #22c55e;
-            }
-
-            50% {
-                opacity: 0.6;
-                box-shadow: 0 0 2px #22c55e;
-            }
+            0%, 100% { opacity: 1; box-shadow: 0 0 6px #22c55e; }
+            50% { opacity: 0.6; box-shadow: 0 0 2px #22c55e; }
         }
 
         .logger-entries {
@@ -737,20 +464,15 @@
             border-left-color: #3b82f6;
             background: rgba(59, 130, 246, 0.03);
         }
-
         .logger-entry.level-debug {
             border-left-color: #8b5cf6;
             background: rgba(139, 92, 246, 0.03);
         }
-
-        .logger-entry.level-warn,
-        .logger-entry.level-warning {
+        .logger-entry.level-warn, .logger-entry.level-warning {
             border-left-color: #f59e0b;
             background: rgba(245, 158, 11, 0.06);
         }
-
-        .logger-entry.level-error,
-        .logger-entry.level-critical {
+        .logger-entry.level-error, .logger-entry.level-critical {
             border-left-color: #ef4444;
             background: rgba(239, 68, 68, 0.08);
         }
@@ -781,17 +503,14 @@
             color: #60a5fa;
             background: rgba(96, 165, 250, 0.1);
         }
-
         .logger-entry .level.warn {
             color: #fbbf24;
             background: rgba(251, 191, 36, 0.1);
         }
-
         .logger-entry .level.error {
             color: #f87171;
             background: rgba(248, 113, 113, 0.15);
         }
-
         .logger-entry .level.debug {
             color: #a78bfa;
             background: rgba(167, 139, 250, 0.1);
@@ -971,29 +690,16 @@
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(4px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-
-            to {
-                transform: rotate(360deg);
-            }
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         @media (max-width: 900px) {
-
             .logger-layout,
             .help-layout {
                 grid-template-columns: 1fr;
@@ -1019,19 +725,15 @@
             color: #374151;
             transition: background-color 0.2s;
         }
-
         .hamburger-btn:hover {
             background-color: rgba(0, 0, 0, 0.05);
         }
-
         [data-theme="dark"] .hamburger-btn {
             color: #9ca3af;
         }
-
         [data-theme="dark"] .hamburger-btn:hover {
             background-color: rgba(255, 255, 255, 0.1);
         }
-
         .hamburger-btn i {
             font-size: 1.25rem;
         }
@@ -1040,13 +742,11 @@
         .sidebar {
             transition: transform 0.3s ease, width 0.3s ease;
         }
-
         .sidebar-collapsed .sidebar {
             transform: translateX(-100%);
             width: 0;
             overflow: hidden;
         }
-
         .sidebar-collapsed .main-content {
             margin-left: 0;
         }
@@ -1059,27 +759,21 @@
                 height: 100vh;
                 transform: translateX(-100%);
             }
-
             .sidebar-open .sidebar {
                 transform: translateX(0);
             }
-
             .main-content {
                 margin-left: 0 !important;
             }
-
             .top-bar {
                 padding: 0.5rem 1rem;
             }
-
             .search-bar {
                 display: none;
             }
-
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr) !important;
             }
-
             .content {
                 padding: 1rem;
             }
@@ -1093,20 +787,18 @@
             background: rgba(0, 0, 0, 0.5);
             z-index: 999;
         }
-
         .sidebar-open .sidebar-overlay {
             display: block;
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-
 <body>
     <div class="app-container">
         <!-- Sidebar -->
         <nav class="sidebar">
             <div class="sidebar-header">
-                <h2><span style="color: var(--accent-gold);">🏠</span> Home Security MCP</h2>
+                <h2>🏠 Home Security MCP</h2>
             </div>
             <ul class="nav-links">
                 <li class="nav-item {% if request.url.path == '/' %}active{% endif %}">
@@ -1246,24 +938,22 @@
                     </button>
                 </div>
                 <div class="user-menu">
-                    <button id="logger-button" class="icon-button" title="Open intelligent logger"
-                        aria-label="Open logger">
+                    <button id="logger-button" class="icon-button" title="Open intelligent logger" aria-label="Open logger">
                         <i class="fas fa-file-alt"></i>
                     </button>
-                    <button id="help-button" class="icon-button" title="Open structured help assistant"
-                        aria-label="Open help">
+                    <button id="help-button" class="icon-button" title="Open structured help assistant" aria-label="Open help">
                         <i class="fas fa-question-circle"></i>
                     </button>
-                    <button id="theme-toggle" class="icon-button theme-toggle" title="Toggle theme"
-                        aria-label="Toggle dark/light theme">
+                    <button id="theme-toggle" class="icon-button theme-toggle" title="Toggle theme" aria-label="Toggle dark/light theme">
                         <i class="fas fa-sun theme-icon theme-icon-sun"></i>
                         <i class="fas fa-moon theme-icon theme-icon-moon"></i>
                     </button>
                     <div class="user-profile" id="user-menu-trigger">
-                        <img src="{{ url_for('static', path='/img/placeholder.svg') }}" alt="User" class="avatar">
+                        <img src="{{ url_for('static', path='/img/placeholder.svg') }}"
+                        alt="User" class="avatar">
                         <span id="username-display">Admin</span>
                         <i class="fas fa-chevron-down" style="margin-left: 4px; font-size: 10px; opacity: 0.7;"></i>
-
+                        
                         <!-- User dropdown menu -->
                         <div class="user-dropdown" id="user-dropdown">
                             <div class="user-dropdown-header">
@@ -1295,8 +985,7 @@
             <div class="modal-header">
                 <div>
                     <div class="modal-title" id="logger-modal-title">Live Logger Control Center</div>
-                    <p class="text-sm text-gray-500">AI-assisted triage, semantic filters, and streaming context for
-                        rapid incident response.</p>
+                    <p class="text-sm text-gray-500">AI-assisted triage, semantic filters, and streaming context for rapid incident response.</p>
                 </div>
                 <button class="modal-close" data-modal-close="logger-modal" aria-label="Close logger dialog">
                     <i class="fas fa-times"></i>
@@ -1332,13 +1021,11 @@
                             <h4><i class="fas fa-sliders-h"></i> CONTROLS</h4>
                             <div class="flex flex-col gap-2 text-sm" style="color: #94a3b8;">
                                 <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                                    <input type="checkbox" id="logger-ai-summary" checked
-                                        style="accent-color: #818cf8;">
+                                    <input type="checkbox" id="logger-ai-summary" checked style="accent-color: #818cf8;">
                                     <span>AI Synopsis (60s)</span>
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                                    <input type="checkbox" id="logger-semantic-groups" checked
-                                        style="accent-color: #818cf8;">
+                                    <input type="checkbox" id="logger-semantic-groups" checked style="accent-color: #818cf8;">
                                     <span>Cluster Events</span>
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
@@ -1350,36 +1037,26 @@
                         <!-- Filters -->
                         <div>
                             <h4><i class="fas fa-filter"></i> FILTERS</h4>
-                            <select id="logger-level-filter"
-                                style="width: 100%; background: #1e293b; color: #e2e8f0; border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 0.375rem; padding: 0.4rem 0.5rem; font-size: 0.8rem;">
+                            <select id="logger-level-filter" style="width: 100%; background: #1e293b; color: #e2e8f0; border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 0.375rem; padding: 0.4rem 0.5rem; font-size: 0.8rem;">
                                 <option value="all">All Levels</option>
                                 <option value="debug">Debug</option>
                                 <option value="info">Info</option>
                                 <option value="warn">Warning</option>
                                 <option value="error">Error</option>
                             </select>
-                            <input id="logger-query" type="text"
-                                style="width: 100%; margin-top: 0.5rem; background: #1e293b; color: #e2e8f0; border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 0.375rem; padding: 0.4rem 0.5rem; font-size: 0.8rem;"
-                                placeholder="Search logs...">
+                            <input id="logger-query" type="text" style="width: 100%; margin-top: 0.5rem; background: #1e293b; color: #e2e8f0; border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 0.375rem; padding: 0.4rem 0.5rem; font-size: 0.8rem;" placeholder="Search logs...">
                         </div>
                         <!-- Actions -->
                         <div>
                             <h4><i class="fas fa-bolt"></i> ACTIONS</h4>
                             <div style="display: flex; flex-direction: column; gap: 0.4rem;">
-                                <button id="logger-refresh" class="icon-button"
-                                    style="width: 100%; justify-content: center; background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.3);">
+                                <button id="logger-refresh" class="icon-button" style="width: 100%; justify-content: center; background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.3);">
                                     <i class="fas fa-sync-alt"></i>
                                     <span>Refresh</span>
                                 </button>
-                                <button id="logger-export" class="icon-button"
-                                    style="width: 100%; justify-content: center; background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.3);">
+                                <button id="logger-export" class="icon-button" style="width: 100%; justify-content: center; background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.3);">
                                     <i class="fas fa-download"></i>
                                     <span>Export JSON</span>
-                                </button>
-                                <button id="logger-copy" class="icon-button"
-                                    style="width: 100%; justify-content: center; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);">
-                                    <i class="fas fa-copy"></i>
-                                    <span>Copy Clipboard</span>
                                 </button>
                             </div>
                         </div>
@@ -1389,8 +1066,7 @@
                             <div class="synopsis-header">
                                 <i class="fas fa-brain" style="color: #a78bfa;"></i>
                                 <strong>AI Synopsis</strong>
-                                <span class="synopsis-timestamp"
-                                    style="margin-left: auto; font-size: 0.7rem; color: #64748b;"></span>
+                                <span class="synopsis-timestamp" style="margin-left: auto; font-size: 0.7rem; color: #64748b;"></span>
                             </div>
                             <div class="synopsis-content" style="font-size: 0.82rem; line-height: 1.5;"></div>
                         </div>
@@ -1424,8 +1100,7 @@
             <div class="modal-header">
                 <div>
                     <div class="modal-title" id="help-modal-title">Guided Help & Knowledge Navigator</div>
-                    <p class="text-sm text-gray-500">Structured documentation, quick recipes, and cross-linking into
-                        Grafana, MCP, and edge orchestration.</p>
+                    <p class="text-sm text-gray-500">Structured documentation, quick recipes, and cross-linking into Grafana, MCP, and edge orchestration.</p>
                 </div>
                 <button class="modal-close" data-modal-close="help-modal" aria-label="Close help dialog">
                     <i class="fas fa-times"></i>
@@ -1453,8 +1128,7 @@
                     <section class="help-content">
                         <article class="help-section active" data-help-section="overview">
                             <h4>Platform Overview</h4>
-                            <p>The Home Security MCP unifies camera control, sensor telemetry, and observability in a
-                                single orchestration plane.</p>
+                            <p>The Home Security MCP unifies camera control, sensor telemetry, and observability in a single orchestration plane.</p>
                             <ul>
                                 <li>Use <strong>Dashboard</strong> for real-time situational awareness.</li>
                                 <li>Edge agents forward metrics and logs for every node.</li>
@@ -1470,16 +1144,10 @@
                         <article class="help-section" data-help-section="cameras">
                             <h4>Camera Operations</h4>
                             <ul>
-                                <li>Start stream: <em>Dashboard → Start Stream</em> or API
-                                    <code>/api/cameras/{id}/stream</code>.
-                                </li>
+                                <li>Start stream: <em>Dashboard → Start Stream</em> or API <code>/api/cameras/{id}/stream</code>.</li>
                                 <li>Snapshots: <code>/api/cameras/{id}/snapshot</code> (returns JPEG).</li>
-                                <li>PTZ capabilities exposed via MCP tools <code>move_ptz</code>,
-                                    <code>save_ptz_preset</code>.
-                                </li>
-                                <li>Status metrics: Prometheus series <code>tapo_camera_status</code>,
-                                    <code>tapo_camera_stream_bitrate</code>.
-                                </li>
+                                <li>PTZ capabilities exposed via MCP tools <code>move_ptz</code>, <code>save_ptz_preset</code>.</li>
+                                <li>Status metrics: Prometheus series <code>tapo_camera_status</code>, <code>tapo_camera_stream_bitrate</code>.</li>
                             </ul>
                             <h4>Troubleshooting</h4>
                             <ul>
@@ -1491,20 +1159,14 @@
                         <article class="help-section" data-help-section="sensors">
                             <h4>Sensor & Energy Telemetry</h4>
                             <ul>
-                                <li>Tapo P115 ingestion via <code>tapo_p115</code> adapter using
-                                    <code>python-kasa</code>.
-                                </li>
-                                <li>REST endpoints: <code>/api/sensors/tapo-p115</code>, history with
-                                    <code>/history?hours=</code>.
-                                </li>
+                                <li>Tapo P115 ingestion via <code>tapo_p115</code> adapter using <code>python-kasa</code>.</li>
+                                <li>REST endpoints: <code>/api/sensors/tapo-p115</code>, history with <code>/history?hours=</code>.</li>
                                 <li>Grafana dashboard: <strong>Sensor Overview</strong> (power, costs, energy).</li>
                                 <li>Add Netatmo / Nest Protect ingestion through edge collectors.</li>
                             </ul>
                             <h4>Data Hygiene</h4>
                             <ul>
-                                <li>Validate metrics in Prometheus: <code>tapo_p115_power_watts</code>,
-                                    <code>tapo_p115_daily_cost</code>.
-                                </li>
+                                <li>Validate metrics in Prometheus: <code>tapo_p115_power_watts</code>, <code>tapo_p115_daily_cost</code>.</li>
                                 <li>Rotate secrets using plan in <code>SECRETS_HARDENING_PLAN.md</code>.</li>
                             </ul>
                         </article>
@@ -1515,19 +1177,16 @@
                                 <li>Loki & Promtail shipping structured logs with semantic labels.</li>
                                 <li>CI validates configs via <code>observability</code> workflow job.</li>
                                 <li>Dashboards: Camera Overview, Sensor Overview, Logging Overview.</li>
-                                <li>Alerts: <code>CameraOffline</code>, <code>EdgeAgentMissedScrape</code> routed
-                                    through Alertmanager.</li>
+                                <li>Alerts: <code>CameraOffline</code>, <code>EdgeAgentMissedScrape</code> routed through Alertmanager.</li>
                             </ul>
                             <h4>Runbooks</h4>
-                            <p>Refer to <code>RUNBOOKS.md</code> for restart procedures, scaling guidance, and
-                                escalation paths.</p>
+                            <p>Refer to <code>RUNBOOKS.md</code> for restart procedures, scaling guidance, and escalation paths.</p>
                         </article>
                         <article class="help-section" data-help-section="automation">
                             <h4>Automation & AI Assist</h4>
                             <ul>
                                 <li>LLM summarization of logs and camera events via logger control center.</li>
-                                <li>Use chatbot personalities for specialized advice (Home Automation Expert, etc.).
-                                </li>
+                                <li>Use chatbot personalities for specialized advice (Home Automation Expert, etc.).</li>
                                 <li>Refine prompts and responses with the Refine buttons.</li>
                                 <li>Document templates available under <code>docs/mcp-technical/</code>.</li>
                             </ul>
@@ -1551,13 +1210,13 @@
         const hamburgerBtn = document.getElementById('hamburger-btn');
         const sidebarOverlay = document.getElementById('sidebar-overlay');
         const appContainer = document.querySelector('.app-container');
-
+        
         // Load sidebar state from localStorage
         const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
         if (sidebarCollapsed && window.innerWidth > 768) {
             appContainer.classList.add('sidebar-collapsed');
         }
-
+        
         hamburgerBtn.addEventListener('click', () => {
             if (window.innerWidth <= 768) {
                 // Mobile: toggle sidebar-open class
@@ -1568,12 +1227,12 @@
                 localStorage.setItem('sidebarCollapsed', appContainer.classList.contains('sidebar-collapsed'));
             }
         });
-
+        
         // Close sidebar on overlay click (mobile)
         sidebarOverlay.addEventListener('click', () => {
             appContainer.classList.remove('sidebar-open');
         });
-
+        
         // Handle resize
         window.addEventListener('resize', () => {
             if (window.innerWidth > 768) {
@@ -1650,11 +1309,11 @@
         const registerModal = (id, triggerId) => {
             const modal = document.getElementById(id);
             const trigger = document.getElementById(triggerId);
-
+            
             if (!modal || !trigger) {
                 return null;
             }
-
+            
             const closeButtons = modal.querySelectorAll('[data-modal-close]');
 
             // Emit custom events
@@ -1702,7 +1361,6 @@
         const loggerQuery = document.getElementById('logger-query');
         const loggerRefresh = document.getElementById('logger-refresh');
         const loggerExport = document.getElementById('logger-export');
-        const loggerCopy = document.getElementById('logger-copy');
         const loggerAiSummary = document.getElementById('logger-ai-summary');
         const loggerSemanticGroups = document.getElementById('logger-semantic-groups');
         const loggerAnomalyDetector = document.getElementById('logger-anomaly-detector');
@@ -1797,7 +1455,7 @@
             let lineNum = 1;
             logsToRender.forEach(entry => {
                 const row = document.createElement('div');
-
+                
                 if (entry.type === 'cluster') {
                     // Render cluster header
                     row.className = 'logger-entry clustered';
@@ -1810,7 +1468,7 @@
                         </div>
                     `;
                     entriesContainer.appendChild(row);
-
+                    
                     // Render first few entries from cluster
                     entry.entries.slice(0, 3).forEach(clusterEntry => {
                         const clusterRow = document.createElement('div');
@@ -1827,7 +1485,7 @@
                         `;
                         entriesContainer.appendChild(clusterRow);
                     });
-
+                    
                     if (entry.entries.length > 3) {
                         const moreRow = document.createElement('div');
                         moreRow.style.cssText = 'color: #64748b; font-size: 0.72rem; font-style: italic; padding: 0.25rem 0.75rem; padding-left: 32px;';
@@ -1840,7 +1498,7 @@
                     const level = (entry.level || 'INFO').toLowerCase();
                     const message = entry.message || '';
                     const loggerName = (entry.logger || '').split('.').pop() || '';
-
+                    
                     // Add level class for color coding
                     row.className = `logger-entry level-${level}`;
 
@@ -1927,7 +1585,7 @@
                     loggerSynopsis.style.display = 'block';
                     loggerSynopsis.querySelector('.synopsis-content').textContent = data.synopsis;
                     const now = new Date();
-                    loggerSynopsis.querySelector('.synopsis-timestamp').textContent =
+                    loggerSynopsis.querySelector('.synopsis-timestamp').textContent = 
                         `Updated ${now.toLocaleTimeString()}`;
                     lastSynopsisTime = now;
                 } else {
@@ -1946,7 +1604,7 @@
         let logRefreshInterval = null;
         loggerModal.addEventListener('modal:opened', () => {
             logRefreshInterval = setInterval(loadAndRenderLogs, 5000);
-
+            
             // Generate initial AI synopsis if enabled
             if (loggerAiSummary && loggerAiSummary.checked) {
                 generateAiSynopsis();
@@ -1998,16 +1656,16 @@
 
 
         levelFilter.addEventListener('change', loadAndRenderLogs);
-
+        
         // Debounce search input
         let searchTimeout = null;
         loggerQuery.addEventListener('input', () => {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(loadAndRenderLogs, 500);
         });
-
+        
         loggerRefresh.addEventListener('click', loadAndRenderLogs);
-
+        
         loggerExport.addEventListener('click', () => {
             if (currentLogs.length === 0) {
                 alert('No logs to export');
@@ -2020,40 +1678,6 @@
             link.download = `tapo-logger-export-${new Date().toISOString().split('T')[0]}.json`;
             link.click();
             URL.revokeObjectURL(url);
-        });
-
-        loggerCopy.addEventListener('click', () => {
-            if (currentLogs.length === 0) {
-                alert('No logs to copy');
-                return;
-            }
-
-            // Format logs for clipboard
-            const text = currentLogs.map(entry => {
-                const ts = entry.timestamp || '';
-                const lv = (entry.level || 'INFO').toUpperCase();
-                const ln = (entry.logger || '').split('.').pop() || '';
-                const msg = entry.message || '';
-                return `[${ts}] ${lv} [${ln}] ${msg}`;
-            }).join('\n');
-
-            navigator.clipboard.writeText(text).then(() => {
-                const span = loggerCopy.querySelector('span');
-                const icon = loggerCopy.querySelector('i');
-                const originalText = span.textContent;
-                const originalIcon = icon.className;
-
-                span.textContent = 'Copied!';
-                icon.className = 'fas fa-check';
-
-                setTimeout(() => {
-                    span.textContent = originalText;
-                    icon.className = originalIcon;
-                }, 2000);
-            }).catch(err => {
-                console.error('Failed to copy logs:', err);
-                alert('Failed to copy to clipboard');
-            });
         });
 
         // Help modal navigation
@@ -2077,13 +1701,13 @@
         const userDropdown = document.getElementById('user-dropdown');
 
         if (userMenuTrigger && userDropdown) {
-            userMenuTrigger.addEventListener('click', function (e) {
+            userMenuTrigger.addEventListener('click', function(e) {
                 e.stopPropagation();
                 userDropdown.classList.toggle('show');
             });
 
             // Close dropdown when clicking outside
-            document.addEventListener('click', function (e) {
+            document.addEventListener('click', function(e) {
                 if (!userMenuTrigger.contains(e.target)) {
                     userDropdown.classList.remove('show');
                 }
@@ -2134,5 +1758,4 @@
     <script src="{{ url_for('static', path='/js/chatbot.js') }}?v=20251203"></script>
     {% block extra_js %}{% endblock %}
 </body>
-
 </html>

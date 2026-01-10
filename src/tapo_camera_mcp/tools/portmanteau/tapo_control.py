@@ -88,7 +88,7 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                 - "turn on kettle" - Turn on Zojirushi kettle
                 - "turn off kettle" - Turn off Zojirushi kettle
                 - "status" - Get system status
-            
+
             device_id (str | None): Device ID for plugs/appliances
             light_id (str | None): Light ID for light operations
             group_id (str | None): Group ID for group operations
@@ -125,7 +125,10 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                 if isinstance(brightness_percent, str):
                     brightness_percent = int(brightness_percent)
                 elif not isinstance(brightness_percent, int):
-                    return {"success": False, "error": f"brightness_percent must be an integer, got {type(brightness_percent).__name__}"}
+                    return {
+                        "success": False,
+                        "error": f"brightness_percent must be an integer, got {type(brightness_percent).__name__}",
+                    }
 
             # Normalize action (handle spaces and case)
             action_lower = action.lower().replace(" ", "_").strip()
@@ -170,7 +173,7 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                     "data": {
                         "lights": [_model_dump(light) for light in lights],
                         "count": len(lights),
-                        "type": "hue"
+                        "type": "hue",
                     },
                 }
 
@@ -184,7 +187,7 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                     "data": {
                         "lights": [_model_dump(light) for light in lights],
                         "count": len(lights),
-                        "type": "tapo"
+                        "type": "tapo",
                     },
                 }
 
@@ -197,7 +200,9 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                         if action == "turn_on":
                             success = await hue_manager.set_light_state(light_id, on=True, **kwargs)
                         elif action == "turn_off":
-                            success = await hue_manager.set_light_state(light_id, on=False, **kwargs)
+                            success = await hue_manager.set_light_state(
+                                light_id, on=False, **kwargs
+                            )
                         elif action == "set_brightness":
                             success = await hue_manager.set_light_state(light_id, on=True, **kwargs)
                         elif action == "set_color":
@@ -209,13 +214,20 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                                 success = False
                         elif action == "set_effect":
                             # Hue lights don't support effects
-                            return {"success": False, "error": "Effects are not supported for Philips Hue lights"}
+                            return {
+                                "success": False,
+                                "error": "Effects are not supported for Philips Hue lights",
+                            }
                         else:
                             success = False
 
                         if success:
                             light = await hue_manager.get_light(light_id)
-                            return {"success": True, "type": "hue", "light": _model_dump(light) if light else None}
+                            return {
+                                "success": True,
+                                "type": "hue",
+                                "light": _model_dump(light) if light else None,
+                            }
                     except Exception:
                         pass  # Continue to try Tapo
 
@@ -223,30 +235,45 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                 if tapo_lighting_manager._initialized or await tapo_lighting_manager.initialize():
                     try:
                         if action == "turn_on":
-                            success = await tapo_lighting_manager.set_light_state(light_id, on=True, **kwargs)
+                            success = await tapo_lighting_manager.set_light_state(
+                                light_id, on=True, **kwargs
+                            )
                         elif action == "turn_off":
-                            success = await tapo_lighting_manager.set_light_state(light_id, on=False, **kwargs)
-                        elif action == "set_brightness":
-                            success = await tapo_lighting_manager.set_light_state(light_id, **kwargs)
-                        elif action == "set_color":
-                            success = await tapo_lighting_manager.set_light_state(light_id, **kwargs)
-                        elif action == "set_effect":
-                            success = await tapo_lighting_manager.set_light_state(light_id, **kwargs)
+                            success = await tapo_lighting_manager.set_light_state(
+                                light_id, on=False, **kwargs
+                            )
+                        elif (
+                            action == "set_brightness"
+                            or action == "set_color"
+                            or action == "set_effect"
+                        ):
+                            success = await tapo_lighting_manager.set_light_state(
+                                light_id, **kwargs
+                            )
                         else:
                             success = False
 
                         if success:
                             light = await tapo_lighting_manager.get_light(light_id)
-                            return {"success": True, "type": "tapo", "light": _model_dump(light) if light else None}
+                            return {
+                                "success": True,
+                                "type": "tapo",
+                                "light": _model_dump(light) if light else None,
+                            }
                     except Exception:
                         pass  # Both failed
 
-                return {"success": False, "error": f"Light {light_id} not found or failed to control"}
+                return {
+                    "success": False,
+                    "error": f"Light {light_id} not found or failed to control",
+                }
 
             if action_lower in ["turn_on_light", "turn on light", "on light"]:
                 if not light_id:
                     return {"success": False, "error": "light_id is required to turn on a light"}
-                result = await _control_light(light_id, "turn_on", brightness_percent=brightness_percent)
+                result = await _control_light(
+                    light_id, "turn_on", brightness_percent=brightness_percent
+                )
                 if result["success"]:
                     return {
                         "success": True,
@@ -274,7 +301,9 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                     return {"success": False, "error": "light_id is required to set brightness"}
                 if brightness_percent is None:
                     return {"success": False, "error": "brightness_percent is required"}
-                result = await _control_light(light_id, "set_brightness", brightness_percent=brightness_percent)
+                result = await _control_light(
+                    light_id, "set_brightness", brightness_percent=brightness_percent
+                )
                 if result["success"]:
                     return {
                         "success": True,
@@ -291,7 +320,10 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                 if isinstance(brightness_percent, list) and len(brightness_percent) >= 3:
                     rgb_values = brightness_percent[:3]
                 if not rgb_values:
-                    return {"success": False, "error": "rgb parameter required for set_color (pass as brightness_percent=[r,g,b])"}
+                    return {
+                        "success": False,
+                        "error": "rgb parameter required for set_color (pass as brightness_percent=[r,g,b])",
+                    }
 
                 result = await _control_light(light_id, "set_color", rgb=rgb_values)
                 if result["success"]:
@@ -376,7 +408,11 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                 if not hue_manager._initialized:
                     await hue_manager.initialize()
                 success = await hue_manager.activate_scene(scene_id, group_id)
-                return {"success": success, "action": "activate_scene", "data": {"scene_id": scene_id}}
+                return {
+                    "success": success,
+                    "action": "activate_scene",
+                    "data": {"scene_id": scene_id},
+                }
 
             # Energy/Plug actions
             if action_lower in ["list_plugs", "list_plug", "list plugs", "list plug"]:
@@ -462,7 +498,12 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                 # Find Zojirushi kettle
                 all_devices = await tapo_plug_manager.get_all_devices()
                 kettle = next(
-                    (d for d in all_devices if "zojirushi" in d.name.lower() or "kettle" in d.name.lower()), None
+                    (
+                        d
+                        for d in all_devices
+                        if "zojirushi" in d.name.lower() or "kettle" in d.name.lower()
+                    ),
+                    None,
                 )
                 if not kettle:
                     return {"success": False, "error": "Zojirushi kettle not found"}
@@ -477,7 +518,12 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                 # Find Zojirushi kettle
                 all_devices = await tapo_plug_manager.get_all_devices()
                 kettle = next(
-                    (d for d in all_devices if "zojirushi" in d.name.lower() or "kettle" in d.name.lower()), None
+                    (
+                        d
+                        for d in all_devices
+                        if "zojirushi" in d.name.lower() or "kettle" in d.name.lower()
+                    ),
+                    None,
                 )
                 if not kettle:
                     return {"success": False, "error": "Zojirushi kettle not found"}
@@ -519,8 +565,10 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
             # Provide helpful suggestions for unknown actions
             action_lower_normalized = action_lower.replace("_", " ")
             similar_actions = [
-                key for key in TAPO_ACTIONS
-                if action_lower_normalized in key.replace("_", " ") or key.replace("_", " ") in action_lower_normalized
+                key
+                for key in TAPO_ACTIONS
+                if action_lower_normalized in key.replace("_", " ")
+                or key.replace("_", " ") in action_lower_normalized
             ]
 
             error_msg = f"Unknown action '{action}'."
@@ -556,6 +604,3 @@ def register_tapo_control_tool(mcp: FastMCP) -> None:
                 "action": action,
                 "exception_type": type(e).__name__,
             }
-
-
-

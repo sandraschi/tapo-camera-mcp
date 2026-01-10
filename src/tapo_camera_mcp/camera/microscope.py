@@ -4,7 +4,7 @@ import asyncio
 import logging
 from typing import Dict, Optional
 
-from .base import BaseCamera, CameraFactory, CameraType
+from .base import CameraFactory, CameraType
 from .webcam import WebCamera
 
 logger = logging.getLogger(__name__)
@@ -28,24 +28,28 @@ class MicroscopeCamera(WebCamera):
         self._focus_mode = self.config.params.get("focus_mode", "auto")  # auto, manual, fixed
         self._led_brightness = int(self.config.params.get("led_brightness", 50))  # 0-100
         self._calibration_factor = float(self.config.params.get("calibration_factor", 1.0))
+        # Track active background tasks
+        self._active_tasks: set[asyncio.Task] = set()
 
     async def get_status(self) -> Dict:
         """Get microscope camera status with enhanced microscope info."""
         status = await super().get_status()
 
         # Add microscope-specific status
-        status.update({
-            "magnification": self._magnification,
-            "focus_mode": self._focus_mode,
-            "led_brightness": self._led_brightness,
-            "calibration_factor": self._calibration_factor,
-            "microscope_features": {
-                "focus_control": True,
-                "led_lighting": True,
-                "calibration": True,
-                "measurement": True
+        status.update(
+            {
+                "magnification": self._magnification,
+                "focus_mode": self._focus_mode,
+                "led_brightness": self._led_brightness,
+                "calibration_factor": self._calibration_factor,
+                "microscope_features": {
+                    "focus_control": True,
+                    "led_lighting": True,
+                    "calibration": True,
+                    "measurement": True,
+                },
             }
-        })
+        )
 
         return status
 
@@ -55,8 +59,8 @@ class MicroscopeCamera(WebCamera):
             self._magnification = max(1.0, min(1000.0, magnification))
             logger.info(f"Set microscope magnification to {self._magnification}x")
             return True
-        except Exception as e:
-            logger.error(f"Failed to set magnification: {e}")
+        except Exception:
+            logger.exception("Failed to set magnification")
             return False
 
     async def set_led_brightness(self, brightness: int) -> bool:
@@ -66,8 +70,8 @@ class MicroscopeCamera(WebCamera):
             logger.info(f"Set microscope LED brightness to {self._led_brightness}%")
             # TODO: Implement actual LED control if microscope supports it
             return True
-        except Exception as e:
-            logger.error(f"Failed to set LED brightness: {e}")
+        except Exception:
+            logger.exception("Failed to set LED brightness")
             return False
 
     async def calibrate(self, known_distance_pixels: int, actual_distance_mm: float) -> bool:
@@ -76,8 +80,8 @@ class MicroscopeCamera(WebCamera):
             self._calibration_factor = actual_distance_mm / known_distance_pixels
             logger.info(f"Calibrated microscope: {self._calibration_factor} mm/pixel")
             return True
-        except Exception as e:
-            logger.error(f"Failed to calibrate microscope: {e}")
+        except Exception:
+            logger.exception("Failed to calibrate microscope")
             return False
 
     async def measure_distance(self, pixel_distance: int) -> Optional[float]:
@@ -86,8 +90,8 @@ class MicroscopeCamera(WebCamera):
             if self._calibration_factor > 0:
                 return pixel_distance * self._calibration_factor
             return None
-        except Exception as e:
-            logger.error(f"Failed to measure distance: {e}")
+        except Exception:
+            logger.exception("Failed to measure distance")
             return None
 
     async def auto_focus(self) -> bool:
@@ -98,8 +102,8 @@ class MicroscopeCamera(WebCamera):
             # and analyzing sharpness/contrast to find optimal focus
             logger.info("Performing auto-focus (not yet implemented)")
             return False
-        except Exception as e:
-            logger.error(f"Auto-focus failed: {e}")
+        except Exception:
+            logger.exception("Auto-focus failed")
             return False
 
     def get_microscope_info(self) -> Dict:
@@ -115,11 +119,12 @@ class MicroscopeCamera(WebCamera):
             "plant_monitoring": True,
             "current_magnification": self._magnification,
             "current_led_brightness": self._led_brightness,
-            "calibration_factor": self._calibration_factor
+            "calibration_factor": self._calibration_factor,
         }
 
-    async def start_timelapse(self, interval_minutes: int, duration_hours: int,
-                            session_name: str, auto_focus: bool = True) -> Dict:
+    async def start_timelapse(
+        self, interval_minutes: int, duration_hours: int, session_name: str, auto_focus: bool = True
+    ) -> Dict:
         """Start a time-lapse photography session for plant growth monitoring."""
         import os
         from datetime import datetime, timedelta
@@ -137,7 +142,7 @@ class MicroscopeCamera(WebCamera):
             "start_time": datetime.now(),
             "end_time": datetime.now() + timedelta(hours=duration_hours),
             "auto_focus": auto_focus,
-            "status": "starting"
+            "status": "starting",
         }
 
         # Create session directory
@@ -149,11 +154,15 @@ class MicroscopeCamera(WebCamera):
         await self.set_led_brightness(80)  # Good brightness for plant photography
         await self.set_focus_mode("auto" if auto_focus else "manual")
 
-        logger.info(f"Microscope {self.config.name}: Starting timelapse session '{session_name}' - "
-                   f"{total_shots} shots over {duration_hours} hours (every {interval_minutes} min)")
+        logger.info(
+            f"Microscope {self.config.name}: Starting timelapse session '{session_name}' - "
+            f"{total_shots} shots over {duration_hours} hours (every {interval_minutes} min)"
+        )
 
         # Start background task
-        asyncio.create_task(self._run_timelapse(session_info))
+        task = asyncio.create_task(self._run_timelapse(session_info))
+        self._active_tasks.add(task)
+        task.add_done_callback(self._active_tasks.discard)
 
         return session_info
 
@@ -185,19 +194,9 @@ class MicroscopeCamera(WebCamera):
                 filename = f"{session_name}_{timestamp}_{shots_taken:04d}.jpg"
                 image_path = await self.capture_image(filename, save_path=session_dir)
 
-                # Add metadata
-                metadata = {
-                    "timelapse_session": session_name,
-                    "shot_number": shots_taken,
-                    "total_shots": total_shots,
-                    "interval_minutes": session_info["interval_minutes"],
-                    "focus_mode": "auto" if auto_focus else "manual",
-                    "led_brightness": self._led_brightness,
-                    "magnification": self._magnification,
-                    "plant_growth_session": True
-                }
-
-                logger.info(f"Timelapse {session_name}: Captured shot {shots_taken + 1}/{total_shots} - {image_path}")
+                logger.info(
+                    f"Timelapse {session_name}: Captured shot {shots_taken + 1}/{total_shots} - {image_path}"
+                )
 
                 shots_taken += 1
                 session_info["shots_taken"] = shots_taken
@@ -213,7 +212,7 @@ class MicroscopeCamera(WebCamera):
         except Exception as e:
             session_info["status"] = "error"
             session_info["error"] = str(e)
-            logger.error(f"Timelapse {session_name}: Session failed - {e}")
+            logger.exception(f"Timelapse {session_name}: Session failed")
 
     async def stop_timelapse(self, session_name: str) -> Dict:
         """Stop a running timelapse session."""
@@ -223,7 +222,7 @@ class MicroscopeCamera(WebCamera):
         return {
             "session_name": session_name,
             "action": "stopped",
-            "message": "Timelapse session stop requested"
+            "message": "Timelapse session stop requested",
         }
 
     async def get_timelapse_status(self) -> Dict:
@@ -232,15 +231,17 @@ class MicroscopeCamera(WebCamera):
         return {
             "active_sessions": [],  # Would contain running session info
             "recent_sessions": [],  # Would contain completed session info
-            "message": "No timelapse sessions currently tracked"
+            "message": "No timelapse sessions currently tracked",
         }
 
-    async def create_growth_video(self, session_dir: str, output_path: str = None,
-                                fps: int = 30, add_timestamp: bool = True) -> str:
+    async def create_growth_video(
+        self, session_dir: str, output_path: Optional[str] = None, fps: int = 30, add_timestamp: bool = True
+    ) -> str:
         """Create a time-lapse video from captured images."""
         import glob
-        import cv2
         from pathlib import Path
+
+        import cv2
 
         if not output_path:
             session_name = Path(session_dir).name
@@ -260,7 +261,7 @@ class MicroscopeCamera(WebCamera):
         height, width = first_image.shape[:2]
 
         # Create video writer
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         video_writer = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
         try:
@@ -269,10 +270,21 @@ class MicroscopeCamera(WebCamera):
 
                 if add_timestamp:
                     # Add timestamp overlay
-                    timestamp = Path(image_file).stem.split('_')[-2]  # Extract timestamp from filename
-                    readable_time = f"{timestamp[:8]} {timestamp[8:10]}:{timestamp[10:12]}:{timestamp[12:14]}"
-                    cv2.putText(frame, readable_time, (10, 30),
-                              cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                    timestamp = Path(image_file).stem.split("_")[
+                        -2
+                    ]  # Extract timestamp from filename
+                    readable_time = (
+                        f"{timestamp[:8]} {timestamp[8:10]}:{timestamp[10:12]}:{timestamp[12:14]}"
+                    )
+                    cv2.putText(
+                        frame,
+                        readable_time,
+                        (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (255, 255, 255),
+                        2,
+                    )
 
                 video_writer.write(frame)
 
@@ -295,14 +307,14 @@ class MicroscopeCamera(WebCamera):
                 "growth_rate": "Not implemented - would analyze pixel changes over time",
                 "color_changes": "Not implemented - would track green color development",
                 "movement_detection": "Not implemented - would detect subtle movements",
-                "health_indicators": "Not implemented - would analyze leaf color/health"
+                "health_indicators": "Not implemented - would analyze leaf color/health",
             },
             "recommendations": [
                 "Implement computer vision analysis for growth tracking",
                 "Add color analysis for plant health monitoring",
                 "Include size measurement capabilities",
-                "Add automated alerts for growth milestones"
-            ]
+                "Add automated alerts for growth milestones",
+            ],
         }
 
         logger.info(f"Microscope {self.config.name}: Analyzed growth session {session_dir}")

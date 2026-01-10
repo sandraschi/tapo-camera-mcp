@@ -75,9 +75,7 @@ class WienEnergieIngestionService:
         self._timeout = self._adapter_cfg.get("timeout", 5)
 
         # Security configuration
-        self._security_key = (
-            self._security_cfg.get("key") or os.getenv("WIEN_ENERGIE_SECURITY_KEY")
-        )
+        self._security_key = self._security_cfg.get("key") or os.getenv("WIEN_ENERGIE_SECURITY_KEY")
         self._encryption = self._security_cfg.get("encryption", "AES-128")
 
         # Meter configuration
@@ -117,12 +115,13 @@ class WienEnergieIngestionService:
             async with self._connection_lock:
                 if self._serial_reader is None or self._serial_writer is None:
                     try:
-                        self._serial_reader, self._serial_writer = (
-                            await serial_asyncio.open_serial_connection(
-                                url=self._adapter_port,
-                                baudrate=self._baudrate,
-                                timeout=self._timeout,
-                            )
+                        (
+                            self._serial_reader,
+                            self._serial_writer,
+                        ) = await serial_asyncio.open_serial_connection(
+                            url=self._adapter_port,
+                            baudrate=self._baudrate,
+                            timeout=self._timeout,
                         )
                         logger.info(f"Connected to Wien Energie adapter at {self._adapter_port}")
                     except Exception as e:
@@ -315,4 +314,3 @@ class WienEnergieIngestionService:
             self._serial_reader = None
             self._serial_writer = None
             logger.info("Closed Wien Energie adapter connection")
-

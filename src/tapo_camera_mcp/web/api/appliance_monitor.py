@@ -1,7 +1,8 @@
 """Appliance health monitoring API for detecting device failures via energy patterns."""
 
+import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
@@ -12,6 +13,7 @@ from ...core.server import TapoCameraServer
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/appliance-monitor", tags=["appliance-monitor"])
 
+
 class ApplianceConfig(BaseModel):
     """Configuration for appliance monitoring."""
 
@@ -21,6 +23,7 @@ class ApplianceConfig(BaseModel):
     monitoring_period: int = 3600  # seconds to monitor
     alert_threshold: int = 1800  # seconds without expected power before alert
     enabled: bool = True
+
 
 class ApplianceStatus(BaseModel):
     """Current status of appliance monitoring."""
@@ -34,6 +37,7 @@ class ApplianceStatus(BaseModel):
     alerts_triggered: int
     last_alert: Optional[datetime]
 
+
 class CreateApplianceMonitorRequest(BaseModel):
     """Request to create appliance monitoring."""
 
@@ -42,6 +46,7 @@ class CreateApplianceMonitorRequest(BaseModel):
     expected_power_range: Dict[str, float]
     monitoring_period: Optional[int] = 3600
     alert_threshold: Optional[int] = 1800
+
 
 class ApplianceAlert(BaseModel):
     """Appliance alert information."""
@@ -54,22 +59,27 @@ class ApplianceAlert(BaseModel):
     current_power: float
     expected_range: Dict[str, float]
 
+
 # In-memory storage for appliance monitoring
 _appliance_configs = {}
 _appliance_status = {}
 _appliance_alerts = []
 
+
 def get_appliance_configs() -> Dict[str, ApplianceConfig]:
     """Get all appliance configurations."""
     return _appliance_configs.copy()
+
 
 def get_appliance_status() -> Dict[str, ApplianceStatus]:
     """Get all appliance statuses."""
     return _appliance_status.copy()
 
+
 def get_appliance_alerts(limit: int = 50) -> List[ApplianceAlert]:
     """Get recent appliance alerts."""
     return _appliance_alerts[-limit:] if _appliance_alerts else []
+
 
 async def check_appliance_health(device_id: str) -> None:
     """Check health of a specific appliance."""
@@ -81,10 +91,10 @@ async def check_appliance_health(device_id: str) -> None:
     try:
         # Get current power reading from Tapo plug
         server = await TapoCameraServer.get_instance()
-        energy_client = getattr(server, 'energy_client', None)
+        energy_client = getattr(server, "energy_client", None)
 
         if not energy_client:
-            logger.warning(f"No energy client available for appliance monitoring")
+            logger.warning("No energy client available for appliance monitoring")
             return
 
         # Get current power
@@ -99,10 +109,12 @@ async def check_appliance_health(device_id: str) -> None:
                 appliance_type=config.appliance_type,
                 status="monitoring",
                 current_power=current_power,
-                last_active=now if current_power >= config.expected_power_range.get("min", 0) else None,
+                last_active=now
+                if current_power >= config.expected_power_range.get("min", 0)
+                else None,
                 monitoring_since=now,
                 alerts_triggered=0,
-                last_alert=None
+                last_alert=None,
             )
 
         status = _appliance_status[device_id]
@@ -110,7 +122,7 @@ async def check_appliance_health(device_id: str) -> None:
 
         # Check if power is in expected range
         min_power = config.expected_power_range.get("min", 0)
-        max_power = config.expected_power_range.get("max", float('inf'))
+        max_power = config.expected_power_range.get("max", float("inf"))
 
         is_power_normal = min_power <= current_power <= max_power
 
@@ -118,40 +130,40 @@ async def check_appliance_health(device_id: str) -> None:
             # Appliance is active
             status.last_active = now
             status.status = "healthy"
-        else:
-            # Check how long it's been since last activity
-            if status.last_active:
-                time_since_active = (now - status.last_active).total_seconds()
-                if time_since_active > config.alert_threshold:
-                    # Trigger alert
-                    alert = ApplianceAlert(
-                        device_id=device_id,
-                        appliance_type=config.appliance_type,
-                        alert_type="no_power" if current_power < min_power else "abnormal_power",
-                        message=f"{config.appliance_type.title()} not drawing expected power for {int(time_since_active/60)} minutes. Current: {current_power}W",
-                        triggered_at=now,
-                        current_power=current_power,
-                        expected_range=config.expected_power_range
-                    )
+        # Check how long it's been since last activity
+        elif status.last_active:
+            time_since_active = (now - status.last_active).total_seconds()
+            if time_since_active > config.alert_threshold:
+                # Trigger alert
+                alert = ApplianceAlert(
+                    device_id=device_id,
+                    appliance_type=config.appliance_type,
+                    alert_type="no_power" if current_power < min_power else "abnormal_power",
+                    message=f"{config.appliance_type.title()} not drawing expected power for {int(time_since_active / 60)} minutes. Current: {current_power}W",
+                    triggered_at=now,
+                    current_power=current_power,
+                    expected_range=config.expected_power_range,
+                )
 
-                    _appliance_alerts.append(alert)
-                    status.alerts_triggered += 1
-                    status.last_alert = now
-                    status.status = "critical"
+                _appliance_alerts.append(alert)
+                status.alerts_triggered += 1
+                status.last_alert = now
+                status.status = "critical"
 
-                    logger.warning(f"Appliance alert: {alert.message}")
+                logger.warning(f"Appliance alert: {alert.message}")
 
-                    # Send notification (would integrate with alerts system)
-                    await send_appliance_alert(alert)
-                elif time_since_active > (config.alert_threshold / 2):
-                    status.status = "warning"
-                else:
-                    status.status = "monitoring"
+                # Send notification (would integrate with alerts system)
+                await send_appliance_alert(alert)
+            elif time_since_active > (config.alert_threshold / 2):
+                status.status = "warning"
+            else:
+                status.status = "monitoring"
 
     except Exception as e:
         logger.exception(f"Failed to check appliance health for {device_id}: {e}")
         if device_id in _appliance_status:
             _appliance_status[device_id].status = "error"
+
 
 async def send_appliance_alert(alert: ApplianceAlert) -> None:
     """Send appliance alert notification."""
@@ -169,11 +181,12 @@ async def send_appliance_alert(alert: ApplianceAlert) -> None:
     except Exception as e:
         logger.exception(f"Failed to send appliance alert: {e}")
 
+
 async def monitor_appliances_background() -> None:
     """Background task to monitor all appliances."""
     while True:
         try:
-            for device_id in _appliance_configs.keys():
+            for device_id in _appliance_configs:
                 if _appliance_configs[device_id].enabled:
                     await check_appliance_health(device_id)
 
@@ -183,6 +196,7 @@ async def monitor_appliances_background() -> None:
         except Exception as e:
             logger.exception(f"Error in appliance monitoring background task: {e}")
             await asyncio.sleep(60)  # Wait a minute before retrying
+
 
 @router.post("/create")
 async def create_appliance_monitor(request: CreateApplianceMonitorRequest):
@@ -194,7 +208,7 @@ async def create_appliance_monitor(request: CreateApplianceMonitorRequest):
             expected_power_range=request.expected_power_range,
             monitoring_period=request.monitoring_period or 3600,
             alert_threshold=request.alert_threshold or 1800,
-            enabled=True
+            enabled=True,
         )
 
         _appliance_configs[request.device_id] = config
@@ -208,7 +222,7 @@ async def create_appliance_monitor(request: CreateApplianceMonitorRequest):
             last_active=None,
             monitoring_since=datetime.now(),
             alerts_triggered=0,
-            last_alert=None
+            last_alert=None,
         )
 
         logger.info(f"Created appliance monitor for {request.device_id} ({request.appliance_type})")
@@ -216,12 +230,13 @@ async def create_appliance_monitor(request: CreateApplianceMonitorRequest):
         return {
             "success": True,
             "message": f"Appliance monitor created for {request.appliance_type}",
-            "config": config.dict()
+            "config": config.dict(),
         }
 
     except Exception as e:
         logger.exception("Failed to create appliance monitor")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/status")
 async def get_all_appliance_status():
@@ -231,14 +246,12 @@ async def get_all_appliance_status():
         for device_id, status in _appliance_status.items():
             status_dict[device_id] = status.dict()
 
-        return {
-            "success": True,
-            "appliances": status_dict
-        }
+        return {"success": True, "appliances": status_dict}
 
     except Exception as e:
         logger.exception("Failed to get appliance status")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/status/{device_id}")
 async def get_appliance_status(device_id: str):
@@ -247,16 +260,14 @@ async def get_appliance_status(device_id: str):
         if device_id not in _appliance_status:
             raise HTTPException(status_code=404, detail=f"Appliance {device_id} not found")
 
-        return {
-            "success": True,
-            "status": _appliance_status[device_id].dict()
-        }
+        return {"success": True, "status": _appliance_status[device_id].dict()}
 
     except HTTPException:
         raise
     except Exception as e:
         logger.exception(f"Failed to get appliance status for {device_id}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/alerts")
 async def get_recent_alerts(limit: int = 20):
@@ -265,15 +276,12 @@ async def get_recent_alerts(limit: int = 20):
         alerts = get_appliance_alerts(limit)
         alert_dicts = [alert.dict() for alert in alerts]
 
-        return {
-            "success": True,
-            "alerts": alert_dicts,
-            "total": len(_appliance_alerts)
-        }
+        return {"success": True, "alerts": alert_dicts, "total": len(_appliance_alerts)}
 
     except Exception as e:
         logger.exception("Failed to get appliance alerts")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.delete("/alerts")
 async def clear_alerts():
@@ -282,14 +290,12 @@ async def clear_alerts():
         _appliance_alerts.clear()
         logger.info("Cleared all appliance alerts")
 
-        return {
-            "success": True,
-            "message": "All alerts cleared"
-        }
+        return {"success": True, "message": "All alerts cleared"}
 
     except Exception as e:
         logger.exception("Failed to clear appliance alerts")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/check/{device_id}")
 async def manual_health_check(device_id: str):
@@ -303,7 +309,9 @@ async def manual_health_check(device_id: str):
         return {
             "success": True,
             "message": f"Health check completed for {device_id}",
-            "status": _appliance_status.get(device_id, {}).dict() if device_id in _appliance_status else None
+            "status": _appliance_status.get(device_id, {}).dict()
+            if device_id in _appliance_status
+            else None,
         }
 
     except HTTPException:
@@ -311,6 +319,7 @@ async def manual_health_check(device_id: str):
     except Exception as e:
         logger.exception(f"Failed to manually check appliance health for {device_id}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/presets")
 async def get_appliance_presets():
@@ -321,57 +330,58 @@ async def get_appliance_presets():
             "expected_power_range": {"min": 50, "max": 200},
             "monitoring_period": 3600,
             "alert_threshold": 7200,  # 2 hours - fridges cycle power
-            "description": "Refrigerator power monitoring"
+            "description": "Refrigerator power monitoring",
         },
         "freezer": {
             "appliance_type": "freezer",
             "expected_power_range": {"min": 30, "max": 150},
             "monitoring_period": 3600,
             "alert_threshold": 10800,  # 3 hours - freezers cycle less frequently
-            "description": "Freezer power monitoring"
+            "description": "Freezer power monitoring",
         },
         "washer": {
             "appliance_type": "washer",
             "expected_power_range": {"min": 100, "max": 2000},
             "monitoring_period": 1800,
             "alert_threshold": 3600,  # 1 hour - washers have distinct cycles
-            "description": "Washing machine power monitoring"
+            "description": "Washing machine power monitoring",
         },
         "dryer": {
             "appliance_type": "dryer",
             "expected_power_range": {"min": 500, "max": 5000},
             "monitoring_period": 1800,
             "alert_threshold": 7200,  # 2 hours - dryers run longer cycles
-            "description": "Clothes dryer power monitoring"
+            "description": "Clothes dryer power monitoring",
         },
         "dishwasher": {
             "appliance_type": "dishwasher",
             "expected_power_range": {"min": 100, "max": 1800},
             "monitoring_period": 1800,
             "alert_threshold": 3600,  # 1 hour - dishwashers have timed cycles
-            "description": "Dishwasher power monitoring"
+            "description": "Dishwasher power monitoring",
         },
         "water_heater": {
             "appliance_type": "water_heater",
             "expected_power_range": {"min": 1000, "max": 6000},
             "monitoring_period": 3600,
             "alert_threshold": 21600,  # 6 hours - water heaters cycle infrequently
-            "description": "Water heater power monitoring"
+            "description": "Water heater power monitoring",
         },
         "ac_unit": {
             "appliance_type": "ac_unit",
             "expected_power_range": {"min": 500, "max": 5000},
             "monitoring_period": 1800,
             "alert_threshold": 3600,  # 1 hour - AC cycles frequently
-            "description": "Air conditioner power monitoring"
-        }
+            "description": "Air conditioner power monitoring",
+        },
     }
 
     return {
         "success": True,
         "presets": presets,
-        "usage": "Use preset values as starting point, adjust based on your specific appliance"
+        "usage": "Use preset values as starting point, adjust based on your specific appliance",
     }
+
 
 @router.post("/start-background-monitoring")
 async def start_background_monitoring(background_tasks: BackgroundTasks):
@@ -387,26 +397,9 @@ async def start_background_monitoring(background_tasks: BackgroundTasks):
         return {
             "success": True,
             "message": "Background appliance monitoring started",
-            "monitored_appliances": list(_appliance_configs.keys())
+            "monitored_appliances": list(_appliance_configs.keys()),
         }
 
     except Exception as e:
         logger.exception("Failed to start background monitoring")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

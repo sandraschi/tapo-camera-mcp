@@ -56,6 +56,7 @@ class HomeAssistantClient:
     ):
         # Auto-detect Docker environment and adjust URL
         import os
+
         if os.getenv("CONTAINER") == "yes":
             # In Docker, replace localhost with host.docker.internal for Windows/Mac
             # Or use service name if Home Assistant is in same Docker network
@@ -113,9 +114,14 @@ class HomeAssistantClient:
         except aiohttp.ClientConnectorError:
             logger.warning(f"Cannot connect to Home Assistant at {self.base_url}")
             import os
+
             if os.getenv("CONTAINER") == "yes":
-                logger.warning("  [DOCKER] If Home Assistant is on host, try: http://host.docker.internal:8123")
-                logger.warning("  [DOCKER] If Home Assistant is in Docker, ensure it's on same network")
+                logger.warning(
+                    "  [DOCKER] If Home Assistant is on host, try: http://host.docker.internal:8123"
+                )
+                logger.warning(
+                    "  [DOCKER] If Home Assistant is in Docker, ensure it's on same network"
+                )
             return False
         except Exception:
             logger.exception("Failed to initialize Home Assistant client")
@@ -265,9 +271,7 @@ class HomeAssistantClient:
             "smoke_status": "ok" if smoke_ok else "alert",
             "co_status": "ok" if co_ok else "alert",
             "battery_warnings": [
-                d.friendly_name
-                for d in devices
-                if d.battery_level and d.battery_level < 20
+                d.friendly_name for d in devices if d.battery_level and d.battery_level < 20
             ],
             "all_ok": smoke_ok and co_ok and all_online,
             "devices": [d.to_dict() for d in devices],
@@ -303,4 +307,3 @@ async def init_homeassistant_client(
 def get_homeassistant_client() -> Optional[HomeAssistantClient]:
     """Get the global Home Assistant client instance."""
     return _ha_client
-

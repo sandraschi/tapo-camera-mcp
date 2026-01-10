@@ -184,7 +184,9 @@ def import_consolidated_tools():
                 logger.exception(f"Failed to register {tool_cls.__name__}")
 
         _tools_registered = True
-        logger.info("[OK] All 16 consolidated portmanteau tools registered (FastMCP 2.12 compliant)")
+        logger.info(
+            "[OK] All 16 consolidated portmanteau tools registered (FastMCP 2.12 compliant)"
+        )
         logger.info("[SUCCESS] Tool consolidation successful: 64 -> 16 tools (75% reduction)")
 
     except ImportError:

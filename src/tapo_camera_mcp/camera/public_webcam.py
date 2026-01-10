@@ -1,8 +1,8 @@
 """Public webcam camera implementation for external webcams."""
 
-import asyncio
 import logging
 from typing import Dict, Optional
+
 import aiohttp
 
 from .base import CameraFactory, CameraType
@@ -48,13 +48,15 @@ class PublicWebcam(WebCamera):
     async def get_snapshot(self) -> Optional[bytes]:
         """Get a snapshot from the public webcam."""
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(self._webcam_url, timeout=aiohttp.ClientTimeout(total=10)) as response:
-                    if response.status == 200:
-                        return await response.read()
-                    else:
-                        logger.warning(f"Failed to get snapshot from {self._webcam_url}: HTTP {response.status}")
-                        return None
+            async with aiohttp.ClientSession() as session, session.get(
+                self._webcam_url, timeout=aiohttp.ClientTimeout(total=10)
+            ) as response:
+                if response.status == 200:
+                    return await response.read()
+                logger.warning(
+                    f"Failed to get snapshot from {self._webcam_url}: HTTP {response.status}"
+                )
+                return None
         except Exception as e:
             logger.exception(f"Error getting snapshot from public webcam {self.config.name}: {e}")
             return None
@@ -62,26 +64,10 @@ class PublicWebcam(WebCamera):
     async def test_connection(self) -> bool:
         """Test if the public webcam is accessible."""
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.head(self._webcam_url, timeout=aiohttp.ClientTimeout(total=5)) as response:
-                    return response.status == 200
+            async with aiohttp.ClientSession() as session, session.head(
+                self._webcam_url, timeout=aiohttp.ClientTimeout(total=5)
+            ) as response:
+                return response.status == 200
         except Exception as e:
             logger.warning(f"Connection test failed for {self.config.name}: {e}")
             return False
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

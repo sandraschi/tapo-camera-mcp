@@ -7,7 +7,7 @@ emergency alerts, weather warnings, system notifications, and messaging.
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastmcp import FastMCP
 
@@ -97,7 +97,7 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                         "acknowledged": False,
                         "location": "Vienna",
                         "expires_at": "2025-12-27T08:00:00Z",
-                        "actions_available": ["acknowledge", "dismiss", "view_details"]
+                        "actions_available": ["acknowledge", "dismiss", "view_details"],
                     },
                     {
                         "id": "alert_security_002",
@@ -110,7 +110,7 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                         "acknowledged": False,
                         "location": "Kitchen",
                         "camera_id": "tapo_kitchen",
-                        "actions_available": ["acknowledge", "view_recording", "dismiss"]
+                        "actions_available": ["acknowledge", "view_recording", "dismiss"],
                     },
                     {
                         "id": "alert_system_003",
@@ -122,7 +122,7 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                         "timestamp": "2025-12-27T03:15:00Z",
                         "acknowledged": True,
                         "device_id": "usb_camera_1",
-                        "actions_available": ["dismiss"]
+                        "actions_available": ["dismiss"],
                     },
                     {
                         "id": "alert_emergency_004",
@@ -136,8 +136,8 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                         "device_id": "tapo_p115_aircon",
                         "current_power": 850,
                         "threshold": 800,
-                        "actions_available": ["acknowledge", "shutdown_device", "view_history"]
-                    }
+                        "actions_available": ["acknowledge", "shutdown_device", "view_history"],
+                    },
                 ]
 
                 # Filter by type if specified
@@ -152,7 +152,7 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                     "filter_applied": alert_type,
                 }
 
-            elif action == "get_alert_details":
+            if action == "get_alert_details":
                 if not alert_id:
                     return {"success": False, "error": "alert_id is required for get_alert_details"}
 
@@ -174,15 +174,23 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                     "confidence_score": 0.89,
                     "detection_method": "motion_sensor",
                     "related_events": [
-                        {"id": "event_123", "type": "motion_start", "timestamp": "2025-12-27T03:45:00Z"},
-                        {"id": "event_124", "type": "motion_end", "timestamp": "2025-12-27T03:45:15Z"}
+                        {
+                            "id": "event_123",
+                            "type": "motion_start",
+                            "timestamp": "2025-12-27T03:45:00Z",
+                        },
+                        {
+                            "id": "event_124",
+                            "type": "motion_end",
+                            "timestamp": "2025-12-27T03:45:15Z",
+                        },
                     ],
                     "available_actions": ["acknowledge", "dismiss", "escalate", "view_recording"],
                     "metadata": {
                         "sensor_id": "motion_kitchen_001",
                         "firmware_version": "1.2.3",
-                        "battery_level": 92
-                    }
+                        "battery_level": 92,
+                    },
                 }
 
                 return {
@@ -191,7 +199,7 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                     "alert": alert_details,
                 }
 
-            elif action == "acknowledge_alert":
+            if action == "acknowledge_alert":
                 if not alert_id:
                     return {"success": False, "error": "alert_id is required for acknowledge_alert"}
 
@@ -203,7 +211,7 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                     "acknowledged_at": "2025-12-27T04:00:00Z",
                     "auto_acknowledged": False,
                     "notification_sent": True,
-                    "escalation_cancelled": False
+                    "escalation_cancelled": False,
                 }
 
                 return {
@@ -212,7 +220,7 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                     "acknowledgment": ack_result,
                 }
 
-            elif action == "dismiss_alert":
+            if action == "dismiss_alert":
                 if not alert_id:
                     return {"success": False, "error": "alert_id is required for dismiss_alert"}
 
@@ -224,7 +232,7 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                     "dismissed_at": "2025-12-27T04:00:00Z",
                     "reason": "user_dismissed",
                     "notification_cancelled": True,
-                    "archived": True
+                    "archived": True,
                 }
 
                 return {
@@ -233,9 +241,12 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                     "dismissal": dismiss_result,
                 }
 
-            elif action == "create_alert":
+            if action == "create_alert":
                 if not title or not message:
-                    return {"success": False, "error": "title and message are required for create_alert"}
+                    return {
+                        "success": False,
+                        "error": "title and message are required for create_alert",
+                    }
 
                 # Mock alert creation
                 new_alert = {
@@ -250,10 +261,7 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                     "created_by": "system_user",
                     "notification_channels": ["dashboard", "email"],
                     "expires_at": None,
-                    "metadata": {
-                        "custom_alert": True,
-                        "created_via": "mcp_tool"
-                    }
+                    "metadata": {"custom_alert": True, "created_via": "mcp_tool"},
                 }
 
                 return {
@@ -262,7 +270,7 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                     "alert_created": new_alert,
                 }
 
-            elif action == "get_alert_history":
+            if action == "get_alert_history":
                 # Mock historical alerts
                 history_alerts = [
                     {
@@ -273,7 +281,7 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                         "message": "Strong winds expected, gusts up to 60 km/h",
                         "timestamp": "2025-12-26T14:30:00Z",
                         "resolved": True,
-                        "resolution_time": "2025-12-26T20:00:00Z"
+                        "resolution_time": "2025-12-26T20:00:00Z",
                     },
                     {
                         "id": "alert_hist_002",
@@ -283,8 +291,8 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                         "message": "Front door opened during normal hours",
                         "timestamp": "2025-12-26T09:15:00Z",
                         "resolved": True,
-                        "resolution_time": "2025-12-26T09:16:00Z"
-                    }
+                        "resolution_time": "2025-12-26T09:16:00Z",
+                    },
                 ]
 
                 return {
@@ -296,9 +304,12 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                     "total_available": len(history_alerts),
                 }
 
-            elif action == "set_alert_filters":
+            if action == "set_alert_filters":
                 if not alert_type:
-                    return {"success": False, "error": "alert_type is required for set_alert_filters"}
+                    return {
+                        "success": False,
+                        "error": "alert_type is required for set_alert_filters",
+                    }
 
                 # Mock filter configuration
                 filter_config = {
@@ -310,15 +321,15 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                         "enabled": True,
                         "start_hour": 0,
                         "end_hour": 23,
-                        "weekdays_only": False
+                        "weekdays_only": False,
                     },
                     "notification_channels": ["dashboard", "email", "sms"],
                     "escalation_rules": {
                         "unacknowledged_timeout_minutes": 15,
                         "escalate_to": ["supervisor"],
-                        "escalation_channels": ["sms", "call"]
+                        "escalation_channels": ["sms", "call"],
                     },
-                    "updated_at": "2025-12-27T04:00:00Z"
+                    "updated_at": "2025-12-27T04:00:00Z",
                 }
 
                 return {
@@ -327,7 +338,7 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                     "filters": filter_config,
                 }
 
-            elif action == "test_alert_system":
+            if action == "test_alert_system":
                 # Mock alert system test
                 test_results = {
                     "test_timestamp": "2025-12-27T04:00:00Z",
@@ -335,11 +346,11 @@ def register_alerts_management_tool(mcp: FastMCP) -> None:
                     "results": {
                         "dashboard": {"status": "success", "response_time_ms": 45},
                         "email": {"status": "success", "delivery_time_ms": 1200},
-                        "sms": {"status": "success", "delivery_time_ms": 800}
+                        "sms": {"status": "success", "delivery_time_ms": 800},
                     },
                     "overall_status": "success",
                     "test_alert_id": f"test_alert_{asyncio.get_event_loop().time()}",
-                    "cleanup_performed": True
+                    "cleanup_performed": True,
                 }
 
                 return {

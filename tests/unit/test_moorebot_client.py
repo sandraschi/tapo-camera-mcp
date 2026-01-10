@@ -310,4 +310,3 @@ class TestMoorebotHardware:
         result = await client.move(0.1, 0.0, 1.0)
         assert result["success"] is True
         await client.disconnect()
-

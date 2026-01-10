@@ -23,7 +23,7 @@ COPY requirements-docker.txt /app/requirements-docker.txt
 # Skip 'pip install .' to avoid pulling in extra deps from pyproject.toml
 # This layer is cached unless requirements-docker.txt changes
 RUN python -m pip install --upgrade pip \
-    && pip install -r requirements-docker.txt
+ && pip install -r requirements-docker.txt
 
 # Copy source code last (changes most frequently)
 # This layer invalidates cache on code changes, but previous layers stay cached
@@ -31,7 +31,7 @@ COPY . /app
 
 EXPOSE 7777
 
-HEALTHCHECK --interval=30s --timeout=12s --retries=10 CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7777/api/health', timeout=10)" || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --retries=10 CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7777/api/health', timeout=4)" || exit 1
 
 ENTRYPOINT ["python", "-m", "tapo_camera_mcp.web.server"]
 

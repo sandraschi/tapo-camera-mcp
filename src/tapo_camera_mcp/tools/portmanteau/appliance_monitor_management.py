@@ -6,9 +6,8 @@ power consumption patterns, detecting appliance issues, and monitoring
 device health through energy usage analysis.
 """
 
-import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastmcp import FastMCP  # type: ignore[import]
 
@@ -93,7 +92,7 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                         "last_maintenance": "2025-06-15T00:00:00Z",
                         "predicted_maintenance": "2026-06-15T00:00:00Z",
                         "energy_efficiency": "A+",
-                        "daily_consumption_kwh": 2.8
+                        "daily_consumption_kwh": 2.8,
                     },
                     {
                         "id": "appliance_washer",
@@ -107,7 +106,7 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                         "last_maintenance": "2025-09-01T00:00:00Z",
                         "predicted_maintenance": "2026-09-01T00:00:00Z",
                         "energy_efficiency": "A+++",
-                        "daily_consumption_kwh": 0.8
+                        "daily_consumption_kwh": 0.8,
                     },
                     {
                         "id": "appliance_oven",
@@ -121,7 +120,7 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                         "last_maintenance": "2025-03-20T00:00:00Z",
                         "predicted_maintenance": "2026-03-20T00:00:00Z",
                         "energy_efficiency": "A",
-                        "daily_consumption_kwh": 1.2
+                        "daily_consumption_kwh": 1.2,
                     },
                     {
                         "id": "appliance_tv",
@@ -135,8 +134,8 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                         "last_maintenance": "2025-01-01T00:00:00Z",
                         "predicted_maintenance": None,
                         "energy_efficiency": "A",
-                        "daily_consumption_kwh": 0.15
-                    }
+                        "daily_consumption_kwh": 0.15,
+                    },
                 ]
 
                 return {
@@ -147,9 +146,12 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                     "monitored_count": len([a for a in appliances if a.get("monitoring_enabled")]),
                 }
 
-            elif action == "get_appliance_status":
+            if action == "get_appliance_status":
                 if not appliance_id:
-                    return {"success": False, "error": "appliance_id is required for get_appliance_status"}
+                    return {
+                        "success": False,
+                        "error": "appliance_id is required for get_appliance_status",
+                    }
 
                 # Mock detailed appliance status
                 appliance_status = {
@@ -163,28 +165,28 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                         "average_daily_kwh": 2.8,
                         "peak_today_watts": 120,
                         "efficiency_rating": "A+",
-                        "standby_power_watts": 25
+                        "standby_power_watts": 25,
                     },
                     "operational_data": {
                         "runtime_today_hours": 22.5,
                         "cycles_today": 18,
                         "temperature_control": "optimal",
                         "compressor_health": "good",
-                        "door_open_events": 8
+                        "door_open_events": 8,
                     },
                     "maintenance_info": {
                         "last_service": "2025-06-15T00:00:00Z",
                         "next_service_due": "2026-06-15T00:00:00Z",
                         "maintenance_overdue": False,
-                        "recommended_actions": []
+                        "recommended_actions": [],
                     },
                     "anomalies_detected": [],
                     "monitoring_rules": {
                         "power_threshold_watts": 200,
                         "efficiency_minimum": 0.85,
-                        "alert_on_anomaly": True
+                        "alert_on_anomaly": True,
                     },
-                    "timestamp": "2025-12-27T04:00:00Z"
+                    "timestamp": "2025-12-27T04:00:00Z",
                 }
 
                 return {
@@ -193,9 +195,12 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                     "appliance": appliance_status,
                 }
 
-            elif action == "analyze_power_pattern":
+            if action == "analyze_power_pattern":
                 if not appliance_id:
-                    return {"success": False, "error": "appliance_id is required for analyze_power_pattern"}
+                    return {
+                        "success": False,
+                        "error": "appliance_id is required for analyze_power_pattern",
+                    }
 
                 # Mock power pattern analysis
                 pattern_analysis = {
@@ -208,33 +213,33 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                             "type": "normal_cycle",
                             "description": "Regular compressor cycles every 45-60 minutes",
                             "confidence": 0.95,
-                            "impact": "normal_operation"
+                            "impact": "normal_operation",
                         },
                         {
                             "type": "efficiency_trend",
                             "description": "Energy efficiency improved by 8% over last month",
                             "confidence": 0.87,
-                            "impact": "positive"
+                            "impact": "positive",
                         },
                         {
                             "type": "standby_drain",
                             "description": "Standby power consumption within normal range",
                             "confidence": 0.92,
-                            "impact": "normal"
-                        }
+                            "impact": "normal",
+                        },
                     ],
                     "metrics": {
                         "average_power_watts": 85,
                         "power_variance": 0.15,
                         "peak_power_watts": 120,
                         "duty_cycle_percent": 35,
-                        "efficiency_score": 0.88
+                        "efficiency_score": 0.88,
                     },
                     "recommendations": [
                         "Continue normal operation - no issues detected",
-                        "Schedule routine maintenance in 6 months"
+                        "Schedule routine maintenance in 6 months",
                     ],
-                    "timestamp": "2025-12-27T04:00:00Z"
+                    "timestamp": "2025-12-27T04:00:00Z",
                 }
 
                 return {
@@ -243,9 +248,12 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                     "analysis": pattern_analysis,
                 }
 
-            elif action == "detect_anomalies":
+            if action == "detect_anomalies":
                 if not appliance_id:
-                    return {"success": False, "error": "appliance_id is required for detect_anomalies"}
+                    return {
+                        "success": False,
+                        "error": "appliance_id is required for detect_anomalies",
+                    }
 
                 # Mock anomaly detection
                 anomalies = [
@@ -259,8 +267,12 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                         "peak_power_watts": 119,
                         "normal_power_watts": 85,
                         "confidence": 0.89,
-                        "possible_causes": ["Door left open", "Hot food storage", "Ambient temperature change"],
-                        "recommendations": ["Check door seal", "Verify temperature settings"]
+                        "possible_causes": [
+                            "Door left open",
+                            "Hot food storage",
+                            "Ambient temperature change",
+                        ],
+                        "recommendations": ["Check door seal", "Verify temperature settings"],
                     }
                 ]
 
@@ -272,7 +284,7 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                     "anomalies": anomalies,
                     "false_positive_probability": 0.05,
                     "next_scan_scheduled": "2025-12-27T05:00:00Z",
-                    "timestamp": "2025-12-27T04:00:00Z"
+                    "timestamp": "2025-12-27T04:00:00Z",
                 }
 
                 return {
@@ -281,9 +293,12 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                     "detection": detection_result,
                 }
 
-            elif action == "predict_maintenance":
+            if action == "predict_maintenance":
                 if not appliance_id:
-                    return {"success": False, "error": "appliance_id is required for predict_maintenance"}
+                    return {
+                        "success": False,
+                        "error": "appliance_id is required for predict_maintenance",
+                    }
 
                 # Mock maintenance prediction
                 maintenance_prediction = {
@@ -300,22 +315,22 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                             "action": "Clean condenser coils",
                             "frequency": "every 6 months",
                             "difficulty": "easy",
-                            "estimated_time_minutes": 30
+                            "estimated_time_minutes": 30,
                         },
                         {
                             "action": "Check door seals",
                             "frequency": "every 12 months",
                             "difficulty": "easy",
-                            "estimated_time_minutes": 15
-                        }
+                            "estimated_time_minutes": 15,
+                        },
                     ],
                     "usage_metrics": {
                         "total_runtime_hours": 8760,  # 1 year
                         "total_energy_kwh": 1022,
                         "average_daily_cycles": 18,
-                        "wear_and_tear_score": 0.15  # Low wear
+                        "wear_and_tear_score": 0.15,  # Low wear
                     },
-                    "timestamp": "2025-12-27T04:00:00Z"
+                    "timestamp": "2025-12-27T04:00:00Z",
                 }
 
                 return {
@@ -324,9 +339,12 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                     "prediction": maintenance_prediction,
                 }
 
-            elif action == "set_monitoring_rules":
+            if action == "set_monitoring_rules":
                 if not appliance_id:
-                    return {"success": False, "error": "appliance_id is required for set_monitoring_rules"}
+                    return {
+                        "success": False,
+                        "error": "appliance_id is required for set_monitoring_rules",
+                    }
 
                 # Mock monitoring rules configuration
                 monitoring_rules = {
@@ -336,28 +354,28 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                         "normal_range_watts": {"min": 70, "max": 110},
                         "spike_threshold_watts": 150,
                         "spike_duration_minutes": 5,
-                        "standby_threshold_watts": 30
+                        "standby_threshold_watts": 30,
                     },
                     "efficiency_monitoring": {
                         "enabled": True,
                         "minimum_efficiency": 0.8,
                         "trend_analysis_days": 7,
-                        "alert_on_decline_percent": 10
+                        "alert_on_decline_percent": 10,
                     },
                     "usage_monitoring": {
                         "enabled": True,
                         "daily_usage_limit_kwh": 5.0,
                         "monthly_usage_limit_kwh": 120.0,
-                        "unusual_usage_threshold_percent": 25
+                        "unusual_usage_threshold_percent": 25,
                     },
                     "alert_settings": {
                         "email_notifications": True,
                         "sms_for_critical": True,
                         "dashboard_alerts": True,
-                        "quiet_hours": {"start": "22:00", "end": "08:00"}
+                        "quiet_hours": {"start": "22:00", "end": "08:00"},
                     },
                     "data_retention_days": 365,
-                    "updated_at": "2025-12-27T04:00:00Z"
+                    "updated_at": "2025-12-27T04:00:00Z",
                 }
 
                 return {
@@ -366,7 +384,7 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                     "rules": monitoring_rules,
                 }
 
-            elif action == "get_energy_report":
+            if action == "get_energy_report":
                 # Mock energy report generation
                 energy_report = {
                     "report_format": report_format,
@@ -378,7 +396,7 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                         "average_daily_kwh": 3.8,
                         "peak_usage_day": "2025-12-25",
                         "most_efficient_appliance": "Refrigerator",
-                        "highest_consumer": "Washing Machine"
+                        "highest_consumer": "Washing Machine",
                     },
                     "appliance_breakdown": [
                         {
@@ -386,37 +404,37 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                             "energy_kwh": 16.8,
                             "cost_usd": 2.10,
                             "percentage": 37.2,
-                            "efficiency_rating": "A+"
+                            "efficiency_rating": "A+",
                         },
                         {
                             "appliance": "Washing Machine",
                             "energy_kwh": 12.4,
                             "cost_usd": 1.55,
                             "percentage": 27.4,
-                            "efficiency_rating": "A+++"
+                            "efficiency_rating": "A+++",
                         },
                         {
                             "appliance": "Electric Oven",
                             "energy_kwh": 9.6,
                             "cost_usd": 1.20,
                             "percentage": 21.2,
-                            "efficiency_rating": "A"
+                            "efficiency_rating": "A",
                         },
                         {
                             "appliance": "Smart TV",
                             "energy_kwh": 6.4,
                             "cost_usd": 0.80,
                             "percentage": 14.2,
-                            "efficiency_rating": "A"
-                        }
+                            "efficiency_rating": "A",
+                        },
                     ],
                     "recommendations": [
                         "Consider upgrading TV to more efficient model",
                         "Refrigerator operating optimally",
-                        "Check washing machine usage patterns"
+                        "Check washing machine usage patterns",
                     ],
                     "data_quality": "high",
-                    "next_report_available": "2025-12-28T04:00:00Z"
+                    "next_report_available": "2025-12-28T04:00:00Z",
                 }
 
                 return {
@@ -425,9 +443,12 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                     "report": energy_report,
                 }
 
-            elif action == "troubleshoot_appliance":
+            if action == "troubleshoot_appliance":
                 if not appliance_id:
-                    return {"success": False, "error": "appliance_id is required for troubleshoot_appliance"}
+                    return {
+                        "success": False,
+                        "error": "appliance_id is required for troubleshoot_appliance",
+                    }
 
                 # Mock troubleshooting recommendations
                 troubleshooting = {
@@ -441,7 +462,7 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                             "symptoms": ["Higher power consumption", "Warmer than usual"],
                             "solution": "Clean condenser coils with vacuum or brush",
                             "difficulty": "easy",
-                            "estimated_time_minutes": 30
+                            "estimated_time_minutes": 30,
                         },
                         {
                             "issue": "Door seal degradation",
@@ -449,7 +470,7 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                             "symptoms": ["Frequent compressor cycling", "Food spoiling faster"],
                             "solution": "Replace door seal gasket",
                             "difficulty": "medium",
-                            "estimated_time_minutes": 45
+                            "estimated_time_minutes": 45,
                         },
                         {
                             "issue": "Ambient temperature too high",
@@ -457,25 +478,25 @@ def register_appliance_monitor_management_tool(mcp: FastMCP) -> None:
                             "symptoms": ["Constant running", "Reduced cooling efficiency"],
                             "solution": "Improve ventilation around appliance",
                             "difficulty": "easy",
-                            "estimated_time_minutes": 15
-                        }
+                            "estimated_time_minutes": 15,
+                        },
                     ],
                     "immediate_actions": [
                         "Check that appliance is level",
                         "Ensure proper ventilation around appliance",
-                        "Clean condenser coils if accessible"
+                        "Clean condenser coils if accessible",
                     ],
                     "preventive_maintenance": [
                         "Clean coils every 6 months",
                         "Check door seals annually",
-                        "Keep ambient temperature below 30°C"
+                        "Keep ambient temperature below 30°C",
                     ],
                     "when_to_call_professional": [
                         "If power consumption exceeds 200% of normal",
                         "If cooling performance is significantly reduced",
-                        "If unusual noises or vibrations occur"
+                        "If unusual noises or vibrations occur",
                     ],
-                    "timestamp": "2025-12-27T04:00:00Z"
+                    "timestamp": "2025-12-27T04:00:00Z",
                 }
 
                 return {

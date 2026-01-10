@@ -7,6 +7,7 @@ Combines camera information operations:
 - Manage camera groups
 """
 
+import asyncio
 import logging
 import time
 from typing import Any, Dict, Optional
@@ -93,33 +94,96 @@ class CameraInfoTool(BaseTool):
                 "timestamp": time.time(),
             }
 
-        # Simulate camera info
-        camera_info = {
-            "camera_id": camera_id,
-            "name": "Front Door Camera",
-            "model": "Tapo C200",
-            "firmware_version": "1.2.3",
-            "hardware_version": "1.0",
-            "serial_number": "TC200123456789",
-            "ip_address": "192.168.1.100",
-            "mac_address": "AA:BB:CC:DD:EE:FF",
-            "resolution": "1920x1080",
-            "fps": 30,
-            "night_vision": True,
-            "ptz_support": True,
-            "audio_support": True,
-            "storage": "microSD",
-            "location": "Front Door",
-            "installation_date": "2024-01-15",
-        }
+        from tapo_camera_mcp.core.server import TapoCameraServer
 
-        return {
-            "success": True,
-            "operation": "info",
-            "camera_info": camera_info,
-            "message": f"Camera info retrieved for {camera_id}",
-            "timestamp": time.time(),
-        }
+        server = await TapoCameraServer.get_instance()
+
+        try:
+            # Check if it's a Ring camera first
+            if camera_id.startswith("ring_"):
+                try:
+                    from ...integrations.ring_client import get_ring_client
+                    ring_client = get_ring_client()
+                    if ring_client and ring_client.is_initialized:
+                        ring_id = camera_id.replace("ring_", "")
+                        doorbells = await asyncio.wait_for(ring_client.get_doorbells(), timeout=3.0)
+                        for doorbell in doorbells:
+                            if str(doorbell.id) == ring_id:
+                                camera_info = {
+                                    "camera_id": camera_id,
+                                    "name": f"Ring {doorbell.device_type}",
+                                    "model": doorbell.device_type,
+                                    "firmware_version": doorbell.extra_data.get("firmware", "N/A"),
+                                    "hardware_version": "N/A",
+                                    "serial_number": str(doorbell.id),
+                                    "ip_address": "N/A (Cloud)",
+                                    "mac_address": "N/A",
+                                    "resolution": "1080p",
+                                    "fps": 30,
+                                    "night_vision": True,
+                                    "ptz_support": False,
+                                    "audio_support": True,
+                                    "storage": "Ring Cloud",
+                                    "location": doorbell.name or "Unknown",
+                                    "installation_date": "N/A",
+                                    "battery_life": doorbell.battery_level,
+                                    "connection_type": "WebRTC",
+                                }
+                                return {
+                                    "success": True,
+                                    "operation": "info",
+                                    "camera_info": camera_info,
+                                    "message": f"Ring camera info retrieved for {camera_id}",
+                                    "timestamp": time.time(),
+                                }
+                except Exception as e:
+                    logger.warning(f"Failed to get Ring camera info for {camera_id}: {e}")
+
+            # Try to get camera from camera manager
+            if hasattr(server, "camera_manager") and server.camera_manager:
+                camera = await server.camera_manager.get_camera(camera_id)
+                if camera:
+                    status = await camera.get_status()
+                    camera_info = {
+                        "camera_id": camera_id,
+                        "name": camera_id,
+                        "model": status.get("model", "Unknown"),
+                        "firmware_version": status.get("firmware", "Unknown"),
+                        "hardware_version": "N/A",
+                        "serial_number": "N/A",
+                        "ip_address": getattr(camera.config, 'params', {}).get('host', 'N/A') if hasattr(camera, 'config') else 'N/A',
+                        "mac_address": "N/A",
+                        "resolution": status.get("resolution", "Unknown"),
+                        "fps": 30,
+                        "night_vision": True,
+                        "ptz_support": status.get("ptz_capable", False),
+                        "audio_support": status.get("audio_capable", False),
+                        "storage": "N/A",
+                        "location": camera_id,
+                        "installation_date": "N/A",
+                    }
+
+                    return {
+                        "success": True,
+                        "operation": "info",
+                        "camera_info": camera_info,
+                        "message": f"Camera info retrieved for {camera_id}",
+                        "timestamp": time.time(),
+                    }
+
+            return {
+                "success": False,
+                "error": f"Camera {camera_id} not found",
+                "timestamp": time.time(),
+            }
+
+        except Exception as e:
+            logger.exception(f"Failed to get camera info for {camera_id}")
+            return {
+                "success": False,
+                "error": f"Failed to get camera info: {e!s}",
+                "timestamp": time.time(),
+            }
 
     async def _get_camera_status(self, camera_id: Optional[str]) -> Dict[str, Any]:
         """Get camera status."""
@@ -130,33 +194,97 @@ class CameraInfoTool(BaseTool):
                 "timestamp": time.time(),
             }
 
-        # Simulate camera status
+        from tapo_camera_mcp.core.server import TapoCameraServer
 
-        camera_status = {
-            "camera_id": camera_id,
-            "status": "online",
-            "connection_quality": "excellent",
-            "signal_strength": 85,
-            "battery_level": 100,
-            "storage_usage": 45.2,
-            "last_motion": time.time() - 300,
-            "recording_status": "active",
-            "night_mode": False,
-            "privacy_mode": False,
-            "led_status": "on",
-            "motion_detection": "enabled",
-            "audio_recording": "enabled",
-            "cloud_storage": "connected",
-            "last_sync": time.time() - 60,
-        }
+        server = await TapoCameraServer.get_instance()
 
-        return {
-            "success": True,
-            "operation": "status",
-            "camera_status": camera_status,
-            "message": f"Camera status retrieved for {camera_id}",
-            "timestamp": time.time(),
-        }
+        try:
+            # Check if it's a Ring camera first
+            if camera_id.startswith("ring_"):
+                try:
+                    from ...integrations.ring_client import get_ring_client
+                    ring_client = get_ring_client()
+                    if ring_client and ring_client.is_initialized:
+                        ring_id = camera_id.replace("ring_", "")
+                        doorbells = await asyncio.wait_for(ring_client.get_doorbells(), timeout=3.0)
+                        for doorbell in doorbells:
+                            if str(doorbell.id) == ring_id:
+                                camera_status = {
+                                    "camera_id": camera_id,
+                                    "status": "online" if doorbell.is_online else "offline",
+                                    "connection_quality": "cloud",
+                                    "signal_strength": None,
+                                    "battery_level": doorbell.battery_level,
+                                    "storage_usage": None,
+                                    "last_motion": None,
+                                    "recording_status": "cloud",
+                                    "night_mode": None,
+                                    "privacy_mode": None,
+                                    "led_status": "auto",
+                                    "motion_detection": "enabled",
+                                    "audio_recording": "enabled",
+                                    "cloud_storage": "ring",
+                                    "last_sync": time.time(),
+                                    "device_type": doorbell.device_type,
+                                    "firmware": doorbell.extra_data.get("firmware", "N/A"),
+                                }
+                                return {
+                                    "success": True,
+                                    "operation": "status",
+                                    "camera_status": camera_status,
+                                    "message": f"Ring camera status retrieved for {camera_id}",
+                                    "timestamp": time.time(),
+                                }
+                except Exception as e:
+                    logger.warning(f"Failed to get Ring camera status for {camera_id}: {e}")
+
+            # Try to get camera from camera manager
+            if hasattr(server, "camera_manager") and server.camera_manager:
+                camera = await server.camera_manager.get_camera(camera_id)
+                if camera:
+                    status = await camera.get_status()
+                    camera_status = {
+                        "camera_id": camera_id,
+                        "status": "online" if status.get("connected", False) else "offline",
+                        "connection_quality": "direct" if status.get("connected", False) else "none",
+                        "signal_strength": None,
+                        "battery_level": None,
+                        "storage_usage": None,
+                        "last_motion": None,
+                        "recording_status": "streaming" if status.get("streaming", False) else "idle",
+                        "night_mode": None,
+                        "privacy_mode": None,
+                        "led_status": "auto",
+                        "motion_detection": "enabled",
+                        "audio_recording": "enabled",
+                        "cloud_storage": "local",
+                        "last_sync": time.time(),
+                        "model": status.get("model", "Unknown"),
+                        "firmware": status.get("firmware", "Unknown"),
+                        "streaming": status.get("streaming", False),
+                    }
+
+                    return {
+                        "success": True,
+                        "operation": "status",
+                        "camera_status": camera_status,
+                        "message": f"Camera status retrieved for {camera_id}",
+                        "timestamp": time.time(),
+                    }
+
+            return {
+                "success": False,
+                "error": f"Camera {camera_id} not found",
+                "timestamp": time.time(),
+            }
+
+        except Exception as e:
+            logger.exception(f"Failed to get camera status for {camera_id}")
+            return {
+                "success": False,
+                "error": f"Failed to get camera status: {e!s}",
+                "timestamp": time.time(),
+            }
 
     async def _manage_groups(
         self, group_action: Optional[str], group_name: Optional[str], camera_id: Optional[str]

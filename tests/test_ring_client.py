@@ -215,11 +215,7 @@ class TestRingAlarmStatus:
         """Test creating RingAlarmStatus."""
         from tapo_camera_mcp.integrations.ring_client import RingAlarmMode, RingAlarmStatus
 
-        status = RingAlarmStatus(
-            mode=RingAlarmMode.HOME,
-            is_armed=True,
-            sensors=[]
-        )
+        status = RingAlarmStatus(mode=RingAlarmMode.HOME, is_armed=True, sensors=[])
         assert status.mode == RingAlarmMode.HOME
         assert status.is_armed is True
 
@@ -227,11 +223,7 @@ class TestRingAlarmStatus:
         """Test RingAlarmStatus.to_dict()."""
         from tapo_camera_mcp.integrations.ring_client import RingAlarmMode, RingAlarmStatus
 
-        status = RingAlarmStatus(
-            mode=RingAlarmMode.DISARMED,
-            is_armed=False,
-            sensors=[]
-        )
+        status = RingAlarmStatus(mode=RingAlarmMode.DISARMED, is_armed=False, sensors=[])
         result = status.to_dict()
         assert result["mode"] == "none"
         assert result["is_armed"] is False
@@ -245,10 +237,7 @@ class TestRingDevice:
         from tapo_camera_mcp.integrations.ring_client import RingDevice, RingDeviceType
 
         device = RingDevice(
-            id="123",
-            name="Front Door",
-            device_type=RingDeviceType.DOORBELL,
-            battery_level=100
+            id="123", name="Front Door", device_type=RingDeviceType.DOORBELL, battery_level=100
         )
         assert device.name == "Front Door"
         assert device.battery_level == 100
@@ -257,11 +246,7 @@ class TestRingDevice:
         """Test RingDevice.to_dict()."""
         from tapo_camera_mcp.integrations.ring_client import RingDevice, RingDeviceType
 
-        device = RingDevice(
-            id="123",
-            name="Test Camera",
-            device_type=RingDeviceType.CAMERA
-        )
+        device = RingDevice(id="123", name="Test Camera", device_type=RingDeviceType.CAMERA)
         result = device.to_dict()
         assert result["id"] == "123"
         assert result["device_type"] == "camera"
@@ -274,12 +259,7 @@ class TestRingSensor:
         """Test creating RingSensor."""
         from tapo_camera_mcp.integrations.ring_client import RingSensor
 
-        sensor = RingSensor(
-            id="456",
-            name="Kitchen Door",
-            sensor_type="contact",
-            is_open=False
-        )
+        sensor = RingSensor(id="456", name="Kitchen Door", sensor_type="contact", is_open=False)
         assert sensor.name == "Kitchen Door"
         assert sensor.is_open is False
 
@@ -288,10 +268,7 @@ class TestRingSensor:
         from tapo_camera_mcp.integrations.ring_client import RingSensor
 
         sensor = RingSensor(
-            id="789",
-            name="Hallway Motion",
-            sensor_type="motion",
-            motion_detected=True
+            id="789", name="Hallway Motion", sensor_type="motion", motion_detected=True
         )
         result = sensor.to_dict()
         assert result["sensor_type"] == "motion"

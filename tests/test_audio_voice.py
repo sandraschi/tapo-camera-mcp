@@ -32,9 +32,7 @@ class TestAudioDependencies:
     def test_stt_chain_availability(self):
         """Test STT engine availability flags."""
         # At least one STT engine should be available
-        assert (
-            FASTER_WHISPER_AVAILABLE or VOSK_AVAILABLE or WHISPER_AVAILABLE
-        ) == STT_AVAILABLE
+        assert (FASTER_WHISPER_AVAILABLE or VOSK_AVAILABLE or WHISPER_AVAILABLE) == STT_AVAILABLE
         print("\nSTT Engines:")
         print(f"  Faster-Whisper: {FASTER_WHISPER_AVAILABLE}")
         print(f"  Vosk: {VOSK_AVAILABLE}")
@@ -44,9 +42,7 @@ class TestAudioDependencies:
     def test_tts_chain_availability(self):
         """Test TTS engine availability flags."""
         # At least one TTS engine should be available
-        assert (
-            PIPER_AVAILABLE or EDGE_TTS_AVAILABLE or PYTTSX3_AVAILABLE
-        ) == TTS_AVAILABLE
+        assert (PIPER_AVAILABLE or EDGE_TTS_AVAILABLE or PYTTSX3_AVAILABLE) == TTS_AVAILABLE
         print("\nTTS Engines:")
         print(f"  Piper: {PIPER_AVAILABLE}")
         print(f"  Edge-TTS: {EDGE_TTS_AVAILABLE}")
@@ -199,4 +195,3 @@ if __name__ == "__main__":
     print("\n" + "=" * 60)
     print("✅ All dependency checks passed!")
     print("=" * 60)
-

@@ -185,7 +185,9 @@ def test_api_camera_stream_endpoint():
         assert False
 
 
-@pytest.mark.skip(reason="# TODO: Fix test_api_camera_snapshot_endpoint - currently has assert False")
+@pytest.mark.skip(
+    reason="# TODO: Fix test_api_camera_snapshot_endpoint - currently has assert False"
+)
 def test_api_camera_snapshot_endpoint():
     """Test the /api/cameras/{camera_id}/snapshot endpoint."""
     try:

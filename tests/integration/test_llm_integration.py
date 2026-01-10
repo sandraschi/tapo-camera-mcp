@@ -34,6 +34,7 @@ pytestmark = pytest.mark.integration
 def check_provider_available(base_url: str, timeout: float = 2.0) -> bool:
     """Check if a provider is available at the given URL."""
     import httpx
+
     try:
         if "ollama" in base_url.lower():
             response = httpx.get(f"{base_url}/api/tags", timeout=timeout)
@@ -41,7 +42,9 @@ def check_provider_available(base_url: str, timeout: float = 2.0) -> bool:
             response = httpx.get(f"{base_url}/v1/models", timeout=timeout)
         else:
             # For OpenAI, just check if we can reach the base URL
-            response = httpx.get(f"{base_url}/models", timeout=timeout, headers={"Authorization": "Bearer test"})
+            response = httpx.get(
+                f"{base_url}/models", timeout=timeout, headers={"Authorization": "Bearer test"}
+            )
         return response.status_code in (200, 401)  # 401 means API is reachable but needs auth
     except Exception:
         return False
@@ -74,7 +77,9 @@ class TestOllamaIntegration:
         return OllamaProvider(base_url="http://localhost:11434")
 
     @pytest.mark.asyncio
-    @pytest.mark.skipif(not check_provider_available("http://localhost:11434"), reason="Ollama not available")
+    @pytest.mark.skipif(
+        not check_provider_available("http://localhost:11434"), reason="Ollama not available"
+    )
     async def test_list_models_real(self, provider):
         """Test listing real models from Ollama."""
         models = await provider.list_models()
@@ -87,7 +92,9 @@ class TestOllamaIntegration:
             assert model["provider"] == "ollama"
 
     @pytest.mark.asyncio
-    @pytest.mark.skipif(not check_provider_available("http://localhost:11434"), reason="Ollama not available")
+    @pytest.mark.skipif(
+        not check_provider_available("http://localhost:11434"), reason="Ollama not available"
+    )
     async def test_load_model_real(self, provider):
         """Test loading a real model in Ollama."""
         # First, get available models
@@ -102,7 +109,9 @@ class TestOllamaIntegration:
         assert provider._current_model == model_name
 
     @pytest.mark.asyncio
-    @pytest.mark.skipif(not check_provider_available("http://localhost:11434"), reason="Ollama not available")
+    @pytest.mark.skipif(
+        not check_provider_available("http://localhost:11434"), reason="Ollama not available"
+    )
     async def test_chat_real(self, provider):
         """Test real chat with Ollama."""
         # First, get available models
@@ -124,7 +133,9 @@ class TestOllamaIntegration:
         logger.info("Ollama response: %s", response)
 
     @pytest.mark.asyncio
-    @pytest.mark.skipif(not check_provider_available("http://localhost:11434"), reason="Ollama not available")
+    @pytest.mark.skipif(
+        not check_provider_available("http://localhost:11434"), reason="Ollama not available"
+    )
     async def test_get_current_model_real(self, provider):
         """Test getting current model after loading."""
         models = await provider.list_models()
@@ -147,7 +158,9 @@ class TestLMStudioIntegration:
         return LMStudioProvider(base_url="http://localhost:1234")
 
     @pytest.mark.asyncio
-    @pytest.mark.skipif(not check_provider_available("http://localhost:1234"), reason="LM Studio not available")
+    @pytest.mark.skipif(
+        not check_provider_available("http://localhost:1234"), reason="LM Studio not available"
+    )
     async def test_list_models_real(self, provider):
         """Test listing real models from LM Studio."""
         models = await provider.list_models()
@@ -159,7 +172,9 @@ class TestLMStudioIntegration:
             assert model["provider"] == "lm_studio"
 
     @pytest.mark.asyncio
-    @pytest.mark.skipif(not check_provider_available("http://localhost:1234"), reason="LM Studio not available")
+    @pytest.mark.skipif(
+        not check_provider_available("http://localhost:1234"), reason="LM Studio not available"
+    )
     async def test_load_model_real(self, provider):
         """Test loading a real model in LM Studio."""
         models = await provider.list_models()
@@ -173,7 +188,9 @@ class TestLMStudioIntegration:
         assert isinstance(result, bool)
 
     @pytest.mark.asyncio
-    @pytest.mark.skipif(not check_provider_available("http://localhost:1234"), reason="LM Studio not available")
+    @pytest.mark.skipif(
+        not check_provider_available("http://localhost:1234"), reason="LM Studio not available"
+    )
     async def test_chat_real(self, provider):
         """Test real chat with LM Studio."""
         models = await provider.list_models()
@@ -211,10 +228,7 @@ class TestOpenAIIntegration:
         """Create an OpenAIProvider instance."""
         if not openai_api_key:
             pytest.skip("OPENAI_API_KEY environment variable not set")
-        return OpenAIProvider(
-            base_url="https://api.openai.com/v1",
-            api_key=openai_api_key
-        )
+        return OpenAIProvider(base_url="https://api.openai.com/v1", api_key=openai_api_key)
 
     @pytest.mark.asyncio
     async def test_list_models_real(self, provider, openai_api_key):
@@ -257,14 +271,13 @@ class TestLLMManagerIntegration:
         return LLMManager()
 
     @pytest.mark.asyncio
-    @pytest.mark.skipif(not check_provider_available("http://localhost:11434"), reason="Ollama not available")
+    @pytest.mark.skipif(
+        not check_provider_available("http://localhost:11434"), reason="Ollama not available"
+    )
     async def test_manager_with_ollama(self, manager):
         """Test manager with real Ollama provider."""
         # Register Ollama
-        success = manager.register_provider(
-            ProviderType.OLLAMA,
-            "http://localhost:11434"
-        )
+        success = manager.register_provider(ProviderType.OLLAMA, "http://localhost:11434")
         assert success is True
 
         # List providers
@@ -285,11 +298,7 @@ class TestLLMManagerIntegration:
 
             # Try chatting
             messages = [{"role": "user", "content": "Say 'test'"}]
-            response = await manager.chat(
-                messages,
-                ProviderType.OLLAMA,
-                stream=False
-            )
+            response = await manager.chat(messages, ProviderType.OLLAMA, stream=False)
             assert isinstance(response, str)
             assert len(response) > 0
             logger.info("Manager with Ollama response: %s", response)
@@ -302,9 +311,7 @@ class TestLLMManagerIntegration:
 
         # Register OpenAI
         success = manager.register_provider(
-            ProviderType.OPENAI,
-            "https://api.openai.com/v1",
-            api_key=openai_api_key
+            ProviderType.OPENAI, "https://api.openai.com/v1", api_key=openai_api_key
         )
         assert success is True
 
@@ -318,24 +325,19 @@ class TestLLMManagerIntegration:
 
         # Try chatting (OpenAI doesn't need explicit load)
         messages = [{"role": "user", "content": "Say 'test'"}]
-        response = await manager.chat(
-            messages,
-            ProviderType.OPENAI,
-            stream=False
-        )
+        response = await manager.chat(messages, ProviderType.OPENAI, stream=False)
         assert isinstance(response, str)
         assert len(response) > 0
         logger.info("Manager with OpenAI response: %s", response)
 
     @pytest.mark.asyncio
-    @pytest.mark.skipif(not check_provider_available("http://localhost:1234"), reason="LM Studio not available")
+    @pytest.mark.skipif(
+        not check_provider_available("http://localhost:1234"), reason="LM Studio not available"
+    )
     async def test_manager_with_lm_studio(self, manager):
         """Test manager with real LM Studio provider."""
         # Register LM Studio
-        success = manager.register_provider(
-            ProviderType.LM_STUDIO,
-            "http://localhost:1234"
-        )
+        success = manager.register_provider(ProviderType.LM_STUDIO, "http://localhost:1234")
         assert success is True
 
         # List providers
@@ -354,11 +356,7 @@ class TestLLMManagerIntegration:
             # Try chatting
             messages = [{"role": "user", "content": "Say 'test'"}]
             try:
-                response = await manager.chat(
-                    messages,
-                    ProviderType.LM_STUDIO,
-                    stream=False
-                )
+                response = await manager.chat(messages, ProviderType.LM_STUDIO, stream=False)
                 assert isinstance(response, str)
                 assert len(response) > 0
                 logger.info("Manager with LM Studio response: %s", response)
@@ -371,18 +369,20 @@ class TestLLMManagerIntegration:
         providers_registered = 0
 
         # Try to register Ollama
-        if check_provider_available("http://localhost:11434") and manager.register_provider(ProviderType.OLLAMA, "http://localhost:11434"):
+        if check_provider_available("http://localhost:11434") and manager.register_provider(
+            ProviderType.OLLAMA, "http://localhost:11434"
+        ):
             providers_registered += 1
 
         # Try to register LM Studio
-        if check_provider_available("http://localhost:1234") and manager.register_provider(ProviderType.LM_STUDIO, "http://localhost:1234"):
+        if check_provider_available("http://localhost:1234") and manager.register_provider(
+            ProviderType.LM_STUDIO, "http://localhost:1234"
+        ):
             providers_registered += 1
 
         # Try to register OpenAI
         if openai_api_key and manager.register_provider(
-            ProviderType.OPENAI,
-            "https://api.openai.com/v1",
-            api_key=openai_api_key
+            ProviderType.OPENAI, "https://api.openai.com/v1", api_key=openai_api_key
         ):
             providers_registered += 1
 
@@ -398,14 +398,16 @@ class TestLLMManagerIntegration:
             provider_type = ProviderType(provider_info["type"])
             models = await manager.list_models(provider_type)
             assert isinstance(models, list)
-            logger.info("Provider %s has %d models", provider_info['type'], len(models))
+            logger.info("Provider %s has %d models", provider_info["type"], len(models))
 
 
 class TestStreamingIntegration:
     """Integration tests for streaming responses."""
 
     @pytest.mark.asyncio
-    @pytest.mark.skipif(not check_provider_available("http://localhost:11434"), reason="Ollama not available")
+    @pytest.mark.skipif(
+        not check_provider_available("http://localhost:11434"), reason="Ollama not available"
+    )
     async def test_ollama_streaming(self):
         """Test streaming chat with Ollama."""
         provider = OllamaProvider(base_url="http://localhost:11434")
@@ -439,10 +441,7 @@ class TestStreamingIntegration:
         if not openai_api_key:
             pytest.skip("OPENAI_API_KEY not set")
 
-        provider = OpenAIProvider(
-            base_url="https://api.openai.com/v1",
-            api_key=openai_api_key
-        )
+        provider = OpenAIProvider(base_url="https://api.openai.com/v1", api_key=openai_api_key)
 
         messages = [{"role": "user", "content": "Count from 1 to 5, one number per line."}]
         chunks = []
@@ -456,4 +455,3 @@ class TestStreamingIntegration:
         for chunk in chunks:
             assert isinstance(chunk, str)
         logger.info("Received %d streaming chunks from OpenAI", len(chunks))
-

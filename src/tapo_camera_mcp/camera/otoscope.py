@@ -15,9 +15,13 @@ class OtoscopeCamera(WebCamera):
 
     def __init__(self, config, mock_webcam=None):
         super().__init__(config, mock_webcam)
-        self._light_intensity = int(self.config.params.get("light_intensity", 80))  # Default 80% brightness
+        self._light_intensity = int(
+            self.config.params.get("light_intensity", 80)
+        )  # Default 80% brightness
         self._focus_mode = self.config.params.get("focus_mode", "auto")
-        self._specimen_type = self.config.params.get("specimen_type", "ear")  # ear, throat, nose, etc.
+        self._specimen_type = self.config.params.get(
+            "specimen_type", "ear"
+        )  # ear, throat, nose, etc.
         self._magnification = float(self.config.params.get("magnification", 1.0))
         self._calibration_data = self.config.params.get("calibration_data", {})
 
@@ -74,11 +78,9 @@ class OtoscopeCamera(WebCamera):
                 "reference_size_mm": reference_size_mm,
                 "reference_pixels": pixels,
                 "pixels_per_mm": pixels / reference_size_mm,
-                "calibrated_at": "current_timestamp"  # Would use actual timestamp
+                "calibrated_at": "current_timestamp",  # Would use actual timestamp
             }
-            logger.info(
-                ".3f"
-            )
+            logger.info(".3f")
         else:
             raise ValueError("Reference size and pixels must be positive for calibration.")
 
@@ -96,30 +98,31 @@ class OtoscopeCamera(WebCamera):
             raise ValueError("Otoscope must be calibrated before measurements can be taken.")
 
         pixels_per_mm = self._calibration_data.get("pixels_per_mm", 1.0)
-        return pixels_area / (pixels_per_mm ** 2)
+        return pixels_area / (pixels_per_mm**2)
 
     async def capture_medical_image(self, filename: str, metadata: Optional[Dict] = None) -> str:
         """Capture a medical image with embedded metadata."""
         # This would capture an image and embed medical metadata
         metadata = metadata or {}
-        medical_metadata = {
-            "device_type": "otoscope",
-            "specimen_type": self._specimen_type,
-            "light_intensity": self._light_intensity,
-            "magnification": self._magnification,
-            "calibration_data": self._calibration_data,
-            "timestamp": "current_timestamp",  # Would use actual timestamp
-            **metadata
-        }
+        # In a real implementation, medical metadata would be embedded:
+        # - device_type: "otoscope"
+        # - specimen_type, light_intensity, magnification, calibration_data
+        # - timestamp and other metadata
 
         # In a real implementation, this would save the image with metadata
-        logger.info(f"Otoscope {self.config.name}: Captured medical image '{filename}' with metadata")
+        logger.info(
+            f"Otoscope {self.config.name}: Captured medical image '{filename}' with metadata"
+        )
         return f"medical_capture_{filename}"
 
-    async def start_medical_recording(self, filename: str, duration_seconds: Optional[int] = None) -> str:
+    async def start_medical_recording(
+        self, filename: str, duration_seconds: Optional[int] = None
+    ) -> str:
         """Start recording a medical examination video."""
-        logger.info(f"Otoscope {self.config.name}: Started medical recording '{filename}'"
-                   f"{' for ' + str(duration_seconds) + 's' if duration_seconds else ''}")
+        logger.info(
+            f"Otoscope {self.config.name}: Started medical recording '{filename}'"
+            f"{' for ' + str(duration_seconds) + 's' if duration_seconds else ''}"
+        )
 
         # In a real implementation, this would start video recording
         return f"medical_recording_{filename}"
@@ -135,26 +138,26 @@ class OtoscopeCamera(WebCamera):
                 "specimen_type": "ear",
                 "light_intensity": 70,
                 "magnification": 2.0,
-                "focus_mode": "auto"
+                "focus_mode": "auto",
             },
             "throat_exam": {
                 "specimen_type": "throat",
                 "light_intensity": 60,
                 "magnification": 1.5,
-                "focus_mode": "auto"
+                "focus_mode": "auto",
             },
             "nose_exam": {
                 "specimen_type": "nose",
                 "light_intensity": 65,
                 "magnification": 1.8,
-                "focus_mode": "auto"
+                "focus_mode": "auto",
             },
             "skin_exam": {
                 "specimen_type": "skin",
                 "light_intensity": 80,
                 "magnification": 3.0,
-                "focus_mode": "manual"
-            }
+                "focus_mode": "manual",
+            },
         }
 
     async def apply_medical_preset(self, preset_name: str) -> None:
@@ -170,20 +173,3 @@ class OtoscopeCamera(WebCamera):
         await self.set_focus_mode(preset["focus_mode"])
 
         logger.info(f"Otoscope {self.config.name}: Applied medical preset '{preset_name}'")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

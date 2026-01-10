@@ -45,8 +45,8 @@ class HardwareInitializer:
         try:
             host_ip = socket.gethostbyname(socket.gethostname())
             logger.info(f"Container IP: {host_ip}")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Could not determine container IP: {e}")
 
         # Test network connectivity to host network (for Docker debugging)
         if os.getenv("CONTAINER") == "yes":
@@ -112,9 +112,7 @@ class HardwareInitializer:
         }
 
         # Summary
-        successful = sum(
-            1 for r in self.initialization_results.values() if r.get("success", False)
-        )
+        successful = sum(1 for r in self.initialization_results.values() if r.get("success", False))
         total = len(self.initialization_results)
 
         logger.info("=" * 60)
@@ -125,18 +123,9 @@ class HardwareInitializer:
 
         for component, result in self.initialization_results.items():
             status = "[OK]" if result.get("success") else "[FAIL]"
-            message = result.get("message", result.get("error", "Unknown error"))
-            logger.info(f"  {status} {component}: {message}")
-            if not result.get("success") and result.get("error"):
-                logger.debug(f"    Detail for {component}: {result.get('error')}")
-            if (
-                result.get("failed")
-                and isinstance(result["failed"], list)
-                and result["failed"]
-            ):
-                logger.warning(
-                    f"    Failed sub-components: {', '.join(result['failed'])}"
-                )
+            logger.info(
+                f"  {status} {component}: {result.get('message', result.get('error', 'Unknown'))}"
+            )
 
         self._initialized = True
         return self.initialization_results
@@ -168,11 +157,7 @@ class HardwareInitializer:
             for cam in cameras:
                 cam_name = cam.get("name")
                 status = cam.get("status", {})
-                connected = (
-                    status.get("connected", False)
-                    if isinstance(status, dict)
-                    else False
-                )
+                connected = status.get("connected", False) if isinstance(status, dict) else False
                 in_use = (
                     status.get("in_use_by_another_app", False)
                     if isinstance(status, dict)
@@ -203,7 +188,9 @@ class HardwareInitializer:
                     message_parts.append(f"{len(in_use_cameras)} in use by other apps")
                 if failed_cameras:
                     message_parts.append(f"{len(failed_cameras)} failed")
-                message = f"{connected_count}/{len(cameras)} cameras ready ({', '.join(message_parts)})"
+                message = (
+                    f"{connected_count}/{len(cameras)} cameras ready ({', '.join(message_parts)})"
+                )
             elif connected_count == len(cameras):
                 message = f"All {connected_count} cameras connected"
             else:
@@ -242,8 +229,7 @@ class HardwareInitializer:
                 if not success:
                     return {
                         "success": False,
-                        "error": hue_manager._connection_error
-                        or "Initialization failed",
+                        "error": hue_manager._connection_error or "Initialization failed",
                     }
 
             # Test connection by getting lights
@@ -284,10 +270,7 @@ class HardwareInitializer:
 
             devices_cfg = tapo_cfg.get("devices", [])
             if not devices_cfg:
-                return {
-                    "success": False,
-                    "message": "No Tapo lighting devices configured",
-                }
+                return {"success": False, "message": "No Tapo lighting devices configured"}
 
             # Initialize Tapo lighting manager
             if not tapo_lighting_manager._initialized:
@@ -295,12 +278,11 @@ class HardwareInitializer:
                 if not success:
                     return {
                         "success": False,
-                        "error": tapo_lighting_manager._connection_error
-                        or "Initialization failed",
+                        "error": tapo_lighting_manager._connection_error or "Initialization failed",
                     }
 
-            # Test connection by rescanning devices
-            await tapo_lighting_manager.rescan_devices()
+            # Test connection by rescanning devices (disabled - causing startup hang)
+            # await tapo_lighting_manager.rescan_devices()
             lights = tapo_lighting_manager.devices
 
             logger.info(f"  [OK] Tapo Lighting: {len(lights)} lights")
@@ -328,11 +310,7 @@ class HardwareInitializer:
             plugs_config = energy_cfg.get("devices", [])
 
             if not plugs_config:
-                return {
-                    "success": True,
-                    "message": "No Tapo plugs configured",
-                    "count": 0,
-                }
+                return {"success": True, "message": "No Tapo plugs configured", "count": 0}
 
             # Check if tapo library available
             try:
@@ -343,54 +321,42 @@ class HardwareInitializer:
             # Initialize plug manager
             account = energy_cfg.get("account", {})
             if not account.get("email") or not account.get("password"):
-                return {
-                    "success": False,
-                    "error": "Tapo account credentials not configured",
-                }
+                return {"success": False, "error": "Tapo account credentials not configured"}
 
             # Initialize the manager
             if not tapo_plug_manager._initialized:
                 await tapo_plug_manager.initialize(account)
 
-            # Test each plug connection in parallel
-            async def _test_plug(plug_cfg):
+            # Test each plug connection directly
+            connected_count = 0
+            failed_plugs = []
+
+            for plug_cfg in plugs_config:
                 device_id = plug_cfg.get("device_id", "unknown")
                 name = plug_cfg.get("name", device_id)
                 host = plug_cfg.get("host")
 
                 if not host:
+                    failed_plugs.append(name)
                     logger.warning(f"  [FAIL] Plug '{name}': No host configured")
-                    return name, False
+                    continue
 
                 try:
-                    # Test connection directly with timeout
+                    # Test connection directly
                     api_client = tapo.ApiClient(account["email"], account["password"])
-                    device = await asyncio.wait_for(api_client.p115(host), timeout=3.0)
-
-                    # Run these in parallel too
-                    await asyncio.gather(
-                        asyncio.wait_for(device.get_device_info(), timeout=2.0),
-                        asyncio.wait_for(device.get_energy_usage(), timeout=2.0),
-                    )
-
-                    # Get power usage for logging
+                    device = await api_client.p115(host)
+                    await device.get_device_info()  # Ensure device is accessible
                     energy = await device.get_energy_usage()
+
+                    connected_count += 1
                     power = (
-                        energy.current_power
-                        if energy and hasattr(energy, "current_power")
-                        else 0
+                        energy.current_power if energy and hasattr(energy, "current_power") else 0
                     )
                     logger.info(f"  [OK] Plug '{name}' ({host}): Connected - {power}W")
-                    return name, True
                 except Exception as e:
-                    logger.warning(f"  [FAIL] Plug '{name}' ({host}): {e}")
-                    return name, False
-
-            # Run all plug tests in parallel
-            plug_results = await asyncio.gather(*[_test_plug(p) for p in plugs_config])
-
-            connected_count = sum(1 for _, success in plug_results if success)
-            failed_plugs = [name for name, success in plug_results if not success]
+                    failed_plugs.append(name)
+                    error_msg = str(e)
+                    logger.warning(f"  [FAIL] Plug '{name}' ({host}): {error_msg}")
 
             if connected_count == len(plugs_config):
                 return {
@@ -418,28 +384,21 @@ class HardwareInitializer:
             logger.info("[WEATHER] Initializing Netatmo weather station...")
 
             config = get_config()
-            weather_cfg = (
-                config.get("weather", {}).get("integrations", {}).get("netatmo", {})
-            )
+            weather_cfg = config.get("weather", {}).get("integrations", {}).get("netatmo", {})
 
             if not weather_cfg.get("enabled"):
                 return {"success": True, "message": "Netatmo not enabled in config"}
 
             # Check if pyatmo available
             try:
-                import importlib.util
-
-                if importlib.util.find_spec("pyatmo") is None:
-                    return {"success": False, "error": "pyatmo library not installed"}
+                import pyatmo
             except ImportError:
                 return {"success": False, "error": "pyatmo library not installed"}
 
             service = None
             try:
                 # Use singleton pattern to share instance with web API
-                service = await asyncio.wait_for(
-                    NetatmoService.get_instance(), timeout=3.0
-                )
+                service = await asyncio.wait_for(NetatmoService.get_instance(), timeout=3.0)
 
                 if not service._use_real_api:
                     return {
@@ -452,9 +411,7 @@ class HardwareInitializer:
                 station_count = len(stations)
                 module_count = sum(len(s.get("modules", [])) for s in stations)
 
-                logger.info(
-                    f"  [OK] Netatmo: {station_count} stations, {module_count} modules"
-                )
+                logger.info(f"  [OK] Netatmo: {station_count} stations, {module_count} modules")
 
                 return {
                     "success": True,
@@ -469,17 +426,15 @@ class HardwareInitializer:
             except Exception as e:
                 error_msg = str(e)
                 error_type = type(e).__name__
-                logger.error(
-                    f"  [ERROR] Netatmo initialization failed: {error_type}: {error_msg}"
-                )
+                logger.exception(f"  [ERROR] Netatmo initialization failed: {error_type}")
                 # Don't mask DNS errors - let them propagate so they can be fixed
                 return {"success": False, "error": f"{error_type}: {error_msg}"}
             finally:
                 if service:
                     try:
                         await service.close()
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"Error closing service: {e}")
 
         except Exception as e:
             logger.exception("Failed to initialize Netatmo")
@@ -511,29 +466,17 @@ class HardwareInitializer:
                 cache_ttl = ring_cfg.get("cache_ttl", 60)
 
                 if not email or not password:
-                    return {
-                        "success": False,
-                        "error": "Ring email/password not configured",
-                    }
+                    return {"success": False, "error": "Ring email/password not configured"}
 
                 try:
                     ring_client = await init_ring_client(
-                        email=email,
-                        password=password,
-                        token_file=token_file,
-                        cache_ttl=cache_ttl,
+                        email=email, password=password, token_file=token_file, cache_ttl=cache_ttl
                     )
 
-                    if (
-                        not ring_client.is_initialized
-                        and not ring_client.is_2fa_pending
-                    ):
+                    if not ring_client.is_initialized and not ring_client.is_2fa_pending:
                         return {"success": False, "error": "Ring initialization failed"}
                 except Exception as e:
-                    return {
-                        "success": False,
-                        "error": f"Ring initialization error: {e}",
-                    }
+                    return {"success": False, "error": f"Ring initialization error: {e}"}
 
             if not ring_client:
                 return {"success": False, "error": "Failed to initialize Ring client"}
@@ -541,12 +484,8 @@ class HardwareInitializer:
             # Try to get devices with timeout (reduced from 8s to 3s)
             try:
                 # Get both doorbells and alarm devices
-                doorbells = await asyncio.wait_for(
-                    ring_client.get_doorbells(), timeout=3.0
-                )
-                alarm_devices = await asyncio.wait_for(
-                    ring_client.get_alarm_devices(), timeout=3.0
-                )
+                doorbells = await asyncio.wait_for(ring_client.get_doorbells(), timeout=3.0)
+                alarm_devices = await asyncio.wait_for(ring_client.get_alarm_devices(), timeout=3.0)
                 devices = (doorbells or []) + (alarm_devices or [])
                 device_count = len(devices)
 
@@ -582,19 +521,13 @@ class HardwareInitializer:
             ha_cfg = security_cfg.get("homeassistant", {})
 
             if not ha_cfg.get("enabled"):
-                return {
-                    "success": True,
-                    "message": "Home Assistant not enabled in config",
-                }
+                return {"success": True, "message": "Home Assistant not enabled in config"}
 
             url = ha_cfg.get("url", "http://localhost:8123")
             token = ha_cfg.get("access_token")
 
             if not token:
-                return {
-                    "success": False,
-                    "error": "Home Assistant access token not configured",
-                }
+                return {"success": False, "error": "Home Assistant access token not configured"}
 
             # Initialize client (will auto-detect Docker and adjust URL)
             client = await init_homeassistant_client(
@@ -602,10 +535,7 @@ class HardwareInitializer:
             )
 
             if not client or not client.is_initialized:
-                return {
-                    "success": False,
-                    "error": "Failed to connect to Home Assistant",
-                }
+                return {"success": False, "error": "Failed to connect to Home Assistant"}
 
             # Test by getting Nest Protect devices
             try:
@@ -677,8 +607,8 @@ class HardwareInitializer:
                 # Only test if it's an IP or known hostname (not localhost in Docker)
                 if ha_host and ha_host not in ["localhost", "127.0.0.1"]:
                     test_ips.append(("home_assistant", "Home Assistant", ha_host))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Could not parse Home Assistant URL: {e}")
 
         # Tapo Plug IPs
         energy_cfg = config.get("energy", {}).get("tapo_p115", {})
@@ -695,47 +625,36 @@ class HardwareInitializer:
 
         logger.info(f"  [NETWORK] Testing connectivity to {len(test_ips)} device(s)...")
 
-        async def test_ip(
-            device_type: str, name: str, ip: str
-        ) -> Tuple[str, str, bool, str]:
+        async def test_ip(device_type: str, name: str, ip: str) -> Tuple[str, str, bool, str]:
             """Test if we can reach an IP address."""
             try:
-                # Try to resolve the IP (if it's a hostname) in a thread
+                # Try to resolve the IP (if it's a hostname)
                 try:
-                    resolved_ip = await asyncio.to_thread(socket.gethostbyname, ip)
+                    resolved_ip = socket.gethostbyname(ip)
                 except socket.gaierror:
                     return (device_type, name, False, f"DNS resolution failed for {ip}")
 
                 # Try to connect to common ports
                 ports_to_test = [80, 443, 2020, 9999]  # HTTP, HTTPS, ONVIF, Kasa
                 reachable = False
-                reached_port = None
+                error_msg = "No reachable ports"
 
                 for port in ports_to_test:
-
-                    def _check_port():
-                        try:
-                            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                            sock.settimeout(1.5)  # 1.5s timeout for port check
-                            res = sock.connect_ex((resolved_ip, port))
-                            sock.close()
-                            return res == 0
-                        except Exception:
-                            return False
-
-                    # Check port in a thread with a timeout
                     try:
-                        is_up = await asyncio.to_thread(_check_port)
-                        if is_up:
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        sock.settimeout(2)
+                        result = sock.connect_ex((resolved_ip, port))
+                        sock.close()
+                        if result == 0:
                             reachable = True
-                            reached_port = port
+                            error_msg = f"Port {port} reachable"
                             break
                     except Exception:
                         continue
 
                 if reachable:
-                    return (device_type, name, True, f"Port {reached_port} reachable")
-                return (device_type, name, False, "No reachable ports")
+                    return (device_type, name, True, error_msg)
+                return (device_type, name, False, error_msg)
             except Exception as e:
                 return (device_type, name, False, str(e))
 
@@ -759,9 +678,7 @@ class HardwareInitializer:
                 logger.warning(f"  [NETWORK] ❌ {name} ({device_type}): {msg}")
 
         if reachable_count == len(test_ips):
-            logger.info(
-                f"  [NETWORK] All {reachable_count} device(s) reachable from container"
-            )
+            logger.info(f"  [NETWORK] All {reachable_count} device(s) reachable from container")
         elif reachable_count > 0:
             logger.warning(
                 f"  [NETWORK] {reachable_count}/{len(test_ips)} device(s) reachable - check network configuration"

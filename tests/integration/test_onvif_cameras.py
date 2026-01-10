@@ -64,13 +64,15 @@ def get_onvif_cameras():
 
         # Check if it's an ONVIF camera
         if cam_type == "onvif" or params.get("onvif_port"):
-            onvif_cameras.append({
-                "name": name,
-                "host": params.get("host"),
-                "port": params.get("onvif_port", 2020),
-                "username": params.get("username"),
-                "password": params.get("password"),
-            })
+            onvif_cameras.append(
+                {
+                    "name": name,
+                    "host": params.get("host"),
+                    "port": params.get("onvif_port", 2020),
+                    "username": params.get("username"),
+                    "password": params.get("password"),
+                }
+            )
 
     return onvif_cameras
 
@@ -88,6 +90,7 @@ def onvif_cameras():
 def camera_manager():
     """Get camera manager instance."""
     from tapo_camera_mcp.camera.manager import CameraManager
+
     return CameraManager()
 
 
@@ -107,7 +110,7 @@ async def test_onvif_camera_connection(onvif_cameras):
                     "onvif_port": camera_info["port"],
                     "username": camera_info["username"],
                     "password": camera_info["password"],
-                }
+                },
             )
 
             camera = ONVIFBasedCamera(config)
@@ -128,14 +131,18 @@ async def test_onvif_camera_connection(onvif_cameras):
             pytest.fail(f"Connection to {camera_info['name']} timed out")
         except OSError as e:
             if "permission" in str(e).lower() or "10013" in str(e) or "10048" in str(e):
-                pytest.skip(f"Socket permission error for {camera_info['name']}: {e}. "
-                           f"This may be a Windows firewall or port conflict issue.")
+                pytest.skip(
+                    f"Socket permission error for {camera_info['name']}: {e}. "
+                    f"This may be a Windows firewall or port conflict issue."
+                )
             pytest.fail(f"Connection to {camera_info['name']} failed with OSError: {e}")
         except Exception as e:
             error_msg = str(e)
             if "permission" in error_msg.lower() or "socket" in error_msg.lower():
-                pytest.skip(f"Socket permission error for {camera_info['name']}: {e}. "
-                           f"This may be a Windows firewall or port conflict issue.")
+                pytest.skip(
+                    f"Socket permission error for {camera_info['name']}: {e}. "
+                    f"This may be a Windows firewall or port conflict issue."
+                )
             pytest.fail(f"Connection to {camera_info['name']} failed: {e}")
 
 
@@ -155,7 +162,7 @@ async def test_onvif_stream_url(onvif_cameras):
                     "onvif_port": camera_info["port"],
                     "username": camera_info["username"],
                     "password": camera_info["password"],
-                }
+                },
             )
 
             camera = ONVIFBasedCamera(config)
@@ -202,8 +209,7 @@ async def test_onvif_stream_endpoint(onvif_cameras):
 
             # Get camera from manager
             camera = await asyncio.wait_for(
-                server.camera_manager.get_camera(camera_info["name"]),
-                timeout=5.0
+                server.camera_manager.get_camera(camera_info["name"]), timeout=5.0
             )
 
             assert camera is not None, f"Camera {camera_info['name']} not found in manager"
@@ -244,7 +250,7 @@ async def test_onvif_snapshot(onvif_cameras):
                     "onvif_port": camera_info["port"],
                     "username": camera_info["username"],
                     "password": camera_info["password"],
-                }
+                },
             )
 
             camera = ONVIFBasedCamera(config)
@@ -258,9 +264,16 @@ async def test_onvif_snapshot(onvif_cameras):
             # Snapshot should be PIL Image
             if snapshot_image:
                 from PIL import Image
-                assert isinstance(snapshot_image, Image.Image), f"Snapshot should be PIL Image, got {type(snapshot_image)}"
-                assert snapshot_image.size[0] > 0 and snapshot_image.size[1] > 0, "Snapshot should have valid dimensions"
-                print(f"✅ {camera_info['name']}: Snapshot retrieved ({snapshot_image.size[0]}x{snapshot_image.size[1]})")
+
+                assert isinstance(snapshot_image, Image.Image), (
+                    f"Snapshot should be PIL Image, got {type(snapshot_image)}"
+                )
+                assert snapshot_image.size[0] > 0 and snapshot_image.size[1] > 0, (
+                    "Snapshot should have valid dimensions"
+                )
+                print(
+                    f"✅ {camera_info['name']}: Snapshot retrieved ({snapshot_image.size[0]}x{snapshot_image.size[1]})"
+                )
             else:
                 print(f"⚠️  {camera_info['name']}: Snapshot not supported (this is OK)")
 
@@ -289,8 +302,7 @@ async def test_onvif_mjpeg_stream_endpoint(onvif_cameras):
 
             # Get camera from manager
             camera = await asyncio.wait_for(
-                server.camera_manager.get_camera(camera_info["name"]),
-                timeout=5.0
+                server.camera_manager.get_camera(camera_info["name"]), timeout=5.0
             )
 
             assert camera is not None, f"Camera {camera_info['name']} not found in manager"
@@ -305,7 +317,7 @@ async def test_onvif_mjpeg_stream_endpoint(onvif_cameras):
             # Test that we can get stream URL multiple times (fresh connections)
             for i in range(3):
                 url = await asyncio.wait_for(camera.get_stream_url(), timeout=15.0)
-                assert url == stream_url, f"Stream URL changed on iteration {i+1}"
+                assert url == stream_url, f"Stream URL changed on iteration {i + 1}"
 
             print(f"✅ {camera_info['name']}: MJPEG stream endpoint test passed")
             print(f"   Stream URL: {stream_url[:60]}...")
@@ -316,7 +328,9 @@ async def test_onvif_mjpeg_stream_endpoint(onvif_cameras):
         except OSError as e:
             if "permission" in str(e).lower() or "10013" in str(e) or "10048" in str(e):
                 pytest.skip(f"Socket permission error for {camera_info['name']}: {e}")
-            pytest.fail(f"MJPEG stream endpoint test for {camera_info['name']} failed with OSError: {e}")
+            pytest.fail(
+                f"MJPEG stream endpoint test for {camera_info['name']} failed with OSError: {e}"
+            )
         except Exception as e:
             error_msg = str(e)
             if "permission" in error_msg.lower() or "socket" in error_msg.lower():
@@ -340,7 +354,7 @@ async def test_onvif_fresh_connection_each_time(onvif_cameras):
                     "onvif_port": camera_info["port"],
                     "username": camera_info["username"],
                     "password": camera_info["password"],
-                }
+                },
             )
 
             # Create fresh camera instance
@@ -387,7 +401,7 @@ async def test_onvif_camera_manager_integration(onvif_cameras, camera_manager):
                     "onvif_port": camera_info["port"],
                     "username": camera_info["username"],
                     "password": camera_info["password"],
-                }
+                },
             )
 
             await asyncio.wait_for(camera_manager.add_camera(config), timeout=10.0)
@@ -396,14 +410,14 @@ async def test_onvif_camera_manager_integration(onvif_cameras, camera_manager):
         cameras = await asyncio.wait_for(camera_manager.list_cameras(), timeout=5.0)
 
         onvif_found = [c for c in cameras if c.get("type") == "onvif"]
-        assert len(onvif_found) == len(onvif_cameras), \
+        assert len(onvif_found) == len(onvif_cameras), (
             f"Expected {len(onvif_cameras)} ONVIF cameras, found {len(onvif_found)}"
+        )
 
         # Test getting each camera
         for camera_info in onvif_cameras:
             camera = await asyncio.wait_for(
-                camera_manager.get_camera(camera_info["name"]),
-                timeout=5.0
+                camera_manager.get_camera(camera_info["name"]), timeout=5.0
             )
             assert camera is not None, f"Camera {camera_info['name']} not found"
 
@@ -424,4 +438,3 @@ async def test_onvif_camera_manager_integration(onvif_cameras, camera_manager):
         if "permission" in error_msg.lower() or "socket" in error_msg.lower():
             pytest.skip(f"Socket permission error in camera manager test: {e}")
         pytest.fail(f"Camera manager integration test failed: {e}")
-

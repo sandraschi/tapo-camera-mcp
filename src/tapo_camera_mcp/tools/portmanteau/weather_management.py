@@ -52,16 +52,16 @@ def register_weather_management_tool(mcp: FastMCP) -> None:
                 - "alerts": Configure weather alerts (optional: alert_config)
                 - "health": Get weather station health (optional: station_id)
                 - "analyze": Analyze weather patterns (requires: start_date, end_date, optional: station_id)
-            
+
             station_id (str | None): Weather station ID. Used by: current, historical, health, analyze operations
                 to filter to specific station.
-            
+
             start_date (str | None): Start date for historical data. Required for: historical, analyze operations.
                 Format: "YYYY-MM-DD" or "YYYY-MM-DD HH:MM:SS"
-            
+
             end_date (str | None): End date for historical data. Required for: historical, analyze operations.
                 Format: "YYYY-MM-DD" or "YYYY-MM-DD HH:MM:SS"
-            
+
             alert_config (dict[str, Any] | None): Alert configuration. Used by: alerts operation.
                 Required keys: "thresholds" (dict), "conditions" (list).
                 Optional keys: "enabled" (bool), "notifications" (list)
@@ -132,4 +132,3 @@ def register_weather_management_tool(mcp: FastMCP) -> None:
         except Exception as e:
             logger.error(f"Error in weather management action '{action}': {e}", exc_info=True)
             return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
-

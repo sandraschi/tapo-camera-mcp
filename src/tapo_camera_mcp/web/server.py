@@ -13,27 +13,28 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Generator, List, Optional
 
-from fastapi import Body, FastAPI, Form, Query, Request, status
+from fastapi import (
+    Body,
+    FastAPI,
+    Form,
+    Query,
+    Request,
+    Response,
+    status,
+)
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.gzip import GZipMiddleware
-from fastapi import (
-    Response,
-)
-from starlette.responses import (
-    HTMLResponse,
-    JSONResponse,
-    RedirectResponse,
-    StreamingResponse,
-)
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.gzip import GZipMiddleware
+from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 
 from ..config import SecuritySettings, WebUISettings, get_config, get_model
+from ..utils.log_manager import LogConfig, LogManager
 from ..utils.logging import setup_logging
-from ..utils.log_manager import LogManager, LogConfig
-
+from .api.log_management import router as log_management_router
+from .api.robots import router as robots_router
 from .auth import (
     AuthMiddleware,
     create_session,
@@ -43,9 +44,6 @@ from .auth import (
     setup_default_user,
     validate_credentials,
 )
-from .api.robots import router as robots_router
-from .api.log_management import router as log_management_router
-from .api.plex import router as plex_router
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -119,7 +117,39 @@ class WebServer:
         # Add startup event for robot integration and log management
         @self.app.on_event("startup")
         async def startup_event():
-            """Initialize robot integrations and log management on startup."""
+            """Initialize server, robot integrations and log management on startup."""
+            # Initialize TapoCameraServer first
+            try:
+                from tapo_camera_mcp.core.server import TapoCameraServer
+
+                logger.info("Initializing TapoCameraServer...")
+                server = await TapoCameraServer.get_instance()
+                await TapoCameraServer.ensure_hardware_initialized()
+                logger.info("TapoCameraServer initialized successfully")
+            except Exception as e:
+                logger.exception(f"Failed to initialize TapoCameraServer: {e}")
+
+            # Initialize MCP clients (temporarily disabled - causing startup hang)
+            # try:
+            #     from tapo_camera_mcp.mcp_client import setup_default_clients, mcp_clients
+            #
+            #     logger.info("Setting up MCP clients...")
+            #     setup_default_clients()
+            #     logger.info("MCP clients setup complete, starting clients...")
+            #     await mcp_clients.start_all_clients()
+            #     logger.info("MCP clients initialized and started successfully")
+            #
+            #     # Test MCP connection
+            #     try:
+            #         from tapo_camera_mcp.mcp_client import call_mcp_tool
+            #         test_result = await call_mcp_tool("mcp_tapo-mcp_tapo", "status")
+            #         logger.info(f"MCP connection test successful: {test_result.get('success', False)}")
+            #     except Exception as test_e:
+            #         logger.warning(f"MCP connection test failed: {test_e}")
+            #
+            # except Exception as e:
+            #     logger.exception(f"Failed to initialize MCP clients: {e}")
+
             try:
                 from .api.robots import initialize_vbot_integration
 
@@ -151,9 +181,7 @@ class WebServer:
         logger.info("Routes setup complete")
 
         # Setup templates
-        self.templates = Jinja2Templates(
-            directory=str(Path(__file__).parent / "templates")
-        )
+        self.templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
         self.templates.env.globals.update(
             {
                 "app_title": self.web_config.title,
@@ -259,9 +287,7 @@ class WebServer:
             )
 
         @self.app.exception_handler(RequestValidationError)
-        async def validation_exception_handler(
-            request: Request, exc: RequestValidationError
-        ):
+        async def validation_exception_handler(request: Request, exc: RequestValidationError):
             if request.url.path.startswith("/api/"):
                 return JSONResponse(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -301,9 +327,7 @@ class WebServer:
                         "error_category": error_info["category"],
                         "error_type": error_info["type"],
                         "actionable": error_info["actionable"],
-                        "debug_info": str(exc)
-                        if self.config.get("debug", False)
-                        else None,
+                        "debug_info": str(exc) if self.config.get("debug", False) else None,
                     },
                 )
 
@@ -337,13 +361,7 @@ class WebServer:
         # Network/Connection errors
         if any(
             keyword in error_msg
-            for keyword in [
-                "connection",
-                "connect",
-                "network",
-                "unreachable",
-                "refused",
-            ]
+            for keyword in ["connection", "connect", "network", "unreachable", "refused"]
         ):
             return {
                 "category": "network_error",
@@ -360,11 +378,7 @@ class WebServer:
             }
 
         # Timeout errors
-        if (
-            "timeout" in error_msg
-            or "timed out" in error_msg
-            or error_type == "TimeoutError"
-        ):
+        if "timeout" in error_msg or "timed out" in error_msg or error_type == "TimeoutError":
             return {
                 "category": "timeout_error",
                 "type": error_type,
@@ -408,11 +422,7 @@ class WebServer:
             }
 
         # DNS errors
-        if (
-            "dns" in error_msg
-            or "getaddrinfo" in error_msg
-            or "name resolution" in error_msg
-        ):
+        if "dns" in error_msg or "getaddrinfo" in error_msg or "name resolution" in error_msg:
             return {
                 "category": "dns_error",
                 "type": error_type,
@@ -529,17 +539,15 @@ class WebServer:
 
             # Add timeout to prevent hanging
             try:
-                server = await asyncio.wait_for(
-                    TapoCameraServer.get_instance(), timeout=5.0
-                )
+                server = await asyncio.wait_for(TapoCameraServer.get_instance(), timeout=5.0)
                 # Ensure hardware is initialized before accessing camera_manager
                 await TapoCameraServer.ensure_hardware_initialized()
                 # Get cameras list with detailed information (with timeout)
                 cameras_list = await asyncio.wait_for(
                     server.camera_manager.list_cameras(), timeout=5.0
                 )
-            except asyncio.TimeoutError:
-                logger.warning("Camera list request timed out - returning empty list")
+            except (asyncio.TimeoutError, AttributeError) as e:
+                logger.warning(f"Camera list request failed: {e} - returning empty list")
                 cameras_list = []
 
             # Enhance each camera with additional details
@@ -559,9 +567,7 @@ class WebServer:
                             "resolution": status_dict.get("resolution", "Unknown"),
                             "ptz_capable": status_dict.get("ptz_capable", False),
                             "audio_capable": status_dict.get("audio_capable", False),
-                            "streaming_capable": status_dict.get(
-                                "streaming_capable", False
-                            ),
+                            "streaming_capable": status_dict.get("streaming_capable", False),
                         }
                     )
                     # Check for Teams/webcam blocking
@@ -578,9 +584,7 @@ class WebServer:
                             camera_info["error_message"] = error_msg
                 else:
                     # Fallback if status is already a string
-                    camera_info["status"] = (
-                        str(status_dict) if status_dict else "offline"
-                    )
+                    camera_info["status"] = str(status_dict) if status_dict else "offline"
 
                 # Ensure status is always a string, never a dict
                 if not isinstance(camera_info.get("status"), str):
@@ -594,8 +598,7 @@ class WebServer:
                         detailed_status = {}
                         try:
                             camera_obj = await asyncio.wait_for(
-                                server.camera_manager.get_camera(camera["name"]),
-                                timeout=3.0,
+                                server.camera_manager.get_camera(camera["name"]), timeout=3.0
                             )
                             if camera_obj:
                                 # Get detailed status including capabilities (with timeout)
@@ -626,24 +629,16 @@ class WebServer:
                         # Use detailed_status if we got it, otherwise use defaults
                         if detailed_status:
                             # Add resolution info
-                            camera_info["resolution"] = detailed_status.get(
-                                "resolution", "Unknown"
-                            )
+                            camera_info["resolution"] = detailed_status.get("resolution", "Unknown")
                             # Add PTZ capability
-                            camera_info["ptz_capable"] = detailed_status.get(
-                                "ptz_capable", False
-                            )
+                            camera_info["ptz_capable"] = detailed_status.get("ptz_capable", False)
                             # Add audio capability
                             camera_info["audio_capable"] = detailed_status.get(
                                 "audio_capable", False
                             )
                             # Add model and firmware
-                            camera_info["model"] = detailed_status.get(
-                                "model", "Unknown"
-                            )
-                            camera_info["firmware"] = detailed_status.get(
-                                "firmware", "Unknown"
-                            )
+                            camera_info["model"] = detailed_status.get("model", "Unknown")
+                            camera_info["firmware"] = detailed_status.get("firmware", "Unknown")
                             # Add streaming capability
                             camera_info["streaming_capable"] = detailed_status.get(
                                 "streaming", False
@@ -717,17 +712,11 @@ class WebServer:
             if "connection" in error_msg or "network" in error_msg:
                 actionable = "Network error accessing cameras. Check camera connectivity and network settings."
             elif "timeout" in error_msg:
-                actionable = (
-                    "Camera operation timed out. Cameras may be slow or unreachable."
-                )
+                actionable = "Camera operation timed out. Cameras may be slow or unreachable."
             elif "auth" in error_msg or "credential" in error_msg:
-                actionable = (
-                    "Authentication failed. Check camera credentials in config.yaml."
-                )
+                actionable = "Authentication failed. Check camera credentials in config.yaml."
             else:
-                actionable = (
-                    f"Unexpected error: {error_type}. Check server logs for details."
-                )
+                actionable = f"Unexpected error: {error_type}. Check server logs for details."
 
             logger.exception(
                 f"Error getting cameras data: {error_type}: {e}",
@@ -757,26 +746,18 @@ class WebServer:
             ring_client = get_ring_client()
             if ring_client and ring_client.is_initialized:
                 try:
-                    doorbells = await asyncio.wait_for(
-                        ring_client.get_doorbells(), timeout=3.0
-                    )
+                    doorbells = await asyncio.wait_for(ring_client.get_doorbells(), timeout=3.0)
                     for doorbell in doorbells:
                         doorbell_dict = (
-                            doorbell.to_dict()
-                            if hasattr(doorbell, "to_dict")
-                            else dict(doorbell)
+                            doorbell.to_dict() if hasattr(doorbell, "to_dict") else dict(doorbell)
                         )
-                        device_id = str(
-                            doorbell_dict.get("id", doorbell_dict.get("device_id", ""))
-                        )
+                        device_id = str(doorbell_dict.get("id", doorbell_dict.get("device_id", "")))
                         cameras_data.append(
                             {
                                 "name": f"ring_{device_id}",
                                 "id": device_id,
                                 "type": "ring",
-                                "custom_name": doorbell_dict.get(
-                                    "name", f"Ring {device_id}"
-                                ),
+                                "custom_name": doorbell_dict.get("name", f"Ring {device_id}"),
                                 "status": "online",
                                 "model": doorbell_dict.get("model", "Ring Doorbell"),
                                 "firmware": doorbell_dict.get("firmware", "Unknown"),
@@ -785,12 +766,8 @@ class WebServer:
                                 "audio_capable": True,
                                 "streaming_capable": True,
                                 "digital_zoom_capable": False,
-                                "battery_life": doorbell_dict.get(
-                                    "battery_life", "Unknown"
-                                ),
-                                "wifi_signal": doorbell_dict.get(
-                                    "wifi_signal_strength", "Unknown"
-                                ),
+                                "battery_life": doorbell_dict.get("battery_life", "Unknown"),
+                                "wifi_signal": doorbell_dict.get("wifi_signal_strength", "Unknown"),
                             }
                         )
                 except asyncio.TimeoutError:
@@ -809,9 +786,7 @@ class WebServer:
                 "active_page": "cameras",
                 "cameras": cameras_data,
                 "total_cameras": len(cameras_data),
-                "online_cameras": sum(
-                    1 for cam in cameras_data if cam.get("status") == "online"
-                ),
+                "online_cameras": sum(1 for cam in cameras_data if cam.get("status") == "online"),
             },
         )
 
@@ -948,9 +923,6 @@ class WebServer:
         # Include log management router
         self.app.include_router(log_management_router)
 
-        # Include Plex router
-        self.app.include_router(plex_router)
-
         @self.app.get("/api/status")
         async def get_status():
             """Get server status."""
@@ -1010,9 +982,7 @@ class WebServer:
                 try:
                     # Check SQLite (time series DB)
                     ts_db_path = (
-                        Path(__file__).parent.parent.parent.parent
-                        / "data"
-                        / "timeseries.db"
+                        Path(__file__).parent.parent.parent.parent / "data" / "timeseries.db"
                     )
                     if ts_db_path.exists():
                         db_size = ts_db_path.stat().st_size
@@ -1043,15 +1013,9 @@ class WebServer:
                         )
                         sock.close()
                         if result == 0:
-                            postgres_status = {
-                                "status": "reachable",
-                                "host": postgres_host,
-                            }
+                            postgres_status = {"status": "reachable", "host": postgres_host}
                         else:
-                            postgres_status = {
-                                "status": "unreachable",
-                                "host": postgres_host,
-                            }
+                            postgres_status = {"status": "unreachable", "host": postgres_host}
                     else:
                         postgres_status = {"status": "not_configured"}
                 except Exception as e:
@@ -1066,46 +1030,26 @@ class WebServer:
 
                     from tapo_camera_mcp.core.server import TapoCameraServer
 
-                    server = await asyncio.wait_for(
-                        TapoCameraServer.get_instance(), timeout=2.0
+                    server = await asyncio.wait_for(TapoCameraServer.get_instance(), timeout=3.0)
+                    await TapoCameraServer.ensure_hardware_initialized()
+                    cameras = await asyncio.wait_for(
+                        server.camera_manager.list_cameras(), timeout=3.0
                     )
-
-                    # Don't force initialization in health check, just report status
-                    is_initialized = TapoCameraServer._hardware_initialized
-                    initializing = TapoCameraServer._initializing
-                    camera_status["initialization"] = (
-                        "ready"
-                        if is_initialized
-                        else ("initializing" if initializing else "pending")
-                    )
-
-                    # If not initialized, we can still report config count if server has it
-                    if hasattr(server, "camera_manager") and server.camera_manager:
-                        cameras = await asyncio.wait_for(
-                            server.camera_manager.list_cameras(), timeout=2.0
-                        )
-                        camera_status["total"] = len(cameras)
-                        # Check status - can be dict or string
-                        online_count = 0
-                        for cam in cameras:
-                            status_val = cam.get("status", {})
-                            if isinstance(status_val, dict):
-                                if status_val.get("connected", False):
-                                    online_count += 1
-                            elif isinstance(status_val, str) and status_val == "online":
+                    camera_status["total"] = len(cameras)
+                    # Check status - can be dict or string
+                    online_count = 0
+                    for cam in cameras:
+                        status_val = cam.get("status", {})
+                        if isinstance(status_val, dict):
+                            if status_val.get("connected", False):
                                 online_count += 1
-                        camera_status["online"] = online_count
-                        camera_status["offline"] = (
-                            camera_status["total"] - camera_status["online"]
-                        )
+                        elif isinstance(status_val, str) and status_val == "online":
+                            online_count += 1
+                    camera_status["online"] = online_count
+                    camera_status["offline"] = camera_status["total"] - camera_status["online"]
                 except asyncio.TimeoutError:
                     logger.warning("Camera status check timed out in health endpoint")
-                    camera_status = {
-                        "total": 0,
-                        "online": 0,
-                        "offline": 0,
-                        "error": "timeout",
-                    }
+                    camera_status = {"total": 0, "online": 0, "offline": 0, "error": "timeout"}
                 except Exception:
                     pass
 
@@ -1144,14 +1088,10 @@ class WebServer:
                 memory_data = (
                     {
                         "total_gb": round(memory.total / (1024**3), 2) if memory else 0,
-                        "available_gb": round(memory.available / (1024**3), 2)
-                        if memory
-                        else 0,
+                        "available_gb": round(memory.available / (1024**3), 2) if memory else 0,
                         "used_gb": round(memory.used / (1024**3), 2) if memory else 0,
                         "percent": round(memory.percent, 1) if memory else 0,
-                        "process_mb": round(process_memory.rss / (1024**2), 2)
-                        if memory
-                        else 0,
+                        "process_mb": round(process_memory.rss / (1024**2), 2) if memory else 0,
                     }
                     if memory
                     else {"error": "Unable to read memory stats"}
@@ -1208,18 +1148,18 @@ class WebServer:
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
                 # Add timeouts to prevent hanging
-                server = await asyncio.wait_for(
-                    TapoCameraServer.get_instance(), timeout=5.0
-                )
+                server = await asyncio.wait_for(TapoCameraServer.get_instance(), timeout=5.0)
 
                 # Ensure hardware is initialized (lazy initialization)
                 await TapoCameraServer.ensure_hardware_initialized()
 
                 # INCREASED TIMEOUT: list_cameras now runs parallel checks (patched in manager.py)
                 # but with many cameras, 5.0s might still be too tight locally. Bump to 8.0s.
-                cameras = await asyncio.wait_for(
-                    server.camera_manager.list_cameras(), timeout=8.0
-                )
+                try:
+                    cameras = await asyncio.wait_for(server.camera_manager.list_cameras(), timeout=8.0)
+                except AttributeError:
+                    logger.warning("Camera manager not initialized - returning empty list")
+                    cameras = []
 
                 # Add Ring cameras if Ring integration is available
                 try:
@@ -1231,9 +1171,7 @@ class WebServer:
                     )
                     if ring_client and ring_client.is_initialized:
                         # Get Ring doorbells
-                        doorbells = await asyncio.wait_for(
-                            ring_client.get_doorbells(), timeout=3.0
-                        )
+                        doorbells = await asyncio.wait_for(ring_client.get_doorbells(), timeout=3.0)
                         logger.debug(f"Found {len(doorbells)} Ring doorbells")
                         for doorbell in doorbells:
                             ring_camera = {
@@ -1272,8 +1210,7 @@ class WebServer:
                 # Use lazy initialization - don't trigger hardware init if not already done
                 try:
                     server = await asyncio.wait_for(
-                        TapoCameraServer.get_instance(skip_hardware_init=True),
-                        timeout=1.0,
+                        TapoCameraServer.get_instance(skip_hardware_init=True), timeout=1.0
                     )
                 except asyncio.TimeoutError:
                     # Server not initialized yet
@@ -1291,9 +1228,7 @@ class WebServer:
                             server.camera_manager.list_cameras(), timeout=1.0
                         )
                         total = len(cameras)
-                        online = sum(
-                            1 for cam in cameras if cam.get("status") == "online"
-                        )
+                        online = sum(1 for cam in cameras if cam.get("status") == "online")
                         return {
                             "total": total,
                             "online": online,
@@ -1307,9 +1242,7 @@ class WebServer:
                 # If no camera manager or timeout, try to auto-add webcam
                 try:
                     # Initialize server with hardware init for webcam auto-add
-                    server = await asyncio.wait_for(
-                        TapoCameraServer.get_instance(), timeout=2.0
-                    )
+                    server = await asyncio.wait_for(TapoCameraServer.get_instance(), timeout=2.0)
 
                     if hasattr(server, "camera_manager") and server.camera_manager:
                         camera_manager = server.camera_manager
@@ -1336,9 +1269,7 @@ class WebServer:
                             except asyncio.TimeoutError:
                                 pass
 
-                        online = sum(
-                            1 for cam in cameras if cam.get("status") == "online"
-                        )
+                        online = sum(1 for cam in cameras if cam.get("status") == "online")
                         return {
                             "total": total,
                             "online": online,
@@ -1374,9 +1305,7 @@ class WebServer:
             import re
 
             if not re.match(r"^[a-zA-Z0-9_-]{1,100}$", camera_id):
-                return JSONResponse(
-                    {"error": "Invalid camera_id format"}, status_code=400
-                )
+                return JSONResponse({"error": "Invalid camera_id format"}, status_code=400)
 
             try:
                 from tapo_camera_mcp.core.server import TapoCameraServer
@@ -1464,12 +1393,8 @@ class WebServer:
                         if camera_type == "webcam":
                             # Proxy to windows_camera_server.py on port 7778
                             device_id = camera.config.params.get("device_id", 0)
-                            proxy_url = (
-                                f"http://localhost:7778/mjpeg?device={device_id}"
-                            )
-                            logger.info(
-                                f"Proxying webcam stream for {camera_id} to {proxy_url}"
-                            )
+                            proxy_url = f"http://localhost:7778/mjpeg?device={device_id}"
+                            logger.info(f"Proxying webcam stream for {camera_id} to {proxy_url}")
 
                             import httpx
 
@@ -1487,9 +1412,7 @@ class WebServer:
                                             async for chunk in response.aiter_bytes():
                                                 yield chunk
                                     except Exception as e:
-                                        logger.error(
-                                            f"Error in webcam proxy stream: {e}"
-                                        )
+                                        logger.error(f"Error in webcam proxy stream: {e}")
 
                             return StreamingResponse(
                                 stream_proxy(),
@@ -1510,9 +1433,7 @@ class WebServer:
                                     camera.get_stream_url(), timeout=15.0
                                 )
                                 if not stream_url:
-                                    logger.error(
-                                        f"Failed to get stream URL for {camera_id}"
-                                    )
+                                    logger.error(f"Failed to get stream URL for {camera_id}")
                                     return Response(
                                         content=f"Failed to get stream URL for camera {camera_id}",
                                         status_code=500,
@@ -1532,9 +1453,7 @@ class WebServer:
                                             f"ONVIF MJPEG stream: Added auth to RTSP URL for {camera_id}"
                                         )
 
-                                logger.info(
-                                    f"Starting MJPEG stream for {camera_id} (ONVIF)"
-                                )
+                                logger.info(f"Starting MJPEG stream for {camera_id} (ONVIF)")
                                 return StreamingResponse(
                                     self._generate_rtsp_mjpeg_stream_sync(stream_url),
                                     media_type="multipart/x-mixed-replace; boundary=frame",
@@ -1566,20 +1485,15 @@ class WebServer:
                                 #     media_type="multipart/x-mixed-replace; boundary=frame",
                                 # )
                             except asyncio.TimeoutError:
-                                logger.error(
-                                    f"Timeout getting stream URL for {camera_id}"
-                                )
+                                logger.error(f"Timeout getting stream URL for {camera_id}")
                                 return Response(
                                     content=f"Timeout getting stream URL for camera {camera_id}",
                                     status_code=500,
                                 )
                             except Exception as e:
-                                logger.exception(
-                                    f"Error getting stream URL for {camera_id}: {e}"
-                                )
+                                logger.exception(f"Error getting stream URL for {camera_id}: {e}")
                                 return Response(
-                                    content=f"Error getting stream URL: {e}",
-                                    status_code=500,
+                                    content=f"Error getting stream URL: {e}", status_code=500
                                 )
 
                 return Response(content="Camera not found", status_code=404)
@@ -1627,17 +1541,13 @@ class WebServer:
             import re
 
             if not re.match(r"^[a-zA-Z0-9_-]{1,100}$", camera_id):
-                return JSONResponse(
-                    {"error": "Invalid camera_id format"}, status_code=400
-                )
+                return JSONResponse({"error": "Invalid camera_id format"}, status_code=400)
 
             # Validate action parameter
             valid_actions = ["start_stream", "stop_stream", "start_audio", "stop_audio"]
             if action not in valid_actions:
                 return JSONResponse(
-                    {
-                        "error": f"Invalid action. Must be one of: {', '.join(valid_actions)}"
-                    },
+                    {"error": f"Invalid action. Must be one of: {', '.join(valid_actions)}"},
                     status_code=400,
                 )
 
@@ -1682,9 +1592,7 @@ class WebServer:
                             image.save(buffer, format="JPEG", quality=75)
                             image_bytes = buffer.getvalue()
 
-                            return Response(
-                                content=image_bytes, media_type="image/jpeg"
-                            )
+                            return Response(content=image_bytes, media_type="image/jpeg")
 
                 return {"error": "Camera not found"}
             except Exception as e:
@@ -1701,12 +1609,11 @@ class WebServer:
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
                 # Get REAL camera data
-                server = await asyncio.wait_for(
-                    TapoCameraServer.get_instance(), timeout=3.0
-                )
-                cameras = await asyncio.wait_for(
-                    server.camera_manager.list_cameras(), timeout=3.0
-                )
+                server = await asyncio.wait_for(TapoCameraServer.get_instance(), timeout=3.0)
+                try:
+                    cameras = await asyncio.wait_for(server.camera_manager.list_cameras(), timeout=3.0)
+                except AttributeError:
+                    cameras = []
                 total_cameras = len(cameras)
                 online_cameras = sum(
                     1
@@ -1743,14 +1650,10 @@ class WebServer:
 
         @self.app.get("/api/events")
         async def get_events(
-            limit: int = Query(
-                100, ge=1, le=1000, description="Number of events to retrieve"
-            ),
+            limit: int = Query(100, ge=1, le=1000, description="Number of events to retrieve"),
             event_type: Optional[str] = Query(None, description="Filter by event type"),
             camera_id: Optional[str] = Query(None, description="Filter by camera ID"),
-            hours: int = Query(
-                24, ge=1, le=168, description="Hours of history to retrieve"
-            ),
+            hours: int = Query(24, ge=1, le=168, description="Hours of history to retrieve"),
         ):
             """Get events from storage."""
             try:
@@ -1815,15 +1718,10 @@ class WebServer:
         @self.app.get("/api/logs")
         async def get_logs(
             level: Optional[str] = Query(
-                None,
-                description="Filter by log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+                None, description="Filter by log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)"
             ),
-            lines: int = Query(
-                100, ge=1, le=1000, description="Number of log lines to retrieve"
-            ),
-            search: Optional[str] = Query(
-                None, description="Search term to filter log messages"
-            ),
+            lines: int = Query(100, ge=1, le=1000, description="Number of log lines to retrieve"),
+            search: Optional[str] = Query(None, description="Search term to filter log messages"),
         ):
             """Get application logs with filtering."""
             try:
@@ -1832,100 +1730,36 @@ class WebServer:
                 from tapo_camera_mcp.config import get_config
 
                 config = get_config()
-                # Use the configured log file or a sensible default
                 log_file = config.get("logging", {}).get("file")
 
-                is_docker = os.getenv("CONTAINER") == "yes" or os.path.exists(
-                    "/.dockerenv"
-                )
-
                 if not log_file:
-                    if is_docker:
-                        log_file = "/app/logs/tapo_mcp.log"
-                    else:
-                        # Try to find log file in default location
-                        user_data_dir = Path(
-                            "~/.local/share/tapo-camera-mcp"
-                        ).expanduser()
-                        log_file = user_data_dir / "tapo-camera-mcp.log"
+                    # Try to find log file in default location
+                    user_data_dir = Path("~/.local/share/tapo-camera-mcp").expanduser()
+                    log_file = user_data_dir / "tapo-camera-mcp.log"
 
                 log_file = Path(log_file)
-
-                # If in Docker and path is relative, prioritize /app/logs
-                if is_docker and not log_file.is_absolute():
-                    docker_fixed_path = Path("/app/logs") / log_file.name
-                    if docker_fixed_path.exists():
-                        log_file = docker_fixed_path
-                    elif Path("/app/logs/tapo_mcp.log").exists():
-                        log_file = Path("/app/logs/tapo_mcp.log")
-
-                # Final fallback check if path is still not found
-                if not log_file.exists():
-                    # Check common locations
-                    fallbacks = [
-                        Path("tapo_mcp.log"),
-                        Path("tapo-camera-mcp.log"),
-                        Path("/app/logs/tapo_mcp.log") if is_docker else None,
-                    ]
-                    for fb in fallbacks:
-                        if fb and fb.exists():
-                            log_file = fb
-                            break
 
                 if not log_file.exists():
                     return {
                         "logs": [],
                         "total": 0,
-                        "message": f"Log file not found at {log_file.absolute()}",
+                        "message": "Log file not found",
                     }
 
                 # Read log file
                 log_entries = []
                 try:
-                    import json
-
                     with open(log_file, encoding="utf-8") as f:
                         file_lines = f.readlines()
                         # Get last N lines
                         recent_lines = (
-                            file_lines[-lines:]
-                            if len(file_lines) > lines
-                            else file_lines
+                            file_lines[-lines:] if len(file_lines) > lines else file_lines
                         )
 
                         for raw_line in recent_lines:
                             line = raw_line.strip()
                             if not line:
                                 continue
-
-                            # Try to parse as JSON first (Docker mode)
-                            try:
-                                log_data = json.loads(line)
-                                timestamp_str = log_data.get("timestamp", "")
-                                log_level = log_data.get("level", "INFO").upper()
-                                logger_name = log_data.get("logger", "unknown")
-                                message = log_data.get("message", "")
-
-                                # Filter by level if specified
-                                if level and log_level != level.upper():
-                                    continue
-
-                                # Filter by search term if specified
-                                if search and search.lower() not in message.lower():
-                                    continue
-
-                                log_entries.append(
-                                    {
-                                        "timestamp": timestamp_str,
-                                        "level": log_level,
-                                        "logger": logger_name,
-                                        "message": message,
-                                    }
-                                )
-                                continue
-                            except json.JSONDecodeError:
-                                # Not JSON, try standard format
-                                pass
 
                             # Parse log line: "2025-01-01 12:00:00 - logger_name - LEVEL - message"
                             parts = line.split(" - ", 3)
@@ -1996,9 +1830,7 @@ class WebServer:
                             normalized,
                         )
                         normalized = re.sub(
-                            r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}",
-                            "IP",
-                            normalized,
+                            r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}", "IP", normalized
                         )
 
                         if normalized not in clusters:
@@ -2085,9 +1917,7 @@ class WebServer:
 
                         # Prepare log summary for LLM
                         log_summary = f"Recent log entries ({len(logs)} total):\n\n"
-                        for i, log_entry in enumerate(
-                            logs[:50]
-                        ):  # Limit to first 50 for context
+                        for i, log_entry in enumerate(logs[:50]):  # Limit to first 50 for context
                             log_summary += f"[{log_entry.get('level', 'INFO')}] {log_entry.get('message', '')}\n"
 
                         prompt = f"""Analyze these application logs and provide a brief synopsis (2-3 sentences):
@@ -2119,9 +1949,7 @@ Provide a concise summary:"""
                             logger.warning(f"AI synopsis generation failed: {e}")
                             result["synopsis"] = f"AI synopsis unavailable: {e!s}"
                     except ImportError:
-                        result["synopsis"] = (
-                            "AI synopsis unavailable - LLM module not available"
-                        )
+                        result["synopsis"] = "AI synopsis unavailable - LLM module not available"
                     except Exception as e:
                         logger.exception("Error generating AI synopsis")
                         result["synopsis"] = f"AI synopsis error: {e!s}"
@@ -2185,9 +2013,9 @@ Provide a concise summary:"""
                         if account_email and account_password and host != "unknown":
                             import tapo
 
-                            client = await tapo.ApiClient(
-                                account_email, account_password
-                            ).p115(host)
+                            client = await tapo.ApiClient(account_email, account_password).p115(
+                                host
+                            )
                             current_power_result = await client.get_current_power()
                             power_watts = (
                                 current_power_result.current_power
@@ -2244,16 +2072,14 @@ Provide a concise summary:"""
                         # stations is a list of WeatherStationResponse Pydantic models or dict-like
                         if stations:
                             first = stations[0]
-                            station_id = getattr(
-                                first, "station_id", None
-                            ) or first.get("station_id")  # type: ignore[attr-defined]
+                            station_id = getattr(first, "station_id", None) or first.get(
+                                "station_id"
+                            )  # type: ignore[attr-defined]
                             if station_id:
                                 data_resp = await get_station_weather_data(
                                     station_id=station_id, module_type="indoor"
                                 )  # type: ignore[misc]
-                                data = getattr(
-                                    data_resp, "data", None
-                                ) or data_resp.get("data")  # type: ignore[attr-defined]
+                                data = getattr(data_resp, "data", None) or data_resp.get("data")  # type: ignore[attr-defined]
                                 if data:
                                     temperature = float(data.get("temperature", 0.0))
                                     humidity = float(data.get("humidity", 0.0))
@@ -2295,9 +2121,7 @@ Provide a concise summary:"""
                     nest_devices_total = 0
 
                 # Expose on/off and device counts for Grafana panels
-                metrics_lines.append(
-                    f"ring_integration_enabled  {1 if ring_enabled else 0}"
-                )
+                metrics_lines.append(f"ring_integration_enabled  {1 if ring_enabled else 0}")
                 metrics_lines.append(
                     f"nest_protect_integration_enabled  {1 if nest_enabled else 0}"
                 )
@@ -2375,9 +2199,7 @@ Provide a concise summary:"""
                     pass
 
                 metrics_text = "\n".join(metrics_lines) + "\n"
-                return Response(
-                    content=metrics_text, media_type="text/plain; version=0.0.4"
-                )
+                return Response(content=metrics_text, media_type="text/plain; version=0.0.4")
 
             except Exception as e:
                 logger.exception("Error generating Prometheus metrics")
@@ -2408,16 +2230,16 @@ Provide a concise summary:"""
         except Exception as e:
             logger.error(f"Failed to import lighting router: {e}")
             lighting_router = None
+        from .api.appliance_monitor import router as appliance_monitor_router
+        from .api.dymo import router as dymo_router
+        from .api.ikettle import router as ikettle_router
         from .api.messages import router as messages_router
         from .api.microscope import router as microscope_router
-        from .api.otoscope import router as otoscope_router
-        from .api.scanner import router as scanner_router
-        from .api.dymo import router as dymo_router
-        from .api.appliance_monitor import router as appliance_monitor_router
-        from .api.ikettle import router as ikettle_router
         from .api.motion import router as motion_router
+        from .api.otoscope import router as otoscope_router
         from .api.ptz import router as ptz_router
         from .api.ring import router as ring_router
+        from .api.scanner import router as scanner_router
         from .api.security import router as security_router
         from .api.sensors import router as sensors_router
         from .api.shelly import router as shelly_router
@@ -2537,9 +2359,7 @@ Provide a concise summary:"""
             )
 
         # Stream Viewer route
-        @self.app.get(
-            "/stream/{camera_id}", response_class=HTMLResponse, name="stream_viewer"
-        )
+        @self.app.get("/stream/{camera_id}", response_class=HTMLResponse, name="stream_viewer")
         async def stream_viewer_page(request: Request, camera_id: str):
             """Serve the stream viewer page for a camera."""
             # Get custom camera name if available
@@ -2578,9 +2398,7 @@ Provide a concise summary:"""
             )
 
         # Weather Monitoring route
-        @self.app.get(
-            "/appliance-monitor", response_class=HTMLResponse, name="appliance_monitor"
-        )
+        @self.app.get("/appliance-monitor", response_class=HTMLResponse, name="appliance_monitor")
         async def appliance_monitor_page(request: Request):
             """Serve the appliance monitoring dashboard page."""
             return self.templates.TemplateResponse(
@@ -2618,9 +2436,7 @@ Provide a concise summary:"""
                 },
             )
 
-        @self.app.get(
-            "/vienna-webcams", response_class=HTMLResponse, name="vienna_webcams"
-        )
+        @self.app.get("/vienna-webcams", response_class=HTMLResponse, name="vienna_webcams")
         async def vienna_webcams_page(request: Request):
             """Serve the Vienna public webcams dashboard page."""
             return self.templates.TemplateResponse(
@@ -2681,22 +2497,17 @@ Provide a concise summary:"""
             security_devices = []
             security_alerts = []
             security_overview = {}
-            recent_events = []
 
-            # Try to load recent events via EventStore
-            try:
-                from tapo_camera_mcp.utils.storage import EventStore
-
-                event_store = EventStore()
-                recent_events = event_store.get_events(limit=10)
-            except Exception as e:
-                logger.warning(f"Failed to load recent events: {e}")
-                recent_events = []
+            # Skip server initialization for immediate dashboard load
+            # All data will load asynchronously via JavaScript API calls
+            total_cameras = 0
+            online_cameras = 0
 
             # Try to auto-add USB webcam for immediate dashboard functionality
             # Use very short timeouts to prevent hanging the dashboard
             try:
                 import asyncio
+
                 from tapo_camera_mcp.core.server import TapoCameraServer
 
                 # Initialize server on-demand for webcam detection (very short timeout)
@@ -2713,12 +2524,6 @@ Provide a concise summary:"""
                         existing_cameras = await asyncio.wait_for(
                             camera_manager.list_cameras(), timeout=0.2
                         )
-                        cameras = existing_cameras
-                        total_cameras = len(cameras)
-                        online_cameras = sum(
-                            1 for cam in cameras if cam.get("status") == "online"
-                        )
-
                         if len(existing_cameras) == 0:
                             # No cameras configured, try to auto-add USB webcam
                             logger.info(
@@ -2737,25 +2542,27 @@ Provide a concise summary:"""
                             )
 
                             if success:
-                                logger.info(
-                                    "Successfully auto-added USB webcam for dashboard"
-                                )
+                                logger.info("Successfully auto-added USB webcam for dashboard")
                                 # Refresh camera count
                                 cameras = await camera_manager.list_cameras()
                                 total_cameras = len(cameras)
                                 online_cameras = sum(
-                                    1
-                                    for cam in cameras
-                                    if cam.get("status") == "online"
+                                    1 for cam in cameras if cam.get("status") == "online"
+                                )
+                            else:
+                                logger.warning(
+                                    "Failed to auto-add USB webcam, but dashboard will still work"
                                 )
                     except asyncio.TimeoutError:
-                        logger.warning(
-                            "Camera list check timed out, skipping webcam auto-add"
-                        )
-            except Exception as e:
+                        logger.warning("Camera list check timed out, skipping webcam auto-add")
+            except asyncio.TimeoutError:
                 logger.warning(
-                    f"Dashboard server data check issues: {e}, but dashboard loads anyway"
+                    "Server initialization timed out for webcam auto-add, but dashboard loads anyway"
                 )
+            except Exception as e:
+                logger.warning(f"Webcam auto-add failed: {e}, but dashboard loads anyway")
+
+            # Storage calculation removed for immediate loading
 
             # System status - simplified for immediate loading
             system_status = {
@@ -2780,7 +2587,7 @@ Provide a concise summary:"""
                 return str(obj)
 
             return self.templates.TemplateResponse(
-                "dashboard.html",
+                "simple_dashboard.html",
                 {
                     "request": request,
                     "active_page": "dashboard",
@@ -2790,15 +2597,10 @@ Provide a concise summary:"""
                     "active_alerts": len(security_alerts),
                     "active_recordings": 0,
                     "cameras": cameras,
-                    "security_devices": [
-                        safe_serialize(device) for device in security_devices
-                    ],
-                    "security_alerts": [
-                        safe_serialize(alert) for alert in security_alerts
-                    ],
+                    "security_devices": [safe_serialize(device) for device in security_devices],
+                    "security_alerts": [safe_serialize(alert) for alert in security_alerts],
                     "security_overview": security_overview or {},
                     "system_status": system_status,
-                    "recent_events": recent_events,
                 },
             )
 
@@ -2811,26 +2613,15 @@ Provide a concise summary:"""
 
         @self.app.get("/api/recordings")
         async def get_recordings_api(
-            limit: int = Query(
-                100, ge=1, le=1000, description="Number of recordings to retrieve"
-            ),
+            limit: int = Query(100, ge=1, le=1000, description="Number of recordings to retrieve"),
             camera_id: Optional[str] = Query(None, description="Filter by camera ID"),
             recording_type: Optional[str] = Query(
-                None,
-                description="Filter by type (on_demand, automatic, motion, emergency)",
+                None, description="Filter by type (on_demand, automatic, motion, emergency)"
             ),
-            hours: int = Query(
-                24, ge=1, le=168, description="Hours of history to retrieve"
-            ),
-            emergency_only: bool = Query(
-                False, description="Show only emergency recordings"
-            ),
-            unusual_only: bool = Query(
-                False, description="Show only unusual recordings"
-            ),
-            with_ai_analysis: bool = Query(
-                False, description="Include AI analysis results"
-            ),
+            hours: int = Query(24, ge=1, le=168, description="Hours of history to retrieve"),
+            emergency_only: bool = Query(False, description="Show only emergency recordings"),
+            unusual_only: bool = Query(False, description="Show only unusual recordings"),
+            with_ai_analysis: bool = Query(False, description="Include AI analysis results"),
         ):
             """Get recordings from storage."""
             try:
@@ -2867,9 +2658,7 @@ Provide a concise summary:"""
 
                 return {
                     "success": success,
-                    "message": "Recording deleted"
-                    if success
-                    else "Recording not found",
+                    "message": "Recording deleted" if success else "Recording not found",
                 }
             except Exception as e:
                 logger.exception("Error deleting recording")
@@ -2885,9 +2674,7 @@ Provide a concise summary:"""
             confidence: float | None = Query(
                 None, ge=0.0, le=1.0, description="Confidence score (0.0 to 1.0)"
             ),
-            details: dict | None = Body(
-                None, description="Additional analysis details"
-            ),
+            details: dict | None = Body(None, description="Additional analysis details"),
         ):
             """Add AI analysis result to a recording."""
             try:
@@ -2914,12 +2701,8 @@ Provide a concise summary:"""
         async def add_snapshot_ai_analysis(
             snapshot_id: str,
             analysis_type: str = Query(..., description="Analysis type"),
-            confidence: float | None = Query(
-                None, ge=0.0, le=1.0, description="Confidence score"
-            ),
-            details: dict | None = Body(
-                None, description="Additional analysis details"
-            ),
+            confidence: float | None = Query(None, ge=0.0, le=1.0, description="Confidence score"),
+            details: dict | None = Body(None, description="Additional analysis details"),
         ):
             """Add AI analysis result to a snapshot."""
             try:
@@ -2963,9 +2746,7 @@ Provide a concise summary:"""
             video_recordings: int | None = Body(
                 None, ge=1, le=3650, description="Days to keep video recordings"
             ),
-            snapshots: int | None = Body(
-                None, ge=1, le=3650, description="Days to keep snapshots"
-            ),
+            snapshots: int | None = Body(None, ge=1, le=3650, description="Days to keep snapshots"),
             environment_data: int | None = Body(
                 None, ge=1, le=3650, description="Days to keep environment data"
             ),
@@ -2980,15 +2761,11 @@ Provide a concise summary:"""
 
                 # Update policies
                 if video_recordings is not None:
-                    storage_cfg.retention_policies["video_recordings"] = (
-                        video_recordings
-                    )
+                    storage_cfg.retention_policies["video_recordings"] = video_recordings
                 if snapshots is not None:
                     storage_cfg.retention_policies["snapshots"] = snapshots
                 if environment_data is not None:
-                    storage_cfg.retention_policies["environment_data"] = (
-                        environment_data
-                    )
+                    storage_cfg.retention_policies["environment_data"] = environment_data
 
                 # Save to config
                 if "storage" not in config:
@@ -3005,16 +2782,11 @@ Provide a concise summary:"""
                 logger.exception("Error updating retention policies")
                 return {"success": False, "error": str(e)}
 
-        @self.app.post(
-            "/api/storage/scrub", summary="Scrub old data (guarded operation)"
-        )
+        @self.app.post("/api/storage/scrub", summary="Scrub old data (guarded operation)")
         async def scrub_old_data(
-            confirm: bool = Body(
-                ..., description="Confirmation required (must be true)"
-            ),
+            confirm: bool = Body(..., description="Confirmation required (must be true)"),
             dry_run: bool = Body(
-                False,
-                description="Preview what would be deleted without actually deleting",
+                False, description="Preview what would be deleted without actually deleting"
             ),
         ):
             """Scrub old data based on retention policies. Requires explicit confirmation."""
@@ -3080,9 +2852,7 @@ Provide a concise summary:"""
                     results["error"] = str(e)
 
                 # Scrub snapshots
-                snapshot_cutoff = datetime.now(timezone.utc) - timedelta(
-                    days=policies["snapshots"]
-                )
+                snapshot_cutoff = datetime.now(timezone.utc) - timedelta(days=policies["snapshots"])
                 try:
                     # Get all snapshots older than retention period
                     all_snapshots = db.get_snapshots(limit=10000, since=None)
@@ -3133,9 +2903,7 @@ Provide a concise summary:"""
                     "success": True,
                     "dry_run": dry_run,
                     "results": results,
-                    "message": "Scrub completed"
-                    if not dry_run
-                    else "Dry run completed",
+                    "message": "Scrub completed" if not dry_run else "Dry run completed",
                 }
             except Exception as e:
                 logger.exception("Error scrubbing old data")
@@ -3151,9 +2919,7 @@ Provide a concise summary:"""
                 stats = recording_store.get_storage_stats()
                 recordings_list = recording_store.get_recordings(limit=50)
 
-                today = datetime.now().replace(
-                    hour=0, minute=0, second=0, microsecond=0
-                )
+                today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
                 today_recordings = [
                     r
                     for r in recordings_list
@@ -3241,9 +3007,7 @@ Provide a concise summary:"""
                 "help.html", {"request": request, "active_page": "help"}
             )
 
-        @self.app.get(
-            "/health-dashboard", response_class=HTMLResponse, name="health_dashboard"
-        )
+        @self.app.get("/health-dashboard", response_class=HTMLResponse, name="health_dashboard")
         async def health_dashboard_page(request: Request):
             """Serve the connection health monitoring dashboard."""
             return self.templates.TemplateResponse(
@@ -3354,6 +3118,7 @@ Provide a concise summary:"""
         cap = None
         try:
             import asyncio
+
             import cv2
 
             # For webcams, create our own VideoCapture instance for streaming
@@ -3382,9 +3147,7 @@ Provide a concise summary:"""
             while True:
                 ret, frame = cap.read()
                 if not ret:
-                    logger.warning(
-                        f"Failed to read frame from webcam device {device_id}"
-                    )
+                    logger.warning(f"Failed to read frame from webcam device {device_id}")
                     # If read fails, wait a bit before retrying to avoid tight loop
                     await asyncio.sleep(0.1)
                     continue
@@ -3397,9 +3160,7 @@ Provide a concise summary:"""
                     # Create MJPEG frame
                     yield (
                         b"--frame\r\n"
-                        b"Content-Type: image/jpeg\r\n\r\n"
-                        + encoded_img.tobytes()
-                        + b"\r\n"
+                        b"Content-Type: image/jpeg\r\n\r\n" + encoded_img.tobytes() + b"\r\n"
                     )
 
                 # Control frame rate - 0.1 seconds = 10 FPS (reasonable for streaming)
@@ -3416,14 +3177,12 @@ Provide a concise summary:"""
             )
             yield error_frame
 
-    async def _generate_rtsp_mjpeg_stream_sync(
-        self, rtsp_url: str
-    ) -> Generator[bytes, None, None]:
+    async def _generate_rtsp_mjpeg_stream_sync(self, rtsp_url: str) -> Generator[bytes, None, None]:
         """Generate MJPEG stream from RTSP URL for browser viewing."""
         import asyncio
-        import cv2
         import os
-        import time
+
+        import cv2
 
         logger.info(f"Opening RTSP stream for ONVIF: {rtsp_url[:60]}...")
 
@@ -3463,9 +3222,7 @@ Provide a concise summary:"""
                 if result:
                     yield (
                         b"--frame\r\n"
-                        b"Content-Type: image/jpeg\r\n\r\n"
-                        + encoded_img.tobytes()
-                        + b"\r\n"
+                        b"Content-Type: image/jpeg\r\n\r\n" + encoded_img.tobytes() + b"\r\n"
                     )
 
                 await asyncio.sleep(0.05)  # ~20 FPS target
@@ -3479,7 +3236,6 @@ Provide a concise summary:"""
 
     def _generate_dummy_mjpeg_stream(self) -> Generator[bytes, None, None]:
         """Generate dummy MJPEG stream for testing."""
-        import asyncio
         import cv2
         import numpy as np
 
@@ -3507,9 +3263,7 @@ Provide a concise summary:"""
                 if result:
                     yield (
                         b"--frame\r\n"
-                        b"Content-Type: image/jpeg\r\n\r\n"
-                        + encoded_img.tobytes()
-                        + b"\r\n"
+                        b"Content-Type: image/jpeg\r\n\r\n" + encoded_img.tobytes() + b"\r\n"
                     )
 
                 frame_count += 1
@@ -3522,9 +3276,7 @@ Provide a concise summary:"""
         except Exception as e:
             logger.exception(f"Error in dummy MJPEG stream: {e}")
 
-    async def _generate_rtsp_mjpeg_stream(
-        self, rtsp_url: str
-    ) -> Generator[bytes, None, None]:
+    async def _generate_rtsp_mjpeg_stream(self, rtsp_url: str) -> Generator[bytes, None, None]:
         """Generate MJPEG stream from RTSP URL for browser viewing - CRITICAL for ONVIF cameras."""
         import asyncio
 
@@ -3561,7 +3313,7 @@ Provide a concise summary:"""
                 # Handle URLs with @ in username (like email addresses) for each path
                 if "@" in test_url:
                     # URL has @ in username (like email), try URL encoding
-                    from urllib.parse import urlparse, urlunparse, quote
+                    from urllib.parse import quote, urlparse, urlunparse
 
                     parsed = urlparse(test_url)
                     if "@" in parsed.netloc:
@@ -3578,9 +3330,7 @@ Provide a concise summary:"""
                         cap.release()
                     cap = None
 
-                    os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = (
-                        f"rtsp_transport;{transport}"
-                    )
+                    os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = f"rtsp_transport;{transport}"
                     logger.debug(f"Trying {transport} transport for {path}")
 
                     cap = cv2.VideoCapture(test_url, cv2.CAP_FFMPEG)
@@ -3595,9 +3345,7 @@ Provide a concise summary:"""
                         # Test if we can actually read a frame with longer timeout
                         start_time = time.time()
                         ret = False
-                        while (
-                            time.time() - start_time < 3.0 and not ret
-                        ):  # 3 second timeout
+                        while time.time() - start_time < 3.0 and not ret:  # 3 second timeout
                             ret, frame = cap.read()
                             if ret and frame is not None and frame.size > 0:
                                 logger.info(
@@ -3616,9 +3364,7 @@ Provide a concise summary:"""
                             cap.release()
                             cap = None
                     else:
-                        logger.debug(
-                            f"RTSP path {path} with {transport} failed to open"
-                        )
+                        logger.debug(f"RTSP path {path} with {transport} failed to open")
 
                 if cap is not None and cap.isOpened():
                     break  # Found working path/transport combination
@@ -3663,9 +3409,7 @@ Provide a concise summary:"""
                 if result:
                     yield (
                         b"--frame\r\n"
-                        b"Content-Type: image/jpeg\r\n\r\n"
-                        + encoded_img.tobytes()
-                        + b"\r\n"
+                        b"Content-Type: image/jpeg\r\n\r\n" + encoded_img.tobytes() + b"\r\n"
                     )
 
                 # ~10 FPS for browser streaming
@@ -3689,7 +3433,6 @@ Provide a concise summary:"""
             host: Host to bind to. Defaults to config value.
             port: Port to bind to. Defaults to config value.
         """
-        import socket
 
         import uvicorn
 
@@ -3729,8 +3472,7 @@ Provide a concise summary:"""
                     "   This can happen if another process grabbed the port between check and start."
                 )
                 raise RuntimeError(
-                    f"Port {port} conflict during startup. "
-                    f"Try again or use --port <different_port>"
+                    f"Port {port} conflict during startup. Try again or use --port <different_port>"
                 ) from e
             logger.exception(f"OSError starting server: {e}")
             raise

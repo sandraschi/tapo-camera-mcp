@@ -59,7 +59,9 @@ def test_camera_factory_creation():
         logger.debug(f"Camera creation failed (expected): {e}")
 
 
-@pytest.mark.skip(reason="# TODO: Fix test_tool_execution_with_mocking - currently has assert False")
+@pytest.mark.skip(
+    reason="# TODO: Fix test_tool_execution_with_mocking - currently has assert False"
+)
 def test_tool_execution_with_mocking():
     """Test tool execution with comprehensive mocking."""
     try:
@@ -164,7 +166,9 @@ def test_validation_error_scenarios():
         assert False
 
 
-@pytest.mark.skip(reason="# TODO: Fix test_camera_connection_scenarios - currently has assert False")
+@pytest.mark.skip(
+    reason="# TODO: Fix test_camera_connection_scenarios - currently has assert False"
+)
 def test_camera_connection_scenarios():
     """Test camera connection scenarios and error handling."""
     try:

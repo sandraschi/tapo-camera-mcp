@@ -1,8 +1,12 @@
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# C extensions
 *.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -16,83 +20,236 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
 
-# Virtual Environment
-venv/
-ENV/
-.env
-.venv
-env/
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
 
-# Testing
-.coverage
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
 htmlcov/
-.pytest_cache/
+.tox/
+.nox/
+.coverage
 .coverage.*
 .cache
 nosetests.xml
 coverage.xml
 *.cover
 *.py,cover
+.hypothesis/
+.pytest_cache/
 
-# IDEs and Editors
-.idea/
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypa__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Docker
+.dockerignore
+
+# IDEs
 .vscode/
+.idea/
 *.swp
 *.swo
 *~
 
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
 # Logs
-*.log
 logs/
+*.log
+*.log.*
+log-*
 
-# Local development
-.env.local
-.env.development
-.env.test
-.env.production
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
 
-# Local data
+# Database files
 *.db
 *.sqlite
 *.sqlite3
 
-# Media and Recordings
-media/
-static/
-recordings/
+# Configuration files (may contain secrets)
+config.yaml
+config.yml
+secrets.yaml
+secrets.yml
+.env.local
+.env.production
+.env.staging
 
-# System Files
-.DS_Store
-Thumbs.db
+# Cache files
+.cache/
+.cache/
+*.cache
 
-# Temp files
-*.tmp
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Test artifacts
+.coverage
+.pytest_cache/
+.tox/
+htmlcov/
+
+# Node.js (if using any frontend tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Web assets
+src/tapo_camera_mcp/web/static/
+!src/tapo_camera_mcp/web/static/css/
+!src/tapo_camera_mcp/web/static/js/
+!src/tapo_camera_mcp/web/static/images/
+
+# Specific to this project
+ring_token.cache
+tap_token.cache
+*.token
+*.cache
+
+# Docker volumes and data
+data/
+deploy/*/config/.storage/
+deploy/*/config/*.db*
+
+# Backup files
 *.bak
-*.swp
+*.backup
+
+# Windows executables
+*.exe
+*.dll
+*.lib
+
+# macOS
+.DS_Store
+
+# Linux
 *~
 
-# GitLab runtime data and sockets
-deploy/gitlab/data/
-deploy/gitlab/logs/
-deploy/gitlab/config/*.json
-deploy/gitlab/config/*.key
-deploy/gitlab/config/*.pub
-deploy/gitlab/config/initial_root_password
-*.socket
+# JetBrains IDEs
+.idea/
 
-# Docker runtime files
-*.pid
-*.sock
+# VS Code
+.vscode/
 
-# Sensitive files
-ring_token.cache
-config.yaml
-deploy/homeassistant/config/secrets.yaml
-deploy/homeassistant/config/.storage/auth
-deploy/homeassistant/config/.storage/auth_provider.homeassistant
-deploy/homeassistant/config/.storage/http.auth
+# Cursor
+.cursor/
+
+# Temporary scripts and debug files
+debug_*.py
+test_*.py
+check_*.py
+*_debug.py
+*_test.py
+
+# API keys and secrets
+.env*
+!.env.example
+
+# Docker compose overrides
+docker-compose.override.yml
+
+# Git
+.git/
+.gitignore.backup

@@ -13,8 +13,6 @@ router = APIRouter(prefix="/api/dymo", tags=["dymo"])
 class DymoRequest(BaseModel):
     """Base request model for Dymo operations."""
 
-    pass
-
 
 class PrintLabelRequest(DymoRequest):
     """Request model for printing labels."""
@@ -88,7 +86,7 @@ class MockDymoPrinter:
             "success": True,
             "label_text": text,
             "settings": kwargs,
-            "estimated_length": len(text) * 2  # Rough estimate in mm
+            "estimated_length": len(text) * 2,  # Rough estimate in mm
         }
 
     async def print_batch_labels(self, labels: List[str], **kwargs) -> Dict:
@@ -98,11 +96,7 @@ class MockDymoPrinter:
         for i, text in enumerate(labels):
             result = await self.print_label(text, **kwargs)
             results.append({**result, "batch_index": i})
-        return {
-            "success": True,
-            "total_labels": len(labels),
-            "results": results
-        }
+        return {"success": True, "total_labels": len(labels), "results": results}
 
     async def get_status(self) -> Dict:
         """Get printer status."""
@@ -112,7 +106,7 @@ class MockDymoPrinter:
             "tape_color": "black_on_white",
             "tape_remaining": 85,  # percentage
             "printer_model": "LabelWriter 450",
-            "firmware_version": "1.2.3"
+            "firmware_version": "1.2.3",
         }
 
     async def create_shopping_labels(self, items: List[str], **kwargs) -> Dict:
@@ -157,7 +151,9 @@ class MockDymoPrinter:
 
         return await self.print_batch_labels(formatted_labels, **kwargs)
 
-    async def create_custom_template(self, template_name: str, fields: List[Dict[str, str]], **kwargs) -> Dict:
+    async def create_custom_template(
+        self, template_name: str, fields: List[Dict[str, str]], **kwargs
+    ) -> Dict:
         """Create labels from custom template."""
         formatted_labels = []
         layout = kwargs.get("layout", "horizontal")
@@ -181,12 +177,16 @@ class MockDymoPrinter:
 
         return await self.print_batch_labels(formatted_labels, **kwargs)
 
-    async def generate_humorous_labels(self, theme: str, count: int, style: str, category: str, **kwargs) -> Dict:
+    async def generate_humorous_labels(
+        self, theme: str, count: int, style: str, category: str, **kwargs
+    ) -> Dict:
         """Generate and print humorous labels for the fridge."""
         # Limit count to prevent abuse
         count = min(count, 100)
 
-        logger.info(f"Dymo: Generating {count} humorous labels (theme: {theme}, category: {category}, style: {style})")
+        logger.info(
+            f"Dymo: Generating {count} humorous labels (theme: {theme}, category: {category}, style: {style})"
+        )
 
         # Generate humorous texts based on theme and category
         humorous_texts = await self._generate_humorous_texts(theme, count, style, category)
@@ -199,10 +199,12 @@ class MockDymoPrinter:
             "theme": theme,
             "category": category,
             "style": style,
-            "generated_texts": humorous_texts
+            "generated_texts": humorous_texts,
         }
 
-    async def _generate_humorous_texts(self, theme: str, count: int, style: str, category: str) -> List[str]:
+    async def _generate_humorous_texts(
+        self, theme: str, count: int, style: str, category: str
+    ) -> List[str]:
         """Generate humorous texts for labels."""
         # Pre-defined humorous texts by category and theme
         humor_templates = {
@@ -256,7 +258,7 @@ class MockDymoPrinter:
                     "Warning: May contain glitter",
                     "Caution: May cause excessive excitement",
                     "Do not operate without supervision",
-                    "Warning: May contain traces of genius"
+                    "Warning: May contain traces of genius",
                 ],
                 "dad_jokes": [
                     "I'm reading a book on anti-gravity. It's impossible to put down!",
@@ -305,7 +307,7 @@ class MockDymoPrinter:
                     "I'm reading a book on teleportation. It's bound to take me places!",
                     "Why did the math book look sad? Because it had too many problems!",
                     "I used to play piano by ear, but now I use my hands!",
-                    "Why don't skeletons fight each other? They don't have the guts!"
+                    "Why don't skeletons fight each other? They don't have the guts!",
                 ],
                 "puns": [
                     "Lettuce turnip the beet",
@@ -357,8 +359,8 @@ class MockDymoPrinter:
                     "That really sets my teeth on edge",
                     "You're snow kind",
                     "I'm feeling bonkers",
-                    "That really makes my blood boil"
-                ]
+                    "That really makes my blood boil",
+                ],
             },
             "food": {
                 "random": [
@@ -413,7 +415,7 @@ class MockDymoPrinter:
                     "Shake well before judgment",
                     "Warning: Contents may be too delicious",
                     "Best served with friends",
-                    "Do not feed to imaginary friends"
+                    "Do not feed to imaginary friends",
                 ]
             },
             "chores": {
@@ -469,9 +471,9 @@ class MockDymoPrinter:
                     "Wash dishes or lick them clean",
                     "Fold laundry or wear potato sacks",
                     "Clean shed or store regrets",
-                    "Dust everything or live in time capsule"
+                    "Dust everything or live in time capsule",
                 ]
-            }
+            },
         }
 
         # Select appropriate templates based on category and theme
@@ -479,7 +481,9 @@ class MockDymoPrinter:
             templates = humor_templates[category][theme]
         elif category in humor_templates:
             # Fallback to random if specific theme not found
-            templates = humor_templates[category].get("random", humor_templates["general"]["random"])
+            templates = humor_templates[category].get(
+                "random", humor_templates["general"]["random"]
+            )
         else:
             # Ultimate fallback
             templates = humor_templates["general"]["random"]
@@ -527,7 +531,7 @@ async def print_label(request: PrintLabelRequest):
             tape_color=request.tape_color,
             font_size=request.font_size,
             style=request.style,
-            alignment=request.alignment
+            alignment=request.alignment,
         )
         return {"success": True, "message": "Label printed successfully", "result": result}
     except Exception as e:
@@ -540,11 +544,13 @@ async def print_batch_labels(request: BatchLabelsRequest):
     """Print multiple labels."""
     try:
         result = await _dymo_printer.print_batch_labels(
-            labels=request.labels,
-            tape_size=request.tape_size,
-            tape_color=request.tape_color
+            labels=request.labels, tape_size=request.tape_size, tape_color=request.tape_color
         )
-        return {"success": True, "message": f"Batch of {len(request.labels)} labels printed", "result": result}
+        return {
+            "success": True,
+            "message": f"Batch of {len(request.labels)} labels printed",
+            "result": result,
+        }
     except Exception as e:
         logger.exception("Failed to print batch labels")
         raise HTTPException(status_code=500, detail=str(e))
@@ -558,7 +564,7 @@ async def create_shopping_labels(request: CreateShoppingLabelsRequest):
             items=request.items,
             categories=request.categories,
             include_checkboxes=request.include_checkboxes,
-            tape_size=request.tape_size
+            tape_size=request.tape_size,
         )
         return {"success": True, "message": "Shopping labels created and printed", "result": result}
     except Exception as e:
@@ -573,9 +579,13 @@ async def create_inventory_labels(request: CreateInventoryLabelsRequest):
         result = await _dymo_printer.create_inventory_labels(
             items=request.items,
             include_barcodes=request.include_barcodes,
-            tape_size=request.tape_size
+            tape_size=request.tape_size,
         )
-        return {"success": True, "message": "Inventory labels created and printed", "result": result}
+        return {
+            "success": True,
+            "message": "Inventory labels created and printed",
+            "result": result,
+        }
     except Exception as e:
         logger.exception("Failed to create inventory labels")
         raise HTTPException(status_code=500, detail=str(e))
@@ -586,11 +596,13 @@ async def create_custom_template(request: LabelTemplateRequest):
     """Create labels from custom template."""
     try:
         result = await _dymo_printer.create_custom_template(
-            template_name=request.template_name,
-            fields=request.fields,
-            layout=request.layout
+            template_name=request.template_name, fields=request.fields, layout=request.layout
         )
-        return {"success": True, "message": f"Custom template '{request.template_name}' labels printed", "result": result}
+        return {
+            "success": True,
+            "message": f"Custom template '{request.template_name}' labels printed",
+            "result": result,
+        }
     except Exception as e:
         logger.exception("Failed to create custom template labels")
         raise HTTPException(status_code=500, detail=str(e))
@@ -602,28 +614,28 @@ async def get_label_templates():
     templates = {
         "shopping_basic": {
             "description": "Simple shopping list with checkboxes",
-            "example": ["☐ Milk", "☐ Bread", "☐ Eggs"]
+            "example": ["☐ Milk", "☐ Bread", "☐ Eggs"],
         },
         "shopping_categorized": {
             "description": "Categorized shopping list",
-            "example": ["--- DAIRY ---", "☐ Milk", "☐ Cheese", "--- BAKERY ---", "☐ Bread"]
+            "example": ["--- DAIRY ---", "☐ Milk", "☐ Cheese", "--- BAKERY ---", "☐ Bread"],
         },
         "inventory_simple": {
             "description": "Basic inventory labels",
-            "example": ["Item Name\nLocation"]
+            "example": ["Item Name\nLocation"],
         },
         "inventory_detailed": {
             "description": "Detailed inventory with quantity",
-            "example": ["Widget A\nShelf B-2 | Qty: 15"]
+            "example": ["Widget A\nShelf B-2 | Qty: 15"],
         },
         "address_labels": {
             "description": "Address/contact labels",
-            "example": ["John Doe\n123 Main St\nAnytown, ST 12345"]
+            "example": ["John Doe\n123 Main St\nAnytown, ST 12345"],
         },
         "file_folder": {
             "description": "File folder labels",
-            "example": ["2024 Tax Documents\nImportant - Keep Safe"]
-        }
+            "example": ["2024 Tax Documents\nImportant - Keep Safe"],
+        },
     }
     return {"success": True, "templates": templates}
 
@@ -639,8 +651,8 @@ async def get_tape_sizes():
             "9mm": "General purpose, file tabs",
             "12mm": "Standard labels, addresses",
             "19mm": "Wide labels, inventory, files",
-            "24mm": "Extra wide, shipping, large items"
-        }
+            "24mm": "Extra wide, shipping, large items",
+        },
     }
 
 
@@ -654,8 +666,8 @@ async def get_tape_colors():
             "black_on_white": "Classic black text on white tape",
             "white_on_black": "White text on black tape",
             "red_on_white": "Red text on white tape (highlighting)",
-            "blue_on_white": "Blue text on white tape (professional)"
-        }
+            "blue_on_white": "Blue text on white tape (professional)",
+        },
     }
 
 
@@ -670,12 +682,16 @@ async def generate_humorous_labels(request: GenerateHumorousLabelsRequest):
         # Validate theme
         valid_themes = ["random", "dad_jokes", "puns", "sarcastic", "motivational", "absurd"]
         if request.theme not in valid_themes:
-            raise HTTPException(status_code=400, detail=f"Theme must be one of: {', '.join(valid_themes)}")
+            raise HTTPException(
+                status_code=400, detail=f"Theme must be one of: {', '.join(valid_themes)}"
+            )
 
         # Validate category
         valid_categories = ["general", "food", "chores", "pets", "tech", "life"]
         if request.category not in valid_categories:
-            raise HTTPException(status_code=400, detail=f"Category must be one of: {', '.join(valid_categories)}")
+            raise HTTPException(
+                status_code=400, detail=f"Category must be one of: {', '.join(valid_categories)}"
+            )
 
         result = await _dymo_printer.generate_humorous_labels(
             theme=request.theme,
@@ -683,13 +699,13 @@ async def generate_humorous_labels(request: GenerateHumorousLabelsRequest):
             style=request.style,
             category=request.category,
             tape_size=request.tape_size,
-            tape_color=request.tape_color
+            tape_color=request.tape_color,
         )
 
         return {
             "success": True,
             "message": f"Generated and printed {request.count} humorous {request.category} labels with {request.theme} theme",
-            "result": result
+            "result": result,
         }
 
     except HTTPException:
@@ -710,7 +726,7 @@ async def get_humorous_themes():
             "puns": "Wordplay and clever puns",
             "sarcastic": "Sarcastic and witty remarks",
             "motivational": "Motivational with humor",
-            "absurd": "Completely ridiculous and absurd"
+            "absurd": "Completely ridiculous and absurd",
         },
         "categories": {
             "general": "General purpose humor",
@@ -718,11 +734,11 @@ async def get_humorous_themes():
             "chores": "Household chores sarcasm",
             "pets": "Pet-related humor",
             "tech": "Technology jokes",
-            "life": "Life observations"
+            "life": "Life observations",
         },
         "styles": {
             "short": "One-liners and quick jokes",
             "medium": "Short with a twist",
-            "long": "Extended humorous takes"
-        }
+            "long": "Extended humorous takes",
+        },
     }

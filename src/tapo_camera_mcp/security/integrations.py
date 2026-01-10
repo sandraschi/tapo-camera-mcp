@@ -214,6 +214,7 @@ class RingMCPClient:
         devices = []
         try:
             from ...core.server import TapoCameraServer
+
             server = await TapoCameraServer.get_instance()
             if hasattr(server, "camera_manager") and server.camera_manager:
                 cameras = await server.camera_manager.list_cameras()

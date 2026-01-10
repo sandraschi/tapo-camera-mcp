@@ -3,174 +3,21 @@
 {% block title %}Settings - Home Security MCP{% endblock %}
 
 {% block extra_css %}
-<style>
-    .settings-section {
-        border-radius: 0.75rem;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .settings-section h3 {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .settings-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 1rem;
-    }
-
-    .setting-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem;
-        background-color: var(--bg-secondary);
-        border-radius: 0.5rem;
-        border: 1px solid var(--border-primary);
-    }
-
-    .setting-info {
-        flex: 1;
-    }
-
-    .setting-label {
-        font-weight: 500;
-        color: var(--text-primary);
-        margin-bottom: 0.25rem;
-    }
-
-    .setting-description {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-    }
-
-    .setting-control {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .toggle-switch {
-        position: relative;
-        display: inline-block;
-        width: 44px;
-        height: 24px;
-    }
-
-    .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-
-    .toggle-slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: var(--border-primary);
-        transition: 0.4s;
-        border-radius: 24px;
-    }
-
-    .toggle-slider:before {
-        position: absolute;
-        content: "";
-        height: 18px;
-        width: 18px;
-        left: 3px;
-        bottom: 3px;
-        background-color: white;
-        transition: 0.4s;
-        border-radius: 50%;
-    }
-
-    input:checked+.toggle-slider {
-        background-color: var(--accent-gold);
-    }
-
-    input:checked+.toggle-slider:before {
-        transform: translateX(20px);
-    }
-
-    .battery-status-good {
-        color: var(--success-color);
-    }
-
-    .battery-status-low {
-        color: var(--warning-color);
-    }
-
-    .battery-status-critical {
-        color: var(--error-color);
-    }
-
-    .battery-status-unknown {
-        color: var(--text-secondary);
-    }
-
-    .form-input {
-        padding: 0.5rem;
-        background-color: var(--input-bg);
-        color: var(--text-primary);
-        border: 1px solid var(--border-primary);
-        border-radius: 0.375rem;
-        font-size: 0.875rem;
-        width: 100%;
-    }
-
-    .form-input:focus {
-        outline: none;
-        border-color: var(--accent-gold);
-        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
-    }
-
-    .status-indicator {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-
-    .status-online {
-        background-color: rgba(16, 185, 129, 0.15);
-        color: var(--success-color);
-    }
-
-    .status-offline {
-        background-color: rgba(245, 158, 11, 0.15);
-        color: var(--warning-color);
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', path='/css/settings.css') }}?v=20251203">
 {% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <!-- Page Header -->
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-100 mb-2"><span style="color: var(--accent-gold);">⚙️</span> Settings
-        </h1>
-        <p class="text-gray-400">Configure your Home Security MCP system</p>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
+        <p class="text-gray-600">Configure your Home Security MCP system</p>
     </div>
 
     <!-- System Status -->
-    <div class="settings-section glass">
+    <div class="settings-section">
         <h3>
-            <i class="fas fa-server" style="color: var(--accent-gold);"></i>
+            <i class="fas fa-server text-blue-500"></i>
             System Status
         </h3>
         <div class="settings-grid">
@@ -208,9 +55,9 @@
     </div>
 
     <!-- Camera Settings -->
-    <div class="settings-section glass">
+    <div class="settings-section">
         <h3>
-            <i class="fas fa-video" style="color: var(--accent-gold);"></i>
+            <i class="fas fa-video text-green-500"></i>
             Camera Settings
         </h3>
         <div class="settings-grid">
@@ -244,7 +91,7 @@
                     <div class="setting-description">Video recording quality setting</div>
                 </div>
                 <div class="setting-control">
-                    <select class="form-input" style="width: auto;">
+                    <select class="form-input width-auto">
                         <option>HD (1080p)</option>
                         <option>FHD (1440p)</option>
                         <option>4K</option>
@@ -255,9 +102,9 @@
     </div>
 
     <!-- Network Settings -->
-    <div class="settings-section glass">
+    <div class="settings-section">
         <h3>
-            <i class="fas fa-network-wired" style="color: var(--accent-gold);"></i>
+            <i class="fas fa-network-wired text-purple-500"></i>
             Network Settings
         </h3>
         <div class="settings-grid">
@@ -267,7 +114,7 @@
                     <div class="setting-description">HTTP server port (default: 8000)</div>
                 </div>
                 <div class="setting-control">
-                    <input type="number" class="form-input" value="8000" style="width: 80px;">
+                    <input type="number" class="form-input width-80px" value="8000">
                 </div>
             </div>
             <div class="setting-item">
@@ -334,7 +181,7 @@
                     <div class="setting-description">Logging verbosity level</div>
                 </div>
                 <div class="setting-control">
-                    <select class="form-input" style="width: auto;">
+                    <select class="form-input width-auto">
                         <option>INFO</option>
                         <option>DEBUG</option>
                         <option>WARNING</option>
@@ -384,36 +231,33 @@
             Philips Hue Bridge Configuration
         </h3>
         <div class="settings-grid">
-            <div class="setting-item" style="grid-column: 1 / -1;">
+            <div class="setting-item grid-col-full">
                 <div class="setting-info">
                     <div class="setting-label">Bridge IP Address</div>
                     <div class="setting-description">IP address of your Philips Hue Bridge (e.g., 192.168.1.100)</div>
                 </div>
                 <div class="setting-control">
-                    <input type="text" id="hue-bridge-ip" class="form-input" placeholder="192.168.1.100"
-                        style="width: 200px;">
+                    <input type="text" id="hue-bridge-ip" class="form-input width-200px" placeholder="192.168.1.100">
                 </div>
             </div>
-            <div class="setting-item" style="grid-column: 1 / -1;">
+            <div class="setting-item grid-col-full">
                 <div class="setting-info">
                     <div class="setting-label">Bridge Username (API Key)</div>
-                    <div class="setting-description">Press the button on your Hue Bridge, then click "Connect" to
-                        generate</div>
+                    <div class="setting-description">Press the button on your Hue Bridge, then click "Connect" to generate</div>
                 </div>
                 <div class="setting-control">
-                    <input type="text" id="hue-username" class="form-input" placeholder="Leave empty to auto-generate"
-                        style="width: 300px;">
-                    <button id="hue-connect" class="btn-primary" style="margin-left: 12px;">
+                    <input type="text" id="hue-username" class="form-input width-300px" placeholder="Leave empty to auto-generate">
+                    <button id="hue-connect" class="btn-primary ml-12px">
                         <i class="fas fa-plug mr-2"></i>
                         Create New Username (Press Button)
                     </button>
-                    <button id="hue-test-existing" class="btn-secondary" style="margin-left: 12px;">
+                    <button id="hue-test-existing" class="btn-secondary ml-12px">
                         <i class="fas fa-check-circle mr-2"></i>
                         Test Existing Username
                     </button>
                 </div>
             </div>
-            <div class="setting-item" style="grid-column: 1 / -1;">
+            <div class="setting-item grid-col-full">
                 <div class="setting-info">
                     <div class="setting-label">Connection Status</div>
                     <div class="setting-description" id="hue-status-desc">Not configured</div>
@@ -438,13 +282,10 @@
         </div>
         <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p class="text-sm text-blue-800">
-                <strong>Option 1 - Use Existing Username:</strong> If you have a username from another app (Hue app,
-                Home Assistant, etc.),
+                <strong>Option 1 - Use Existing Username:</strong> If you have a username from another app (Hue app, Home Assistant, etc.), 
                 enter it and click "Test Existing".<br><br>
-                <strong>Option 2 - Create New Username:</strong> Press the button on your Hue Bridge, then click "Create
-                New (Press Button)".
-                This creates a new API username for this system and will <strong>NOT</strong> affect your Alexa
-                connection or any other integrations.
+                <strong>Option 2 - Create New Username:</strong> Press the button on your Hue Bridge, then click "Create New (Press Button)". 
+                This creates a new API username for this system and will <strong>NOT</strong> affect your Alexa connection or any other integrations.
             </p>
         </div>
     </div>
@@ -462,8 +303,7 @@
                     <div class="setting-description">Days to keep video recordings</div>
                 </div>
                 <div class="setting-control">
-                    <input type="number" id="retention-video" class="form-input" min="1" max="3650" value="30"
-                        style="width: 100px;">
+                    <input type="number" id="retention-video" class="form-input width-100px" min="1" max="3650" value="30">
                     <span class="text-sm text-gray-500 ml-2">days</span>
                 </div>
             </div>
@@ -473,8 +313,7 @@
                     <div class="setting-description">Days to keep snapshot images</div>
                 </div>
                 <div class="setting-control">
-                    <input type="number" id="retention-snapshots" class="form-input" min="1" max="3650" value="90"
-                        style="width: 100px;">
+                    <input type="number" id="retention-snapshots" class="form-input width-100px" min="1" max="3650" value="90">
                     <span class="text-sm text-gray-500 ml-2">days</span>
                 </div>
             </div>
@@ -484,8 +323,7 @@
                     <div class="setting-description">Days to keep weather/energy time series</div>
                 </div>
                 <div class="setting-control">
-                    <input type="number" id="retention-environment" class="form-input" min="1" max="3650" value="365"
-                        style="width: 100px;">
+                    <input type="number" id="retention-environment" class="form-input width-100px" min="1" max="3650" value="365">
                     <span class="text-sm text-gray-500 ml-2">days</span>
                 </div>
             </div>
@@ -499,8 +337,8 @@
     </div>
 
     <!-- Data Management -->
-    <div class="settings-section" style="border: 2px solid #dc2626;">
-        <h3 style="color: #dc2626;">
+    <div class="settings-section danger-zone">
+        <h3>
             <i class="fas fa-exclamation-triangle"></i>
             Data Management (Danger Zone)
         </h3>
@@ -513,17 +351,17 @@
                 </div>
             </div>
             <div class="setting-control">
-                <button id="scrub-preview" class="btn-secondary" style="margin-right: 0.5rem;">
+                <button id="scrub-preview" class="btn-secondary mr-05rem">
                     <i class="fas fa-eye mr-2"></i>
                     Preview
                 </button>
-                <button id="scrub-execute" class="btn-danger" style="background-color: #dc2626; color: white;">
+                <button id="scrub-execute" class="btn-danger">
                     <i class="fas fa-trash-alt mr-2"></i>
                     Scrub Now
                 </button>
             </div>
         </div>
-        <div id="scrub-results" style="margin-top: 1rem; display: none;"></div>
+        <div id="scrub-results" class="mt-1rem" style="display: none;"></div>
     </div>
 
     <!-- Actions -->
@@ -550,7 +388,7 @@
 
     <script>
         // Settings page functionality
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             console.log('Settings page loaded successfully');
 
             // Load retention policies
@@ -581,7 +419,7 @@
             const connectHueBtn = document.getElementById('hue-connect');
             if (connectHueBtn) {
                 console.log('Attaching click handler to hue-connect button');
-                connectHueBtn.addEventListener('click', function (e) {
+                connectHueBtn.addEventListener('click', function(e) {
                     console.log('hue-connect button clicked', e);
                     e.preventDefault();
                     connectHueBridge();
@@ -622,13 +460,13 @@
             const exportBtn = document.querySelectorAll('.btn-secondary')[1];
 
             if (saveBtn) {
-                saveBtn.addEventListener('click', function () {
+                saveBtn.addEventListener('click', function() {
                     alert('Settings saved successfully!');
                 });
             }
 
             if (resetBtn) {
-                resetBtn.addEventListener('click', function () {
+                resetBtn.addEventListener('click', function() {
                     if (confirm('Reset all settings to defaults?')) {
                         alert('Settings reset to defaults');
                     }
@@ -636,7 +474,7 @@
             }
 
             if (exportBtn) {
-                exportBtn.addEventListener('click', function () {
+                exportBtn.addEventListener('click', function() {
                     alert('Configuration export not implemented yet');
                 });
             }
@@ -664,7 +502,7 @@
             try {
                 const response = await fetch('/api/settings/retention', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         video_recordings: video,
                         snapshots: snapshots,
@@ -690,7 +528,7 @@
             try {
                 const response = await fetch('/api/security/ring/status');
                 const data = await response.json();
-
+                
                 if (data.devices && data.devices.length > 0) {
                     container.innerHTML = data.devices.map(device => {
                         const batteryLevel = device.battery_level;
@@ -698,8 +536,8 @@
                         const isCharging = device.is_charging;
                         const statusClass = `battery-status-${batteryStatus}`;
                         const statusIcon = batteryStatus === 'critical' ? 'fa-battery-empty' :
-                            batteryStatus === 'low' ? 'fa-battery-quarter' :
-                                batteryStatus === 'good' ? 'fa-battery-full' : 'fa-battery-half';
+                                          batteryStatus === 'low' ? 'fa-battery-quarter' :
+                                          batteryStatus === 'good' ? 'fa-battery-full' : 'fa-battery-half';
                         const chargingIcon = isCharging ? '<i class="fas fa-plug text-green-500 ml-2"></i>' : '';
 
                         return `
@@ -750,22 +588,22 @@
             try {
                 const response = await fetch('/api/security/nest/status');
                 const data = await response.json();
-
+                
                 if (data.devices && data.devices.length > 0) {
                     container.innerHTML = data.devices.map(device => {
                         const batteryLevel = device.battery_level;
                         const batteryStatus = device.battery_status || 'unknown';
                         const statusClass = `battery-status-${batteryStatus}`;
                         const statusIcon = batteryStatus === 'critical' ? 'fa-battery-empty' :
-                            batteryStatus === 'low' ? 'fa-battery-quarter' :
-                                batteryStatus === 'good' ? 'fa-battery-full' : 'fa-battery-half';
-                        const deviceType = device.type === 'smoke_detector' ? 'Smoke/CO Detector' :
-                            device.type === 'co_detector' ? 'CO Detector' : 'Protect';
-                        const statusBadge = device.status === 'online' ?
+                                          batteryStatus === 'low' ? 'fa-battery-quarter' :
+                                          batteryStatus === 'good' ? 'fa-battery-full' : 'fa-battery-half';
+                        const deviceType = device.type === 'smoke_detector' ? 'Smoke/CO Detector' : 
+                                          device.type === 'co_detector' ? 'CO Detector' : 'Protect';
+                        const statusBadge = device.status === 'online' ? 
                             '<span class="status-indicator status-online" style="margin-left: 0.5rem;">Online</span>' :
                             device.status === 'offline' ?
-                                '<span class="status-indicator status-offline" style="margin-left: 0.5rem;">Offline</span>' :
-                                '<span class="status-indicator" style="background-color: #fef3c7; color: #92400e; margin-left: 0.5rem;">Warning</span>';
+                            '<span class="status-indicator status-offline" style="margin-left: 0.5rem;">Offline</span>' :
+                            '<span class="status-indicator" style="background-color: #fef3c7; color: #92400e; margin-left: 0.5rem;">Warning</span>';
 
                         return `
                             <div class="setting-item">
@@ -810,7 +648,7 @@
         async function scrubData(dryRun) {
             const resultsDiv = document.getElementById('scrub-results');
             const scrubExecuteBtn = document.getElementById('scrub-execute');
-
+            
             if (resultsDiv) {
                 resultsDiv.style.display = 'block';
                 resultsDiv.innerHTML = '<p>Processing...</p>';
@@ -823,14 +661,14 @@
             try {
                 const response = await fetch('/api/storage/scrub', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         confirm: true,
                         dry_run: dryRun,
                     }),
                 });
                 const data = await response.json();
-
+                
                 if (resultsDiv) {
                     if (data.success) {
                         const results = data.results || {};
@@ -874,14 +712,14 @@
             try {
                 const response = await fetch('/api/lighting/hue/config');
                 const data = await response.json();
-
+                
                 if (data.bridge_ip) {
                     document.getElementById('hue-bridge-ip').value = data.bridge_ip;
                 }
                 if (data.username) {
                     document.getElementById('hue-username').value = data.username;
                 }
-
+                
                 // Update status
                 updateHueStatus(data.connected || false, data.error || null);
             } catch (error) {
@@ -970,7 +808,7 @@
                 alert('Error: Bridge IP input field not found');
                 return;
             }
-
+            
             const bridgeIpValue = bridgeIp.value.trim();
             console.log('Bridge IP:', bridgeIpValue);
 
@@ -989,7 +827,7 @@
                 console.log('User cancelled');
                 return;
             }
-
+            
             console.log('Proceeding with connection...');
 
             try {

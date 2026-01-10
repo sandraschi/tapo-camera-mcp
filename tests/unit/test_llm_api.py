@@ -148,9 +148,7 @@ class TestLLMModelsAPI:
             new_callable=AsyncMock,
         ) as mock_unload:
             mock_unload.return_value = True
-            response = client.post(
-                "/api/llm/models/unload", json={"provider": "ollama"}
-            )
+            response = client.post("/api/llm/models/unload", json={"provider": "ollama"})
             assert response.status_code == 200
             data = response.json()
             assert data["success"] is True
@@ -196,4 +194,3 @@ class TestLLMChatAPI:
             data = response.json()
             assert data["success"] is True
             assert data["response"] == "AI response text"
-

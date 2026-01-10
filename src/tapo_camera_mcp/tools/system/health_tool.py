@@ -84,11 +84,13 @@ class HealthCheckTool(BaseTool):
 
             # Determine overall status
             critical_issues = [
-                name for name, check in all_checks.items()
+                name
+                for name, check in all_checks.items()
                 if isinstance(check, dict) and check.get("status") == "critical"
             ]
             warning_issues = [
-                name for name, check in all_checks.items()
+                name
+                for name, check in all_checks.items()
                 if isinstance(check, dict) and check.get("status") == "warning"
             ]
 
@@ -133,7 +135,9 @@ class HealthCheckTool(BaseTool):
             server_responsive = hasattr(server, "mcp") and server.mcp is not None
 
             # Check for registered tools - use _tools_registered flag instead of list_tools()
-            tools_registered = getattr(server, "_tools_registered", False) if server_responsive else False
+            tools_registered = (
+                getattr(server, "_tools_registered", False) if server_responsive else False
+            )
 
             issues = []
             if not server_responsive:
@@ -159,6 +163,7 @@ class HealthCheckTool(BaseTool):
         try:
             try:
                 import psutil
+
                 has_psutil = True
             except ImportError:
                 has_psutil = False
@@ -175,7 +180,7 @@ class HealthCheckTool(BaseTool):
                     "issues": ["psutil not available - system monitoring limited"],
                     "cpu_percent": 0.0,
                     "memory_percent": 0.0,
-                    "disk_percent": 0.0
+                    "disk_percent": 0.0,
                 }
 
             issues = []
@@ -234,7 +239,9 @@ class HealthCheckTool(BaseTool):
             if hasattr(camera_manager, "list_cameras"):
                 cameras_list = await camera_manager.list_cameras()
                 total_cameras = len(cameras_list)
-                online_cameras = sum(1 for cam in cameras_list if cam.get("status", {}).get("connected", False))
+                online_cameras = sum(
+                    1 for cam in cameras_list if cam.get("status", {}).get("connected", False)
+                )
             elif hasattr(camera_manager, "cameras"):
                 cameras_dict = camera_manager.cameras
                 total_cameras = len(cameras_dict)
@@ -303,16 +310,17 @@ class HealthCheckTool(BaseTool):
 
             # Calculate average response time
             response_times = self._performance_metrics["response_times"]
-            avg_response_time_ms = sum(response_times) / len(response_times) if response_times else 0
+            avg_response_time_ms = (
+                sum(response_times) / len(response_times) if response_times else 0
+            )
 
             try:
                 import psutil
+
                 process = psutil.Process()
                 memory_mb = process.memory_info().rss / (1024 * 1024)
-                has_psutil = True
             except ImportError:
                 memory_mb = 0.0
-                has_psutil = False
 
             return {
                 "status": "healthy",

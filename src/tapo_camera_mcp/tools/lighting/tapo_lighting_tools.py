@@ -5,7 +5,7 @@ This module provides MCP tools for controlling Tapo smart lighting devices
 like L900 lightstrips with color control, brightness, and effects.
 """
 
-import asyncio
+import concurrent.futures
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -86,9 +86,7 @@ class TapoLightingManager:
             self._account_password = account_cfg.get("password")
 
             if not self._account_email or not self._account_password:
-                self._connection_error = (
-                    "Tapo lighting account credentials not configured"
-                )
+                self._connection_error = "Tapo lighting account credentials not configured"
                 logger.warning(self._connection_error)
                 return False
 
@@ -116,9 +114,7 @@ class TapoLightingManager:
                         last_seen=datetime.now().isoformat(),
                     )
                     self.devices[device_id] = device
-                    logger.info(
-                        f"Configured Tapo light: {name} ({device_id}) at {host}"
-                    )
+                    logger.info(f"Configured Tapo light: {name} ({device_id}) at {host}")
 
             self._initialized = True
             logger.info(f"Tapo lighting initialized with {len(self.devices)} devices")
@@ -129,9 +125,7 @@ class TapoLightingManager:
             logger.error(self._connection_error, exc_info=True)
             return False
 
-    def _sync_get_device_status(
-        self, host: str, email: str, password: str
-    ) -> Dict[str, Any]:
+    def _sync_get_device_status(self, host: str, email: str, password: str) -> Dict[str, Any]:
         """Synchronous method to get device status (runs in separate thread)."""
         try:
             tapo_device = Tapo(host, email, password)
@@ -171,9 +165,7 @@ class TapoLightingManager:
             logger.error(f"Failed to get device status for {host}: {e}")
             raise
 
-    def _sync_set_device_state(
-        self, host: str, email: str, password: str, **kwargs
-    ) -> bool:
+    def _sync_set_device_state(self, host: str, email: str, password: str, **kwargs) -> bool:
         """Synchronous method to set device state (runs in separate thread)."""
         try:
             tapo_device = Tapo(host, email, password)
@@ -190,14 +182,12 @@ class TapoLightingManager:
                 tapo_device.setBrightness(brightness)
 
             if "rgb" in kwargs and len(kwargs["rgb"]) >= 3:
-                tapo_device.setRgbColor(
-                    kwargs["rgb"][0], kwargs["rgb"][1], kwargs["rgb"][2]
-                )
+                tapo_device.setRgbColor(kwargs["rgb"][0], kwargs["rgb"][1], kwargs["rgb"][2])
 
             if "hue" in kwargs and "saturation" in kwargs:
                 tapo_device.setHueSaturation(kwargs["hue"], kwargs["saturation"])
 
-            if "effect" in kwargs and kwargs["effect"]:
+            if kwargs.get("effect"):
                 tapo_device.setLightingEffect(kwargs["effect"])
 
             return True
@@ -214,27 +204,29 @@ class TapoLightingManager:
             logger.info("Rescanning Tapo lighting devices...")
             updated_count = 0
 
-            # Create individual poll tasks with timeouts
-            async def _poll_device(device_id: str, device: TapoLight):
-                nonlocal updated_count
-                host = self._device_hosts.get(device_id)
-                if not host:
-                    return
+            # Use ThreadPoolExecutor to run synchronous pytapo calls
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                futures = {}
 
-                try:
-                    # Polling a device synchronously in a thread with a timeout
-                    # Use asyncio.to_thread for simplicity (Python 3.9+)
-                    # Use wait_for to enforce the timeout on the thread execution
+                for device_id, device in self.devices.items():
+                    host = self._device_hosts.get(device_id)
+                    if not host:
+                        continue
+
+                    # Submit the synchronous call to the thread pool
+                    future = executor.submit(
+                        self._sync_get_device_status,
+                        host,
+                        self._account_email,
+                        self._account_password,
+                    )
+                    futures[future] = (device_id, device)
+
+                # Collect results
+                for future in concurrent.futures.as_completed(futures):
+                    device_id, device = futures[future]
                     try:
-                        status = await asyncio.wait_for(
-                            asyncio.to_thread(
-                                self._sync_get_device_status,
-                                host,
-                                self._account_email,
-                                self._account_password,
-                            ),
-                            timeout=4.0,  # 4 second timeout per device
-                        )
+                        status = future.result()
 
                         # Update device state
                         device.on = status.get("device_on", False)
@@ -246,33 +238,18 @@ class TapoLightingManager:
                         device.reachable = True
                         device.last_seen = datetime.now().isoformat()
                         updated_count += 1
-                        logger.debug(f"Updated Tapo light {device_id}: on={device.on}")
-                    except asyncio.TimeoutError:
-                        logger.warning(
-                            f"Timeout polling Tapo light {device_id} at {host}"
+
+                        logger.debug(
+                            f"Updated Tapo light {device_id}: on={device.on}, brightness={device.brightness}"
                         )
-                        device.reachable = False
-                        device.last_seen = datetime.now().isoformat()
+
                     except Exception as e:
                         logger.warning(f"Failed to update Tapo light {device_id}: {e}")
                         device.reachable = False
                         device.last_seen = datetime.now().isoformat()
-                except Exception as e:
-                    logger.error(f"Error poll task for {device_id}: {e}")
-
-            # Run all polls in parallel
-            tasks = [
-                _poll_device(device_id, device)
-                for device_id, device in self.devices.items()
-            ]
-
-            if tasks:
-                await asyncio.gather(*tasks)
 
             self._last_scan_time = datetime.now()
-            logger.info(
-                f"Rescanned {len(self.devices)} Tapo lights, updated {updated_count}"
-            )
+            logger.info(f"Rescanned {len(self.devices)} Tapo lights, updated {updated_count}")
             return True
 
         except Exception as e:
@@ -356,37 +333,27 @@ class TapoLightingManager:
                 if effect is not None:
                     kwargs["effect"] = effect
 
-                # Use asyncio.to_thread for the synchronous pytapo call
-                try:
-                    success = await asyncio.wait_for(
-                        asyncio.to_thread(
-                            self._sync_set_device_state,
-                            host,
-                            self._account_email,
-                            self._account_password,
-                            **kwargs,
-                        ),
-                        timeout=5.0,
+                # Use ThreadPoolExecutor to run the synchronous pytapo call
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(
+                        self._sync_set_device_state,
+                        host,
+                        self._account_email,
+                        self._account_password,
+                        **kwargs,
                     )
-                except asyncio.TimeoutError:
-                    logger.warning(
-                        f"Timeout setting state for Tapo light {light_id} at {host}"
-                    )
-                    device.reachable = False
-                    return False
-                except Exception as e:
-                    logger.error(f"Failed to set Tapo light state: {e}")
-                    device.reachable = False
-                    return False
 
-                if success:
-                    logger.info(
-                        f"Successfully set physical Tapo light {light_id} state: on={on}, brightness={brightness_percent}, rgb={rgb}"
-                    )
-                else:
-                    logger.warning(
-                        f"Failed to set physical Tapo light {light_id} state, but local state updated"
-                    )
+                    # Wait for the result
+                    success = future.result(timeout=5)  # 5 second timeout
+
+                    if success:
+                        logger.info(
+                            f"Successfully set physical Tapo light {light_id} state: on={on}, brightness={brightness_percent}, rgb={rgb}"
+                        )
+                    else:
+                        logger.warning(
+                            f"Failed to set physical Tapo light {light_id} state, but local state updated"
+                        )
             else:
                 logger.info(
                     f"Tapo light {light_id} not reachable, updated local state only: on={on}, brightness={brightness_percent}, rgb={rgb}"
@@ -395,9 +362,7 @@ class TapoLightingManager:
             return True
 
         except Exception as e:
-            logger.error(
-                f"Failed to set Tapo light {light_id} state: {e}", exc_info=True
-            )
+            logger.error(f"Failed to set Tapo light {light_id} state: {e}", exc_info=True)
             return False
 
     async def toggle_light(self, light_id: str) -> bool:
@@ -424,8 +389,7 @@ class TapoLightingTool(BaseTool):
 
     def __init__(self):
         super().__init__(
-            category=ToolCategory.LIGHTING,
-            description="Control Tapo smart lighting devices",
+            category=ToolCategory.LIGHTING, description="Control Tapo smart lighting devices"
         )
 
     async def ensure_initialized(self) -> bool:
@@ -475,11 +439,7 @@ class ListTapoLights(TapoLightingTool):
 
         except Exception as e:
             logger.error(f"Failed to list Tapo lights: {e}", exc_info=True)
-            return {
-                "success": False,
-                "error": f"Failed to list Tapo lights: {e}",
-                "lights": [],
-            }
+            return {"success": False, "error": f"Failed to list Tapo lights: {e}", "lights": []}
 
 
 @tool()
@@ -510,9 +470,7 @@ class ControlTapoLight(TapoLightingTool):
                     device_id, on=True, brightness_percent=brightness_percent
                 )
             elif action.lower() == "off":
-                success = await tapo_lighting_manager.set_light_state(
-                    device_id, on=False
-                )
+                success = await tapo_lighting_manager.set_light_state(device_id, on=False)
             elif action.lower() == "toggle":
                 success = await tapo_lighting_manager.toggle_light(device_id)
             elif action.lower() == "brightness" and brightness_percent is not None:
@@ -520,17 +478,13 @@ class ControlTapoLight(TapoLightingTool):
                     device_id, brightness_percent=brightness_percent
                 )
             elif action.lower() == "color" and rgb:
-                success = await tapo_lighting_manager.set_light_state(
-                    device_id, rgb=rgb
-                )
+                success = await tapo_lighting_manager.set_light_state(device_id, rgb=rgb)
             elif action.lower() == "hsv" and hue is not None and saturation is not None:
                 success = await tapo_lighting_manager.set_light_state(
                     device_id, hue=hue, saturation=saturation
                 )
             elif action.lower() == "effect" and effect:
-                success = await tapo_lighting_manager.set_light_state(
-                    device_id, effect=effect
-                )
+                success = await tapo_lighting_manager.set_light_state(device_id, effect=effect)
             else:
                 return {
                     "success": False,
@@ -554,16 +508,10 @@ class ControlTapoLight(TapoLightingTool):
                     if light
                     else None,
                 }
-            else:
-                return {
-                    "success": False,
-                    "error": f"Failed to {action} light {device_id}",
-                }
+            return {"success": False, "error": f"Failed to {action} light {device_id}"}
 
         except Exception as e:
-            logger.error(
-                f"Failed to control Tapo light {device_id}: {e}", exc_info=True
-            )
+            logger.error(f"Failed to control Tapo light {device_id}: {e}", exc_info=True)
             return {"success": False, "error": f"Failed to control light: {e}"}
 
 
@@ -599,11 +547,8 @@ class GetTapoLightStatus(TapoLightingTool):
                         "last_seen": light.last_seen,
                     },
                 }
-            else:
-                return {"success": False, "error": f"Tapo light {device_id} not found"}
+            return {"success": False, "error": f"Tapo light {device_id} not found"}
 
         except Exception as e:
-            logger.error(
-                f"Failed to get Tapo light status for {device_id}: {e}", exc_info=True
-            )
+            logger.error(f"Failed to get Tapo light status for {device_id}: {e}", exc_info=True)
             return {"success": False, "error": f"Failed to get light status: {e}"}

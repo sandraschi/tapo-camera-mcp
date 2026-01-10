@@ -137,7 +137,10 @@ def register_robotics_management_tool(mcp: FastMCP) -> None:
 
             if action == "initialize":
                 if not ip_address:
-                    return {"success": False, "error": "ip_address is required for initialize action"}
+                    return {
+                        "success": False,
+                        "error": "ip_address is required for initialize action",
+                    }
                 initialize_moorebot_client(ip_address, mock_mode)
                 return {
                     "success": True,
@@ -145,7 +148,7 @@ def register_robotics_management_tool(mcp: FastMCP) -> None:
                     "data": {
                         "ip_address": ip_address,
                         "mock_mode": mock_mode,
-                        "message": f"Moorebot client initialized at {ip_address} (mock: {mock_mode})"
+                        "message": f"Moorebot client initialized at {ip_address} (mock: {mock_mode})",
                     },
                 }
 

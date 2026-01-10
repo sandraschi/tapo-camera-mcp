@@ -100,11 +100,13 @@ def register_grafana_management_tool(mcp: FastMCP) -> None:
             # Import Grafana tools
             if action == "get_metrics":
                 from ...tools.grafana.metrics import GrafanaMetricsTool
+
                 tool = GrafanaMetricsTool()
                 result = await tool.execute()
 
             elif action == "get_vienna_dashboard":
                 from ...tools.grafana.dashboards import ViennaDashboardTool
+
                 tool = ViennaDashboardTool()
                 result = await tool.execute()
 
@@ -112,12 +114,14 @@ def register_grafana_management_tool(mcp: FastMCP) -> None:
                 if not camera_id:
                     return {"success": False, "error": "camera_id is required for create_snapshot"}
                 from ...tools.grafana.snapshots import GrafanaSnapshotsTool
+
                 tool = GrafanaSnapshotsTool()
                 result = await tool.execute(camera_id=camera_id)
 
             elif action == "get_dashboard":
                 # For now, use Vienna dashboard as the main dashboard tool
                 from ...tools.grafana.dashboards import ViennaDashboardTool
+
                 tool = ViennaDashboardTool()
                 result = await tool.execute()
                 # Add dashboard type context
@@ -127,6 +131,7 @@ def register_grafana_management_tool(mcp: FastMCP) -> None:
             elif action == "export_timeseries":
                 # Use metrics tool for time-series export
                 from ...tools.grafana.metrics import GrafanaMetricsTool
+
                 tool = GrafanaMetricsTool()
                 result = await tool.execute()
                 # Add time_range context if provided
@@ -151,7 +156,10 @@ def register_grafana_management_tool(mcp: FastMCP) -> None:
 
         except Exception as e:
             logger.error(f"Error in Grafana management action '{action}': {e}", exc_info=True)
-            return {"success": False, "error": f"Failed to execute Grafana action '{action}': {e!s}"}
+            return {
+                "success": False,
+                "error": f"Failed to execute Grafana action '{action}': {e!s}",
+            }
 
 
 def _format_prometheus_metrics(data: dict[str, Any]) -> dict[str, Any]:
@@ -163,21 +171,29 @@ def _format_prometheus_metrics(data: dict[str, Any]) -> dict[str, Any]:
         labels = f'camera="{camera_id}"'
 
         if "motion_events_1h" in camera_data:
-            prometheus_lines.append(f'tapo_motion_events_1h{{{labels}}} {camera_data["motion_events_1h"]}')
+            prometheus_lines.append(
+                f"tapo_motion_events_1h{{{labels}}} {camera_data['motion_events_1h']}"
+            )
 
         if "recording_duration_today" in camera_data:
-            prometheus_lines.append(f'tapo_recording_duration_today{{{labels}}} {camera_data["recording_duration_today"]}')
+            prometheus_lines.append(
+                f"tapo_recording_duration_today{{{labels}}} {camera_data['recording_duration_today']}"
+            )
 
         if "storage_used_mb" in camera_data:
-            prometheus_lines.append(f'tapo_storage_used_mb{{{labels}}} {camera_data["storage_used_mb"]}')
+            prometheus_lines.append(
+                f"tapo_storage_used_mb{{{labels}}} {camera_data['storage_used_mb']}"
+            )
 
     # System metrics
     system = data.get("system", {})
-    prometheus_lines.extend([
-        f'tapo_active_cameras {system.get("active_cameras", 0)}',
-        f'tapo_total_cameras {system.get("total_cameras", 0)}',
-        f'tapo_alerts_pending {system.get("alerts_pending", 0)}',
-    ])
+    prometheus_lines.extend(
+        [
+            f"tapo_active_cameras {system.get('active_cameras', 0)}",
+            f"tapo_total_cameras {system.get('total_cameras', 0)}",
+            f"tapo_alerts_pending {system.get('alerts_pending', 0)}",
+        ]
+    )
 
     return {
         "format": "prometheus",
@@ -197,25 +213,25 @@ def _format_influxdb_metrics(data: dict[str, Any]) -> dict[str, Any]:
         fields = []
 
         if "motion_events_1h" in camera_data:
-            fields.append(f'motion_events_1h={camera_data["motion_events_1h"]}')
+            fields.append(f"motion_events_1h={camera_data['motion_events_1h']}")
 
         if "recording_duration_today" in camera_data:
-            fields.append(f'recording_duration_today={camera_data["recording_duration_today"]}')
+            fields.append(f"recording_duration_today={camera_data['recording_duration_today']}")
 
         if "storage_used_mb" in camera_data:
-            fields.append(f'storage_used_mb={camera_data["storage_used_mb"]}')
+            fields.append(f"storage_used_mb={camera_data['storage_used_mb']}")
 
         if fields:
-            influx_lines.append(f'tapo_camera,camera={camera_id} {",".join(fields)} {timestamp}')
+            influx_lines.append(f"tapo_camera,camera={camera_id} {','.join(fields)} {timestamp}")
 
     # System metrics
     system = data.get("system", {})
     system_fields = [
-        f'active_cameras={system.get("active_cameras", 0)}',
-        f'total_cameras={system.get("total_cameras", 0)}',
-        f'alerts_pending={system.get("alerts_pending", 0)}',
+        f"active_cameras={system.get('active_cameras', 0)}",
+        f"total_cameras={system.get('total_cameras', 0)}",
+        f"alerts_pending={system.get('alerts_pending', 0)}",
     ]
-    influx_lines.append(f'tapo_system {",".join(system_fields)} {timestamp}')
+    influx_lines.append(f"tapo_system {','.join(system_fields)} {timestamp}")
 
     return {
         "format": "influxdb",

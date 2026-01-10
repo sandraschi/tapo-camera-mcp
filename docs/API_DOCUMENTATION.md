@@ -2,6 +2,65 @@
 
 Complete API reference for the Tapo Camera MCP platform including device onboarding, energy management, security integration, and camera control.
 
+## 🏗️ **Architecture Overview**
+
+### **MCP Client Integration (v1.17.0)**
+
+All web API endpoints now use the MCP (Model Context Protocol) client architecture instead of direct manager calls. This provides:
+
+- **Unified Communication**: Standardized protocol for all tool interactions
+- **Better Separation**: Clean separation between web layer and business logic
+- **Enhanced Reliability**: Improved error handling and connection management
+- **Future-Proof**: Extensible architecture for new integrations
+
+#### **MCP Tool Categories**
+- `energy_management` - Smart plug and energy monitoring operations
+- `motion_management` - Motion detection and camera event management
+- `camera_management` - Camera control and streaming operations
+- `ptz_management` - Pan-Tilt-Zoom control and presets
+- `media_management` - Media capture and streaming operations
+- `system_management` - System operations and logging
+- `medical_management` - Medical device control operations
+- `security_management` - Security system integration
+- `lighting_management` - Lighting control systems
+
+#### **API Response Format**
+All endpoints follow a consistent response format:
+
+```json
+{
+  "success": true|false,
+  "data": {...},           // Operation-specific data
+  "error": "error message" // Only present if success is false
+}
+```
+
+#### **Error Handling**
+- **400**: Bad Request - Invalid parameters or malformed requests
+- **404**: Not Found - Resource or device not found
+- **500**: Internal Server Error - MCP communication or server errors
+- **503**: Service Unavailable - MCP service or external dependencies unavailable
+
+### **Migration from Direct Manager Calls**
+
+Prior to v1.17.0, APIs directly called manager classes:
+```python
+# Old approach (direct manager calls)
+camera_manager = CameraManager()
+result = await camera_manager.get_camera_status(camera_id)
+```
+
+Now APIs use MCP client:
+```python
+# New approach (MCP client)
+result = await call_mcp_tool("camera_management", {
+    "action": "status",
+    "camera_id": camera_id
+})
+```
+
+This provides better abstraction, testability, and maintainability.
+
 ## 🎯 **Device Onboarding API**
 
 ### **Discovery & Configuration**

@@ -87,9 +87,7 @@ class TestOllamaProvider:
 
         with patch.object(provider._client, "post", new_callable=AsyncMock) as mock_post:
             mock_post.return_value = mock_response
-            response = await provider.chat(
-                [{"role": "user", "content": "Hello"}], stream=False
-            )
+            response = await provider.chat([{"role": "user", "content": "Hello"}], stream=False)
 
             assert response == "Hello, how can I help?"
 
@@ -155,15 +153,11 @@ class TestLMStudioProvider:
         mock_chat_response.raise_for_status = MagicMock()
 
         with patch.object(provider._client, "get", new_callable=AsyncMock) as mock_get:
-            with patch.object(
-                provider._client, "post", new_callable=AsyncMock
-            ) as mock_post:
+            with patch.object(provider._client, "post", new_callable=AsyncMock) as mock_post:
                 mock_get.return_value = mock_models_response
                 mock_post.return_value = mock_chat_response
 
-                response = await provider.chat(
-                    [{"role": "user", "content": "Hello"}], stream=False
-                )
+                response = await provider.chat([{"role": "user", "content": "Hello"}], stream=False)
 
                 assert response == "Response text"
 
@@ -186,9 +180,7 @@ class TestOpenAIProvider:
     @pytest.fixture
     def provider(self):
         """Create an OpenAIProvider instance."""
-        return OpenAIProvider(
-            base_url="https://api.openai.com/v1", api_key="test-key"
-        )
+        return OpenAIProvider(base_url="https://api.openai.com/v1", api_key="test-key")
 
     def test_init_requires_api_key(self):
         """Test that OpenAI provider requires API key."""
@@ -219,9 +211,7 @@ class TestOpenAIProvider:
     async def test_load_model_success(self, provider):
         """Test successful model loading."""
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "data": [{"id": "gpt-4", "object": "model"}]
-        }
+        mock_response.json.return_value = {"data": [{"id": "gpt-4", "object": "model"}]}
         mock_response.raise_for_status = MagicMock()
 
         with patch.object(provider._client, "get", new_callable=AsyncMock) as mock_get:
@@ -234,16 +224,12 @@ class TestOpenAIProvider:
     async def test_chat_non_streaming(self, provider):
         """Test non-streaming chat."""
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "choices": [{"message": {"content": "AI response"}}]
-        }
+        mock_response.json.return_value = {"choices": [{"message": {"content": "AI response"}}]}
         mock_response.raise_for_status = MagicMock()
 
         with patch.object(provider._client, "post", new_callable=AsyncMock) as mock_post:
             mock_post.return_value = mock_response
-            response = await provider.chat(
-                [{"role": "user", "content": "Hello"}], stream=False
-            )
+            response = await provider.chat([{"role": "user", "content": "Hello"}], stream=False)
 
             assert response == "AI response"
 
@@ -252,4 +238,3 @@ class TestOpenAIProvider:
         """Test model unloading (always succeeds for OpenAI)."""
         result = await provider.unload_model()
         assert result is True
-

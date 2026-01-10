@@ -6,6 +6,7 @@ Provides realistic mock data and behaviors for development without hardware.
 **Timestamp**: 2025-12-02
 **Usage**: Testing, CI/CD, development before hardware arrival
 """
+
 import random
 import time
 from datetime import datetime
@@ -41,11 +42,11 @@ class MockMoorebotScout:
                 "x": round(self.x, 2),
                 "y": round(self.y, 2),
                 "heading": round(self.heading, 1),
-                "room": self._get_current_room()
+                "room": self._get_current_room(),
             },
             "wifi_signal": random.randint(-60, -40),
             "uptime": int(time.time() - self.last_move_time),
-            "mock_mode": True
+            "mock_mode": True,
         }
 
     def get_mock_sensors(self) -> Dict:
@@ -59,21 +60,21 @@ class MockMoorebotScout:
                     "x": 0.0,
                     "y": 0.0,
                     "z": round(random.uniform(-0.1, 0.1), 3),
-                    "w": round(random.uniform(0.95, 1.0), 3)
+                    "w": round(random.uniform(0.95, 1.0), 3),
                 },
                 "angular_velocity": {
                     "x": round(random.uniform(-0.05, 0.05), 4),
                     "y": round(random.uniform(-0.05, 0.05), 4),
-                    "z": round(random.uniform(-0.1, 0.1), 4)
+                    "z": round(random.uniform(-0.1, 0.1), 4),
                 },
                 "linear_acceleration": {
                     "x": round(random.uniform(-0.2, 0.2), 3),
                     "y": round(random.uniform(-0.2, 0.2), 3),
-                    "z": round(9.81 + random.uniform(-0.1, 0.1), 2)
-                }
+                    "z": round(9.81 + random.uniform(-0.1, 0.1), 2),
+                },
             },
             "timestamp": datetime.now().isoformat(),
-            "mock_mode": True
+            "mock_mode": True,
         }
 
     def simulate_movement(self, linear: float, angular: float, duration: float):
@@ -96,7 +97,7 @@ class MockMoorebotScout:
             "waypoints": len(waypoints),
             "estimated_duration": len(waypoints) * 60,
             "current_waypoint": 0,
-            "mock_mode": True
+            "mock_mode": True,
         }
 
     def simulate_docking(self) -> Dict:
@@ -109,17 +110,13 @@ class MockMoorebotScout:
             self.charging = True
             self.x = 0.0
             self.y = 0.0
-            return {
-                "success": True,
-                "docking_status": "success",
-                "mock_mode": True
-            }
+            return {"success": True, "docking_status": "success", "mock_mode": True}
         return {
             "success": False,
             "error": "Docking failed - alignment issue",
             "suggestion": "Manually place robot on dock or retry",
             "attempts": random.randint(2, 5),
-            "mock_mode": True
+            "mock_mode": True,
         }
 
     def _get_current_room(self) -> str:
@@ -139,7 +136,7 @@ class MockMoorebotScout:
                 {"x": 2.0, "y": 2.0, "room": "living_room"},
                 {"x": 6.0, "y": 1.5, "room": "bedroom"},
                 {"x": 1.0, "y": 5.0, "room": "kitchen"},
-                {"x": 0.0, "y": 0.0, "room": "home_base"}
+                {"x": 0.0, "y": 0.0, "room": "home_base"},
             ],
             "perimeter": [
                 {"x": 0.0, "y": 0.0, "room": "home_base"},
@@ -147,14 +144,14 @@ class MockMoorebotScout:
                 {"x": 8.0, "y": 0.0, "room": "bedroom"},
                 {"x": 8.0, "y": 7.0, "room": "kitchen"},
                 {"x": 0.0, "y": 7.0, "room": "living_room"},
-                {"x": 0.0, "y": 0.0, "room": "home_base"}
+                {"x": 0.0, "y": 0.0, "room": "home_base"},
             ],
             "rooms": [
                 {"x": 2.5, "y": 2.0, "room": "living_room"},
                 {"x": 6.5, "y": 1.5, "room": "bedroom"},
                 {"x": 1.5, "y": 5.5, "room": "kitchen"},
-                {"x": 0.0, "y": 0.0, "room": "home_base"}
-            ]
+                {"x": 0.0, "y": 0.0, "room": "home_base"},
+            ],
         }
         return routes.get(route, routes["default"])
 
@@ -168,7 +165,7 @@ MOCK_STATUS_IDLE = {
     "position": {"x": 0.0, "y": 0.0, "heading": 0.0, "room": "living_room"},
     "wifi_signal": -45,
     "uptime": 1200,
-    "mock_mode": True
+    "mock_mode": True,
 }
 
 MOCK_STATUS_MOVING = {
@@ -179,7 +176,7 @@ MOCK_STATUS_MOVING = {
     "position": {"x": 2.5, "y": 1.2, "heading": 45.0, "room": "living_room"},
     "wifi_signal": -48,
     "uptime": 1250,
-    "mock_mode": True
+    "mock_mode": True,
 }
 
 MOCK_STATUS_CHARGING = {
@@ -190,7 +187,7 @@ MOCK_STATUS_CHARGING = {
     "position": {"x": 0.0, "y": 0.0, "heading": 0.0, "room": "home_base"},
     "wifi_signal": -42,
     "uptime": 3600,
-    "mock_mode": True
+    "mock_mode": True,
 }
 
 MOCK_STATUS_LOW_BATTERY = {
@@ -201,7 +198,7 @@ MOCK_STATUS_LOW_BATTERY = {
     "position": {"x": 5.5, "y": 3.2, "heading": 180.0, "room": "bedroom"},
     "wifi_signal": -52,
     "uptime": 7200,
-    "mock_mode": True
+    "mock_mode": True,
 }
 
 MOCK_SENSOR_DATA = {
@@ -211,10 +208,10 @@ MOCK_SENSOR_DATA = {
     "imu": {
         "orientation": {"x": 0.0, "y": 0.0, "z": 0.05, "w": 0.998},
         "angular_velocity": {"x": 0.001, "y": -0.002, "z": 0.015},
-        "linear_acceleration": {"x": 0.05, "y": -0.03, "z": 9.78}
+        "linear_acceleration": {"x": 0.05, "y": -0.03, "z": 9.78},
     },
     "timestamp": "2025-12-02T10:30:45.123456",
-    "mock_mode": True
+    "mock_mode": True,
 }
 
 MOCK_MOVE_SUCCESS = {
@@ -222,7 +219,7 @@ MOCK_MOVE_SUCCESS = {
     "linear": 0.3,
     "angular": 0.0,
     "duration": 0.0,
-    "mock_mode": True
+    "mock_mode": True,
 }
 
 MOCK_PATROL_SUCCESS = {
@@ -231,20 +228,15 @@ MOCK_PATROL_SUCCESS = {
     "waypoints": 4,
     "estimated_duration": 240,
     "current_waypoint": 0,
-    "mock_mode": True
+    "mock_mode": True,
 }
 
-MOCK_DOCK_SUCCESS = {
-    "success": True,
-    "docking_status": "success",
-    "mock_mode": True
-}
+MOCK_DOCK_SUCCESS = {"success": True, "docking_status": "success", "mock_mode": True}
 
 MOCK_DOCK_FAILURE = {
     "success": False,
     "error": "Docking failed - alignment issue",
     "suggestion": "Manually place robot on dock or retry",
     "attempts": 3,
-    "mock_mode": True
+    "mock_mode": True,
 }
-

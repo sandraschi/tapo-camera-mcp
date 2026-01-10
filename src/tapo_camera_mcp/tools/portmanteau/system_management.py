@@ -51,15 +51,15 @@ def register_system_management_tool(mcp: FastMCP) -> None:
                 - "health": Perform health check (no other parameters required)
                 - "reboot": Reboot camera (requires: camera_name, reboot_type)
                 - "logs": Get system logs (optional: log_level, lines)
-            
+
             camera_name (str | None): Camera name for reboot operation. Required for: reboot operation.
-            
+
             reboot_type (str): Type of reboot. Required for: reboot operation. Default: "soft".
                 Valid: "soft", "hard", "factory_reset"
-            
+
             log_level (str): Log level filter. Used by: logs operation. Default: "INFO".
                 Valid: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
-            
+
             lines (int): Number of log lines to retrieve. Used by: logs operation. Default: 100
 
         Returns:
@@ -131,4 +131,3 @@ def register_system_management_tool(mcp: FastMCP) -> None:
         except Exception as e:
             logger.error(f"Error in system management action '{action}': {e}", exc_info=True)
             return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
-

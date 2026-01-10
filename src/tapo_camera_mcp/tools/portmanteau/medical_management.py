@@ -7,7 +7,7 @@ otoscope cameras, scanners, and other medical equipment.
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastmcp import FastMCP
 
@@ -92,7 +92,7 @@ def register_medical_management_tool(mcp: FastMCP) -> None:
                         "capabilities": ["image_capture", "magnification", "led_control"],
                         "current_magnification": 50,
                         "led_brightness": 80,
-                        "focus_mode": "auto"
+                        "focus_mode": "auto",
                     },
                     {
                         "id": "otoscope_1",
@@ -102,7 +102,7 @@ def register_medical_management_tool(mcp: FastMCP) -> None:
                         "location": "Exam Room",
                         "capabilities": ["image_capture", "video_recording"],
                         "resolution": "high",
-                        "light_intensity": 70
+                        "light_intensity": 70,
                     },
                     {
                         "id": "scanner_1",
@@ -112,8 +112,8 @@ def register_medical_management_tool(mcp: FastMCP) -> None:
                         "location": "Admin Office",
                         "capabilities": ["document_scan", "multi_format"],
                         "supported_formats": ["jpg", "png", "tiff", "pdf"],
-                        "default_resolution": "high"
-                    }
+                        "default_resolution": "high",
+                    },
                 ]
 
                 return {
@@ -123,9 +123,12 @@ def register_medical_management_tool(mcp: FastMCP) -> None:
                     "count": len(devices),
                 }
 
-            elif action == "get_device_status":
+            if action == "get_device_status":
                 if not device_id:
-                    return {"success": False, "error": "device_id is required for get_device_status"}
+                    return {
+                        "success": False,
+                        "error": "device_id is required for get_device_status",
+                    }
 
                 # Mock device status - in real implementation, query actual device
                 device_status = {
@@ -136,7 +139,7 @@ def register_medical_management_tool(mcp: FastMCP) -> None:
                     "temperature": 25.5,
                     "firmware_version": "1.2.3",
                     "error_count": 0,
-                    "uptime_hours": 168
+                    "uptime_hours": 168,
                 }
 
                 return {
@@ -145,9 +148,12 @@ def register_medical_management_tool(mcp: FastMCP) -> None:
                     "device": device_status,
                 }
 
-            elif action == "capture_image":
+            if action == "capture_image":
                 if not device_id or not device_type:
-                    return {"success": False, "error": "device_id and device_type are required for capture_image"}
+                    return {
+                        "success": False,
+                        "error": "device_id and device_type are required for capture_image",
+                    }
 
                 # Mock image capture - in real implementation, trigger actual capture
                 capture_result = {
@@ -158,7 +164,7 @@ def register_medical_management_tool(mcp: FastMCP) -> None:
                     "resolution": resolution or "high",
                     "file_size_kb": 245,
                     "quality": "diagnostic",
-                    "path": f"/captures/{device_type}/{device_id}/"
+                    "path": f"/captures/{device_type}/{device_id}/",
                 }
 
                 return {
@@ -167,7 +173,7 @@ def register_medical_management_tool(mcp: FastMCP) -> None:
                     "capture": capture_result,
                 }
 
-            elif action == "scan_document":
+            if action == "scan_document":
                 if not device_id:
                     return {"success": False, "error": "device_id is required for scan_document"}
 
@@ -180,7 +186,7 @@ def register_medical_management_tool(mcp: FastMCP) -> None:
                     "file_size_kb": 1250,
                     "page_count": 1,
                     "format": file_format or "pdf",
-                    "quality": "medical_record"
+                    "quality": "medical_record",
                 }
 
                 return {
@@ -189,9 +195,12 @@ def register_medical_management_tool(mcp: FastMCP) -> None:
                     "scan": scan_result,
                 }
 
-            elif action == "adjust_microscope":
+            if action == "adjust_microscope":
                 if not device_id:
-                    return {"success": False, "error": "device_id is required for adjust_microscope"}
+                    return {
+                        "success": False,
+                        "error": "device_id is required for adjust_microscope",
+                    }
 
                 # Mock microscope adjustment
                 adjustments = {}
@@ -207,10 +216,10 @@ def register_medical_management_tool(mcp: FastMCP) -> None:
                     "action": action,
                     "device_id": device_id,
                     "adjustments": adjustments,
-                    "timestamp": "2025-12-27T04:00:00Z"
+                    "timestamp": "2025-12-27T04:00:00Z",
                 }
 
-            elif action == "calibrate_device":
+            if action == "calibrate_device":
                 if not device_id:
                     return {"success": False, "error": "device_id is required for calibrate_device"}
 
@@ -221,7 +230,7 @@ def register_medical_management_tool(mcp: FastMCP) -> None:
                     "duration_seconds": 30,
                     "status": "completed",
                     "accuracy_score": 98.5,
-                    "timestamp": "2025-12-27T04:00:00Z"
+                    "timestamp": "2025-12-27T04:00:00Z",
                 }
 
                 return {
@@ -230,7 +239,7 @@ def register_medical_management_tool(mcp: FastMCP) -> None:
                     "calibration": calibration_result,
                 }
 
-            elif action == "get_readings":
+            if action == "get_readings":
                 if not device_id:
                     return {"success": False, "error": "device_id is required for get_readings"}
 
@@ -243,26 +252,21 @@ def register_medical_management_tool(mcp: FastMCP) -> None:
                             "type": "temperature",
                             "value": 25.5,
                             "unit": "celsius",
-                            "accuracy": "±0.1°C"
+                            "accuracy": "±0.1°C",
                         },
-                        {
-                            "type": "humidity",
-                            "value": 45.2,
-                            "unit": "percent",
-                            "accuracy": "±2%"
-                        },
+                        {"type": "humidity", "value": 45.2, "unit": "percent", "accuracy": "±2%"},
                         {
                             "type": "pressure",
                             "value": 1013.25,
                             "unit": "hPa",
-                            "accuracy": "±0.5 hPa"
-                        }
+                            "accuracy": "±0.5 hPa",
+                        },
                     ],
                     "quality_indicators": {
                         "signal_strength": "excellent",
                         "calibration_status": "valid",
-                        "error_flags": []
-                    }
+                        "error_flags": [],
+                    },
                 }
 
                 return {

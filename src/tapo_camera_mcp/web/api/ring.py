@@ -45,12 +45,12 @@ class RingSummaryResponse(BaseModel):
 @router.get("/status")
 async def get_ring_status():
     """Get Ring connection status."""
-    from ..config import get_config
-    
+    from ...config import get_config
+
     config = get_config()
     ring_cfg = config.get("ring", {})
     enabled = ring_cfg.get("enabled", False)
-    
+
     if not enabled:
         return {
             "connected": False,
@@ -60,7 +60,7 @@ async def get_ring_status():
             "message": "Ring integration is disabled in config.yaml",
             "config_issue": True,
         }
-    
+
     client = get_ring_client()
     if not client:
         return {
@@ -80,7 +80,7 @@ async def get_ring_status():
             "enabled": True,
             "message": "2FA code required. Check your email/SMS and submit the code.",
         }
-    elif client.is_initialized:
+    if client.is_initialized:
         return {
             "connected": True,
             "initialized": True,
@@ -88,67 +88,64 @@ async def get_ring_status():
             "enabled": True,
             "message": "Ring is connected and ready",
         }
-    else:
-        return {
-            "connected": False,
-            "initialized": False,
-            "two_fa_pending": False,
-            "enabled": True,
-            "message": "Ring client not initialized. Click 'Initialize' to connect.",
-            "needs_init": True,
-        }
+    return {
+        "connected": False,
+        "initialized": False,
+        "two_fa_pending": False,
+        "enabled": True,
+        "message": "Ring client not initialized. Click 'Initialize' to connect.",
+        "needs_init": True,
+    }
 
 
 @router.post("/init")
 async def initialize_ring():
     """Initialize Ring connection."""
-    from ..config import get_config
-    from ..integrations.ring_client import init_ring_client
-    
+    from ...config import get_config
+    from ...integrations.ring_client import init_ring_client
+
     config = get_config()
     ring_cfg = config.get("ring", {})
-    
+
     if not ring_cfg.get("enabled"):
         raise HTTPException(status_code=400, detail="Ring is disabled in config.yaml")
-    
+
     email = ring_cfg.get("email")
     password = ring_cfg.get("password")
     token_file = ring_cfg.get("token_file", "ring_token.cache")
     cache_ttl = ring_cfg.get("cache_ttl", 60)
-    
+
     if not email or not password:
-        raise HTTPException(status_code=400, detail="Ring email/password not configured in config.yaml")
-    
+        raise HTTPException(
+            status_code=400, detail="Ring email/password not configured in config.yaml"
+        )
+
     try:
         client = await init_ring_client(
-            email=email,
-            password=password,
-            token_file=token_file,
-            cache_ttl=cache_ttl
+            email=email, password=password, token_file=token_file, cache_ttl=cache_ttl
         )
-        
+
         if client.is_2fa_pending:
             return {
                 "success": False,
                 "two_fa_pending": True,
                 "message": "2FA code required. Check your email/SMS and submit the code using /api/ring/auth/2fa",
             }
-        
+
         if client.is_initialized:
             return {
                 "success": True,
                 "initialized": True,
                 "message": "Ring initialized successfully",
             }
-        else:
-            return {
-                "success": False,
-                "initialized": False,
-                "message": "Ring initialization failed",
-            }
+        return {
+            "success": False,
+            "initialized": False,
+            "message": "Ring initialization failed",
+        }
     except Exception as e:
         logger.exception("Failed to initialize Ring")
-        raise HTTPException(status_code=500, detail=f"Initialization failed: {str(e)}") from e
+        raise HTTPException(status_code=500, detail=f"Initialization failed: {e!s}") from e
 
 
 @router.get("/summary", response_model=RingSummaryResponse)
@@ -312,13 +309,13 @@ class RingSirenTestRequest(BaseModel):
 @router.post("/alarm/siren/test")
 async def test_siren(request: RingSirenTestRequest):
     """Test Ring alarm siren with countdown warning.
-    
-    WARNING: This WILL be loud (104dB)! 
-    
+
+    WARNING: This WILL be loud (104dB)!
+
     Args:
         duration: How long siren sounds (default 3 seconds)
         countdown: Seconds before siren starts (default 5 - RUN!)
-    
+
     Returns:
         Countdown info, then triggers siren after delay
     """
@@ -332,11 +329,15 @@ async def test_siren(request: RingSirenTestRequest):
     if request.duration > 10:
         raise HTTPException(status_code=400, detail="Max test duration is 10 seconds (have mercy)")
     if request.countdown < 3:
-        raise HTTPException(status_code=400, detail="Min countdown is 3 seconds (warn your girlfriend!)")
+        raise HTTPException(
+            status_code=400, detail="Min countdown is 3 seconds (warn your girlfriend!)"
+        )
     if request.countdown > 30:
         raise HTTPException(status_code=400, detail="Max countdown is 30 seconds")
 
-    logger.warning(f"[ALARM] SIREN TEST INITIATED - {request.countdown}s countdown, {request.duration}s duration")
+    logger.warning(
+        f"[ALARM] SIREN TEST INITIATED - {request.countdown}s countdown, {request.duration}s duration"
+    )
 
     # Wait for countdown
     await asyncio.sleep(request.countdown)
@@ -425,37 +426,21 @@ async def get_event_video_url(device_id: str, recording_id: str):
 
     try:
         # Use async recording URL to avoid timeout issues
-        try:
-            for db in client._ring.video_devices():
-                if str(db.id) == device_id:
+        for db in client._ring.video_devices():
+            if str(db.id) == device_id:
+                try:
                     url = await db.async_recording_url(recording_id)
                     return {"url": url, "has_subscription": db.has_subscription}
-            return None
-        except Exception as e:
-            return {"error": str(e), "has_subscription": False}
-
-        result = await asyncio.to_thread(get_url)
-
-        if not result:
-            raise HTTPException(status_code=404, detail="Device not found")
-
-        if result.get("error"):
-            return {
-                "video_url": None,
-                "recording_id": recording_id,
-                "has_subscription": result.get("has_subscription", False),
-                "error": result["error"],
-                "message": "Video may not be available or may require Ring Protect subscription for older recordings"
-            }
-
-        if not result.get("url"):
-            return {
-                "video_url": None,
-                "recording_id": recording_id,
-                "message": "Video not available for this recording"
-            }
-
-        return {"video_url": result["url"], "recording_id": recording_id}
+                except Exception as e:
+                    return {
+                        "video_url": None,
+                        "recording_id": recording_id,
+                        "has_subscription": db.has_subscription,
+                        "error": str(e),
+                        "message": "Video may not be available or may require Ring Protect subscription for older recordings",
+                    }
+        
+        raise HTTPException(status_code=404, detail="Device not found")
     except HTTPException:
         raise
     except Exception as e:
@@ -530,7 +515,6 @@ async def get_doorbell_snapshot(device_id: str):
         raise HTTPException(status_code=503, detail="Ring not initialized")
 
     try:
-
         # Get the doorbell device
         await client._update_data()
         doorbell = None
@@ -554,12 +538,16 @@ async def get_doorbell_snapshot(device_id: str):
                 if last_id:
                     # Get recording URL for thumbnail
                     url = await doorbell.async_recording_url(last_id)
-                    return {"message": "Snapshot unavailable", "last_recording_url": url, "recording_id": last_id}
+                    return {
+                        "message": "Snapshot unavailable",
+                        "last_recording_url": url,
+                        "recording_id": last_id,
+                    }
             except Exception as e:
                 logger.debug("Could not get fallback recording URL: %s", e)
             raise HTTPException(
                 status_code=503,
-                detail="Snapshot unavailable. Ring Protect subscription may be required for live snapshots."
+                detail="Snapshot unavailable. Ring Protect subscription may be required for live snapshots.",
             ) from None
 
         if not snapshot:
@@ -598,7 +586,10 @@ async def get_last_recording(device_id: str):
         # Get last recording ID
         last_id = await doorbell.async_get_last_recording_id()
         if not last_id:
-            return {"message": "No recordings available", "has_subscription": doorbell.has_subscription}
+            return {
+                "message": "No recordings available",
+                "has_subscription": doorbell.has_subscription,
+            }
 
         # Get recording URL
         url = await doorbell.async_recording_url(last_id)
@@ -607,7 +598,7 @@ async def get_last_recording(device_id: str):
             "recording_id": last_id,
             "video_url": url,
             "has_subscription": doorbell.has_subscription,
-            "message": "Use video_url to view the last recording"
+            "message": "Use video_url to view the last recording",
         }
     except HTTPException:
         raise
@@ -658,7 +649,7 @@ async def create_webrtc_stream(request: WebRTCOfferRequest):
         return {
             "sdp_answer": sdp_answer,
             "device_id": request.device_id,
-            "status": "stream_created"
+            "status": "stream_created",
         }
     except HTTPException:
         raise
@@ -811,7 +802,7 @@ async def get_doorbell_capabilities(device_id: str):
                 "motion_detection": True,
                 "two_way_audio": True,
             },
-            "note": "Live snapshots and on-demand live view require Ring Protect subscription"
+            "note": "Live snapshots and on-demand live view require Ring Protect subscription",
         }
     except HTTPException:
         raise
@@ -835,9 +826,9 @@ async def download_event_video(device_id: str, recording_id: str, request: Reque
     FREE alternative to Ring Protect cloud storage!
     Works without Ring Protect subscription for recent events.
     """
-    import httpx
-    import os
     from pathlib import Path
+
+    import httpx
 
     client = get_ring_client()
     if not client or not client.is_initialized:
@@ -860,14 +851,14 @@ async def download_event_video(device_id: str, recording_id: str, request: Reque
                 return {
                     "success": False,
                     "error": "Video not available or device not found",
-                    "saved_path": None
+                    "saved_path": None,
                 }
 
         except Exception as e:
             return {
                 "success": False,
-                "error": f"Failed to get video URL: {str(e)}",
-                "saved_path": None
+                "error": f"Failed to get video URL: {e!s}",
+                "saved_path": None,
             }
 
         # Download the video with redirect following
@@ -886,6 +877,7 @@ async def download_event_video(device_id: str, recording_id: str, request: Reque
 
             # Generate filename with timestamp
             from datetime import datetime
+
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"ring_{device_id}_{recording_id}_{timestamp}.mp4"
             full_path = save_dir / filename
@@ -900,19 +892,17 @@ async def download_event_video(device_id: str, recording_id: str, request: Reque
             "success": True,
             "video_size_bytes": len(video_data),
             "saved_path": saved_path,
-            "message": "Video downloaded successfully. FREE Ring Protect alternative!"
+            "message": "Video downloaded successfully. FREE Ring Protect alternative!",
         }
 
     except Exception as e:
         logger.exception("Failed to download Ring video")
-        raise HTTPException(status_code=500, detail=f"Download failed: {str(e)}") from e
+        raise HTTPException(status_code=500, detail=f"Download failed: {e!s}") from e
 
 
 @router.post("/events/auto-download")
 async def auto_download_recent_events(
-    hours_back: int = 24,
-    save_path: str = "./ring_videos",
-    max_videos: int = 10
+    hours_back: int = 24, save_path: str = "./ring_videos", max_videos: int = 10
 ):
     """Automatically download recent Ring event videos for local storage.
 
@@ -936,7 +926,7 @@ async def auto_download_recent_events(
         for event in events:
             if event.get("timestamp"):
                 try:
-                    event_time = datetime.fromisoformat(event["timestamp"].replace('Z', '+00:00'))
+                    event_time = datetime.fromisoformat(event["timestamp"].replace("Z", "+00:00"))
                     if event_time > cutoff_time:
                         recent_events.append(event)
                 except:
@@ -956,29 +946,35 @@ async def auto_download_recent_events(
                 if device_id and recording_id:
                     result = await download_event_video(device_id, recording_id, save_path)
                     if result["success"]:
-                        downloaded.append({
-                            "device_id": device_id,
-                            "recording_id": recording_id,
-                            "saved_path": result["saved_path"],
-                            "size_bytes": result["video_size_bytes"],
-                            "event_type": event.get("event_type"),
-                            "timestamp": event.get("timestamp")
-                        })
+                        downloaded.append(
+                            {
+                                "device_id": device_id,
+                                "recording_id": recording_id,
+                                "saved_path": result["saved_path"],
+                                "size_bytes": result["video_size_bytes"],
+                                "event_type": event.get("event_type"),
+                                "timestamp": event.get("timestamp"),
+                            }
+                        )
                     else:
-                        failed.append({
-                            "device_id": device_id,
-                            "recording_id": recording_id,
-                            "error": result.get("error")
-                        })
+                        failed.append(
+                            {
+                                "device_id": device_id,
+                                "recording_id": recording_id,
+                                "error": result.get("error"),
+                            }
+                        )
 
                 await asyncio.sleep(1)  # Rate limiting
 
             except Exception as e:
-                failed.append({
-                    "device_id": event.get("device_id"),
-                    "recording_id": event.get("recording_id"),
-                    "error": str(e)
-                })
+                failed.append(
+                    {
+                        "device_id": event.get("device_id"),
+                        "recording_id": event.get("recording_id"),
+                        "error": str(e),
+                    }
+                )
 
         return {
             "success": True,
@@ -987,7 +983,7 @@ async def auto_download_recent_events(
             "downloaded": downloaded,
             "failed": failed,
             "save_path": save_path,
-            "message": f"Downloaded {len(downloaded)} videos locally. FREE Ring Protect alternative!"
+            "message": f"Downloaded {len(downloaded)} videos locally. FREE Ring Protect alternative!",
         }
 
     except Exception as e:

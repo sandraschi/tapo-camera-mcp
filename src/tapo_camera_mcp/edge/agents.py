@@ -56,7 +56,7 @@ class EdgeCollector:
         """
         Default loop: collect metrics and ignore logs.
         Subclasses can override for more sophisticated behavior.
-        
+
         NOTE: This method now uses the centralized polling manager to prevent
         aggressive polling and coordinate with other monitoring tasks.
         """

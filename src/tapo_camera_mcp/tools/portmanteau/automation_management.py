@@ -141,7 +141,7 @@ def register_automation_management_tool(mcp: FastMCP) -> None:
                 if not rule_name or not conditions or not actions:
                     return {
                         "success": False,
-                        "error": "rule_name, conditions, and actions are required for create_rule"
+                        "error": "rule_name, conditions, and actions are required for create_rule",
                     }
                 result = await automation_tool.execute(
                     action="create_rule",
@@ -149,7 +149,7 @@ def register_automation_management_tool(mcp: FastMCP) -> None:
                     conditions=conditions,
                     actions=actions,
                     priority=priority,
-                    enabled=enabled
+                    enabled=enabled,
                 )
 
             elif action == "list_rules":
@@ -169,14 +169,14 @@ def register_automation_management_tool(mcp: FastMCP) -> None:
                 if not schedule_name or not cron_expression or not actions:
                     return {
                         "success": False,
-                        "error": "schedule_name, cron_expression, and actions are required for create_schedule"
+                        "error": "schedule_name, cron_expression, and actions are required for create_schedule",
                     }
                 result = await automation_tool.execute(
                     action="create_schedule",
                     name=schedule_name,
                     cron_expression=cron_expression,
                     actions=actions,
-                    enabled=enabled
+                    enabled=enabled,
                 )
 
             elif action == "list_schedules":
@@ -184,13 +184,23 @@ def register_automation_management_tool(mcp: FastMCP) -> None:
 
             elif action == "execute_schedule":
                 if not schedule_id:
-                    return {"success": False, "error": "schedule_id is required for execute_schedule"}
-                result = await automation_tool.execute(action="execute_schedule", schedule_id=schedule_id)
+                    return {
+                        "success": False,
+                        "error": "schedule_id is required for execute_schedule",
+                    }
+                result = await automation_tool.execute(
+                    action="execute_schedule", schedule_id=schedule_id
+                )
 
             elif action == "delete_schedule":
                 if not schedule_id:
-                    return {"success": False, "error": "schedule_id is required for delete_schedule"}
-                result = await automation_tool.execute(action="delete_schedule", schedule_id=schedule_id)
+                    return {
+                        "success": False,
+                        "error": "schedule_id is required for delete_schedule",
+                    }
+                result = await automation_tool.execute(
+                    action="delete_schedule", schedule_id=schedule_id
+                )
 
             elif action == "get_history":
                 result = await automation_tool.execute(action="get_history", time_range=time_range)
@@ -205,9 +215,12 @@ def register_automation_management_tool(mcp: FastMCP) -> None:
                 "success": result.get("success", True),
                 "action": action,
                 "data": result,
-                "error": result.get("error")
+                "error": result.get("error"),
             }
 
         except Exception as e:
             logger.error(f"Error in automation management action '{action}': {e}", exc_info=True)
-            return {"success": False, "error": f"Failed to execute automation action '{action}': {e!s}"}
+            return {
+                "success": False,
+                "error": f"Failed to execute automation action '{action}': {e!s}",
+            }

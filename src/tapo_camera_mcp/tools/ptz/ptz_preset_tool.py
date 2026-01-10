@@ -48,7 +48,9 @@ class PTZPresetTool(BaseTool):
                 ..., description="Preset operation: 'list', 'save', 'recall', 'home'"
             )
             camera_id: str = Field(..., description="Camera ID to control")
-            preset_name: Optional[str] = Field(None, description="Preset name for save/recall operations")
+            preset_name: Optional[str] = Field(
+                None, description="Preset name for save/recall operations"
+            )
             preset_id: Optional[int] = Field(None, description="Preset ID for recall operations")
 
     async def execute(
@@ -137,7 +139,9 @@ class PTZPresetTool(BaseTool):
             "timestamp": time.time(),
         }
 
-    async def _recall_preset(self, camera_id: str, preset_id: Optional[int], preset_name: Optional[str] = None) -> Dict[str, Any]:
+    async def _recall_preset(
+        self, camera_id: str, preset_id: Optional[int], preset_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Recall PTZ preset by ID or name."""
         # If preset_id is not provided but preset_name is, try to find the ID
         if preset_id is None and preset_name:

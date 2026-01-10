@@ -49,14 +49,16 @@ class WindowsWebCamera(BaseCamera):
                 if response.status == 200:
                     data = await response.json()
                     logger.info(f"Windows camera server status data: {data}")
-                    cameras = data.get('cameras', {})
+                    cameras = data.get("cameras", {})
                     cam_key = str(self._device_id)
 
-                    if cam_key in cameras and cameras[cam_key].get('has_frame'):
+                    if cam_key in cameras and cameras[cam_key].get("has_frame"):
                         self._is_connected = True
                         logger.info(f"Connected to Windows camera {self._device_id}")
                         return True
-                    logger.warning(f"Camera {self._device_id} not available on Windows server. Available cameras: {list(cameras.keys())}")
+                    logger.warning(
+                        f"Camera {self._device_id} not available on Windows server. Available cameras: {list(cameras.keys())}"
+                    )
                     return False
                 logger.error(f"Windows camera server status check failed: {response.status}")
                 return False
@@ -123,7 +125,7 @@ class WindowsWebCamera(BaseCamera):
                 async with session.get(status_url, timeout=2.0) as response:
                     if response.status == 200:
                         data = await response.json()
-                        cameras = data.get('cameras', {})
+                        cameras = data.get("cameras", {})
                         cam_key = str(self._device_id)
 
                         if cam_key in cameras:
@@ -133,7 +135,7 @@ class WindowsWebCamera(BaseCamera):
                             return {
                                 "connected": True,
                                 "model": f"Windows Camera {self._device_id}",
-                                "streaming": cam_info.get('has_frame', False),
+                                "streaming": cam_info.get("has_frame", False),
                                 "resolution": "Unknown",
                                 "ptz_capable": False,
                                 "audio_capable": False,
@@ -142,18 +144,12 @@ class WindowsWebCamera(BaseCamera):
                             }
                         return {
                             "connected": False,
-                            "error": f"Camera {self._device_id} not found on server. Avail: {list(cameras.keys())}"
+                            "error": f"Camera {self._device_id} not found on server. Avail: {list(cameras.keys())}",
                         }
-                    return {
-                        "connected": False,
-                        "error": f"Server returned {response.status}"
-                    }
+                    return {"connected": False, "error": f"Server returned {response.status}"}
         except Exception as e:
             self._is_connected = False
-            return {
-                "connected": False,
-                "error": f"Connection failed: {e!s}"
-            }
+            return {"connected": False, "error": f"Connection failed: {e!s}"}
 
 
 @CameraFactory.register(CameraType.MICROSCOPE)
@@ -164,15 +160,17 @@ class WindowsMicroscopeCamera(WindowsWebCamera):
         """Get microscope camera status."""
         base_status = await super().get_status()
         if base_status.get("connected"):
-            base_status.update({
-                "magnification": self.config.params.get("magnification", 50.0),
-                "led_brightness": self.config.params.get("led_brightness", 80),
-                "focus_mode": self.config.params.get("focus_mode", "auto"),
-                "microscope_features": {
-                    "focus_control": True,
-                    "led_lighting": True,
-                    "calibration": True,
-                    "measurement": True,
+            base_status.update(
+                {
+                    "magnification": self.config.params.get("magnification", 50.0),
+                    "led_brightness": self.config.params.get("led_brightness", 80),
+                    "focus_mode": self.config.params.get("focus_mode", "auto"),
+                    "microscope_features": {
+                        "focus_control": True,
+                        "led_lighting": True,
+                        "calibration": True,
+                        "measurement": True,
+                    },
                 }
-            })
+            )
         return base_status

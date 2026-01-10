@@ -1,301 +1,157 @@
 {% extends "base.html" %}
 
-{% block title %}Command Center - Tapo Camera MCP{% endblock %}
+{% block title %}Dashboard - Tapo Camera MCP{% endblock %}
+
 
 {% block content %}
-<div class="dashboard px-4 py-8">
-    <div class="page-header mb-12 border-b border-white/5 pb-8">
-        <div class="flex items-center gap-4 mb-4">
-            <span
-                class="badge badge-primary bg-accent-gold text-slate-900 border-none font-black px-3 py-1 rounded-md text-[10px] uppercase tracking-widest flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-slate-900 animate-pulse"></span>
-                System Online
-            </span>
-            <span class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]" id="last-sync-time">
-                SOTA Sync: Initializing Telemetry...
-            </span>
-        </div>
-        <h1 class="text-5xl font-black tracking-tighter mb-3" style="color: var(--text-primary)">
-            <span class="text-accent-gold">COMMAND</span> CENTER
-        </h1>
-        <p class="font-medium max-w-3xl leading-relaxed" style="color: var(--text-secondary)">
-            Vienna-specific reductionist interface. Unified surveillance matrix aggregating Tapo-SOTA, Ring-Persistence,
-            and Plex-Stream ecosystems for empirical monitoring.
-        </p>
-    </div>
-
-    <!-- Telemetry Stats -->
-    <div class="status-overview mb-12">
-        <div class="status-card glass group p-6 rounded-2xl border transition-all"
-            style="border-color: var(--border-primary)">
-            <div
-                class="status-icon w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl group-hover:scale-110 transition-transform mb-4">
+<div class="dashboard">
+    <h1>Dashboard</h1>
+    
+    <!-- Status Overview -->
+    <div class="status-overview">
+        <div class="status-card">
+            <div class="status-icon online">
                 <i class="fas fa-video"></i>
             </div>
             <div class="status-info">
-                <h3 class="text-xs font-black uppercase tracking-widest mb-1" style="color: var(--text-secondary)">
-                    Optical Sensors</h3>
-                <p class="text-3xl font-black" style="color: var(--text-primary)">{{ online_cameras }}<span
-                        class="text-base font-medium ml-1" style="color: var(--text-secondary)">/ {{
-                        total_cameras }}</span></p>
-                <div class="flex items-center gap-2 mt-4">
-                    <div class="w-full h-1 rounded-full overflow-hidden"
-                        style="background-color: var(--border-primary)">
-                        <div class="h-full bg-blue-400"
-                            style="--progress-width: {{ (online_cameras / total_cameras * 100)|round if total_cameras > 0 else 0 }}%; width: var(--progress-width)">
-                        </div>
-                    </div>
-                </div>
+                <h3>Cameras Online</h3>
+                <p class="count">{{ online_cameras }}/{{ total_cameras }}</p>
             </div>
         </div>
-
-        <div
-            class="status-card glass group p-6 rounded-2xl border border-white/5 hover:border-accent-gold/30 transition-all">
-            <div
-                class="status-icon w-12 h-12 rounded-xl bg-accent-gold/10 text-accent-gold flex items-center justify-center text-xl group-hover:scale-110 transition-transform mb-4">
+        
+        <div class="status-card">
+            <div class="status-icon storage">
                 <i class="fas fa-hdd"></i>
             </div>
             <div class="status-info">
-                <h3 class="text-xs font-black uppercase tracking-widest mb-1" style="color: var(--text-secondary)">Data
-                    Storage</h3>
-                <p class="text-3xl font-black" style="color: var(--text-primary)">{{ storage_used }}<span
-                        class="text-base font-medium ml-1" style="color: var(--text-secondary)">%</span></p>
-                <div class="flex items-center gap-2 mt-4">
-                    <div class="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div class="h-full bg-accent-gold"
-                            style="--storage-width: {{ storage_used }}%; width: var(--storage-width)"></div>
-                    </div>
-                </div>
+                <h3>Storage Used</h3>
+                <p class="count">{{ storage_used }}%</p>
             </div>
         </div>
-
-        <div
-            class="status-card glass group p-6 rounded-2xl border border-white/5 hover:border-red-500/30 transition-all">
-            <div
-                class="status-icon w-12 h-12 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center text-xl group-hover:blink transition-all mb-4">
+        
+        <div class="status-card">
+            <div class="status-icon alerts">
                 <i class="fas fa-bell"></i>
             </div>
             <div class="status-info">
-                <h3 class="text-xs font-black uppercase tracking-widest mb-1" style="color: var(--text-secondary)">
-                    Active Alerts</h3>
-                <p class="text-3xl font-black text-red-400">{{ active_alerts }}</p>
-                <p class="text-[10px] font-black uppercase tracking-widest mt-2"
-                    style="color: var(--text-secondary); opacity: 0.6;">HIGH SEVERITY EVENTS</p>
+                <h3>Active Alerts</h3>
+                <p class="count">{{ active_alerts }}</p>
             </div>
         </div>
-
-        <div
-            class="status-card glass group p-6 rounded-2xl border border-white/5 hover:border-green-500/30 transition-all">
-            <div
-                class="status-icon w-12 h-12 rounded-xl bg-green-500/10 text-green-400 flex items-center justify-center text-xl group-hover:rotate-12 transition-transform mb-4">
+        
+        <div class="status-card">
+            <div class="status-icon recording">
                 <i class="fas fa-record-vinyl"></i>
             </div>
             <div class="status-info">
-                <h3 class="text-xs font-black uppercase tracking-widest mb-1" style="color: var(--text-secondary)">Live
-                    Persistence</h3>
-                <p class="text-3xl font-black text-green-400">{{ active_recordings }}</p>
-                <p class="text-[10px] font-black uppercase tracking-widest mt-2"
-                    style="color: var(--text-secondary); opacity: 0.6;">ACTIVE RECORDINGS</p>
+                <h3>Active Recordings</h3>
+                <p class="count">{{ active_recordings }}</p>
             </div>
         </div>
     </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        <!-- Main Panel: Recent Telemetry -->
-        <div class="lg:col-span-2 space-y-8">
-            <!-- Now Playing Media -->
-            <div id="now-playing-section" class="glass rounded-3xl overflow-hidden mb-8 border border-white/5"
-                style="display: none;">
-                <div class="px-8 py-6 border-b flex justify-between items-center backdrop-blur-md"
-                    style="border-color: var(--border-primary); background-color: var(--glass-bg)">
-                    <h2 class="text-xs font-black tracking-[0.2em] flex items-center gap-3"
-                        style="color: var(--text-primary)">
-                        <span class="text-accent-gold"><i class="fas fa-play-circle"></i></span>
-                        MEDIA STREAM PERSISTENCE
-                    </h2>
-                    <span id="plex-status-badge"
-                        class="badge bg-accent-gold text-slate-900 font-black text-[10px] px-2 py-0.5 rounded uppercase tracking-widest">Plex
-                        Live</span>
-                </div>
-                <div id="now-playing-container" class="p-8">
-                    <!-- Populated via JS -->
-                </div>
-            </div>
-
-            <!-- Vienna Public Alerts -->
-            <div id="vienna-alerts-section" class="glass rounded-3xl overflow-hidden mb-8 border border-white/5">
-                <div
-                    class="px-8 py-6 border-b border-white/5 flex justify-between items-center bg-white/5 backdrop-blur-md">
-                    <h2 class="text-xs font-black tracking-[0.2em] flex items-center gap-3"
-                        style="color: var(--text-primary)">
-                        <span class="text-red-400"><i class="fas fa-exclamation-triangle"></i></span>
-                        VIENNA MUNICIPAL ALERTS
-                    </h2>
-                    <button onclick="refreshAlerts()"
-                        class="btn btn-secondary py-1.5 px-3 text-[10px] uppercase tracking-widest font-black">
-                        <i class="fas fa-sync-alt mr-2"></i> RE-SYNC
-                    </button>
-                </div>
-                <div id="alerts-container" class="p-8">
-                    <div class="loading-state h-32 flex flex-col items-center justify-center">
-                        <div class="spinner w-8 h-8 border-2 border-t-accent-gold rounded-full animate-spin mb-4"
-                            style="border-color: var(--border-primary)">
-                        </div>
-                        <p class="font-black uppercase tracking-[0.2em] text-[10px]"
-                            style="color: var(--text-secondary)">Querying Municipal
-                            Data...
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Events -->
-            <div class="glass rounded-3xl overflow-hidden border" style="border-color: var(--border-primary)">
-                <div class="px-8 py-6 border-b flex justify-between items-center backdrop-blur-md"
-                    style="border-color: var(--border-primary); background-color: var(--glass-bg)">
-                    <h2 class="text-xs font-black tracking-[0.2em] flex items-center gap-3"
-                        style="color: var(--text-primary)">
-                        <i class="fas fa-history text-blue-400"></i>
-                        SURVEILLANCE LOGS
-                    </h2>
-                    <a href="{{ url_for('events') }}"
-                        class="btn btn-secondary py-1.5 px-3 text-[10px] uppercase tracking-widest font-black"
-                        style="border-color: var(--border-primary)">Full
-                        Audit Log</a>
-                </div>
-                <div class="divide-y" style="border-color: var(--border-primary)">
-                    {% for event in recent_events %}
-                    <div class="p-6 transition-colors group hover:bg-black/5 dark:hover:bg-white/5">
-                        <div class="flex gap-6 items-center">
-                            class="w-12 h-12 rounded-xl flex items-center justify-center text-xl text-accent-gold
-                            group-hover:scale-110 transition-transform" style="background-color: var(--border-primary)">
-                            {% if event.type == 'motion' %}
-                            <i class="fas fa-running"></i>
-                            {% elif event.type == 'recording' %}
-                            <i class="fas fa-record-vinyl"></i>
-                            {% elif event.type == 'media_event' %}
-                            <i class="fas fa-music"></i>
-                            {% else %}
-                            <i class="fas fa-info-circle"></i>
-                            {% endif %}
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-bold mb-1" style="color: var(--text-primary)">{{ event.title }}</h4>
-                            <p class="text-sm line-clamp-1" style="color: var(--text-secondary)">{{
-                                event.description }}</p>
-                            <span class="text-[10px] uppercase tracking-[0.2em] font-black mt-2 block"
-                                style="color: var(--text-secondary); opacity: 0.5;">{{
-                                event.timestamp }}</span>
-                        </div>
-                        {% if event.has_thumbnail %}
-                        <div class="w-24 aspect-video rounded-lg overflow-hidden border shadow-2xl group-hover:border-accent-gold/30 transition-colors"
-                            style="border-color: var(--border-primary)">
-                            <img src="{{ event.thumbnail_url }}" alt="Event" class="w-full h-full object-cover">
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                {% else %}
-                <div class="p-24 text-center">
-                    <i class="fas fa-inbox text-5xl mb-6 block" style="color: var(--text-secondary); opacity: 0.2;"></i>
-                    <p class="font-black uppercase tracking-[0.3em] text-[10px]" style="color: var(--text-secondary)">No
-                        Log Entries
-                        Detected</p>
-                </div>
-                {% endfor %}
+    
+    <!-- Vienna Public Alerts -->
+    <div class="section" id="vienna-alerts-section">
+        <div class="section-header">
+            <h2>🚨 Vienna Public Alerts</h2>
+            <button onclick="refreshAlerts()" class="btn btn-sm btn-secondary" title="Refresh alerts">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+        
+        <div id="alerts-container">
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading alerts...</p>
             </div>
         </div>
     </div>
-
-    <!-- Sidebar: System Telemetry -->
-    <div class="space-y-8">
-        <div class="glass rounded-3xl p-8 space-y-8 border backdrop-blur-xl"
-            style="border-color: var(--border-primary)">
-            <h2 class="text-[10px] font-black tracking-[0.3em] mb-2 uppercase opacity-50"
-                style="color: var(--text-primary)">Local Host
-                Telemetry</h2>
-
-            <div class="space-y-6">
-                <div class="status-item">
-                    <div class="flex justify-between text-[10px] font-black uppercase tracking-widest mb-2"
-                        style="color: var(--text-secondary)">
-                        <span>Processing Core</span>
-                        <span class="text-blue-400">{{ system_status.cpu_usage|default(0) }}%</span>
-                    </div>
-                    <div class="h-1.5 w-full rounded-full overflow-hidden"
-                        style="background-color: var(--border-primary)">
-                        <div class="h-full bg-blue-400/80 shadow-[0_0_8px_rgba(96,165,250,0.5)]"
-                            style="--cpu-width: {{ system_status.cpu_usage|default(0) }}%; width: var(--cpu-width)">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="status-item">
-                    <div class="flex justify-between text-[10px] font-black uppercase tracking-widest mb-2"
-                        style="color: var(--text-secondary)">
-                        <span>Memory Matrix</span>
-                        <span class="text-accent-gold">{{ system_status.memory_usage|default(0) }}%</span>
-                    </div>
-                    <div class="h-1.5 w-full rounded-full overflow-hidden"
-                        style="background-color: var(--border-primary)">
-                        <div class="h-full bg-accent-gold/80 shadow-[0_0_8px_rgba(212,175,55,0.5)]"
-                            style="--mem-width: {{ system_status.memory_usage|default(0) }}%; width: var(--mem-width)">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="status-item">
-                    <div class="flex justify-between text-[10px] font-black uppercase tracking-widest mb-2"
-                        style="color: var(--text-secondary)">
-                        <span>Sector Storage</span>
-                        <span class="text-purple-400">{{ system_status.disk_usage|default(0) }}%</span>
-                    </div>
-                    <div class="h-1.5 w-full rounded-full overflow-hidden"
-                        style="background-color: var(--border-primary)">
-                        <div class="h-full bg-purple-400/80 shadow-[0_0_8px_rgba(192,132,252,0.5)]"
-                            style="--disk-width: {{ system_status.disk_usage|default(0) }}%; width: var(--disk-width)">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="pt-8 grid grid-cols-2 gap-4" style="border-top: 1px solid var(--border-primary)">
-                <div class="p-4 rounded-xl border hover:border-blue-500/20 transition-colors"
-                    style="background-color: var(--glass-bg); border-color: var(--border-primary)">
-                    <span class="text-[9px] font-black uppercase tracking-widest block mb-1"
-                        style="color: var(--text-secondary); opacity: 0.6;">Egress
-                        Matrix</span>
-                    <span class="text-sm font-black text-blue-400">{{ system_status.network.upload|default(0.0) }}
-                        MB/s</span>
-                </div>
-                <div class="p-4 rounded-xl border hover:border-accent-gold/20 transition-colors"
-                    style="background-color: var(--glass-bg); border-color: var(--border-primary)">
-                    <span class="text-[9px] font-black uppercase tracking-widest block mb-1"
-                        style="color: var(--text-secondary); opacity: 0.6;">Ingress
-                        Stream</span>
-                    <span class="text-sm font-black text-accent-gold">{{ system_status.network.download|default(0.0)
-                        }} MB/s</span>
-                </div>
-            </div>
+    
+    <!-- Recent Events -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Recent Events</h2>
+            <a href="{{ url_for('events') }}" class="btn btn-link">View All</a>
         </div>
-
-        <div
-            class="glass rounded-3xl p-8 bg-accent-gold/5 border-accent-gold/20 shadow-[inset_0_0_20px_rgba(212,175,55,0.05)]">
-            <h3 class="text-accent-gold font-black text-[10px] uppercase tracking-[0.3em] mb-4">Security Protocol
-                ACTIVE</h3>
-            <p class="text-gray-400 text-xs leading-relaxed mb-6 font-medium">
-                Autonomous monitoring active. All motion events are timestamped and logged for materialist auditing.
-                High-fidelity persistence is mandatory.
-            </p>
-            <div class="flex items-center gap-3">
-                <div class="w-2.5 h-2.5 rounded-full bg-accent-gold animate-pulse shadow-[0_0_8px_#d4af37]"></div>
-                <span class="text-[9px] font-black uppercase tracking-[0.2em]" style="color: var(--text-primary)">Grid
-                    Guard
-                    Operational</span>
+        
+        <div class="events-list">
+            {% for event in recent_events %}
+            <div class="event-item">
+                <div class="event-icon">
+                    {% if event.type == 'motion' %}
+                    <i class="fas fa-running"></i>
+                    {% elif event.type == 'recording' %}
+                    <i class="fas fa-record-vinyl"></i>
+                    {% else %}
+                    <i class="fas fa-info-circle"></i>
+                    {% endif %}
+                </div>
+                <div class="event-details">
+                    <h4>{{ event.title }}</h4>
+                    <p>{{ event.description }}</p>
+                    <span class="event-time">{{ event.timestamp }}</span>
+                </div>
+                {% if event.has_thumbnail %}
+                <div class="event-thumbnail">
+                    <img src="{{ event.thumbnail_url }}" alt="Event Thumbnail">
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>No recent events</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- System Status -->
+    <div class="section">
+        <div class="section-header">
+            <h2>System Status</h2>
+        </div>
+        
+        <div class="system-status">
+            <div class="status-item">
+                <div class="status-label">CPU Usage</div>
+                <div class="status-bar">
+                    <div class="progress" data-value="{{ system_status.cpu_usage|default(0) }}">
+                        <span class="sr-only">{{ system_status.cpu_usage|default(0) }}%</span>
+                    </div>
+                    <span aria-hidden="true">{{ system_status.cpu_usage|default(0) }}%</span>
+                </div>
+            </div>
+            
+            <div class="status-item">
+                <div class="status-label">Memory Usage</div>
+                <div class="status-bar">
+                    <div class="progress" data-value="{{ system_status.memory_usage|default(0) }}">
+                        <span class="sr-only">{{ system_status.memory_usage|default(0) }}%</span>
+                    </div>
+                    <span aria-hidden="true">{{ system_status.memory_usage|default(0) }}%</span>
+                </div>
+            </div>
+            
+            <div class="status-item">
+                <div class="status-label">Disk Usage</div>
+                <div class="status-bar">
+                    <div class="progress" data-value="{{ system_status.disk_usage|default(0) }}">
+                        <span class="sr-only">{{ system_status.disk_usage|default(0) }}%</span>
+                    </div>
+                    <span aria-hidden="true">{{ system_status.disk_usage|default(0) }}%</span>
+                </div>
+            </div>
+            
+            <div class="status-item">
+                <div class="status-label">Network</div>
+                <div class="status-details">
+                    <span>↑ {{ system_status.network.upload|default(0.0) }} MB/s</span>
+                    <span>↓ {{ system_status.network.download|default(0.0) }} MB/s</span>
+                </div>
             </div>
         </div>
     </div>
-</div>
 </div>
 {% endblock %}
 
@@ -306,27 +162,29 @@
     const ALERTS_CACHE_TTL = 2 * 60 * 1000; // 2 minutes cache TTL
     const RATE_LIMIT_MS = 30 * 1000; // 30 seconds rate limit
     const DEBOUNCE_MS = 500; // 500ms debounce for refresh button
-
+    
     let alertsInterval = null;
     let isRefreshingAlerts = false;
     let lastRequestTime = 0;
     let refreshDebounceTimer = null;
-
-    document.addEventListener('DOMContentLoaded', function () {
-        // Initialize last sync time
-        document.getElementById('last-sync-time').textContent = `Last Sync: ${new Date().toLocaleTimeString()}`;
-
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set progress bar widths from data attributes
+        document.querySelectorAll('.progress[data-value]').forEach(progress => {
+            const value = progress.getAttribute('data-value');
+            if (value) {
+                progress.style.width = `${value}%`;
+            }
+        });
+        
         // Load Vienna alerts (check cache first)
         loadAlerts(true);
-
-        // Start Plex Now Playing poll
-        pollNowPlaying();
-
+        
         // Refresh alerts every 5 minutes
         alertsInterval = setInterval(() => loadAlerts(false), 5 * 60 * 1000);
-
+        
         // Clean up interval on page unload to prevent memory leaks
-        window.addEventListener('beforeunload', function () {
+        window.addEventListener('beforeunload', function() {
             if (alertsInterval) {
                 clearInterval(alertsInterval);
                 alertsInterval = null;
@@ -337,21 +195,21 @@
             }
         });
     });
-
+    
     // Client-side caching utilities
     function getCachedAlerts() {
         try {
             const cached = localStorage.getItem(ALERTS_CACHE_KEY);
             if (!cached) return null;
-
+            
             const { data, timestamp } = JSON.parse(cached);
             const age = Date.now() - timestamp;
-
+            
             if (age > ALERTS_CACHE_TTL) {
                 localStorage.removeItem(ALERTS_CACHE_KEY);
                 return null;
             }
-
+            
             return data;
         } catch (error) {
             console.warn('Error reading alerts cache:', error);
@@ -359,7 +217,7 @@
             return null;
         }
     }
-
+    
     function setCachedAlerts(data) {
         try {
             const cache = {
@@ -371,95 +229,195 @@
             console.warn('Error writing alerts cache:', error);
         }
     }
-
+    
     // Rate limiting check
     function canMakeRequest() {
         const now = Date.now();
         const timeSinceLastRequest = now - lastRequestTime;
-
+        
         if (timeSinceLastRequest < RATE_LIMIT_MS) {
             const remaining = Math.ceil((RATE_LIMIT_MS - timeSinceLastRequest) / 1000);
+            console.log(`Rate limit: Please wait ${remaining} more second(s) before refreshing`);
             return false;
         }
-
+        
         lastRequestTime = now;
         return true;
     }
-
+    
     async function loadAlerts(useCache = true) {
         const container = document.getElementById('alerts-container');
-        if (!container) return;
-
+        if (!container) {
+            console.warn('Alerts container not found in DOM');
+            return;
+        }
+        
+        // Try cache first if enabled
         if (useCache) {
             const cached = getCachedAlerts();
             if (cached) {
+                console.log('Loading alerts from cache');
                 renderAlerts(cached);
+                // Still fetch fresh data in background (but don't show loading)
                 fetchFreshAlerts(false);
                 return;
             }
         }
-
+        
+        // Show loading state only if no cache
+        if (useCache) {
+            container.innerHTML = `
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading alerts...</p>
+                </div>
+            `;
+        }
+        
         await fetchFreshAlerts(true);
     }
-
+    
     async function fetchFreshAlerts(showLoading = true) {
         const container = document.getElementById('alerts-container');
         if (!container) return;
-
+        
         try {
+            // Add timeout to prevent hanging requests
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-            const response = await fetch('/alerts/summary', { signal: controller.signal });
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+            
+            const response = await fetch('/alerts/summary', {
+                signal: controller.signal
+            });
             clearTimeout(timeoutId);
-
-            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch alerts: ${response.status} ${response.statusText}`);
+            }
+            
             const data = await response.json();
+            
+            // Validate response structure
+            if (!data || typeof data !== 'object') {
+                throw new Error('Invalid response format from alerts API');
+            }
+            
+            // Cache the data
             setCachedAlerts(data);
+            
+            // Render alerts
             renderAlerts(data);
-            document.getElementById('last-sync-time').textContent = `Last Sync: ${new Date().toLocaleTimeString()}`;
         } catch (error) {
             console.error('Error loading alerts:', error);
+            
+            // Try to fallback to cache if available
             const cached = getCachedAlerts();
             if (cached) {
+                console.log('Using cached alerts due to fetch error');
                 renderAlerts(cached);
-            } else if (showLoading) {
+                return;
+            }
+            
+            // Show error only if no cache available
+            if (showLoading && container) {
+                const errorMessage = error.name === 'AbortError' 
+                    ? 'Request timeout - please check your connection'
+                    : error.message || 'Unable to load alerts';
+                
                 container.innerHTML = `
-                    <div class="glass p-6 text-center rounded-2xl border" style="border-color: var(--error-color)">
-                        <i class="fas fa-exclamation-triangle mb-2" style="color: var(--error-color)"></i>
-                        <p class="text-sm" style="color: var(--text-secondary)">Telemetry disconnect. <a href="#" onclick="loadAlerts(false); return false;" class="text-accent-gold underline">Retry</a></p>
+                    <div class="alert-item" style="background: #374151; padding: 16px; border-radius: 8px; text-align: center;">
+                        <p style="color: #9CA3AF; margin: 0;">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            ${escapeHtml(errorMessage)}. <a href="#" onclick="loadAlerts(false); return false;" style="color: #60A5FA;">Retry</a>
+                        </p>
                     </div>
                 `;
             }
         }
     }
-
+    
+    // Debounced refresh function
     function refreshAlerts() {
-        if (refreshDebounceTimer) clearTimeout(refreshDebounceTimer);
-        refreshDebounceTimer = setTimeout(() => performRefresh(), DEBOUNCE_MS);
+        // Clear existing debounce timer
+        if (refreshDebounceTimer) {
+            clearTimeout(refreshDebounceTimer);
+        }
+        
+        // Set new debounce timer
+        refreshDebounceTimer = setTimeout(() => {
+            performRefresh();
+        }, DEBOUNCE_MS);
     }
-
+    
     async function performRefresh() {
-        if (!canMakeRequest()) return;
-        if (isRefreshingAlerts) return;
-
+        // Check rate limit
+        if (!canMakeRequest()) {
+            const container = document.getElementById('alerts-container');
+            if (container) {
+                const now = Date.now();
+                const remaining = Math.ceil((RATE_LIMIT_MS - (now - lastRequestTime)) / 1000);
+                const currentContent = container.innerHTML;
+                container.innerHTML = `
+                    <div class="alert-item" style="background: #F59E0B; padding: 12px 16px; border-radius: 8px; text-align: center; margin-bottom: 8px;">
+                        <p style="color: #FFFFFF; margin: 0; font-size: 13px;">
+                            <i class="fas fa-clock"></i> 
+                            Please wait ${remaining} more second(s) before refreshing again
+                        </p>
+                    </div>
+                    ${currentContent}
+                `;
+                // Clear the rate limit message after the remaining time
+                setTimeout(() => {
+                    if (container.innerHTML.includes('Please wait')) {
+                        container.innerHTML = currentContent;
+                    }
+                }, remaining * 1000);
+            }
+            return;
+        }
+        
+        // Prevent concurrent refresh requests
+        if (isRefreshingAlerts) {
+            console.log('Refresh already in progress, skipping...');
+            return;
+        }
+        
         const container = document.getElementById('alerts-container');
-        if (!container) return;
-
+        if (!container) {
+            console.warn('Alerts container not found in DOM');
+            return;
+        }
+        
         isRefreshingAlerts = true;
-        container.innerHTML = `<div class="loading-state h-32"><div class="spinner"></div></div>`;
-
+        container.innerHTML = `
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Refreshing alerts...</p>
+            </div>
+        `;
+        
         try {
+            // Add timeout
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-            const response = await fetch('/alerts/refresh', { signal: controller.signal });
+            
+            const response = await fetch('/alerts/refresh', {
+                signal: controller.signal
+            });
             clearTimeout(timeoutId);
-
-            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-
+            
+            if (!response.ok) {
+                throw new Error(`Failed to refresh alerts: ${response.status} ${response.statusText}`);
+            }
+            
             const data = await response.json();
+            
+            // Validate response structure
+            if (!data || typeof data !== 'object' || !Array.isArray(data.alerts)) {
+                throw new Error('Invalid response format from refresh API');
+            }
+            
+            // Convert to summary format
             const summary = {
                 total_alerts: data.total || 0,
                 highest_severity: data.alerts.length > 0 ? (data.alerts[0].severity || 'unknown') : 'unknown',
@@ -468,122 +426,171 @@
                 alerts: data.alerts.slice(0, 5),
                 status: data.total === 0 ? 'ok' : 'warning'
             };
-
+            
+            // Cache the refreshed data
             setCachedAlerts(summary);
+            
             renderAlerts(summary);
         } catch (error) {
             console.error('Error refreshing alerts:', error);
+            const errorMessage = error.name === 'AbortError'
+                ? 'Request timeout - please check your connection'
+                : error.message || 'Unable to refresh alerts';
+            
+            // Try to fallback to cache
             const cached = getCachedAlerts();
-            if (cached) renderAlerts(cached);
+            if (cached) {
+                console.log('Using cached alerts due to refresh error');
+                renderAlerts(cached);
+            } else if (container) {
+                container.innerHTML = `
+                    <div class="alert-item" style="background: #374151; padding: 16px; border-radius: 8px; text-align: center;">
+                        <p style="color: #9CA3AF; margin: 0;">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            ${escapeHtml(errorMessage)}. <a href="#" onclick="refreshAlerts(); return false;" style="color: #60A5FA;">Retry</a>
+                        </p>
+                    </div>
+                `;
+            }
         } finally {
             isRefreshingAlerts = false;
         }
     }
-
+    
     function renderAlerts(data) {
         const container = document.getElementById('alerts-container');
-        if (!container) return;
-
-        const totalAlerts = parseInt(data.total_alerts || 0, 10);
-        if (totalAlerts === 0) {
+        if (!container) {
+            console.warn('Alerts container not found in DOM');
+            return;
+        }
+        
+        // Validate data structure
+        if (!data || typeof data !== 'object') {
             container.innerHTML = `
-                <div class="flex flex-col items-center justify-center py-8">
-                    <div class="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center text-3xl text-green-400 mb-4">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <h3 class="font-bold mb-1" style="color: var(--text-primary)">Grid Clear</h3>
-                    <p class="text-sm" style="color: var(--text-secondary)">No active municipal web alerts for Vienna region.</p>
+                <div class="alert-item" style="background: #374151; padding: 16px; border-radius: 8px; text-align: center;">
+                    <p style="color: #9CA3AF; margin: 0;">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Invalid alert data received
+                    </p>
                 </div>
             `;
             return;
         }
-
-        let alertsHtml = `<div class="space-y-4">`;
+        
+        const totalAlerts = parseInt(data.total_alerts || 0, 10);
+        if (totalAlerts === 0) {
+            container.innerHTML = `
+                <div class="alert-status-ok" style="background: linear-gradient(135deg, #065F46, #047857); padding: 20px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 8px;">✅</div>
+                    <h3 style="color: #A7F3D0; margin: 0 0 8px 0; font-size: 18px;">All Clear</h3>
+                    <p style="color: #6EE7B7; margin: 0; font-size: 14px;">
+                        No active weather or emergency alerts for Vienna
+                    </p>
+                    <p style="color: #34D399; margin: 8px 0 0 0; font-size: 12px;">
+                        Sources: GeoSphere Austria, Meteoalarm
+                    </p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Build alerts HTML - escape all dynamic values for XSS protection
+        const safeSeverityColor = escapeHtml(data.highest_severity_color || '#9CA3AF');
+        const safeSeverityIcon = escapeHtml(data.highest_severity_icon || '✓');
+        const safeTotalAlerts = escapeHtml(String(data.total_alerts || 0));
+        let alertsHtml = `
+            <div class="alerts-summary" style="display: grid; grid-template-columns: auto 1fr; gap: 16px; margin-bottom: 16px;">
+                <div class="alert-badge" style="background: ${safeSeverityColor}; padding: 16px 24px; border-radius: 12px; text-align: center; min-width: 120px;">
+                    <div style="font-size: 32px;">${safeSeverityIcon}</div>
+                    <div style="font-size: 24px; font-weight: bold; color: white;">${safeTotalAlerts}</div>
+                    <div style="font-size: 12px; color: rgba(255,255,255,0.8); text-transform: uppercase;">Alert${data.total_alerts !== 1 ? 's' : ''}</div>
+                </div>
+                <div class="alerts-list" style="display: flex; flex-direction: column; gap: 8px;">
+        `;
+        
+        // Add each alert - escape all dynamic values
         for (const alert of (data.alerts || [])) {
-            const safeColor = alert.severity_color || '#9CA3AF';
+            const typeIcon = getAlertTypeIcon(alert.alert_type);
+            const safeSeverityColor = escapeHtml(alert.severity_color || '#9CA3AF');
+            const safeRegion = escapeHtml(alert.region || 'Unknown');
+            const safeSource = escapeHtml(alert.source === 'geosphere' ? 'GeoSphere' : 'Meteoalarm');
+            const safeSeverity = escapeHtml(alert.severity || 'unknown');
+            const safeSeverityIcon = escapeHtml(alert.severity_icon || '⚠️');
             alertsHtml += `
-                <div class="p-4 rounded-2xl border flex gap-4 items-start transition-colors hover:bg-black/5 dark:hover:bg-white/5" style="border-color: var(--border-primary); border-left: 4px solid ${safeColor}; background-color: var(--glass-bg)">
-                    <div class="text-xl">${getAlertTypeIcon(alert.alert_type)}</div>
-                    <div>
-                        <h4 class="font-bold text-sm" style="color: var(--text-primary)">${escapeHtml(alert.title || 'Unknown Alert')}</h4>
-                        <p class="text-xs mt-1" style="color: var(--text-secondary)">${escapeHtml(alert.region || 'Vienna')} • ${escapeHtml(alert.source.toUpperCase())}</p>
+                <div class="alert-item" style="background: #374151; padding: 12px 16px; border-radius: 8px; border-left: 4px solid ${safeSeverityColor};">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 20px;">${typeIcon}</span>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #F3F4F6; font-size: 14px;">${escapeHtml(alert.title || 'Unknown Alert')}</div>
+                            <div style="color: #9CA3AF; font-size: 12px; margin-top: 2px;">
+                                ${safeRegion} • ${safeSource}
+                            </div>
+                        </div>
+                        <span style="font-size: 16px;" title="${safeSeverity}">${safeSeverityIcon}</span>
                     </div>
+                    ${alert.description ? `<p style="color: #D1D5DB; font-size: 13px; margin: 8px 0 0 32px; line-height: 1.4;">${escapeHtml(truncate(alert.description, 150))}</p>` : ''}
                 </div>
             `;
         }
-        alertsHtml += `</div>`;
+        
+        alertsHtml += `
+                </div>
+            </div>
+            <div style="text-align: center; color: #6B7280; font-size: 11px; margin-top: 8px;">
+                Last updated: ${new Date().toLocaleTimeString('de-AT')} • Sources: GeoSphere Austria, Meteoalarm
+            </div>
+        `;
+        
         container.innerHTML = alertsHtml;
     }
-
+    
+    // Helper to show cache status (optional visual indicator)
+    function showCacheStatus(isFromCache) {
+        if (isFromCache) {
+            const container = document.getElementById('alerts-container');
+            if (container) {
+                const statusDiv = document.createElement('div');
+                statusDiv.className = 'cache-status';
+                statusDiv.textContent = '📦 Loaded from cache';
+                container.appendChild(statusDiv);
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    if (statusDiv.parentNode) {
+                        statusDiv.remove();
+                    }
+                }, 3000);
+            }
+        }
+    }
+    
     function getAlertTypeIcon(type) {
         const icons = {
-            'weather': '🌤️', 'storm': '🌪️', 'wind': '💨', 'rain': '🌧️', 'snow': '❄️',
-            'ice': '🧊', 'fog': '🌫️', 'heat': '🌡️', 'cold': '🥶', 'thunderstorm': '⛈️',
-            'flood': '🌊', 'fire': '🔥', 'avalanche': '🏔️'
+            'weather': '🌤️',
+            'storm': '🌪️',
+            'wind': '💨',
+            'rain': '🌧️',
+            'snow': '❄️',
+            'ice': '🧊',
+            'fog': '🌫️',
+            'heat': '🌡️',
+            'cold': '🥶',
+            'thunderstorm': '⛈️',
+            'flood': '🌊',
+            'fire': '🔥',
+            'avalanche': '🏔️',
         };
         return icons[type] || '⚠️';
     }
-
+    
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
-
-    async function pollNowPlaying() {
-        const section = document.getElementById('now-playing-section');
-        try {
-            const response = await fetch('/api/plex/now-playing');
-            if (!response.ok) throw new Error('Fetch failed');
-            const data = await response.json();
-
-            if (data.active) {
-                section.style.display = 'block';
-                renderNowPlaying(data);
-            } else {
-                section.style.display = 'none';
-            }
-        } catch (error) {
-            section.style.display = 'none';
-        }
-        setTimeout(pollNowPlaying, 10000);
-    }
-
-    function renderNowPlaying(data) {
-        const container = document.getElementById('now-playing-container');
-        const meta = data.metadata || {};
-        const thumbUrl = meta.thumb ? `${meta.thumb}` : '';
-
-        container.innerHTML = `
-            <div class="flex gap-8 items-center">
-                <div class="w-32 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl flex-shrink-0 border" style="border-color: var(--border-primary); background-color: var(--bg-secondary)">
-                    ${thumbUrl ? `<img src="${thumbUrl}" class="w-full h-full object-cover">` : '<div class="w-full h-full flex items-center justify-center text-accent-gold text-4xl"><i class="fas fa-compact-disc fa-spin"></i></div>'}
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-3 mb-2">
-                        <span class="text-[10px] font-black text-accent-gold uppercase tracking-[0.3em] block">${escapeHtml(data.event.split('.').pop().toUpperCase())}</span>
-                        <div class="h-px bg-accent-gold/20 flex-1"></div>
-                    </div>
-                    <h3 class="text-2xl font-black truncate mb-1" style="color: var(--text-primary)">${escapeHtml(data.media || 'Unknown Metadata')}</h3>
-                    <p class="font-bold text-sm mb-4" style="color: var(--text-secondary)">${escapeHtml(meta.year || '2025')} • ${escapeHtml(meta.contentRating || 'NR')}</p>
-                    
-                    <div class="flex gap-6 items-center text-xs font-bold uppercase tracking-widest text-gray-500">
-                        <span class="flex items-center gap-2"><i class="fas fa-user-circle text-accent-gold"></i> ${escapeHtml(data.user || 'Sandra')}</span>
-                        <span class="flex items-center gap-2"><i class="fas fa-tv text-accent-gold"></i> ${escapeHtml(data.player || 'Living Room')}</span>
-                    </div>
-
-                    <div class="mt-6">
-                        <div class="flex justify-between text-[10px] font-black text-gray-600 mb-2 uppercase tracking-widest">
-                            <span>Teleport Progress</span>
-                            <span>Live Sync</span>
-                        </div>
-                        <div class="h-1.5 w-full rounded-full overflow-hidden" style="background-color: var(--border-primary)">
-                            <div class="h-full bg-gradient-to-r from-accent-gold to-yellow-400 animate-pulse" style="width: 65%"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
+    
+    function truncate(text, maxLength) {
+        if (!text || text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
     }
 </script>
 {% endblock %}

@@ -10,9 +10,8 @@ Communicates with FastMCP server via HTTP API calls.
 
 import asyncio
 import logging
-from datetime import datetime
-from typing import Dict, List, Optional, Any
 from enum import Enum
+from typing import Any, Dict, Optional
 
 import aiohttp
 
@@ -21,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class VbotStatus(str, Enum):
     """Virtual robot status states"""
+
     IDLE = "idle"
     SPAWNED = "spawned"
     ACTIVE = "active"
@@ -32,6 +32,7 @@ class VbotStatus(str, Enum):
 
 class VbotType(str, Enum):
     """Supported virtual robot types"""
+
     SCOUT = "scout"  # Moorebot Scout
     SCOUT_E = "scout_e"  # Moorebot Scout E
     GO2 = "go2"  # Unitree Go2
@@ -76,12 +77,8 @@ class VbotClient:
         await client.move_vbot("vbot_scout_01", linear=0.5, angular=0.0)
     """
 
-    def __init__(
-        self,
-        mcp_server_url: str,
-        timeout: int = 30
-    ):
-        self.mcp_server_url = mcp_server_url.rstrip('/')
+    def __init__(self, mcp_server_url: str, timeout: int = 30):
+        self.mcp_server_url = mcp_server_url.rstrip("/")
         self.timeout = timeout
         self.session: Optional[aiohttp.ClientSession] = None
 
@@ -114,23 +111,13 @@ class VbotClient:
 
             if test_result.get("success"):
                 logger.info("Connected to robotics-mcp server")
-                return {
-                    "success": True,
-                    "server_status": test_result
-                }
-            else:
-                logger.error(f"Failed to connect to robotics-mcp server: {test_result}")
-                return {
-                    "success": False,
-                    "error": "Server connection failed"
-                }
+                return {"success": True, "server_status": test_result}
+            logger.error(f"Failed to connect to robotics-mcp server: {test_result}")
+            return {"success": False, "error": "Server connection failed"}
 
         except Exception as e:
             logger.exception(f"Error connecting to robotics-mcp server: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     async def disconnect(self):
         """Disconnect from the server"""
@@ -160,13 +147,9 @@ class VbotClient:
                 if response.status == 200:
                     result = await response.json()
                     return result.get("result", result)
-                else:
-                    error_text = await response.text()
-                    logger.error(f"MCP tool call failed: {response.status} - {error_text}")
-                    return {
-                        "success": False,
-                        "error": f"HTTP {response.status}: {error_text}"
-                    }
+                error_text = await response.text()
+                logger.error(f"MCP tool call failed: {response.status} - {error_text}")
+                return {"success": False, "error": f"HTTP {response.status}: {error_text}"}
 
         except asyncio.TimeoutError:
             logger.error(f"MCP tool call timed out: {tool_name}")
@@ -184,7 +167,7 @@ class VbotClient:
         position: Optional[Dict[str, float]] = None,
         scale: Optional[float] = None,
         metadata: Optional[Dict[str, Any]] = None,
-        model_path: Optional[str] = None
+        model_path: Optional[str] = None,
     ) -> Dict:
         """
         Create a new virtual robot.
@@ -200,11 +183,7 @@ class VbotClient:
         Returns:
             Creation result with vbot details
         """
-        args = {
-            "operation": "create",
-            "robot_type": robot_type,
-            "platform": platform
-        }
+        args = {"operation": "create", "robot_type": robot_type, "platform": platform}
 
         if position:
             args["position"] = position
@@ -234,10 +213,7 @@ class VbotClient:
         Returns:
             Vbot details
         """
-        args = {
-            "operation": "read",
-            "robot_id": robot_id
-        }
+        args = {"operation": "read", "robot_id": robot_id}
 
         result = await self._call_mcp_tool("robot_virtual", args)
         return result
@@ -247,7 +223,7 @@ class VbotClient:
         robot_id: str,
         position: Optional[Dict[str, float]] = None,
         scale: Optional[float] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict:
         """
         Update virtual robot properties.
@@ -261,10 +237,7 @@ class VbotClient:
         Returns:
             Update result
         """
-        args = {
-            "operation": "update",
-            "robot_id": robot_id
-        }
+        args = {"operation": "update", "robot_id": robot_id}
 
         if position:
             args["position"] = position
@@ -292,10 +265,7 @@ class VbotClient:
         Returns:
             Deletion result
         """
-        args = {
-            "operation": "delete",
-            "robot_id": robot_id
-        }
+        args = {"operation": "delete", "robot_id": robot_id}
 
         result = await self._call_mcp_tool("robot_virtual", args)
 
@@ -331,7 +301,7 @@ class VbotClient:
         robot_type: str,
         platform: str = "unity",
         position: Optional[Dict[str, float]] = None,
-        scale: Optional[float] = None
+        scale: Optional[float] = None,
     ) -> Dict:
         """
         Spawn a virtual robot (alias for create).
@@ -357,10 +327,7 @@ class VbotClient:
         Returns:
             Status information
         """
-        args = {
-            "operation": "get_status",
-            "robot_id": robot_id
-        }
+        args = {"operation": "get_status", "robot_id": robot_id}
 
         result = await self._call_mcp_tool("robot_virtual", args)
         return result
@@ -375,10 +342,7 @@ class VbotClient:
         Returns:
             LiDAR scan data
         """
-        args = {
-            "operation": "get_lidar",
-            "robot_id": robot_id
-        }
+        args = {"operation": "get_lidar", "robot_id": robot_id}
 
         result = await self._call_mcp_tool("robot_virtual", args)
         return result
@@ -394,11 +358,7 @@ class VbotClient:
         Returns:
             Scale result
         """
-        args = {
-            "operation": "set_scale",
-            "robot_id": robot_id,
-            "scale": scale
-        }
+        args = {"operation": "set_scale", "robot_id": robot_id, "scale": scale}
 
         result = await self._call_mcp_tool("robot_virtual", args)
 
@@ -419,10 +379,7 @@ class VbotClient:
         Returns:
             Navigation test result
         """
-        args = {
-            "operation": "test_navigation",
-            "robot_id": robot_id
-        }
+        args = {"operation": "test_navigation", "robot_id": robot_id}
 
         result = await self._call_mcp_tool("robot_virtual", args)
         return result
@@ -437,10 +394,7 @@ class VbotClient:
         Returns:
             Sync result
         """
-        args = {
-            "operation": "sync_with_physical",
-            "robot_id": robot_id
-        }
+        args = {"operation": "sync_with_physical", "robot_id": robot_id}
 
         result = await self._call_mcp_tool("robot_virtual", args)
 
@@ -452,10 +406,7 @@ class VbotClient:
         return result
 
     async def load_environment(
-        self,
-        environment: str,
-        environment_path: Optional[str] = None,
-        platform: str = "unity"
+        self, environment: str, environment_path: Optional[str] = None, platform: str = "unity"
     ) -> Dict:
         """
         Load environment into virtual scene.
@@ -468,11 +419,7 @@ class VbotClient:
         Returns:
             Environment load result
         """
-        args = {
-            "operation": "load_environment",
-            "environment": environment,
-            "platform": platform
-        }
+        args = {"operation": "load_environment", "environment": environment, "platform": platform}
 
         if environment_path:
             args["environment_path"] = environment_path
@@ -489,11 +436,7 @@ class VbotClient:
     # Control Operations (via robot_behavior tool)
 
     async def move_vbot(
-        self,
-        robot_id: str,
-        linear: float = 0.0,
-        angular: float = 0.0,
-        duration: float = 0.0
+        self, robot_id: str, linear: float = 0.0, angular: float = 0.0, duration: float = 0.0
     ) -> Dict:
         """
         Move virtual robot.
@@ -515,8 +458,8 @@ class VbotClient:
                 "front_left": linear + angular,
                 "front_right": linear - angular,
                 "rear_left": linear + angular,
-                "rear_right": linear - angular
-            }
+                "rear_right": linear - angular,
+            },
         }
 
         if duration > 0:
@@ -546,7 +489,7 @@ class VbotClient:
             "robot_id": robot_id,
             "category": "navigation",
             "action": "follow_path",
-            "path_id": route
+            "path_id": route,
         }
 
         result = await self._call_mcp_tool("robot_behavior", args)
@@ -568,11 +511,7 @@ class VbotClient:
         Returns:
             Stop result
         """
-        args = {
-            "robot_id": robot_id,
-            "category": "animation",
-            "action": "stop_animation"
-        }
+        args = {"robot_id": robot_id, "category": "animation", "action": "stop_animation"}
 
         result = await self._call_mcp_tool("robot_behavior", args)
 
@@ -593,11 +532,7 @@ class VbotClient:
         Returns:
             Camera feed info
         """
-        args = {
-            "robot_id": robot_id,
-            "category": "camera",
-            "action": "get_virtual_camera"
-        }
+        args = {"robot_id": robot_id, "category": "camera", "action": "get_virtual_camera"}
 
         result = await self._call_mcp_tool("robot_behavior", args)
         return result

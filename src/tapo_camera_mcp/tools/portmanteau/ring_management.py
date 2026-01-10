@@ -293,30 +293,37 @@ def register_ring_management_tool(mcp: FastMCP) -> None:
 
             if action == "arm_home":
                 from tapo_camera_mcp.integrations.ring_client import RingAlarmMode
+
                 success = await client.set_alarm_mode(RingAlarmMode.HOME)
                 return {
                     "success": success,
                     "action": action,
                     "data": {
                         "mode": "home",
-                        "message": "Ring alarm armed in HOME mode" if success else "Failed to arm alarm",
+                        "message": "Ring alarm armed in HOME mode"
+                        if success
+                        else "Failed to arm alarm",
                     },
                 }
 
             if action == "arm_away":
                 from tapo_camera_mcp.integrations.ring_client import RingAlarmMode
+
                 success = await client.set_alarm_mode(RingAlarmMode.AWAY)
                 return {
                     "success": success,
                     "action": action,
                     "data": {
                         "mode": "away",
-                        "message": "Ring alarm armed in AWAY mode" if success else "Failed to arm alarm",
+                        "message": "Ring alarm armed in AWAY mode"
+                        if success
+                        else "Failed to arm alarm",
                     },
                 }
 
             if action == "disarm":
                 from tapo_camera_mcp.integrations.ring_client import RingAlarmMode
+
                 success = await client.set_alarm_mode(RingAlarmMode.DISARMED)
                 return {
                     "success": success,
@@ -335,7 +342,9 @@ def register_ring_management_tool(mcp: FastMCP) -> None:
                     "data": {
                         "siren": "active",
                         "duration": siren_duration,
-                        "message": f"Siren activated for {siren_duration}s" if success else "Failed to activate siren",
+                        "message": f"Siren activated for {siren_duration}s"
+                        if success
+                        else "Failed to activate siren",
                     },
                 }
 
@@ -367,7 +376,9 @@ def register_ring_management_tool(mcp: FastMCP) -> None:
                         "data": {
                             "sensors": [s.to_dict() for s in alarm_status.sensors],
                             "count": len(alarm_status.sensors),
-                            "base_station": alarm_status.base_station.to_dict() if alarm_status.base_station else None,
+                            "base_station": alarm_status.base_station.to_dict()
+                            if alarm_status.base_station
+                            else None,
                         },
                     }
                 return {"success": False, "action": action, "error": "No alarm system found"}
@@ -390,9 +401,3 @@ def register_ring_management_tool(mcp: FastMCP) -> None:
         except Exception as e:
             logger.exception(f"Error in Ring management action '{action}'")
             return {"success": False, "action": action, "error": str(e)}
-
-
-
-
-
-

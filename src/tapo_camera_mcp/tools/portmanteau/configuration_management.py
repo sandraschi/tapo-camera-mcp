@@ -28,7 +28,9 @@ def register_configuration_management_tool(mcp: FastMCP) -> None:
 
     @mcp.tool()
     async def configuration_management(
-        action: Literal["device_settings", "privacy_settings", "led_control", "motion_detection", "privacy_mode"],
+        action: Literal[
+            "device_settings", "privacy_settings", "led_control", "motion_detection", "privacy_mode"
+        ],
         camera_name: str | None = None,
         setting_name: str | None = None,
         setting_value: Any = None,
@@ -50,15 +52,15 @@ def register_configuration_management_tool(mcp: FastMCP) -> None:
                 - "led_control": Control LED (requires: camera_name, enabled)
                 - "motion_detection": Configure motion detection (requires: camera_name, enabled)
                 - "privacy_mode": Configure privacy mode (requires: camera_name, enabled)
-            
+
             camera_name (str | None): Camera name/ID. Required for: all operations.
-            
+
             setting_name (str | None): Setting name to configure. Required for: device_settings operation.
                 Examples: "resolution", "fps", "night_vision"
-            
+
             setting_value (Any): Setting value. Required for: device_settings operation.
                 Type depends on setting_name (str, int, bool, etc.)
-            
+
             enabled (bool | None): Enable/disable flag. Required for: privacy_settings, led_control,
                 motion_detection, privacy_mode operations.
 
@@ -132,4 +134,3 @@ def register_configuration_management_tool(mcp: FastMCP) -> None:
         except Exception as e:
             logger.error(f"Error in configuration management action '{action}': {e}", exc_info=True)
             return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
-

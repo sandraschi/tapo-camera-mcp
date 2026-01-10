@@ -2,8 +2,8 @@
 
 **Central hub for all tapo-camera-mcp documentation**
 
-**Current Version**: v1.3.0 (LLM Integration & Dockerization)  
-**Last Updated**: November 21, 2025  
+**Current Version**: v1.9.0 (CSS Cleanup & Theme Support)
+**Last Updated**: January 9, 2026
 **Status**: 🚀 Production-Ready Platform
 
 ---
@@ -85,6 +85,12 @@ docs/
 │                       → Analytics and AI scene analysis APIs
 │                       → Camera control and streaming APIs
 │                       → WebSocket support and mobile APIs
+│
+├── WEB_INTERFACE_IMPROVEMENTS.md 🎨 **NEW**: Web interface CSS cleanup & theme support
+│                               → CSS architecture refactoring (v1.9.0)
+│                               → Theme variables and consistent styling
+│                               → Readability improvements and responsive design
+│                               → Performance optimizations and maintenance benefits
 │
 ├── ring-setup-guide.md 🔔 **UPDATED**: Ring Doorbell integration guide
 │                       → Web dashboard setup (`/ring`)

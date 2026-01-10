@@ -69,24 +69,30 @@ class LLMManager:
             try:
                 models = await provider.list_models()
                 current_model = await provider.get_current_model()
-                providers.append({
-                    "type": provider_type.value,
-                    "base_url": provider.base_url,
-                    "model_count": len(models),
-                    "current_model": current_model,
-                    "available": True,
-                })
+                providers.append(
+                    {
+                        "type": provider_type.value,
+                        "base_url": provider.base_url,
+                        "model_count": len(models),
+                        "current_model": current_model,
+                        "available": True,
+                    }
+                )
             except Exception:
-                providers.append({
-                    "type": provider_type.value,
-                    "base_url": provider.base_url,
-                    "model_count": 0,
-                    "current_model": None,
-                    "available": False,
-                })
+                providers.append(
+                    {
+                        "type": provider_type.value,
+                        "base_url": provider.base_url,
+                        "model_count": 0,
+                        "current_model": None,
+                        "available": False,
+                    }
+                )
         return providers
 
-    async def list_models(self, provider_type: Optional[ProviderType] = None) -> List[Dict[str, Any]]:
+    async def list_models(
+        self, provider_type: Optional[ProviderType] = None
+    ) -> List[Dict[str, Any]]:
         """List models for a provider.
 
         Args:
@@ -105,7 +111,9 @@ class LLMManager:
             logger.exception("Failed to list models")
             return []
 
-    async def load_model(self, model_name: str, provider_type: Optional[ProviderType] = None) -> bool:
+    async def load_model(
+        self, model_name: str, provider_type: Optional[ProviderType] = None
+    ) -> bool:
         """Load a model.
 
         Args:
@@ -125,7 +133,9 @@ class LLMManager:
                 self.current_model = model_name
                 if provider_type:
                     self.current_provider = provider_type
-                logger.info(f"Loaded model {model_name} on {provider_type or self.current_provider}")
+                logger.info(
+                    f"Loaded model {model_name} on {provider_type or self.current_provider}"
+                )
             return success
         except Exception:
             logger.exception("Failed to load model %s", model_name)
@@ -219,4 +229,3 @@ def get_llm_manager() -> LLMManager:
     if _llm_manager is None:
         _llm_manager = LLMManager()
     return _llm_manager
-

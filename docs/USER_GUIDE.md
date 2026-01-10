@@ -83,7 +83,24 @@ Access the web interface at `http://localhost:7777` (or your server's IP address
 
 ![Web Interface](docs/images/web-interface.png)
 
-### 3.1 Security Dashboards
+### 3.1 Interface Features
+
+The web interface features a modern, responsive design with full light/dark theme support and optimized readability across all devices.
+
+**Key Features:**
+- **Theme Support**: Automatic light/dark mode switching with consistent styling
+- **Responsive Design**: Optimized layouts for desktop, tablet, and mobile devices
+- **Real-time Updates**: Live status indicators and automatic data refresh
+- **Modular CSS**: External stylesheets for maintainability and performance
+- **Accessibility**: High contrast ratios and keyboard navigation support
+
+**Recent Improvements (v1.9.0):**
+- **CSS Cleanup**: Migrated all inline styles to external CSS files for better maintainability
+- **Theme Variables**: Replaced hardcoded colors with CSS custom properties for consistent theming
+- **Readability Fixes**: Resolved "white on white" text issues across all dashboard pages
+- **Performance**: Reduced page load times by externalizing stylesheets
+
+### 3.2 Security Dashboards
 
 The platform includes dedicated dashboards for security devices:
 

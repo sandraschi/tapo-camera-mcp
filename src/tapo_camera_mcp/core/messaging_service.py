@@ -41,7 +41,6 @@ class MessageCategory(str, Enum):
     ENERGY_ALERT = "energy_alert"
     SECURITY_EVENT = "security_event"
     SYSTEM_EVENT = "system_event"
-    MEDIA_EVENT = "media_event"
 
 
 @dataclass
@@ -71,9 +70,7 @@ class Message:
             "description": self.description,
             "details": self.details,
             "acknowledged": self.acknowledged,
-            "ack_timestamp": self.ack_timestamp.isoformat()
-            if self.ack_timestamp
-            else None,
+            "ack_timestamp": self.ack_timestamp.isoformat() if self.ack_timestamp else None,
         }
 
     def to_prometheus_labels(self) -> Dict[str, str]:
@@ -127,12 +124,7 @@ class MessagingService:
         """
         self.messages: deque = deque(maxlen=max_messages)
         self._message_counter = 0
-        self._metrics = {
-            "info_count": 0,
-            "warning_count": 0,
-            "alarm_count": 0,
-            "total_count": 0,
-        }
+        self._metrics = {"info_count": 0, "warning_count": 0, "alarm_count": 0, "total_count": 0}
 
         # Prometheus metrics (for future integration)
         self._prom_metrics = {}
@@ -198,26 +190,12 @@ class MessagingService:
 
         return message
 
-    def info(
-        self,
-        category: MessageCategory,
-        source: str,
-        title: str,
-        description: str,
-        **details,
-    ):
+    def info(self, category: MessageCategory, source: str, title: str, description: str, **details):
         """Convenience method for INFO messages."""
-        return self.add_message(
-            MessageSeverity.INFO, category, source, title, description, details
-        )
+        return self.add_message(MessageSeverity.INFO, category, source, title, description, details)
 
     def warning(
-        self,
-        category: MessageCategory,
-        source: str,
-        title: str,
-        description: str,
-        **details,
+        self, category: MessageCategory, source: str, title: str, description: str, **details
     ):
         """Convenience method for WARNING messages."""
         return self.add_message(
@@ -225,12 +203,7 @@ class MessagingService:
         )
 
     def alarm(
-        self,
-        category: MessageCategory,
-        source: str,
-        title: str,
-        description: str,
-        **details,
+        self, category: MessageCategory, source: str, title: str, description: str, **details
     ):
         """Convenience method for ALARM messages."""
         return self.add_message(
@@ -317,11 +290,7 @@ class MessagingService:
         recent_day = [m for m in self.messages if m.timestamp >= last_day]
 
         unacked_alarms = len(
-            [
-                m
-                for m in self.messages
-                if m.severity == MessageSeverity.ALARM and not m.acknowledged
-            ]
+            [m for m in self.messages if m.severity == MessageSeverity.ALARM and not m.acknowledged]
         )
 
         return {
@@ -337,15 +306,11 @@ class MessagingService:
             "messages_in_buffer": len(self.messages),
             "unacknowledged_alarms": unacked_alarms,
             # By severity (current buffer)
-            "info_current": len(
-                [m for m in self.messages if m.severity == MessageSeverity.INFO]
-            ),
+            "info_current": len([m for m in self.messages if m.severity == MessageSeverity.INFO]),
             "warning_current": len(
                 [m for m in self.messages if m.severity == MessageSeverity.WARNING]
             ),
-            "alarm_current": len(
-                [m for m in self.messages if m.severity == MessageSeverity.ALARM]
-            ),
+            "alarm_current": len([m for m in self.messages if m.severity == MessageSeverity.ALARM]),
         }
 
     def export_prometheus_metrics(self) -> str:

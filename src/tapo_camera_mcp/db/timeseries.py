@@ -112,21 +112,24 @@ class TimeSeriesDB:
 
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO energy_timeseries
                 (device_id, timestamp, power_w, voltage_v, current_a,
                  daily_energy_kwh, monthly_energy_kwh, power_state)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                device_id,
-                ts,
-                power_w,
-                voltage_v,
-                current_a,
-                daily_energy_kwh,
-                monthly_energy_kwh,
-                1 if power_state else 0 if power_state is not None else None,
-            ))
+            """,
+                (
+                    device_id,
+                    ts,
+                    power_w,
+                    voltage_v,
+                    current_a,
+                    daily_energy_kwh,
+                    monthly_energy_kwh,
+                    1 if power_state else 0 if power_state is not None else None,
+                ),
+            )
             conn.commit()
 
     def store_weather_data(
@@ -157,21 +160,24 @@ class TimeSeriesDB:
 
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO weather_timeseries
                 (station_id, module_type, timestamp, temperature_c, humidity_percent,
                  co2_ppm, pressure_mbar, noise_db)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                station_id,
-                module_type,
-                ts,
-                temperature_c,
-                humidity_percent,
-                co2_ppm,
-                pressure_mbar,
-                noise_db,
-            ))
+            """,
+                (
+                    station_id,
+                    module_type,
+                    ts,
+                    temperature_c,
+                    humidity_percent,
+                    co2_ppm,
+                    pressure_mbar,
+                    noise_db,
+                ),
+            )
             conn.commit()
 
     def get_energy_history(
@@ -206,17 +212,23 @@ class TimeSeriesDB:
             cursor = conn.cursor()
 
             if device_id:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT * FROM energy_timeseries
                     WHERE device_id = ? AND timestamp >= ? AND timestamp <= ?
                     ORDER BY timestamp ASC
-                """, (device_id, start_ts, end_ts))
+                """,
+                    (device_id, start_ts, end_ts),
+                )
             else:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT * FROM energy_timeseries
                     WHERE timestamp >= ? AND timestamp <= ?
                     ORDER BY timestamp ASC
-                """, (start_ts, end_ts))
+                """,
+                    (start_ts, end_ts),
+                )
 
             rows = cursor.fetchall()
 
@@ -229,7 +241,9 @@ class TimeSeriesDB:
                     "current_a": row["current_a"],
                     "daily_energy_kwh": row["daily_energy_kwh"],
                     "monthly_energy_kwh": row["monthly_energy_kwh"],
-                    "power_state": bool(row["power_state"]) if row["power_state"] is not None else None,
+                    "power_state": bool(row["power_state"])
+                    if row["power_state"] is not None
+                    else None,
                 }
                 for row in rows
             ]
@@ -281,21 +295,27 @@ class TimeSeriesDB:
             cursor = conn.cursor()
 
             if module_type:
-                cursor.execute(f"""
+                cursor.execute(
+                    f"""
                     SELECT timestamp, {value_column} as value FROM weather_timeseries
                     WHERE station_id = ? AND module_type = ?
                     AND timestamp >= ? AND timestamp <= ?
                     AND {value_column} IS NOT NULL
                     ORDER BY timestamp ASC
-                """, (station_id, module_type, start_ts, end_ts))  # noqa: S608
+                """,
+                    (station_id, module_type, start_ts, end_ts),
+                )
             else:
-                cursor.execute(f"""
+                cursor.execute(
+                    f"""
                     SELECT timestamp, {value_column} as value FROM weather_timeseries
                     WHERE station_id = ?
                     AND timestamp >= ? AND timestamp <= ?
                     AND {value_column} IS NOT NULL
                     ORDER BY timestamp ASC
-                """, (station_id, start_ts, end_ts))  # noqa: S608
+                """,
+                    (station_id, start_ts, end_ts),
+                )
 
             rows = cursor.fetchall()
 
@@ -306,4 +326,3 @@ class TimeSeriesDB:
                 }
                 for row in rows
             ]
-

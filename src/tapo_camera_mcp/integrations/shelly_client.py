@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class ShellyDeviceType(Enum):
     """Shelly device types."""
+
     PLUS_1 = "plus_1"
     PLUS_2PM = "plus_2pm"
     PLUS_I4 = "plus_i4"
@@ -325,10 +326,7 @@ class ShellyClient:
                         continue
 
                     # Get thresholds from config
-                    config = next(
-                        (c for c in self.devices_config if c.get("ip") == ip),
-                        {}
-                    )
+                    config = next((c for c in self.devices_config if c.get("ip") == ip), {})
                     thresholds = config.get("thresholds", {})
 
                     # Query each sensor
@@ -409,4 +407,3 @@ async def init_shelly_client(
     )
     await shelly_client.initialize()
     return shelly_client
-
