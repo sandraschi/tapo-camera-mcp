@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
 """
-Cross-platform launcher for watchfiles
+Cross-platform launcher for watchfiles runner
 This replaces the .exe file and works on Windows, macOS, and Linux
 """
 
 import sys
 import os
+import subprocess
 
-# Add src to path
-src_path = os.path.join(os.path.dirname(__file__), '..', 'src')
-sys.path.insert(0, os.path.abspath(src_path))
+# Find the watchfiles_runner.py script
+script_dir = os.path.dirname(__file__)
+watchfiles_script = os.path.join(script_dir, '..', 'watchfiles_runner.py')
 
-# Import and run watchfiles_runner
-from watchfiles_runner import main
+if not os.path.exists(watchfiles_script):
+    print(f"Error: watchfiles_runner.py not found at {watchfiles_script}")
+    sys.exit(1)
 
-if __name__ == '__main__':
-    main()
+# Run the watchfiles script with the same Python interpreter
+try:
+    result = subprocess.run([sys.executable, watchfiles_script] + sys.argv[1:])
+    sys.exit(result.returncode)
+except Exception as e:
+    print(f"Error running watchfiles_runner.py: {e}")
+    sys.exit(1)
