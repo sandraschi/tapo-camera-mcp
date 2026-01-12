@@ -44,6 +44,111 @@ However, **this is not guaranteed** - some cameras may have:
 
 These are **separate** - you need to find or set the LOCAL credentials.
 
+## MCP Server Configuration
+
+### Configuration Sources (Hierarchical Priority)
+
+The MCP server loads credentials from multiple sources:
+
+#### 1. Primary: YAML Configuration File
+**Location**: `config.yaml` (recommended)
+```yaml
+# Tapo Cameras
+cameras:
+  kitchen:
+    type: tapo
+    host: 192.168.1.100
+    username: admin  # Local admin username
+    password: your_local_password  # Local admin password
+    port: 443
+
+# Tapo Smart Plugs
+energy:
+  tapo_p115:
+    account:
+      email: your_cloud_account@example.com
+      password: your_cloud_password
+    devices:
+      - host: 192.168.1.120
+        device_id: tapo_p115_living_room
+```
+
+#### 2. Secondary: Environment Variables
+**Fallback when config missing**:
+```bash
+TAPO_ACCOUNT_EMAIL=your_email@example.com
+TAPO_ACCOUNT_PASSWORD=your_password
+TAPO_P115_HOSTS=192.168.1.120,192.168.1.121
+```
+
+#### 3. Tertiary: Token Cache Files
+**OAuth services**:
+- `ring_token.cache` - Ring doorbell OAuth
+- `nest_token.cache` - Nest Protect OAuth
+
+### Current Working Configuration (January 2026)
+
+```yaml
+# Cameras (ONVIF protocol)
+cameras:
+  tapo_kitchen:
+    type: onvif
+    host: 192.168.0.164
+    username: sandraschi
+    password: Sec1060ta
+    rtsp_port: 554
+    onvif_port: 2020
+
+  tapo_living_room:
+    type: onvif
+    host: 192.168.0.206
+    username: sandraschi
+    password: Sec1000living
+
+# Energy devices (Tapo P115 plugs)
+energy:
+  tapo_p115:
+    account:
+      email: sandraschipal@hotmail.com
+      password: Sec1060ta#
+    devices:
+      - host: 192.168.0.17
+      - host: 192.168.0.137
+      - host: 192.168.0.38
+
+# Lighting (Tapo L900)
+lighting:
+  tapo_lighting:
+    account:
+      email: sandraschipal@hotmail.com
+      password: Sec1060ta#
+
+# External services
+ring:
+  enabled: true
+  email: sandraschipal@hotmail.com
+  password: Sec1000ri#
+  token_file: ring_token.cache
+
+netatmo:
+  enabled: true
+  client_id: 6939e5b98080806f1c003668
+  client_secret: IyWYPAE9cq28N6HQNHWp3XDdbz
+  refresh_token: 5ca3ae420ec7040a008b57dd|a289c1f0899232016582aa5cf52940f9
+```
+
+### Authentication Methods Summary
+
+| Service | Auth Method | Credentials From | Status |
+|---------|-------------|------------------|---------|
+| Tapo Cameras | ONVIF/Local API | Config file | Working |
+| Tapo Plugs | Cloud Account API | Config + Env vars | Working |
+| Tapo Lighting | Cloud Account API | Config file | Working |
+| Ring Doorbell | OAuth + Token Cache | Config + Cache | Working |
+| Netatmo Weather | OAuth2 Refresh Token | Config file | Working |
+| Home Assistant | Long-lived Access Token | Config file | Working |
+| USB Cameras | Direct Device Access | No auth required | Working |
+
 ### Setting Local Admin Password
 
 If you haven't set one:

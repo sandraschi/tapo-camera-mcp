@@ -62,6 +62,18 @@ Use this checklist to audit any MCP server repo before marking it production-rea
 - [ ] Branch protection rules documented
 - [ ] GitHub Actions all passing
 
+## 🔐 CONFIGURATION & AUTHENTICATION
+
+- [ ] Configuration sources documented (YAML, env vars, token files)
+- [ ] Authentication methods specified for each service type
+- [ ] Credentials securely stored (not in version control)
+- [ ] OAuth token caching implemented for external services
+- [ ] Environment variable fallbacks documented
+- [ ] Configuration validation implemented
+- [ ] Sensitive data masked in logs
+- [ ] Default configuration provided
+- [ ] Configuration examples tested and working
+
 ## 💻 PLATFORM REQUIREMENTS (Windows/PowerShell)
 
 - [ ] No Linux syntax (`&&`, `||`, etc.)

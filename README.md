@@ -26,6 +26,151 @@
 >
 > **⚠️ Beta Status Notice**: This project is in active beta development. Features are working but may have bugs, APIs may change between versions, and some integrations are experimental. Not recommended for critical production use. Active development - contributions welcome.
 
+## 🔧 **MCP SERVER CONFIGURATION & AUTHENTICATION**
+
+### **Configuration Sources (Hierarchical Priority)**
+
+The MCP server loads IP addresses, usernames, passwords, and authentication credentials from multiple sources:
+
+#### **1. Primary: YAML Configuration Files**
+**Location**: `config.yaml` (highest priority)
+**Search Order**:
+- `/app/config.yaml` (Docker container)
+- `~/.config/tapo-camera-mcp/config.yaml` (user home directory)
+- Repository root `config.yaml`
+- Current directory
+
+#### **2. Secondary: Environment Variables**
+**Fallback when config file missing**:
+```bash
+# Tapo Plugs
+TAPO_ACCOUNT_EMAIL=your_email@example.com
+TAPO_ACCOUNT_PASSWORD=your_password
+TAPO_P115_HOSTS=192.168.1.120,192.168.1.121
+
+# MCP Control
+TAPO_MCP_SKIP_HARDWARE_INIT=true
+TAPO_MCP_LAZY_INIT=true
+```
+
+#### **3. Tertiary: Token/Cache Files**
+**OAuth persistence**:
+- `ring_token.cache` - Ring OAuth tokens
+- `nest_token.cache` - Nest OAuth tokens
+
+### **Current Authentication Configuration**
+
+#### **Cameras** (4 configured)
+```yaml
+cameras:
+  tapo_kitchen:
+    type: onvif
+    host: 192.168.0.164
+    username: sandraschi
+    password: Sec1060ta
+    rtsp_port: 554
+    onvif_port: 2020
+
+  tapo_living_room:
+    type: onvif
+    host: 192.168.0.206
+    username: sandraschi
+    password: Sec1000living
+    rtsp_port: 554
+    onvif_port: 2020
+
+  usb_camera_1:
+    type: microscope
+    device_id: 0
+
+  usb_camera_2:
+    type: webcam
+    device_id: 1
+```
+
+#### **Energy Devices** (3 Tapo P115 plugs)
+```yaml
+energy:
+  tapo_p115:
+    account:
+      email: sandraschipal@hotmail.com
+      password: Sec1060ta#
+    devices:
+      - host: 192.168.0.17
+        device_id: tapo_p115_aircon
+        name: Aircon
+      - host: 192.168.0.137
+        device_id: tapo_p115_kitchen
+        name: Kitchen Zojirushi
+      - host: 192.168.0.38
+        device_id: tapo_p115_server
+        name: Server
+```
+
+#### **Lighting Systems**
+```yaml
+lighting:
+  philips_hue:
+    bridge_ip: 192.168.0.83
+    username: J1A3OQ1OMzJDtidSNQWWGmCBuAxZC3lxEjT9qnVc
+
+  tapo_lighting:
+    account:
+      email: sandraschipal@hotmail.com
+      password: Sec1060ta#
+    devices:
+      - host: 192.168.0.174
+        device_id: tapo_l900_lightstrip
+        name: Lightstrip L900
+```
+
+#### **External Services**
+```yaml
+ring:
+  enabled: true
+  email: sandraschipal@hotmail.com
+  password: Sec1000ri#
+  token_file: ring_token.cache
+
+netatmo:
+  enabled: true
+  client_id: 6939e5b98080806f1c003668
+  client_secret: IyWYPAE9cq28N6HQNHWp3XDdbz
+  refresh_token: 5ca3ae420ec7040a008b57dd|a289c1f0899232016582aa5cf52940f9
+
+security_integrations:
+  homeassistant:
+    enabled: true
+    url: http://localhost:8123
+    access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+### **Authentication Methods by Service**
+
+| Service | Auth Method | Credentials From | Status |
+|---------|-------------|------------------|---------|
+| **Tapo Cameras** | ONVIF Protocol | Config file | Working |
+| **Tapo Plugs** | Tapo Account API | Config + Env vars | Working |
+| **Hue Bridge** | Philips Hue API | Config file | Working |
+| **Tapo Lighting** | Tapo Account API | Config file | Working |
+| **Ring Doorbell** | OAuth + Cache | Config + Token file | Working |
+| **Netatmo Weather** | OAuth2 Refresh Token | Config file | Working |
+| **Home Assistant** | Long-lived Access Token | Config file | Working |
+| **USB Cameras** | Direct Device Access | No auth required | Working |
+
+### **Configuration Loading Priority**
+1. **YAML config file** (highest - current working method)
+2. **Environment variables** (fallback)
+3. **Token cache files** (OAuth persistence)
+4. **Built-in defaults** (minimal fallback)
+
+### **Security Notes**
+- All credentials stored in local `config.yaml`
+- OAuth tokens cached securely in token files
+- No credentials transmitted in logs
+- Environment variables used for sensitive fallbacks
+- Configuration files excluded from version control
+
 ## 🏗️ **DUAL ARCHITECTURE OVERVIEW**
 
 **This repository has evolved into a comprehensive home security platform with dual-role architecture:**
