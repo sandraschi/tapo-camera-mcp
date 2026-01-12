@@ -550,7 +550,7 @@
             const container = document.getElementById('alerts-container');
             if (container) {
                 const statusDiv = document.createElement('div');
-                statusDiv.className = 'cache-status';
+                statusDiv.style.cssText = 'text-align: center; color: #9CA3AF; font-size: 10px; margin-top: 4px; font-style: italic;';
                 statusDiv.textContent = '📦 Loaded from cache';
                 container.appendChild(statusDiv);
                 // Remove after 3 seconds

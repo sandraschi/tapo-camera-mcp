@@ -169,3 +169,4 @@ async def initialize_thermal(request: ThermalInitRequest):
     except Exception as e:
         logger.exception("Failed to initialize thermal sensors")
         raise HTTPException(status_code=500, detail=str(e)) from e
+

@@ -147,3 +147,4 @@ async def initialize_shelly(request: ShellyInitRequest):
     except Exception as e:
         logger.exception("Failed to initialize Shelly")
         raise HTTPException(status_code=500, detail=str(e)) from e
+

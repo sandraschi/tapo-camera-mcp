@@ -20,14 +20,13 @@ router = APIRouter(prefix="/api/system", tags=["system"])
 async def get_connection_health() -> Dict[str, Any]:
     """
     Get comprehensive device connection health status.
-
+    
     Returns health for all devices: cameras, plugs, lights, weather, ring.
     Shows which devices are online/offline and error details.
     Triggers a fresh health check before returning data.
     """
     try:
         import asyncio
-
         supervisor = get_supervisor()
         # Trigger a fresh health check first (with timeout)
         try:
@@ -41,7 +40,13 @@ async def get_connection_health() -> Dict[str, Any]:
         return supervisor.get_health_summary()
     except Exception as e:
         logger.exception("Error getting connection health")
-        return {"error": str(e), "total_devices": 0, "online": 0, "offline": 0, "devices": []}
+        return {
+            "error": str(e),
+            "total_devices": 0,
+            "online": 0,
+            "offline": 0,
+            "devices": []
+        }
 
 
 @router.get("/offline-devices")
@@ -59,10 +64,10 @@ async def get_offline_devices() -> Dict[str, Any]:
                     "type": h.device_type,
                     "error": h.last_error,
                     "error_count": h.error_count,
-                    "last_success": h.last_success.isoformat() if h.last_success else None,
+                    "last_success": h.last_success.isoformat() if h.last_success else None
                 }
                 for h in offline
-            ],
+            ]
         }
     except Exception as e:
         logger.exception("Error getting offline devices")
@@ -74,7 +79,6 @@ async def trigger_health_check() -> Dict[str, Any]:
     """Manually trigger an immediate health check of all devices."""
     try:
         import asyncio
-
         supervisor = get_supervisor()
         # Add timeout to prevent hanging
         await asyncio.wait_for(supervisor._check_all_devices(), timeout=10.0)
@@ -85,3 +89,4 @@ async def trigger_health_check() -> Dict[str, Any]:
     except Exception as e:
         logger.exception("Error triggering health check")
         return {"success": False, "error": str(e)}
+

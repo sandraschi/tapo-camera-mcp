@@ -5,9 +5,100 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Tapo Camera MCP{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}?v=20251203">
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/theme.css') }}?v=20251203">
     <link rel="stylesheet" href="{{ url_for('static', path='/css/chatbot.css') }}?v=20251203">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+    <style>
+        [data-theme="dark"] {
+            --bg-color: #1f2937;
+            --text-color: #f9fafb;
+            --card-bg: #374151;
+            --border-color: #4b5563;
+        }
+
+        [data-theme="dark"] body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        [data-theme="dark"] .sidebar {
+            background-color: var(--card-bg);
+            border-right-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        [data-theme="dark"] .sidebar-header h2 {
+            color: var(--text-color);
+        }
+
+        [data-theme="dark"] .app-version {
+            color: var(--text-color);
+            border-top-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .main-content {
+            background-color: var(--bg-color);
+        }
+
+        [data-theme="dark"] .nav-links li a {
+            color: var(--text-color);
+        }
+
+        [data-theme="dark"] .nav-links li.active a,
+        [data-theme="dark"] .nav-links li a:hover {
+            background-color: #4b5563;
+            color: var(--text-color);
+        }
+
+        [data-theme="dark"] .top-bar {
+            background-color: var(--card-bg);
+            border-bottom-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .search-bar input {
+            background-color: #374151;
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+
+        .search-bar i.fas {
+            color: #6b7280 !important;
+            font-family: "Font Awesome 6 Free" !important;
+            font-weight: 900 !important;
+            display: inline-block !important;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .search-button {
+            background: none !important;
+            border: none !important;
+            color: #6b7280 !important;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-button i.fas {
+            color: #6b7280 !important;
+            font-family: "Font Awesome 6 Free" !important;
+            font-weight: 900 !important;
+            display: inline-block !important;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .search-button:hover {
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+
+        .search-button:hover i {
+            color: var(--primary-color) !important;
+        }
 
         [data-theme="dark"] .search-bar i {
             color: #9ca3af !important;
@@ -824,12 +915,6 @@
                     <a href="/energy">
                         <i class="fas fa-bolt"></i>
                         <span>Energy</span>
-                    </a>
-                </li>
-                <li class="nav-item {% if request.url.path == '/logs' %}active{% endif %}">
-                    <a href="/logs">
-                        <i class="fas fa-file-alt"></i>
-                        <span>Log Management</span>
                     </a>
                 </li>
                 <li class="nav-item {% if request.url.path == '/lighting' %}active{% endif %}">
@@ -1717,17 +1802,12 @@
         // Load auth status and update UI
         async function loadAuthStatus() {
             try {
-                // Skip auth status loading for now to allow immediate dashboard access
-                // This can be enabled later when auth system is implemented
-                console.log('Auth status loading skipped for immediate dashboard access');
-                return;
-
                 const response = await fetch('/api/auth/status');
                 const data = await response.json();
-
+                
                 const usernameDisplay = document.getElementById('username-display');
                 const dropdownUsername = document.getElementById('dropdown-username');
-
+                
                 if (usernameDisplay && data.user) {
                     usernameDisplay.textContent = data.user;
                 }
@@ -1750,10 +1830,8 @@
             }
         }
 
-        // Load auth status after page renders (don't block initial load)
-        setTimeout(() => {
-            loadAuthStatus();
-        }, 50);
+        // Load auth status on page load
+        loadAuthStatus();
     </script>
     <script src="{{ url_for('static', path='/js/chatbot.js') }}?v=20251203"></script>
     {% block extra_js %}{% endblock %}

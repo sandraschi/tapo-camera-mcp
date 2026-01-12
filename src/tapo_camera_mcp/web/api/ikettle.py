@@ -1,6 +1,7 @@
 """iKettle smart kettle API endpoints."""
 
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -14,27 +15,23 @@ _ikettle_client = None
 
 class BoilRequest(BaseModel):
     """Request to boil water."""
-
     temperature_c: int = 100  # Celsius
 
 
 class KeepWarmRequest(BaseModel):
     """Request to set keep warm mode."""
-
     temperature_c: int = 95  # Celsius
     duration_minutes: int = 30
 
 
 class ScheduleRequest(BaseModel):
     """Request to schedule a boil."""
-
     temperature_c: int = 100  # Celsius
     delay_minutes: int = 0
 
 
 class MorningRoutineRequest(BaseModel):
     """Request to setup morning coffee routine."""
-
     wake_time: str = "07:00"  # HH:MM format
     coffee_temperature: int = 95  # Celsius
 
@@ -63,7 +60,7 @@ async def get_ikettle_client():
         _ikettle_client = IKettleClient(
             host=host,
             username=ikettle_config.get("username"),
-            password=ikettle_config.get("password"),
+            password=ikettle_config.get("password")
         )
 
         # Try to connect
@@ -81,7 +78,10 @@ async def get_ikettle_status():
         client = await get_ikettle_client()
         status = await client.get_formatted_status()
 
-        return {"success": True, "status": status}
+        return {
+            "success": True,
+            "status": status
+        }
 
     except HTTPException:
         raise
@@ -102,9 +102,10 @@ async def boil_water(request: BoilRequest):
                 "success": True,
                 "message": f"Started boiling water to {request.temperature_c}°C",
                 "temperature_c": request.temperature_c,
-                "temperature_f": client.get_temperature_fahrenheit(request.temperature_c),
+                "temperature_f": client.get_temperature_fahrenheit(request.temperature_c)
             }
-        raise HTTPException(status_code=500, detail="Failed to start boiling")
+        else:
+            raise HTTPException(status_code=500, detail="Failed to start boiling")
 
     except HTTPException:
         raise
@@ -125,9 +126,10 @@ async def set_keep_warm(request: KeepWarmRequest):
                 "success": True,
                 "message": f"Set keep warm to {request.temperature_c}°C for {request.duration_minutes} minutes",
                 "temperature_c": request.temperature_c,
-                "duration_minutes": request.duration_minutes,
+                "duration_minutes": request.duration_minutes
             }
-        raise HTTPException(status_code=500, detail="Failed to set keep warm")
+        else:
+            raise HTTPException(status_code=500, detail="Failed to set keep warm")
 
     except HTTPException:
         raise
@@ -144,8 +146,12 @@ async def stop_kettle():
         success = await client.stop()
 
         if success:
-            return {"success": True, "message": "Stopped kettle operation"}
-        raise HTTPException(status_code=500, detail="Failed to stop kettle")
+            return {
+                "success": True,
+                "message": "Stopped kettle operation"
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to stop kettle")
 
     except HTTPException:
         raise
@@ -166,9 +172,10 @@ async def schedule_boil(request: ScheduleRequest):
                 "success": True,
                 "message": f"Scheduled boil to {request.temperature_c}°C in {request.delay_minutes} minutes",
                 "temperature_c": request.temperature_c,
-                "delay_minutes": request.delay_minutes,
+                "delay_minutes": request.delay_minutes
             }
-        raise HTTPException(status_code=500, detail="Failed to schedule boil")
+        else:
+            raise HTTPException(status_code=500, detail="Failed to schedule boil")
 
     except HTTPException:
         raise
@@ -190,11 +197,10 @@ async def setup_morning_routine(request: MorningRoutineRequest):
                 "message": result["message"],
                 "wake_time": request.wake_time,
                 "coffee_temperature": request.coffee_temperature,
-                "delay_minutes": result.get("delay_minutes"),
+                "delay_minutes": result.get("delay_minutes")
             }
-        raise HTTPException(
-            status_code=500, detail=result.get("error", "Failed to setup morning routine")
-        )
+        else:
+            raise HTTPException(status_code=500, detail=result.get("error", "Failed to setup morning routine"))
 
     except HTTPException:
         raise
@@ -209,16 +215,19 @@ async def set_mode(mode: str):
     try:
         valid_modes = ["wake_up", "home", "formula"]
         if mode not in valid_modes:
-            raise HTTPException(
-                status_code=400, detail=f"Invalid mode. Must be one of: {', '.join(valid_modes)}"
-            )
+            raise HTTPException(status_code=400, detail=f"Invalid mode. Must be one of: {', '.join(valid_modes)}")
 
         client = await get_ikettle_client()
         success = await client.set_mode(mode)
 
         if success:
-            return {"success": True, "message": f"Set kettle mode to {mode}", "mode": mode}
-        raise HTTPException(status_code=500, detail="Failed to set mode")
+            return {
+                "success": True,
+                "message": f"Set kettle mode to {mode}",
+                "mode": mode
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to set mode")
 
     except HTTPException:
         raise
@@ -262,18 +271,21 @@ async def get_ikettle_info():
                 "scheduling": True,
                 "modes": ["wake_up", "home", "formula"],
                 "temperature_range_c": [20, 100],
-                "temperature_range_f": [68, 212],
+                "temperature_range_f": [68, 212]
             },
             "recommendations": {
                 "coffee": 95,  # °C
                 "green_tea": 80,
                 "black_tea": 100,
                 "herbal_tea": 100,
-                "white_tea": 85,
-            },
+                "white_tea": 85
+            }
         }
 
-        return {"success": True, "info": info}
+        return {
+            "success": True,
+            "info": info
+        }
 
     except HTTPException:
         raise

@@ -3,8 +3,231 @@
 {% block title %}Energy Management - Tapo Camera MCP{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', path='/css/energy.css') }}?v=20251203">
 <style>
+    .energy-dashboard {
+        padding: 20px;
+    }
+    
+    .energy-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .energy-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .energy-card h3 {
+        margin: 0 0 16px 0;
+        color: #1f2937;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .energy-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #059669;
+        margin-bottom: 8px;
+    }
+    
+    .energy-unit {
+        color: #6b7280;
+        font-size: 14px;
+    }
+    
+    .energy-trend {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 12px;
+    }
+    
+    .trend-up {
+        color: #dc2626;
+    }
+    
+    .trend-down {
+        color: #059669;
+    }
+    
+    .devices-section {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .device-card {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 16px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+    
+    .device-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .device-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    
+    .device-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .device-location {
+        color: #6b7280;
+        font-size: 14px;
+    }
+    
+    .device-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    
+    .status-online {
+        background-color: #10b981;
+    }
+    
+    .status-offline {
+        background-color: #ef4444;
+    }
+    
+    .device-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+    }
+    
+    .metric {
+        text-align: center;
+    }
+    
+    .metric-value {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .metric-label {
+        font-size: 12px;
+        color: #6b7280;
+        margin-top: 4px;
+    }
+    
+    .device-controls {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+    }
+    
+    .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: none;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #2563eb;
+    }
+    
+    .btn-secondary {
+        background-color: #e5e7eb;
+        color: #374151;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #d1d5db;
+    }
+    
+    .btn-danger {
+        background-color: #ef4444;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background-color: #dc2626;
+    }
+    
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        margin-top: 20px;
+    }
+    
+    .chart-placeholder {
+        height: 300px;
+        background: #f9fafb;
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        font-size: 16px;
+    }
+    
+    .alert-item {
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .alert-warning {
+        border-left-color: #f59e0b !important;
+        background: #fef3c7 !important;
+    }
+    
+    .alert-critical {
+        border-left-color: #dc2626 !important;
+        background: #fee2e2 !important;
+    }
     
 </style>
 {% endblock %}

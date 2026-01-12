@@ -3,7 +3,260 @@
 {% block title %}Settings - Home Security MCP{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', path='/css/settings.css') }}?v=20251203">
+<style>
+    .settings-section {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e5e7eb;
+    }
+
+    .settings-section h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+
+    .setting-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background-color: #f9fafb;
+        border-radius: 0.5rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    .setting-info {
+        flex: 1;
+    }
+
+    .setting-label {
+        font-weight: 500;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+    }
+
+    .setting-description {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+
+    .setting-control {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+        background-color: #3b82f6;
+    }
+
+    input:checked + .toggle-slider:before {
+        transform: translateX(20px);
+    }
+
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .btn-primary:hover {
+        background-color: #2563eb;
+    }
+
+    .btn-secondary {
+        background-color: #f3f4f6;
+        color: #374151;
+        border: 1px solid #d1d5db;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+        background-color: #e5e7eb;
+    }
+
+    .btn-danger {
+        background-color: #dc2626;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .btn-danger:hover {
+        background-color: #b91c1c;
+    }
+
+    .btn-danger:disabled {
+        background-color: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    .battery-status-good {
+        color: #10b981;
+    }
+
+    .battery-status-low {
+        color: #f59e0b;
+    }
+
+    .battery-status-critical {
+        color: #dc2626;
+    }
+
+    .battery-status-unknown {
+        color: #6b7280;
+    }
+
+    .form-input {
+        padding: 0.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        width: 100%;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .status-online {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .status-offline {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    /* Dark theme support */
+    [data-theme="dark"] .settings-section {
+        background: #374151;
+        border-color: #4b5563;
+    }
+
+    [data-theme="dark"] .setting-item {
+        background-color: #4b5563;
+        border-color: #6b7280;
+    }
+
+    [data-theme="dark"] .setting-label {
+        color: #f9fafb;
+    }
+
+    [data-theme="dark"] .setting-description {
+        color: #d1d5db;
+    }
+
+    [data-theme="dark"] .btn-primary {
+        background-color: #3b82f6;
+    }
+
+    [data-theme="dark"] .btn-primary:hover {
+        background-color: #2563eb;
+    }
+
+    [data-theme="dark"] .btn-secondary {
+        background-color: #4b5563;
+        color: #f9fafb;
+        border-color: #6b7280;
+    }
+
+    [data-theme="dark"] .btn-secondary:hover {
+        background-color: #6b7280;
+    }
+
+    [data-theme="dark"] .form-input {
+        background-color: #4b5563;
+        color: #f9fafb;
+        border-color: #6b7280;
+    }
+
+    [data-theme="dark"] .form-input:focus {
+        border-color: #3b82f6;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -91,7 +344,7 @@
                     <div class="setting-description">Video recording quality setting</div>
                 </div>
                 <div class="setting-control">
-                    <select class="form-input width-auto">
+                    <select class="form-input" style="width: auto;">
                         <option>HD (1080p)</option>
                         <option>FHD (1440p)</option>
                         <option>4K</option>
@@ -114,7 +367,7 @@
                     <div class="setting-description">HTTP server port (default: 8000)</div>
                 </div>
                 <div class="setting-control">
-                    <input type="number" class="form-input width-80px" value="8000">
+                    <input type="number" class="form-input" value="8000" style="width: 80px;">
                 </div>
             </div>
             <div class="setting-item">
@@ -181,7 +434,7 @@
                     <div class="setting-description">Logging verbosity level</div>
                 </div>
                 <div class="setting-control">
-                    <select class="form-input width-auto">
+                    <select class="form-input" style="width: auto;">
                         <option>INFO</option>
                         <option>DEBUG</option>
                         <option>WARNING</option>
@@ -231,33 +484,33 @@
             Philips Hue Bridge Configuration
         </h3>
         <div class="settings-grid">
-            <div class="setting-item grid-col-full">
+            <div class="setting-item" style="grid-column: 1 / -1;">
                 <div class="setting-info">
                     <div class="setting-label">Bridge IP Address</div>
                     <div class="setting-description">IP address of your Philips Hue Bridge (e.g., 192.168.1.100)</div>
                 </div>
                 <div class="setting-control">
-                    <input type="text" id="hue-bridge-ip" class="form-input width-200px" placeholder="192.168.1.100">
+                    <input type="text" id="hue-bridge-ip" class="form-input" placeholder="192.168.1.100" style="width: 200px;">
                 </div>
             </div>
-            <div class="setting-item grid-col-full">
+            <div class="setting-item" style="grid-column: 1 / -1;">
                 <div class="setting-info">
                     <div class="setting-label">Bridge Username (API Key)</div>
                     <div class="setting-description">Press the button on your Hue Bridge, then click "Connect" to generate</div>
                 </div>
                 <div class="setting-control">
-                    <input type="text" id="hue-username" class="form-input width-300px" placeholder="Leave empty to auto-generate">
-                    <button id="hue-connect" class="btn-primary ml-12px">
+                    <input type="text" id="hue-username" class="form-input" placeholder="Leave empty to auto-generate" style="width: 300px;">
+                    <button id="hue-connect" class="btn-primary" style="margin-left: 12px;">
                         <i class="fas fa-plug mr-2"></i>
                         Create New Username (Press Button)
                     </button>
-                    <button id="hue-test-existing" class="btn-secondary ml-12px">
+                    <button id="hue-test-existing" class="btn-secondary" style="margin-left: 12px;">
                         <i class="fas fa-check-circle mr-2"></i>
                         Test Existing Username
                     </button>
                 </div>
             </div>
-            <div class="setting-item grid-col-full">
+            <div class="setting-item" style="grid-column: 1 / -1;">
                 <div class="setting-info">
                     <div class="setting-label">Connection Status</div>
                     <div class="setting-description" id="hue-status-desc">Not configured</div>
@@ -303,7 +556,7 @@
                     <div class="setting-description">Days to keep video recordings</div>
                 </div>
                 <div class="setting-control">
-                    <input type="number" id="retention-video" class="form-input width-100px" min="1" max="3650" value="30">
+                    <input type="number" id="retention-video" class="form-input" min="1" max="3650" value="30" style="width: 100px;">
                     <span class="text-sm text-gray-500 ml-2">days</span>
                 </div>
             </div>
@@ -313,7 +566,7 @@
                     <div class="setting-description">Days to keep snapshot images</div>
                 </div>
                 <div class="setting-control">
-                    <input type="number" id="retention-snapshots" class="form-input width-100px" min="1" max="3650" value="90">
+                    <input type="number" id="retention-snapshots" class="form-input" min="1" max="3650" value="90" style="width: 100px;">
                     <span class="text-sm text-gray-500 ml-2">days</span>
                 </div>
             </div>
@@ -323,7 +576,7 @@
                     <div class="setting-description">Days to keep weather/energy time series</div>
                 </div>
                 <div class="setting-control">
-                    <input type="number" id="retention-environment" class="form-input width-100px" min="1" max="3650" value="365">
+                    <input type="number" id="retention-environment" class="form-input" min="1" max="3650" value="365" style="width: 100px;">
                     <span class="text-sm text-gray-500 ml-2">days</span>
                 </div>
             </div>
@@ -337,8 +590,8 @@
     </div>
 
     <!-- Data Management -->
-    <div class="settings-section danger-zone">
-        <h3>
+    <div class="settings-section" style="border: 2px solid #dc2626;">
+        <h3 style="color: #dc2626;">
             <i class="fas fa-exclamation-triangle"></i>
             Data Management (Danger Zone)
         </h3>
@@ -351,17 +604,17 @@
                 </div>
             </div>
             <div class="setting-control">
-                <button id="scrub-preview" class="btn-secondary mr-05rem">
+                <button id="scrub-preview" class="btn-secondary" style="margin-right: 0.5rem;">
                     <i class="fas fa-eye mr-2"></i>
                     Preview
                 </button>
-                <button id="scrub-execute" class="btn-danger">
+                <button id="scrub-execute" class="btn-danger" style="background-color: #dc2626; color: white;">
                     <i class="fas fa-trash-alt mr-2"></i>
                     Scrub Now
                 </button>
             </div>
         </div>
-        <div id="scrub-results" class="mt-1rem" style="display: none;"></div>
+        <div id="scrub-results" style="margin-top: 1rem; display: none;"></div>
     </div>
 
     <!-- Actions -->

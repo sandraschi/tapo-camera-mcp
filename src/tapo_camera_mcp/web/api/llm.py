@@ -89,14 +89,12 @@ async def list_models(provider: str | None = None) -> dict[str, Any]:
 
 class LoadModelRequest(BaseModel):
     """Load model request model."""
-
     model_name: str = Field(..., description="Name of the model to load")
     provider: str | None = Field(None, description="Provider type")
 
 
 class UnloadModelRequest(BaseModel):
     """Unload model request model."""
-
     provider: str | None = Field(None, description="Provider type")
 
 
@@ -160,3 +158,4 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
     except Exception as e:
         logger.exception("Failed to chat")
         raise HTTPException(status_code=500, detail=str(e)) from e
+

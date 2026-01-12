@@ -6,29 +6,24 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from tapo_camera_mcp.mcp_client import call_mcp_tool
-
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/microscope", tags=["microscope"])
 
 
 class MagnificationRequest(BaseModel):
     """Request to set magnification."""
-
     camera_name: str
     magnification: float
 
 
 class LEDRequest(BaseModel):
     """Request to set LED brightness."""
-
     camera_name: str
     brightness: int
 
 
 class CalibrationRequest(BaseModel):
     """Request to calibrate microscope."""
-
     camera_name: str
     known_distance_pixels: int
     actual_distance_mm: float
@@ -36,24 +31,21 @@ class CalibrationRequest(BaseModel):
 
 class MeasurementRequest(BaseModel):
     """Request to measure distance."""
-
     camera_name: str
     pixel_distance: int
 
 
 class StartTimelapseRequest(BaseModel):
     """Request to start a timelapse session."""
-
     camera_name: str
     session_name: str
     interval_minutes: int = 10  # Every 10 minutes
-    duration_hours: int = 24  # For 24 hours (adjust for multi-day)
+    duration_hours: int = 24    # For 24 hours (adjust for multi-day)
     auto_focus: bool = True
 
 
 class CreateVideoRequest(BaseModel):
     """Request to create a timelapse video."""
-
     session_dir: str
     output_path: Optional[str] = None
     fps: int = 30
@@ -62,52 +54,43 @@ class CreateVideoRequest(BaseModel):
 
 class AnalyzeGrowthRequest(BaseModel):
     """Request to analyze plant growth."""
-
     session_dir: str
 
 
-async def _check_microscope_device(camera_name: str):
-    """Check if microscope device exists and is available."""
-    # Check if device exists via MCP
-    device_status = await call_mcp_tool(
-        "medical_management", {"action": "get_device_status", "device_id": camera_name}
-    )
+async def _get_microscope_camera(camera_name: str):
+    """Get microscope camera instance."""
+    from tapo_camera_mcp.core.server import TapoCameraServer
 
-    if not device_status.get("success"):
-        raise HTTPException(status_code=404, detail=f"Microscope device not found: {camera_name}")
+    server = await TapoCameraServer.get_instance()
+    camera = await server.camera_manager.get_camera(camera_name)
+    if not camera:
+        raise HTTPException(status_code=404, detail=f"Camera not found: {camera_name}")
 
-    device_data = device_status.get("data", {})
-    if device_data.get("type") != "microscope":
+    # Check if it's a microscope camera
+    if not hasattr(camera, 'set_magnification'):
         raise HTTPException(
             status_code=400,
-            detail=f"Device {camera_name} is not a microscope (type: {device_data.get('type')})",
+            detail=f"Camera {camera_name} is not a microscope camera"
         )
 
-    return device_data
+    return camera
 
 
 @router.post("/magnification")
 async def set_magnification(request: MagnificationRequest):
     """Set microscope magnification."""
     try:
-        await _check_microscope_device(request.camera_name)
+        camera = await _get_microscope_camera(request.camera_name)
+        success = await camera.set_magnification(request.magnification)
 
-        result = await call_mcp_tool(
-            "medical_management",
-            {
-                "action": "adjust_microscope",
-                "device_id": request.camera_name,
-                "magnification": request.magnification,
-            },
-        )
-
-        if result.get("success"):
+        if success:
             return {
                 "success": True,
                 "message": f"Set magnification to {request.magnification}x",
-                "magnification": request.magnification,
+                "magnification": request.magnification
             }
-        raise HTTPException(status_code=500, detail="Failed to set magnification")
+        else:
+            raise HTTPException(status_code=500, detail="Failed to set magnification")
 
     except HTTPException:
         raise
@@ -120,24 +103,17 @@ async def set_magnification(request: MagnificationRequest):
 async def set_led_brightness(request: LEDRequest):
     """Set microscope LED brightness."""
     try:
-        await _check_microscope_device(request.camera_name)
+        camera = await _get_microscope_camera(request.camera_name)
+        success = await camera.set_led_brightness(request.brightness)
 
-        result = await call_mcp_tool(
-            "medical_management",
-            {
-                "action": "adjust_microscope",
-                "device_id": request.camera_name,
-                "led_brightness": request.brightness,
-            },
-        )
-
-        if result.get("success"):
+        if success:
             return {
                 "success": True,
                 "message": f"Set LED brightness to {request.brightness}%",
-                "brightness": request.brightness,
+                "brightness": request.brightness
             }
-        raise HTTPException(status_code=500, detail="Failed to set LED brightness")
+        else:
+            raise HTTPException(status_code=500, detail="Failed to set LED brightness")
 
     except HTTPException:
         raise
@@ -150,27 +126,19 @@ async def set_led_brightness(request: LEDRequest):
 async def calibrate_microscope(request: CalibrationRequest):
     """Calibrate microscope for measurements."""
     try:
-        await _check_microscope_device(request.camera_name)
+        camera = await _get_microscope_camera(request.camera_name)
+        success = await camera.calibrate(request.known_distance_pixels, request.actual_distance_mm)
 
-        result = await call_mcp_tool(
-            "medical_management",
-            {
-                "action": "calibrate_device",
-                "device_id": request.camera_name,
-                "known_distance_pixels": request.known_distance_pixels,
-                "actual_distance_mm": request.actual_distance_mm,
-            },
-        )
-
-        if result.get("success"):
+        if success:
             calibration_factor = request.actual_distance_mm / request.known_distance_pixels
             return {
                 "success": True,
                 "message": "Microscope calibrated successfully",
                 "calibration_factor": calibration_factor,
-                "units": "mm/pixel",
+                "units": "mm/pixel"
             }
-        raise HTTPException(status_code=500, detail="Failed to calibrate microscope")
+        else:
+            raise HTTPException(status_code=500, detail="Failed to calibrate microscope")
 
     except HTTPException:
         raise
@@ -183,29 +151,18 @@ async def calibrate_microscope(request: CalibrationRequest):
 async def measure_distance(request: MeasurementRequest):
     """Convert pixel distance to actual distance."""
     try:
-        await _check_microscope_device(request.camera_name)
+        camera = await _get_microscope_camera(request.camera_name)
+        actual_distance = await camera.measure_distance(request.pixel_distance)
 
-        result = await call_mcp_tool(
-            "medical_management",
-            {
-                "action": "get_readings",
-                "device_id": request.camera_name,
-                "measurement_type": "distance",
-                "pixel_distance": request.pixel_distance,
-            },
-        )
-
-        if result.get("success") and "actual_distance" in result.get("data", {}):
-            actual_distance = result["data"]["actual_distance"]
+        if actual_distance is not None:
             return {
                 "success": True,
                 "pixel_distance": request.pixel_distance,
                 "actual_distance": actual_distance,
-                "units": "mm",
+                "units": "mm"
             }
-        raise HTTPException(
-            status_code=500, detail="Microscope not calibrated or measurement failed"
-        )
+        else:
+            raise HTTPException(status_code=500, detail="Microscope not calibrated")
 
     except HTTPException:
         raise
@@ -218,16 +175,19 @@ async def measure_distance(request: MeasurementRequest):
 async def auto_focus(camera_name: str):
     """Perform auto-focus on microscope."""
     try:
-        await _check_microscope_device(camera_name)
+        camera = await _get_microscope_camera(camera_name)
+        success = await camera.auto_focus()
 
-        result = await call_mcp_tool(
-            "medical_management",
-            {"action": "adjust_microscope", "device_id": camera_name, "focus_mode": "auto"},
-        )
-
-        if result.get("success"):
-            return {"success": True, "message": "Auto-focus completed successfully"}
-        return {"success": False, "message": "Auto-focus not supported or failed"}
+        if success:
+            return {
+                "success": True,
+                "message": "Auto-focus completed successfully"
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Auto-focus not supported or failed"
+            }
 
     except HTTPException:
         raise
@@ -240,9 +200,14 @@ async def auto_focus(camera_name: str):
 async def get_microscope_info(camera_name: str):
     """Get detailed microscope information."""
     try:
-        device_data = await _check_microscope_device(camera_name)
+        camera = await _get_microscope_camera(camera_name)
+        info = camera.get_microscope_info()
 
-        return {"success": True, "camera_name": camera_name, "info": device_data}
+        return {
+            "success": True,
+            "camera_name": camera_name,
+            "info": info
+        }
 
     except HTTPException:
         raise
@@ -255,27 +220,24 @@ async def get_microscope_info(camera_name: str):
 async def start_timelapse(request: StartTimelapseRequest):
     """Start a timelapse photography session for plant growth monitoring."""
     try:
-        await _check_microscope_device(request.camera_name)
+        camera = await _get_microscope_camera(request.camera_name)
 
-        result = await call_mcp_tool(
-            "medical_management",
-            {
-                "action": "start_timelapse",
-                "device_id": request.camera_name,
-                "session_name": request.session_name,
-                "interval_minutes": request.interval_minutes,
-                "duration_hours": request.duration_hours,
-                "auto_focus": request.auto_focus,
-            },
+        # Check if camera supports timelapse
+        if not hasattr(camera, 'start_timelapse'):
+            raise HTTPException(status_code=400, detail=f"Camera {request.camera_name} does not support timelapse")
+
+        session_info = await camera.start_timelapse(
+            interval_minutes=request.interval_minutes,
+            duration_hours=request.duration_hours,
+            session_name=request.session_name,
+            auto_focus=request.auto_focus
         )
 
-        if result.get("success"):
-            return {
-                "success": True,
-                "message": f"Timelapse session '{request.session_name}' started",
-                "session_info": result.get("data", {}),
-            }
-        raise HTTPException(status_code=500, detail="Failed to start timelapse")
+        return {
+            "success": True,
+            "message": f"Timelapse session '{request.session_name}' started",
+            "session_info": session_info
+        }
 
     except HTTPException:
         raise
@@ -288,20 +250,18 @@ async def start_timelapse(request: StartTimelapseRequest):
 async def stop_timelapse(camera_name: str, session_name: str):
     """Stop a running timelapse session."""
     try:
-        await _check_microscope_device(camera_name)
+        camera = await _get_microscope_camera(camera_name)
 
-        result = await call_mcp_tool(
-            "medical_management",
-            {"action": "stop_timelapse", "device_id": camera_name, "session_name": session_name},
-        )
+        if not hasattr(camera, 'stop_timelapse'):
+            raise HTTPException(status_code=400, detail=f"Camera {camera_name} does not support timelapse")
 
-        if result.get("success"):
-            return {
-                "success": True,
-                "message": f"Timelapse session '{session_name}' stop requested",
-                "result": result.get("data", {}),
-            }
-        raise HTTPException(status_code=500, detail="Failed to stop timelapse")
+        result = await camera.stop_timelapse(session_name)
+
+        return {
+            "success": True,
+            "message": f"Timelapse session '{session_name}' stop requested",
+            "result": result
+        }
 
     except HTTPException:
         raise
@@ -314,15 +274,18 @@ async def stop_timelapse(camera_name: str, session_name: str):
 async def get_timelapse_status(camera_name: str):
     """Get status of timelapse sessions for a camera."""
     try:
-        await _check_microscope_device(camera_name)
+        camera = await _get_microscope_camera(camera_name)
 
-        result = await call_mcp_tool(
-            "medical_management", {"action": "get_timelapse_status", "device_id": camera_name}
-        )
+        if not hasattr(camera, 'get_timelapse_status'):
+            raise HTTPException(status_code=400, detail=f"Camera {camera_name} does not support timelapse")
 
-        if result.get("success"):
-            return {"success": True, "camera_name": camera_name, "status": result.get("data", {})}
-        raise HTTPException(status_code=500, detail="Failed to get timelapse status")
+        status = await camera.get_timelapse_status()
+
+        return {
+            "success": True,
+            "camera_name": camera_name,
+            "status": status
+        }
 
     except HTTPException:
         raise
@@ -335,42 +298,37 @@ async def get_timelapse_status(camera_name: str):
 async def create_timelapse_video(request: CreateVideoRequest):
     """Create a time-lapse video from captured images."""
     try:
-        # Find the first available microscope device
-        devices_result = await call_mcp_tool("medical_management", {"action": "list_devices"})
+        # We need to get a camera instance to use the method
+        # This is a bit hacky, but since the method is on the camera class,
+        # we'll get the first microscope camera available
+        from tapo_camera_mcp.core.server import TapoCameraServer
 
-        if not devices_result.get("success"):
-            raise HTTPException(status_code=404, detail="No microscope devices found")
+        server = await TapoCameraServer.get_instance()
+        cameras = await server.camera_manager.get_all_cameras()
 
-        microscope_device = None
-        for device in devices_result.get("data", {}).get("devices", []):
-            if device.get("type") == "microscope":
-                microscope_device = device
+        microscope_camera = None
+        for camera in cameras.values():
+            if hasattr(camera, 'create_growth_video'):
+                microscope_camera = camera
                 break
 
-        if not microscope_device:
-            raise HTTPException(status_code=404, detail="No microscope device available")
+        if not microscope_camera:
+            raise HTTPException(status_code=404, detail="No microscope camera available")
 
-        result = await call_mcp_tool(
-            "medical_management",
-            {
-                "action": "create_timelapse_video",
-                "session_dir": request.session_dir,
-                "output_path": request.output_path,
-                "fps": request.fps,
-                "add_timestamp": request.add_timestamp,
-            },
+        video_path = await microscope_camera.create_growth_video(
+            session_dir=request.session_dir,
+            output_path=request.output_path,
+            fps=request.fps,
+            add_timestamp=request.add_timestamp
         )
 
-        if result.get("success"):
-            video_path = result.get("data", {}).get("video_path", request.output_path)
-            return {
-                "success": True,
-                "message": f"Timelapse video created: {video_path}",
-                "video_path": video_path,
-                "fps": request.fps,
-                "timestamp_overlay": request.add_timestamp,
-            }
-        raise HTTPException(status_code=500, detail="Failed to create timelapse video")
+        return {
+            "success": True,
+            "message": f"Timelapse video created: {video_path}",
+            "video_path": video_path,
+            "fps": request.fps,
+            "timestamp_overlay": request.add_timestamp
+        }
 
     except HTTPException:
         raise
@@ -383,32 +341,28 @@ async def create_timelapse_video(request: CreateVideoRequest):
 async def analyze_growth(request: AnalyzeGrowthRequest):
     """Analyze plant growth patterns from timelapse images."""
     try:
-        # Find the first available microscope device
-        devices_result = await call_mcp_tool("medical_management", {"action": "list_devices"})
+        # Get first available microscope camera
+        from tapo_camera_mcp.core.server import TapoCameraServer
 
-        if not devices_result.get("success"):
-            raise HTTPException(status_code=404, detail="No microscope devices found")
+        server = await TapoCameraServer.get_instance()
+        cameras = await server.camera_manager.get_all_cameras()
 
-        microscope_device = None
-        for device in devices_result.get("data", {}).get("devices", []):
-            if device.get("type") == "microscope":
-                microscope_device = device
+        microscope_camera = None
+        for camera in cameras.values():
+            if hasattr(camera, 'analyze_growth'):
+                microscope_camera = camera
                 break
 
-        if not microscope_device:
-            raise HTTPException(status_code=404, detail="No microscope device available")
+        if not microscope_camera:
+            raise HTTPException(status_code=404, detail="No microscope camera available")
 
-        result = await call_mcp_tool(
-            "medical_management", {"action": "analyze_growth", "session_dir": request.session_dir}
-        )
+        analysis = await microscope_camera.analyze_growth(request.session_dir)
 
-        if result.get("success"):
-            return {
-                "success": True,
-                "message": f"Growth analysis completed for {request.session_dir}",
-                "analysis": result.get("data", {}),
-            }
-        raise HTTPException(status_code=500, detail="Failed to analyze growth")
+        return {
+            "success": True,
+            "message": f"Growth analysis completed for {request.session_dir}",
+            "analysis": analysis
+        }
 
     except HTTPException:
         raise

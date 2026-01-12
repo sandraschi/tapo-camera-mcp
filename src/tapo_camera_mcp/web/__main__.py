@@ -3,12 +3,7 @@
 import argparse
 import logging
 import sys
-import warnings
 from pathlib import Path
-
-# Suppress websocket deprecation warnings
-warnings.filterwarnings("ignore", message="websockets.legacy is deprecated")
-warnings.filterwarnings("ignore", message="websockets.server.WebSocketServerProtocol is deprecated")
 
 from ..utils.logging import setup_logging
 from .server import WebServer
@@ -33,12 +28,7 @@ if __name__ == "__main__":
 
         # Setup logging - handles both Docker and native environments
         import os
-
         is_docker = os.getenv("CONTAINER") == "yes" or os.path.exists("/.dockerenv")
-
-        # Enable lazy hardware initialization for immediate dashboard access
-        # Temporarily disable lazy init to fix hardware initialization issues
-        # os.environ["TAPO_MCP_LAZY_INIT"] = "true"
         if is_docker:
             # In Docker: Log to stdout (Docker json-file driver) and mounted volume
             # Promtail reads from /app/logs/tapo_mcp.log (mounted to host)

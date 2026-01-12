@@ -20,7 +20,6 @@ router = APIRouter(prefix="/api/messages", tags=["messages"])
 
 class AcknowledgeRequest(BaseModel):
     """Request to acknowledge messages."""
-
     message_ids: Optional[List[str]] = None
     severity: Optional[str] = None  # Acknowledge all of this severity
     acknowledge_all: bool = False
@@ -33,11 +32,11 @@ async def get_messages(
     source: Optional[str] = Query(None, description="Filter by source device"),
     since_minutes: int = Query(60, description="Messages from last N minutes"),
     limit: int = Query(100, description="Max messages to return"),
-    unacknowledged_only: bool = Query(False, description="Only unacknowledged messages"),
+    unacknowledged_only: bool = Query(False, description="Only unacknowledged messages")
 ) -> Dict[str, Any]:
     """
     Get messages with optional filtering.
-
+    
     Query Parameters:
     - severity: info, warning, or alarm
     - category: device_connection, device_status, sensor_reading, etc.
@@ -50,7 +49,6 @@ async def get_messages(
         messaging = get_messaging_service()
 
         from datetime import datetime, timedelta
-
         since = datetime.now() - timedelta(minutes=since_minutes)
 
         sev = MessageSeverity(severity) if severity else None
@@ -58,10 +56,18 @@ async def get_messages(
         ack = False if unacknowledged_only else None
 
         messages = messaging.get_messages(
-            severity=sev, category=cat, source=source, since=since, limit=limit, acknowledged=ack
+            severity=sev,
+            category=cat,
+            source=source,
+            since=since,
+            limit=limit,
+            acknowledged=ack
         )
 
-        return {"count": len(messages), "messages": [m.to_dict() for m in messages]}
+        return {
+            "count": len(messages),
+            "messages": [m.to_dict() for m in messages]
+        }
 
     except Exception as e:
         logger.exception("Error getting messages")
@@ -75,7 +81,10 @@ async def get_unacknowledged_alarms() -> Dict[str, Any]:
         messaging = get_messaging_service()
         alarms = messaging.get_unacknowledged_alarms()
 
-        return {"count": len(alarms), "alarms": [m.to_dict() for m in alarms]}
+        return {
+            "count": len(alarms),
+            "alarms": [m.to_dict() for m in alarms]
+        }
     except Exception as e:
         logger.exception("Error getting alarms")
         return {"count": 0, "alarms": [], "error": str(e)}
@@ -85,7 +94,7 @@ async def get_unacknowledged_alarms() -> Dict[str, Any]:
 async def acknowledge_messages(request: AcknowledgeRequest) -> Dict[str, Any]:
     """
     Acknowledge one or more messages.
-
+    
     Body:
     - message_ids: List of message IDs to ack
     - severity: Ack all of this severity (info, warning, alarm)
@@ -105,7 +114,10 @@ async def acknowledge_messages(request: AcknowledgeRequest) -> Dict[str, Any]:
                 if messaging.acknowledge_message(msg_id):
                     count += 1
 
-        return {"success": True, "acknowledged_count": count}
+        return {
+            "success": True,
+            "acknowledged_count": count
+        }
     except Exception as e:
         logger.exception("Error acknowledging messages")
         return {"success": False, "error": str(e)}
@@ -126,7 +138,7 @@ async def get_message_metrics() -> Dict[str, Any]:
 async def get_prometheus_metrics() -> str:
     """
     Export metrics in Prometheus text format.
-
+    
     Scrape this endpoint with Prometheus:
     ```yaml
     scrape_configs:
@@ -142,3 +154,4 @@ async def get_prometheus_metrics() -> str:
     except Exception as e:
         logger.exception("Error exporting Prometheus metrics")
         return f"# Error: {e}\n"
+

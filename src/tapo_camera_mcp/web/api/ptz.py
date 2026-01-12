@@ -1,12 +1,9 @@
 """PTZ (Pan-Tilt-Zoom) API endpoints for ONVIF cameras."""
 
 import logging
-from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-
-from ...mcp_client import call_mcp_tool
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ptz", tags=["ptz"])
@@ -28,15 +25,34 @@ class PTZPresetRequest(BaseModel):
     preset_token: str
 
 
-@router.post("/move", response_model=Dict[str, Any])
-async def ptz_move(request: PTZMoveRequest) -> Dict[str, Any]:
-    """Start continuous PTZ movement via MCP.
+async def _get_camera(camera_name: str):
+    """Get camera instance by name."""
+    from tapo_camera_mcp.core.server import TapoCameraServer
+
+    server = await TapoCameraServer.get_instance()
+    camera = await server.camera_manager.get_camera(camera_name)
+    if not camera:
+        raise HTTPException(status_code=404, detail=f"Camera not found: {camera_name}")
+    return camera
+
+
+@router.post("/move")
+async def ptz_move(request: PTZMoveRequest):
+    """Start continuous PTZ movement.
 
     Values range from -1.0 to 1.0:
     - pan: negative = left, positive = right
     - tilt: negative = down, positive = up
     - zoom: negative = zoom out, positive = zoom in
     """
+    camera = await _get_camera(request.camera_name)
+
+    # Check if camera supports PTZ
+    if not hasattr(camera, "ptz_move"):
+        raise HTTPException(
+            status_code=400, detail="Camera does not support PTZ controls"
+        )
+
     # Validate and clamp values to prevent issues
     pan = max(-1.0, min(1.0, request.pan))
     tilt = max(-1.0, min(1.0, request.tilt))
@@ -48,99 +64,80 @@ async def ptz_move(request: PTZMoveRequest) -> Dict[str, Any]:
     if abs(pan) < min_threshold and abs(tilt) < min_threshold and abs(zoom) < min_threshold:
         # If all values are too small, stop movement instead
         try:
-            result = await call_mcp_tool(
-                "ptz_management", {"action": "stop", "camera_name": request.camera_name}
-            )
-            if result.get("success"):
-                return {
-                    "success": True,
-                    "message": "PTZ stopped (values too small for movement)",
-                }
-        except Exception as e:
-            logger.warning(f"Failed to stop PTZ movement: {e}")
-
-    try:
-        result = await call_mcp_tool(
-            "ptz_management",
-            {
-                "action": "move",
-                "camera_name": request.camera_name,
-                "pan": pan,
-                "tilt": tilt,
-                "zoom": zoom,
-                "speed": 5,
-            },
-        )
-        if result.get("success"):
+            await camera.ptz_stop()
             return {
                 "success": True,
-                "message": f"PTZ moving: pan={pan:.3f}, tilt={tilt:.3f}, zoom={zoom:.3f}",
+                "message": "PTZ stopped (values too small for movement)",
             }
-        raise HTTPException(status_code=400, detail=result.get("error", "PTZ move failed"))
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception("PTZ move failed via MCP")
-        raise HTTPException(status_code=500, detail=f"PTZ move failed: {e!s}")
+        except Exception:
+            pass
 
-
-@router.post("/stop/{camera_name}", response_model=Dict[str, Any])
-async def ptz_stop(camera_name: str) -> Dict[str, Any]:
-    """Stop all PTZ movement via MCP."""
     try:
-        result = await call_mcp_tool(
-            "ptz_management", {"action": "stop", "camera_name": camera_name}
-        )
-        if result.get("success"):
-            return {"success": True, "message": "PTZ movement stopped"}
-        raise HTTPException(status_code=400, detail=result.get("error", "PTZ stop failed"))
-    except HTTPException:
-        raise
+        await camera.ptz_move(pan=pan, tilt=tilt, zoom=zoom)
+        return {
+            "success": True,
+            "message": f"PTZ moving: pan={pan:.3f}, tilt={tilt:.3f}, zoom={zoom:.3f}",
+        }
     except Exception as e:
-        logger.exception("PTZ stop failed via MCP")
-        raise HTTPException(status_code=500, detail=f"PTZ stop failed: {e!s}")
+        logger.exception("PTZ move failed")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/presets/{camera_name}", response_model=Dict[str, Any])
-async def get_presets(camera_name: str) -> Dict[str, Any]:
-    """Get list of PTZ presets for a camera via MCP."""
+@router.post("/stop/{camera_name}")
+async def ptz_stop(camera_name: str):
+    """Stop all PTZ movement."""
+    camera = await _get_camera(camera_name)
+
+    if not hasattr(camera, "ptz_stop"):
+        raise HTTPException(
+            status_code=400, detail="Camera does not support PTZ controls"
+        )
+
     try:
-        result = await call_mcp_tool(
-            "ptz_management", {"action": "list_presets", "camera_name": camera_name}
-        )
-        if result.get("success"):
-            return {"success": True, "presets": result.get("presets", [])}
-        raise HTTPException(status_code=400, detail=result.get("error", "Failed to get presets"))
-    except HTTPException:
-        raise
+        await camera.ptz_stop()
+        return {"success": True, "message": "PTZ movement stopped"}
     except Exception as e:
-        logger.exception("Failed to get PTZ presets via MCP")
-        raise HTTPException(status_code=500, detail=f"Failed to get PTZ presets: {e!s}")
+        logger.exception("PTZ stop failed")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.post("/preset/goto", response_model=Dict[str, Any])
-async def goto_preset(request: PTZPresetRequest) -> Dict[str, Any]:
-    """Move camera to a saved preset position via MCP."""
+@router.get("/presets/{camera_name}")
+async def get_presets(camera_name: str):
+    """Get list of PTZ presets for a camera."""
+    camera = await _get_camera(camera_name)
+
+    if not hasattr(camera, "ptz_get_presets"):
+        raise HTTPException(
+            status_code=400, detail="Camera does not support PTZ presets"
+        )
+
     try:
-        result = await call_mcp_tool(
-            "ptz_management",
-            {
-                "action": "recall_preset",
-                "camera_name": request.camera_name,
-                "preset_name": request.preset_token,
-            },
-        )
-        if result.get("success"):
-            return {
-                "success": True,
-                "message": f"Moving to preset: {request.preset_token}",
-            }
-        raise HTTPException(status_code=400, detail=result.get("error", "Failed to recall preset"))
-    except HTTPException:
-        raise
+        presets = await camera.ptz_get_presets()
+        return {"success": True, "presets": presets}
     except Exception as e:
-        logger.exception("Failed to go to PTZ preset via MCP")
-        raise HTTPException(status_code=500, detail=f"Failed to go to PTZ preset: {e!s}")
+        logger.exception("Failed to get PTZ presets")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.post("/preset/goto")
+async def goto_preset(request: PTZPresetRequest):
+    """Move camera to a saved preset position."""
+    camera = await _get_camera(request.camera_name)
+
+    if not hasattr(camera, "ptz_go_to_preset"):
+        raise HTTPException(
+            status_code=400, detail="Camera does not support PTZ presets"
+        )
+
+    try:
+        await camera.ptz_go_to_preset(request.preset_token)
+        return {
+            "success": True,
+            "message": f"Moving to preset: {request.preset_token}",
+        }
+    except Exception as e:
+        logger.exception("Failed to go to PTZ preset")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # Convenience endpoints for simple directional control
@@ -182,22 +179,33 @@ async def ptz_zoom_out(camera_name: str, speed: float = 0.3):
 
 class PTZHomeRequest(BaseModel):
     """Request model for PTZ home."""
-
     camera_name: str
 
 
-@router.post("/home", response_model=Dict[str, Any])
-async def ptz_home(request: PTZHomeRequest) -> Dict[str, Any]:
-    """Move camera to home position via MCP."""
-    try:
-        result = await call_mcp_tool(
-            "ptz_management", {"action": "home", "camera_name": request.camera_name}
-        )
-        if result.get("success"):
+@router.post("/home")
+async def ptz_home(request: PTZHomeRequest):
+    """Move camera to home position."""
+    camera = await _get_camera(request.camera_name)
+
+    # Try ptz_go_home first, then fall back to preset
+    if hasattr(camera, "ptz_go_home"):
+        try:
+            await camera.ptz_go_home()
             return {"success": True, "message": "Moving to home position"}
-        raise HTTPException(status_code=400, detail=result.get("error", "Failed to go to home"))
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception("Failed to go to PTZ home via MCP")
-        raise HTTPException(status_code=500, detail=f"Failed to go to PTZ home: {e!s}")
+        except Exception as e:
+            logger.warning(f"ptz_go_home failed: {e}, trying home preset")
+
+    # Try home preset
+    if hasattr(camera, "ptz_go_to_preset"):
+        try:
+            await camera.ptz_go_to_preset("1")  # Preset 1 is typically home
+            return {"success": True, "message": "Moving to home preset"}
+        except Exception:
+            pass
+
+    # Just stop if nothing else works
+    if hasattr(camera, "ptz_stop"):
+        await camera.ptz_stop()
+        return {"success": True, "message": "Stopped PTZ (no home support)"}
+
+    raise HTTPException(status_code=400, detail="Camera does not support PTZ home")

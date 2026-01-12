@@ -2,6 +2,7 @@
 
 import json
 import logging
+from typing import Dict, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -13,12 +14,11 @@ router = APIRouter(prefix="/api/camera-names", tags=["camera-names"])
 _camera_names = {}
 _camera_names_file = "data/camera_names.json"
 
-
 def load_camera_names():
     """Load camera names from file."""
     global _camera_names
     try:
-        with open(_camera_names_file, encoding="utf-8") as f:
+        with open(_camera_names_file, 'r', encoding='utf-8') as f:
             _camera_names = json.load(f)
         logger.info(f"Loaded camera names for {len(_camera_names)} cameras")
     except FileNotFoundError:
@@ -27,43 +27,37 @@ def load_camera_names():
         logger.error(f"Failed to load camera names: {e}")
         _camera_names = {}
 
-
 def save_camera_names():
     """Save camera names to file."""
     try:
         import os
-
         os.makedirs("data", exist_ok=True)
-        with open(_camera_names_file, "w", encoding="utf-8") as f:
+        with open(_camera_names_file, 'w', encoding='utf-8') as f:
             json.dump(_camera_names, f, indent=2, ensure_ascii=False)
         logger.debug("Saved camera names")
     except Exception as e:
         logger.error(f"Failed to save camera names: {e}")
 
-
 # Load on startup
 load_camera_names()
 
-
 class SetCameraNameRequest(BaseModel):
     """Request to set a camera name."""
-
     camera_id: str
     name: str
 
-
 class RenameCameraRequest(BaseModel):
     """Request to rename a camera."""
-
     old_id: str
     new_id: str
-
 
 @router.get("/")
 async def get_camera_names() -> dict:
     """Get all camera names."""
-    return {"success": True, "names": _camera_names.copy()}
-
+    return {
+        "success": True,
+        "names": _camera_names.copy()
+    }
 
 @router.post("/set")
 async def set_camera_name(request: SetCameraNameRequest):
@@ -74,12 +68,11 @@ async def set_camera_name(request: SetCameraNameRequest):
         return {
             "success": True,
             "message": f"Camera '{request.camera_id}' named '{request.name}'",
-            "name": request.name,
+            "name": request.name
         }
     except Exception as e:
         logger.exception("Failed to set camera name")
         raise HTTPException(status_code=500, detail=str(e)) from e
-
 
 @router.post("/rename")
 async def rename_camera(request: RenameCameraRequest):
@@ -91,15 +84,15 @@ async def rename_camera(request: RenameCameraRequest):
             save_camera_names()
             return {
                 "success": True,
-                "message": f"Renamed camera from '{request.old_id}' to '{request.new_id}'",
+                "message": f"Renamed camera from '{request.old_id}' to '{request.new_id}'"
             }
-        raise HTTPException(status_code=404, detail=f"Camera '{request.old_id}' not found")
+        else:
+            raise HTTPException(status_code=404, detail=f"Camera '{request.old_id}' not found")
     except HTTPException:
         raise
     except Exception as e:
         logger.exception("Failed to rename camera")
         raise HTTPException(status_code=500, detail=str(e)) from e
-
 
 @router.delete("/{camera_id}")
 async def delete_camera_name(camera_id: str):
@@ -108,14 +101,17 @@ async def delete_camera_name(camera_id: str):
         if camera_id in _camera_names:
             del _camera_names[camera_id]
             save_camera_names()
-            return {"success": True, "message": f"Deleted name for camera '{camera_id}'"}
-        raise HTTPException(status_code=404, detail=f"Camera '{camera_id}' not found")
+            return {
+                "success": True,
+                "message": f"Deleted name for camera '{camera_id}'"
+            }
+        else:
+            raise HTTPException(status_code=404, detail=f"Camera '{camera_id}' not found")
     except HTTPException:
         raise
     except Exception as e:
         logger.exception("Failed to delete camera name")
         raise HTTPException(status_code=500, detail=str(e)) from e
-
 
 @router.get("/display/{camera_id}")
 async def get_display_name(camera_id: str) -> dict:
@@ -125,5 +121,22 @@ async def get_display_name(camera_id: str) -> dict:
         "camera_id": camera_id,
         "display_name": custom_name or camera_id,
         "has_custom_name": custom_name is not None,
-        "custom_name": custom_name,
+        "custom_name": custom_name
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

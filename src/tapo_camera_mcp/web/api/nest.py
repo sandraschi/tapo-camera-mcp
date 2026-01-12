@@ -42,7 +42,9 @@ async def get_nest_devices():
     """Get all Nest Protect devices via Home Assistant."""
     client = get_homeassistant_client()
     if not client or not client.is_initialized:
-        raise HTTPException(status_code=400, detail="Home Assistant not connected")
+        raise HTTPException(
+            status_code=400, detail="Home Assistant not connected"
+        )
 
     devices = await client.get_nest_protect_devices()
     return {"devices": [d.to_dict() for d in devices]}
@@ -63,3 +65,4 @@ async def get_ha_status():
         "connected": True,
         "url": client.base_url,
     }
+

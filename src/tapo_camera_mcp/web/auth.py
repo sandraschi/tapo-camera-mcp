@@ -23,12 +23,12 @@ CONFIG_PATH = Path(__file__).parent.parent.parent.parent / "config.yaml"
 
 def hash_password(password: str, salt: Optional[str] = None) -> tuple[str, str]:
     """Hash password with salt using SHA-256.
-
+    
     Returns (hashed_password, salt).
     """
     if salt is None:
         salt = secrets.token_hex(16)
-    hashed = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100000)
+    hashed = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
     return hashed.hex(), salt
 
 
@@ -199,11 +199,12 @@ def setup_default_user() -> None:
 
             logger.warning(f"Created default admin user. Password: {default_password}")
             logger.warning("Please change this password immediately!")
-            print(f"\n{'=' * 60}")
+            print(f"\n{'='*60}")
             print("DEFAULT ADMIN CREDENTIALS")
             print("Username: admin")
             print(f"Password: {default_password}")
-            print(f"{'=' * 60}\n")
+            print(f"{'='*60}\n")
 
         except Exception as e:
             logger.error(f"Failed to create default user: {e}")
+

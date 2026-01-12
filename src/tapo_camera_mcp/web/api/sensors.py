@@ -4,28 +4,26 @@ Sensor API endpoints for real-world ingestion data.
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from ...db import TimeSeriesDB
-from ...mcp_client import call_mcp_tool
-
-logger = logging.getLogger(__name__)
+from ...tools.energy.tapo_plug_tools import tapo_plug_manager
 
 
 class ToggleRequest(BaseModel):
     """Request model for toggling device power state."""
-
     turn_on: bool
 
     class Config:
         """Pydantic config."""
-
-        json_schema_extra = {"example": {"turn_on": False}}
-
+        json_schema_extra = {
+            "example": {
+                "turn_on": False
+            }
+        }
 
 router = APIRouter(prefix="/api/sensors", tags=["sensors"])
 _db = TimeSeriesDB()  # Initialize database for historical data
@@ -41,21 +39,16 @@ def _model_dump(model: Any) -> dict[str, Any]:
 @router.get("/tapo-p115", summary="List Tapo P115 smart plugs")
 async def list_tapo_p115_devices() -> dict[str, Any]:
     """
-    Return all Tapo P115 smart plugs with realtime metrics via MCP.
+    Return all Tapo P115 smart plugs with realtime metrics.
     """
-    try:
-        result = await call_mcp_tool("energy_management", {"action": "status"})
-        if result.get("success"):
-            devices = result.get("data", {}).get("devices", [])
-            return {"devices": devices, "count": len(devices)}
-        return {
-            "devices": [],
-            "count": 0,
-            "error": result.get("error", "Failed to get devices"),
-        }
-    except Exception as e:
-        logger.exception("Failed to list Tapo P115 devices via MCP")
-        return {"devices": [], "count": 0, "error": str(e)}
+    devices = await tapo_plug_manager.get_all_devices()
+    response = []
+    for device in devices:
+        data = _model_dump(device)
+        data["host"] = tapo_plug_manager.get_device_host(device.device_id)
+        data["readonly"] = tapo_plug_manager.is_device_readonly(device.device_id)
+        response.append(data)
+    return {"devices": response, "count": len(response)}
 
 
 @router.get(
@@ -69,44 +62,32 @@ async def get_tapo_p115_history(
     """
     Retrieve energy usage history for the specified Tapo P115 plug from database.
     """
-    try:
-        # Check if device exists via MCP
-        status_result = await call_mcp_tool(
-            "energy_management", {"action": "status", "device_id": device_id}
-        )
-        if not status_result.get("success"):
-            raise HTTPException(status_code=404, detail=f"Device {device_id} not found")
+    device = await tapo_plug_manager.get_device_status(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail=f"Device {device_id} not found")
 
-        device_data = status_result.get("data", {})
-        device_name = device_data.get("name", device_id)
+    # Get historical data from database
+    history = _db.get_energy_history(device_id=device_id, hours=hours)
 
-        # Get historical data from database
-        history = _db.get_energy_history(device_id=device_id, hours=hours)
-
-        # Format data points for frontend
-        data_points = [
-            {
-                "timestamp": point["timestamp"],
-                "power_w": point["power_w"],
-                "voltage_v": point["voltage_v"],
-                "current_a": point["current_a"],
-                "power_consumption": point["power_w"],  # Alias for compatibility
-            }
-            for point in history
-        ]
-
-        return {
-            "device_id": device_id,
-            "device_name": device_name,
-            "hours": hours,
-            "data_points": data_points,
-            "count": len(data_points),
+    # Format data points for frontend
+    data_points = [
+        {
+            "timestamp": point["timestamp"],
+            "power_w": point["power_w"],
+            "voltage_v": point["voltage_v"],
+            "current_a": point["current_a"],
+            "power_consumption": point["power_w"],  # Alias for compatibility
         }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception(f"Failed to get history for device {device_id}")
-        raise HTTPException(status_code=500, detail=f"Failed to get device history: {e!s}")
+        for point in history
+    ]
+
+    return {
+        "device_id": device_id,
+        "device_name": device.name,
+        "hours": hours,
+        "data_points": data_points,
+        "count": len(data_points),
+    }
 
 
 @router.post(
@@ -118,36 +99,43 @@ async def toggle_tapo_p115(
     toggle_request: ToggleRequest,
 ) -> dict[str, Any]:
     """
-    Toggle power state of a Tapo P115 plug via MCP.
+    Toggle power state of a Tapo P115 plug.
     """
+    import logging
+    logger = logging.getLogger(__name__)
+
     try:
         turn_on = toggle_request.turn_on
         logger.info(f"Toggle request for device {device_id}: turn_on={turn_on}")
 
-        # Toggle device via MCP
-        result = await call_mcp_tool(
-            "energy_management",
-            {
-                "action": "control",
-                "device_id": device_id,
-                "power_state": "on" if turn_on else "off",
-            },
-        )
+        device = await tapo_plug_manager.get_device_status(device_id)
+        if not device:
+            raise HTTPException(status_code=404, detail=f"Device {device_id} not found")
 
-        if result.get("success"):
-            data = result.get("data", {})
-            return {
-                "success": True,
-                "device_id": device_id,
-                "power_state": turn_on,
-                "message": f"Device turned {'ON' if turn_on else 'OFF'}",
-            }
-        error_msg = result.get("error", "Failed to toggle device")
-        if "not found" in error_msg.lower():
-            raise HTTPException(status_code=404, detail=error_msg)
-        if "read-only" in error_msg.lower() or "readonly" in error_msg.lower():
-            raise HTTPException(status_code=403, detail=error_msg)
-        raise HTTPException(status_code=500, detail=error_msg)
+        # Enforce read-only
+        if tapo_plug_manager.is_device_readonly(device_id):
+            raise HTTPException(status_code=403, detail="Device is read-only; toggling is disabled")
+
+        logger.info(f"Toggling device {device_id} to {'ON' if turn_on else 'OFF'}")
+        success = await tapo_plug_manager.toggle_device(device_id, turn_on)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to toggle device")
+
+        # Refresh device status after a brief delay to allow device to update
+        import asyncio
+        await asyncio.sleep(0.5)
+
+        # Re-discover devices to get fresh data from the actual device
+        await tapo_plug_manager._discover_devices()
+        updated_device = await tapo_plug_manager.get_device_status(device_id)
+
+        logger.info(f"Device {device_id} toggled successfully, new state: {updated_device.power_state if updated_device else turn_on}")
+        return {
+            "success": True,
+            "device_id": device_id,
+            "power_state": updated_device.power_state if updated_device else turn_on,
+            "message": f"Device turned {'ON' if turn_on else 'OFF'}",
+        }
     except HTTPException:
         raise
     except Exception as e:

@@ -1,12 +1,10 @@
 """Motion detection API for ONVIF cameras."""
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-
-from ...mcp_client import call_mcp_tool
 
 logger = logging.getLogger(__name__)
 
@@ -15,149 +13,177 @@ router = APIRouter(prefix="/api/motion", tags=["motion"])
 
 class MotionSubscriptionRequest(BaseModel):
     """Request to subscribe to motion events."""
-
     camera_id: str
 
 
-@router.get("/status", response_model=Dict[str, Any])
-async def get_motion_status() -> Dict[str, Any]:
-    """Get status of motion detection subscriptions via MCP."""
-    try:
-        result = await call_mcp_tool("motion_management", {"action": "status"})
-        if result.get("success"):
-            return result.get("data", {})
-        raise HTTPException(
-            status_code=500, detail=result.get("error", "Failed to get motion status")
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception("Failed to get motion status via MCP")
-        raise HTTPException(status_code=500, detail=f"Failed to get motion status: {e!s}")
+@router.get("/status")
+async def get_motion_status():
+    """Get status of motion detection subscriptions."""
+    from tapo_camera_mcp.integrations.onvif_events import get_subscription_status
+    return await get_subscription_status()
 
 
-@router.get("/events", response_model=Dict[str, Any])
-async def get_motion_events(camera_id: Optional[str] = None, limit: int = 20) -> Dict[str, Any]:
-    """Get recent motion events via MCP."""
-    try:
-        args = {"action": "events", "limit": limit}
-        if camera_id:
-            args["camera_id"] = camera_id
-
-        result = await call_mcp_tool("motion_management", args)
-        if result.get("success"):
-            return result.get("data", {})
-        raise HTTPException(
-            status_code=500, detail=result.get("error", "Failed to get motion events")
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception("Failed to get motion events via MCP")
-        raise HTTPException(status_code=500, detail=f"Failed to get motion events: {e!s}")
+@router.get("/events")
+async def get_motion_events(camera_id: Optional[str] = None, limit: int = 20):
+    """Get recent motion events."""
+    from tapo_camera_mcp.integrations.onvif_events import get_recent_events
+    events = get_recent_events(camera_id=camera_id, limit=limit)
+    return {"events": events, "count": len(events)}
 
 
-@router.post("/subscribe/{camera_id}", response_model=Dict[str, Any])
-async def subscribe_to_motion(camera_id: str) -> Dict[str, Any]:
-    """Subscribe to motion events from a camera via MCP.
+@router.post("/subscribe/{camera_id}")
+async def subscribe_to_motion(camera_id: str):
+    """Subscribe to motion events from a camera.
 
     Note: Not all cameras support ONVIF events. Tapo C200 has limited event support.
     """
-    try:
-        result = await call_mcp_tool(
-            "motion_management", {"action": "subscribe", "camera_id": camera_id}
-        )
+    from tapo_camera_mcp.core.server import TapoCameraServer
+    from tapo_camera_mcp.integrations.onvif_events import subscribe_to_camera
 
-        if result.get("success"):
-            data = result.get("data", {})
-            return {
-                "success": True,
-                "message": data.get("note", f"Subscribed to motion events from {camera_id}"),
-                "camera_id": camera_id,
-                "subscribed": data.get("subscribed", True),
-            }
-        error_msg = result.get("error", "Failed to subscribe to motion events")
-        if "not found" in error_msg.lower():
-            raise HTTPException(status_code=404, detail=error_msg)
-        if "not ONVIF" in error_msg.lower() or "only for ONVIF" in error_msg.lower():
-            raise HTTPException(status_code=400, detail=error_msg)
-        raise HTTPException(status_code=500, detail=error_msg)
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception(f"Failed to subscribe to motion events for {camera_id} via MCP")
-        raise HTTPException(status_code=500, detail=f"Failed to subscribe to motion events: {e!s}")
+    server = await TapoCameraServer.get_instance()
+    camera = await server.camera_manager.get_camera(camera_id)
 
+    if not camera:
+        raise HTTPException(status_code=404, detail=f"Camera {camera_id} not found")
 
-@router.post("/unsubscribe/{camera_id}", response_model=Dict[str, Any])
-async def unsubscribe_from_motion(camera_id: str) -> Dict[str, Any]:
-    """Unsubscribe from motion events via MCP."""
-    try:
-        result = await call_mcp_tool(
-            "motion_management", {"action": "unsubscribe", "camera_id": camera_id}
-        )
+    # Check if ONVIF camera
+    camera_type = camera.config.type
+    if hasattr(camera_type, "value"):
+        camera_type = camera_type.value
 
-        if result.get("success"):
-            data = result.get("data", {})
-            return {
-                "success": True,
-                "message": f"Unsubscribed from {camera_id}",
-                "camera_id": camera_id,
-                "unsubscribed": data.get("unsubscribed", True),
-            }
+    if camera_type != "onvif":
         raise HTTPException(
-            status_code=500,
-            detail=result.get("error", "Failed to unsubscribe from motion events"),
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception(f"Failed to unsubscribe from motion events for {camera_id} via MCP")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to unsubscribe from motion events: {e!s}"
+            status_code=400,
+            detail=f"Camera {camera_id} is not an ONVIF camera. Motion events only supported for ONVIF cameras."
         )
 
+    # Get camera connection details
+    host = camera.config.params.get("host")
+    port = camera.config.params.get("onvif_port", 2020)
+    username = camera.config.params.get("username")
+    password = camera.config.params.get("password")
 
-@router.get("/capabilities", response_model=Dict[str, Any])
-async def get_motion_capabilities() -> Dict[str, Any]:
-    """Get motion detection capabilities for different camera types via MCP."""
+    if not all([host, username, password]):
+        raise HTTPException(status_code=400, detail="Missing camera credentials")
+
+    # Subscribe
+    success = await subscribe_to_camera(camera_id, host, port, username, password)
+
+    if success:
+        return {
+            "success": True,
+            "message": f"Subscribed to motion events from {camera_id}",
+            "note": "Motion events will be stored and can be retrieved via /api/motion/events"
+        }
+
+    return {
+        "success": False,
+        "message": f"Failed to subscribe to {camera_id}. Camera may not support ONVIF events.",
+        "note": "Tapo C200 cameras have limited ONVIF event support. "
+                "Consider using the Tapo app for motion notifications."
+    }
+
+
+@router.post("/unsubscribe/{camera_id}")
+async def unsubscribe_from_motion(camera_id: str):
+    """Unsubscribe from motion events."""
+    from tapo_camera_mcp.integrations.onvif_events import unsubscribe_from_camera
+
+    await unsubscribe_from_camera(camera_id)
+    return {"success": True, "message": f"Unsubscribed from {camera_id}"}
+
+
+@router.get("/capabilities")
+async def get_motion_capabilities():
+    """Get motion detection capabilities for different camera types."""
+    return {
+        "onvif_cameras": {
+            "motion_detection": "Limited",
+            "note": "ONVIF event support varies by camera model. Tapo C200 has basic Profile S support.",
+            "alternatives": [
+                "Use Tapo app for reliable motion notifications",
+                "Motion detection via video analytics (future feature)",
+                "Integration with Home Assistant for event aggregation"
+            ]
+        },
+        "ring_doorbell": {
+            "motion_detection": "Full",
+            "note": "Ring provides motion and ding events via API. Already implemented on /alarms page."
+        },
+        "tapo_app": {
+            "motion_detection": "Full",
+            "note": "The Tapo app provides the most reliable motion notifications with customizable zones and sensitivity."
+        },
+        "recommendation": "For reliable motion alerts, use the Tapo app alongside this dashboard. "
+                         "This dashboard focuses on live viewing and camera control."
+    }
+
+
+@router.post("/test/{camera_id}")
+async def test_motion_support(camera_id: str):
+    """Test if a camera supports ONVIF events."""
+    from tapo_camera_mcp.core.server import TapoCameraServer
+
+    server = await TapoCameraServer.get_instance()
+    camera = await server.camera_manager.get_camera(camera_id)
+
+    if not camera:
+        raise HTTPException(status_code=404, detail=f"Camera {camera_id} not found")
+
+    # Check camera type
+    camera_type = camera.config.type
+    if hasattr(camera_type, "value"):
+        camera_type = camera_type.value
+
+    result = {
+        "camera_id": camera_id,
+        "camera_type": camera_type,
+        "onvif_events_support": False,
+        "details": {}
+    }
+
+    if camera_type != "onvif":
+        result["note"] = "Not an ONVIF camera - events not supported"
+        return result
+
+    # Try to check ONVIF event capabilities
     try:
-        result = await call_mcp_tool("motion_management", {"action": "capabilities"})
-        if result.get("success"):
-            return result.get("data", {})
-        raise HTTPException(
-            status_code=500, detail=result.get("error", "Failed to get motion capabilities")
-        )
-    except HTTPException:
-        raise
+        import asyncio
+
+        from onvif import ONVIFCamera
+
+        host = camera.config.params.get("host")
+        port = camera.config.params.get("onvif_port", 2020)
+        username = camera.config.params.get("username")
+        password = camera.config.params.get("password")
+
+        loop = asyncio.get_event_loop()
+
+        def check_events():
+            cam = ONVIFCamera(host, port, username, password)
+            try:
+                events_service = cam.create_events_service()
+                # Try to get event properties
+                props = events_service.GetEventProperties()
+                return {
+                    "has_events_service": True,
+                    "topics": [str(t) for t in getattr(props, "TopicSet", {})][:10] if hasattr(props, "TopicSet") else []
+                }
+            except Exception as e:
+                return {"has_events_service": False, "error": str(e)}
+
+        details = await loop.run_in_executor(None, check_events)
+        result["details"] = details
+        result["onvif_events_support"] = details.get("has_events_service", False)
+
+        if result["onvif_events_support"]:
+            result["note"] = "Camera supports ONVIF events. You can subscribe to motion events."
+        else:
+            result["note"] = "Camera does not support ONVIF events. Use Tapo app for motion notifications."
+
     except Exception as e:
-        logger.exception("Failed to get motion capabilities via MCP")
-        raise HTTPException(status_code=500, detail=f"Failed to get motion capabilities: {e!s}")
+        result["error"] = str(e)
+        result["note"] = "Failed to check event support"
 
+    return result
 
-@router.post("/test/{camera_id}", response_model=Dict[str, Any])
-async def test_motion_support(camera_id: str) -> Dict[str, Any]:
-    """Test if a camera supports ONVIF events via MCP."""
-    try:
-        result = await call_mcp_tool(
-            "motion_management", {"action": "test", "camera_id": camera_id}
-        )
-
-        if result.get("success"):
-            data = result.get("data", {})
-            return {
-                "camera_id": camera_id,
-                "camera_type": data.get("camera_type"),
-                "onvif_events_support": data.get("onvif_events_support", False),
-                "details": data.get("details", {}),
-                "note": data.get("note", ""),
-            }
-        error_msg = result.get("error", "Failed to test motion support")
-        if "not found" in error_msg.lower():
-            raise HTTPException(status_code=404, detail=error_msg)
-        raise HTTPException(status_code=500, detail=error_msg)
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception(f"Failed to test motion support for {camera_id} via MCP")
-        raise HTTPException(status_code=500, detail=f"Failed to test motion support: {e!s}")

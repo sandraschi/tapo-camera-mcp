@@ -3,8 +3,392 @@
 {% block title %}Lighting Control - Tapo Camera MCP{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', path='/css/lighting.css') }}?v=20251203">
 <style>
+    .lighting-dashboard {
+        padding: 20px;
+    }
+    
+    .lighting-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .overview-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .overview-card h3 {
+        margin: 0 0 16px 0;
+        color: #1f2937;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .overview-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #3b82f6;
+        margin-bottom: 8px;
+    }
+    
+    .overview-label {
+        color: #6b7280;
+        font-size: 14px;
+    }
+    
+    .lights-section, .groups-section {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        margin-bottom: 30px;
+    }
+    
+    .light-card, .group-card, .scene-card {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 16px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+    
+    .light-card:hover, .group-card:hover, .scene-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .scene-card {
+        padding: 16px;
+        margin-bottom: 0;
+    }
+    
+    .light-header, .group-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    
+    .light-name, .group-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .light-room, .group-type {
+        color: #6b7280;
+        font-size: 14px;
+    }
+    
+    .light-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    
+    .status-on {
+        background-color: #10b981;
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+    }
+    
+    .status-off {
+        background-color: #6b7280;
+    }
+    
+    .status-unreachable {
+        background-color: #ef4444;
+    }
+    
+    .light-controls, .group-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 16px;
+    }
+    
+    .brightness-control {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .brightness-slider {
+        width: 100%;
+        height: 8px;
+        border-radius: 4px;
+        background: #e5e7eb;
+        outline: none;
+        -webkit-appearance: none;
+    }
+    
+    .brightness-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #3b82f6;
+        cursor: pointer;
+    }
+    
+    .brightness-slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #3b82f6;
+        cursor: pointer;
+        border: none;
+    }
+    
+    .brightness-value {
+        text-align: center;
+        margin-top: 8px;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .color-controls {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .color-picker-wrapper {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .color-picker-input {
+        width: 60px;
+        height: 40px;
+        border: 2px solid #e5e7eb;
+        border-radius: 6px;
+        cursor: pointer;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background: none;
+    }
+    
+    .color-picker-input::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+    
+    .color-picker-input::-webkit-color-swatch {
+        border: none;
+        border-radius: 4px;
+    }
+    
+    .color-picker-input::-moz-color-swatch {
+        border: none;
+        border-radius: 4px;
+    }
+    
+    .rgb-inputs {
+        display: flex;
+        gap: 8px;
+        flex: 1;
+    }
+    
+    .rgb-input {
+        flex: 1;
+        padding: 6px 8px;
+        border: 1px solid #e5e7eb;
+        border-radius: 4px;
+        font-size: 12px;
+        text-align: center;
+        min-width: 50px;
+    }
+    
+    .color-label {
+        font-size: 12px;
+        color: #6b7280;
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+    
+    .color-mode-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        margin-left: 8px;
+    }
+    
+    .color-mode-xy {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .color-mode-ct {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .color-mode-hs {
+        background-color: #fce7f3;
+        color: #9f1239;
+    }
+
+    .light-type-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        margin-left: 8px;
+    }
+
+    .light-type-hue {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+
+    .light-type-tapo {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    .effect-controls {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .effect-picker-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .effect-select {
+        padding: 8px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+    }
+
+    .effect-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .current-effect {
+        font-size: 12px;
+        color: #6b7280;
+        font-style: italic;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #2563eb;
+    }
+    
+    .btn-secondary {
+        background-color: #6b7280;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #4b5563;
+    }
+    
+    .btn-success {
+        background-color: #10b981;
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background-color: #059669;
+    }
+    
+    .btn-danger {
+        background-color: #ef4444;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background-color: #dc2626;
+    }
+    
+    .setup-notice {
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .setup-notice h3 {
+        margin: 0 0 12px 0;
+        color: #92400e;
+        font-size: 18px;
+    }
+    
+    .setup-notice p {
+        margin: 0 0 8px 0;
+        color: #92400e;
+    }
+    
+    .setup-notice code {
+        background: #fbbf24;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: monospace;
+    }
+    
+    .connection-status {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 12px;
+    }
+    
+    .status-connected {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-disconnected {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
 </style>
 {% endblock %}
 
@@ -345,15 +729,6 @@ async function globalEffect(effect) {
     setTimeout(() => loadData(), 1000);
 }
 
-// Helper function to get control endpoint for light
-function getLightControlEndpoint(light) {
-    if (light.light_type === 'tapo') {
-        return `/api/lighting/tapo/lights/${light.light_id || light.device_id}/control`;
-    } else {
-        return `/api/lighting/hue/lights/${light.light_id}/control`;
-    }
-}
-
 // Load all data (from cache - fast)
 async function loadData(forceRescan = false) {
     try {
@@ -420,6 +795,14 @@ async function loadData(forceRescan = false) {
             }
         });
 
+        // Helper function to get control endpoint for light
+        function getLightControlEndpoint(light) {
+            if (light.light_type === 'tapo') {
+                return `/api/lighting/tapo/lights/${light.light_id || light.device_id}/control`;
+            } else {
+                return `/api/lighting/hue/lights/${light.light_id}/control`;
+            }
+        }
         
         // Load groups (Hue only for now)
         try {
@@ -580,9 +963,7 @@ function renderLights() {
         return 0;  // Keep original order for others
     });
 
-    container.innerHTML = `
-        <div class="lights-container">
-            ${sortedLights.map(light => {
+    container.innerHTML = sortedLights.map(light => {
         // Unified light ID that works for both Hue (light_id) and Tapo (device_id)
         const unifiedLightId = light.light_id || light.device_id;
 
@@ -706,9 +1087,7 @@ function renderLights() {
             ` : ''}
         </div>
     `;
-    }).join('')}
-        </div>
-    `;
+    }).join('');
 }
 
 async function toggleLight(lightId, turnOn) {
@@ -1044,17 +1423,12 @@ async function activateScene(sceneId, groupId) {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-    // Show loading state initially
-    updateOverview();
-
-    // Delay initial data load to allow dashboard to render first
-    setTimeout(() => {
-        loadData();
-    }, 100); // Small delay to let DOM render
-
+    // Initial load
+    loadData();
+    
     // Refresh every 15 seconds (lights can be toggled externally)
     setInterval(loadData, 15000);
-
+    
     // Full rescan every 2 minutes to catch wall switch/remote changes
     setInterval(() => {
         console.log('Periodic rescan...');

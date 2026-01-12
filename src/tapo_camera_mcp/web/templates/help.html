@@ -7,22 +7,20 @@
     <h1>🏠 Home Security MCP Platform - Help & Documentation</h1>
     
     <!-- Table of Contents -->
-    <div class="help-section toc-section">
-        <h2>📋 Table of Contents</h2>
+    <div class="help-section toc-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: 2px solid #4c51bf; border-left: 4px solid #4c51bf; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+        <h2 style="color: white; margin-top: 0;">📋 Table of Contents</h2>
         <div class="toc-grid">
-            <div class="toc-item"><a href="#overview">1. System Overview</a></div>
-            <div class="toc-item"><a href="#architecture">2. Architecture</a></div>
-            <div class="toc-item"><a href="#hardware">3. Supported Hardware</a></div>
-            <div class="toc-item"><a href="#quickstart">4. Quick Start Guide</a></div>
-            <div class="toc-item"><a href="#mcp-tools">5. MCP Server Tools</a></div>
-            <div class="toc-item"><a href="#dashboard">6. Dashboard Features</a></div>
-            <div class="toc-item"><a href="#troubleshooting">7. Troubleshooting</a></div>
-            <div class="toc-item"><a href="#api-reference">8. API Reference</a></div>
-            <div class="toc-item"><a href="#configuration">9. Configuration</a></div>
-            <div class="toc-item"><a href="#monitoring">10. Monitoring & Stability</a></div>
-            <div class="toc-item"><a href="#websocket">11. WebSocket Support</a></div>
-            <div class="toc-item"><a href="#webhooks">12. Webhooks</a></div>
-            <div class="toc-item"><a href="#resources">13. Learning Resources</a></div>
+            <div class="toc-item"><a href="#overview" style="color: #ffd700;">1. System Overview</a></div>
+            <div class="toc-item"><a href="#architecture" style="color: #ffd700;">2. Architecture</a></div>
+            <div class="toc-item"><a href="#hardware" style="color: #ffd700;">3. Supported Hardware</a></div>
+            <div class="toc-item"><a href="#quickstart" style="color: #ffd700;">4. Quick Start Guide</a></div>
+            <div class="toc-item"><a href="#mcp-tools" style="color: #ffd700;">5. MCP Server Tools</a></div>
+            <div class="toc-item"><a href="#dashboard" style="color: #ffd700;">6. Dashboard Features</a></div>
+            <div class="toc-item"><a href="#troubleshooting" style="color: #ffd700;">7. Troubleshooting</a></div>
+            <div class="toc-item"><a href="#api-reference" style="color: #ffd700;">8. API Reference</a></div>
+            <div class="toc-item"><a href="#configuration" style="color: #ffd700;">9. Configuration</a></div>
+            <div class="toc-item"><a href="#monitoring" style="color: #ffd700;">10. Monitoring & Stability</a></div>
+            <div class="toc-item"><a href="#resources" style="color: #ffd700;">11. Learning Resources</a></div>
         </div>
     </div>
     
@@ -32,7 +30,7 @@
         <div class="info-grid">
             <div class="info-card">
                 <h4>Version</h4>
-                <p><strong>1.9.0</strong> (Stable - Full Integration)</p>
+                <p><strong>1.8.0</strong> (Beta - Stability Enhanced)</p>
             </div>
             <div class="info-card">
                 <h4>MCP Server</h4>
@@ -47,8 +45,8 @@
                 <p>✅ All hardware detected and operational</p>
             </div>
         </div>
-        <p><strong>Stability:</strong> 🔍 Dependency validation + 👁️ 60s device polling + 🚨 3-level alert system</p>
-        <p><strong>Monitoring:</strong> 📊 Prometheus metrics + 📝 Loki logs + 📈 Grafana dashboards</p>
+        <p><strong>Stability:</strong> 🔍 Dependency validation + 👁️ 60s device polling + 🚨 Alert system</p>
+        <p><strong>Monitoring:</strong> 📊 Prometheus metrics + 📝 Loki logs ready for Grafana</p>
     </div>
     
     <!-- Architecture -->
@@ -392,649 +390,103 @@
     <!-- MCP Tools -->
     <div id="mcp-tools" class="help-section">
         <h2>🛠️ MCP Server Tools (16 Portmanteau)</h2>
-
-        <div class="mcp-overview">
-            <h3>🚀 FastMCP 2.13.0 Server Architecture</h3>
-            <p><strong>16 consolidated portmanteau tools</strong> (75% reduction from 64+ individual tools)</p>
-            <p><strong>MCP Protocol:</strong> Model Context Protocol 2.12.0 stdio interface</p>
-            <p><strong>Integration:</strong> Claude Desktop, custom MCP clients, web API endpoints</p>
-
-            <div class="mcp-features">
-                <div class="feature-item">
-                    <strong>🎯 Portmanteau Design:</strong> Single tool per domain with action-based interface
-                </div>
-                <div class="feature-item">
-                    <strong>⚡ Performance:</strong> Async operations, connection pooling, caching
-                </div>
-                <div class="feature-item">
-                    <strong>🛡️ Reliability:</strong> Automatic reconnection, error recovery, health monitoring
-                </div>
-                <div class="feature-item">
-                    <strong>🔧 Extensible:</strong> Easy to add new tools and actions
-                </div>
-            </div>
-        </div>
-
-        <h3>📋 Tool Reference Guide</h3>
-        <p><em>Each tool uses an action-based interface. Use <code>tool.action</code> syntax in MCP calls.</em></p>
-
+        <p>FastMCP 2.13.0 server with <strong>16 consolidated portmanteau tools</strong> (75% reduction from 64 individual tools)</p>
+        <p><em>Use these tools in Claude Desktop to control your entire smart home!</em></p>
+        
         <div class="tool-grid">
-            <!-- Core Camera Tools -->
             <div class="tool-card">
                 <h4>📹 camera_management</h4>
-                <p><strong>Complete camera lifecycle management</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>list</code> - List all cameras with connection status</li>
-                        <li><code>info</code> - Get detailed camera information (camera_name required)</li>
-                        <li><code>connect</code> - Connect to IP camera (camera_name required)</li>
-                        <li><code>disconnect</code> - Disconnect from camera (camera_name required)</li>
-                        <li><code>snapshot</code> - Capture still image (camera_name required, optional quality)</li>
-                        <li><code>get_stream_url</code> - Get RTSP/MJPEG stream URL (camera_name required)</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># List all cameras
-camera_management.list()
-
-# Get camera info
-camera_management.info(camera_name="front_door")
-
-# Capture snapshot
-camera_management.snapshot(camera_name="kitchen", quality="high")</code></pre>
-                </div>
+                <p>Complete camera control and configuration</p>
+                <ul>
+                    <li><code>operation: list</code> - List all cameras with status</li>
+                    <li><code>operation: info</code> - Get detailed camera information</li>
+                    <li><code>operation: connect</code> - Connect to IP camera</li>
+                    <li><code>operation: snapshot</code> - Capture image</li>
+                    <li><code>operation: stream</code> - Get stream URL</li>
+                </ul>
             </div>
-
+            
             <div class="tool-card">
                 <h4>🎮 ptz_management</h4>
-                <p><strong>Pan-Tilt-Zoom camera controls</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>move</code> - Continuous PTZ movement (camera_name, pan, tilt, zoom, speed)</li>
-                        <li><code>stop</code> - Stop all PTZ movement (camera_name required)</li>
-                        <li><code>home</code> - Return to home position (camera_name required)</li>
-                        <li><code>list_presets</code> - List saved PTZ presets (camera_name required)</li>
-                        <li><code>recall_preset</code> - Go to saved preset (camera_name, preset_name required)</li>
-                        <li><code>save_preset</code> - Save current position as preset (camera_name, preset_name required)</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># Move camera right
-ptz_management.move(camera_name="living_room", pan=0.5, tilt=0.0, zoom=0.0, speed=5)
-
-# Go to preset position
-ptz_management.recall_preset(camera_name="kitchen", preset_name="dining_table")
-
-# Return home
-ptz_management.home(camera_name="front_door")</code></pre>
-                </div>
+                <p>Pan/Tilt/Zoom controls for Tapo cameras</p>
+                <ul>
+                    <li><code>action: move</code> - Move camera (pan, tilt, zoom, speed)</li>
+                    <li><code>action: position</code> - Get current position</li>
+                    <li><code>action: stop</code> - Stop movement</li>
+                    <li><code>action: save_preset</code> - Save position</li>
+                    <li><code>action: recall_preset</code> - Go to saved position</li>
+                    <li><code>action: home</code> - Return to home position</li>
+                    <li><code>action: prank</code> - Fun modes (nod, shake, dizzy, chaos)</li>
+                </ul>
             </div>
-
+            
             <div class="tool-card">
                 <h4>💡 lighting_management</h4>
-                <p><strong>Philips Hue lighting control</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>list_lights</code> - List all Hue lights with status</li>
-                        <li><code>get_light</code> - Get specific light details (light_id required)</li>
-                        <li><code>control_light</code> - Control individual light (light_id, on/off/brightness/color)</li>
-                        <li><code>list_groups</code> - List light groups/rooms</li>
-                        <li><code>control_group</code> - Control light group (group_id, on/off/brightness)</li>
-                        <li><code>list_scenes</code> - List available scenes</li>
-                        <li><code>activate_scene</code> - Apply lighting scene (scene_id required)</li>
-                        <li><code>status</code> - Get Hue bridge connection status</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># Turn on light with brightness
-lighting_management.control_light(light_id="lamp_1", on=true, brightness_percent=80)
-
-# Apply scene
-lighting_management.activate_scene(scene_id="reading")
-
-# Control entire room
-lighting_management.control_group(group_id="living_room", on=true, brightness_percent=60)</code></pre>
-                </div>
+                <p>Philips Hue lighting management</p>
+                <ul>
+                    <li><code>action: list_lights</code> - Show all lights</li>
+                    <li><code>action: control</code> - Turn on/off, adjust brightness</li>
+                    <li><code>action: scene</code> - Apply predefined scenes</li>
+                    <li><code>action: group</code> - Control light groups</li>
+                    <li><code>action: color</code> - Set RGB color</li>
+                </ul>
             </div>
-
-            <!-- Energy & Power -->
+            
             <div class="tool-card">
                 <h4>⚡ energy_management</h4>
-                <p><strong>Smart plug energy monitoring & control</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>status</code> - Get current energy usage for all devices</li>
-                        <li><code>control</code> - Turn smart plug on/off (device_id, power_state required)</li>
-                        <li><code>consumption</code> - Get energy consumption data (optional time_range)</li>
-                        <li><code>cost</code> - Calculate energy costs (optional device_id, time_range)</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># Get current usage
-energy_management.status()
-
-# Turn off device
-energy_management.control(device_id="coffee_maker", power_state="off")
-
-# Get daily energy costs
-energy_management.cost(time_range="24h")</code></pre>
-                </div>
+                <p>Tapo P115 smart plug control and monitoring</p>
+                <ul>
+                    <li><code>operation: status</code> - Get current power usage</li>
+                    <li><code>operation: control</code> - Turn plugs on/off</li>
+                    <li><code>operation: consumption</code> - View usage trends</li>
+                    <li><code>operation: cost</code> - Calculate energy costs</li>
+                </ul>
             </div>
-
-            <!-- Security & Monitoring -->
+            
             <div class="tool-card">
                 <h4>🔔 ring_management</h4>
-                <p><strong>Ring doorbell and camera control</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>status</code> - Get Ring integration status</li>
-                        <li><code>list_devices</code> - List all Ring devices</li>
-                        <li><code>get_device_info</code> - Get device details (device_id required)</li>
-                        <li><code>live_view</code> - Start WebRTC live stream (device_id required)</li>
-                        <li><code>get_events</code> - Get recent motion/ding events</li>
-                        <li><code>get_history</code> - Get event history (optional time_range)</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># Check Ring status
-ring_management.status()
-
-# Start live view
-ring_management.live_view(device_id="front_doorbell")
-
-# Get recent events
-ring_management.get_events()</code></pre>
-                </div>
+                <p>Ring doorbell WebRTC and alerts</p>
+                <ul>
+                    <li><code>action: live_view</code> - Start WebRTC stream</li>
+                    <li><code>action: talk</code> - Two-way audio</li>
+                    <li><code>action: events</code> - Get motion/ding events</li>
+                    <li><code>action: history</code> - View event history</li>
+                </ul>
             </div>
-
-            <div class="tool-card">
-                <h4>🚨 security_management</h4>
-                <p><strong>Nest Protect smoke/CO monitoring</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>nest_status</code> - Get Nest integration status</li>
-                        <li><code>nest_devices</code> - List all Nest Protect devices</li>
-                        <li><code>nest_alerts</code> - Get current alerts and alarms</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># Check Nest status
-security_management.nest_status()
-
-# Get alerts
-security_management.nest_alerts()</code></pre>
-                </div>
-            </div>
-
-            <!-- Motion & Detection -->
-            <div class="tool-card">
-                <h4>📡 motion_management</h4>
-                <p><strong>Motion detection and camera events</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>status</code> - Get motion detection subscription status</li>
-                        <li><code>events</code> - Get recent motion events (optional camera_id, limit)</li>
-                        <li><code>subscribe</code> - Subscribe to camera motion events (camera_id required)</li>
-                        <li><code>unsubscribe</code> - Unsubscribe from motion events (camera_id required)</li>
-                        <li><code>test</code> - Test camera motion event support (camera_id required)</li>
-                        <li><code>capabilities</code> - Get motion detection capabilities overview</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># Get motion events
-motion_management.events(limit=10)
-
-# Subscribe to camera
-motion_management.subscribe(camera_id="backyard")
-
-# Test motion support
-motion_management.test(camera_id="front_door")</code></pre>
-                </div>
-            </div>
-
-            <!-- Media & Recording -->
-            <div class="tool-card">
-                <h4>📸 media_management</h4>
-                <p><strong>Image/video capture and analysis</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>capture</code> - Capture image from camera (camera_name required)</li>
-                        <li><code>analyze</code> - Analyze image with AI (image_path required)</li>
-                        <li><code>start_recording</code> - Start video recording (camera_name, duration optional)</li>
-                        <li><code>stop_recording</code> - Stop video recording (recording_id required)</li>
-                        <li><code>get_stream_url</code> - Get media stream URL (camera_name required)</li>
-                        <li><code>capabilities</code> - Get media processing capabilities</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># Capture and analyze image
-media_management.capture(camera_name="kitchen")
-media_management.analyze(image_path="/tmp/capture.jpg")
-
-# Record video
-media_management.start_recording(camera_name="living_room", duration=30)</code></pre>
-                </div>
-            </div>
-
-            <!-- System & Infrastructure -->
-            <div class="tool-card">
-                <h4>🔧 system_management</h4>
-                <p><strong>System monitoring and control</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>info</code> - Get system information (version, uptime, etc.)</li>
-                        <li><code>status</code> - Get system health status</li>
-                        <li><code>health</code> - Perform comprehensive health check</li>
-                        <li><code>logs</code> - Retrieve system logs (optional level, lines)</li>
-                        <li><code>reboot</code> - Reboot camera device (camera_name, reboot_type required)</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># System health check
-system_management.health()
-
-# Get error logs
-system_management.logs(log_level="ERROR", lines=50)
-
-# Reboot camera
-system_management.reboot(camera_name="outdoor_cam", reboot_type="soft")</code></pre>
-                </div>
-            </div>
-
-            <!-- Audio & Voice -->
-            <div class="tool-card">
-                <h4>🔊 audio_management</h4>
-                <p><strong>Audio streaming and voice control</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>stream</code> - Start audio streaming (camera_id required)</li>
-                        <li><code>record</code> - Record audio (camera_id, duration optional)</li>
-                        <li><code>transcribe</code> - Transcribe audio to text (audio_file required)</li>
-                        <li><code>analyze</code> - Analyze audio content (audio_file required)</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># Stream audio
-audio_management.stream(camera_id="baby_monitor")
-
-# Record and transcribe
-audio_management.record(camera_id="meeting_room", duration=60)
-audio_management.transcribe(audio_file="meeting.wav")</code></pre>
-                </div>
-            </div>
-
-            <!-- Weather & Environment -->
+            
             <div class="tool-card">
                 <h4>🌤️ weather_management</h4>
-                <p><strong>Weather monitoring and analysis</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>current</code> - Get current weather conditions</li>
-                        <li><code>forecast</code> - Get weather forecast (optional days)</li>
-                        <li><code>stations</code> - List available weather stations</li>
-                        <li><code>analyze</code> - Analyze weather patterns and trends</li>
-                        <li><code>alerts</code> - Get weather alerts and warnings</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># Current conditions
-weather_management.current()
-
-# 5-day forecast
-weather_management.forecast(days=5)
-
-# Weather analysis
-weather_management.analyze(time_range="7d")</code></pre>
-                </div>
+                <p>Netatmo and Vienna weather information</p>
+                <ul>
+                    <li><code>action: current</code> - Current weather data</li>
+                    <li><code>action: stations</code> - List weather stations</li>
+                    <li><code>action: analyze</code> - Analyze weather patterns</li>
+                </ul>
             </div>
-
-            <!-- Configuration & Settings -->
+            
             <div class="tool-card">
-                <h4>⚙️ configuration_management</h4>
-                <p><strong>System configuration and settings</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>get_config</code> - Get current configuration</li>
-                        <li><code>update_config</code> - Update configuration settings</li>
-                        <li><code>validate_config</code> - Validate configuration file</li>
-                        <li><code>backup_config</code> - Backup current configuration</li>
-                        <li><code>restore_config</code> - Restore configuration from backup</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># Get current config
-configuration_management.get_config()
-
-# Update camera settings
-configuration_management.update_config(section="cameras", key="timeout", value=30)
-
-# Validate configuration
-configuration_management.validate_config()</code></pre>
-                </div>
+                <h4>🔧 system_management</h4>
+                <p>Dashboard and server control</p>
+                <ul>
+                    <li><code>action: status</code> - System health check</li>
+                    <li><code>action: info</code> - System information</li>
+                    <li><code>action: health</code> - Comprehensive health check</li>
+                    <li><code>action: logs</code> - View system logs</li>
+                    <li><code>action: reboot</code> - Reboot camera</li>
+                </ul>
             </div>
-
-            <!-- AI & Analysis -->
+            
             <div class="tool-card">
-                <h4>🤖 ai_analysis</h4>
-                <p><strong>AI-powered image and video analysis</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>analyze_image</code> - Analyze image content (image_path required)</li>
-                        <li><code>detect_objects</code> - Object detection in image/video (media_path required)</li>
-                        <li><code>face_recognition</code> - Facial recognition and identification</li>
-                        <li><code>scene_analysis</code> - Analyze scene and environment</li>
-                        <li><code>motion_analysis</code> - Analyze motion patterns in video</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># Analyze captured image
-ai_analysis.analyze_image(image_path="/tmp/snapshot.jpg")
-
-# Detect objects
-ai_analysis.detect_objects(media_path="recording.mp4")
-
-# Scene analysis
-ai_analysis.scene_analysis(image_path="backyard.jpg")</code></pre>
-                </div>
-            </div>
-
-            <!-- Automation & Smart Home -->
-            <div class="tool-card">
-                <h4>🔄 automation_management</h4>
-                <p><strong>Smart home automation and scheduling</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>list_automations</code> - List active automations</li>
-                        <li><code>create_automation</code> - Create new automation rule</li>
-                        <li><code>update_automation</code> - Modify existing automation</li>
-                        <li><code>delete_automation</code> - Remove automation rule</li>
-                        <li><code>trigger_automation</code> - Manually trigger automation</li>
-                        <li><code>get_schedule</code> - Get automation schedule</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># Create motion-activated light
-automation_management.create_automation(
-    name="motion_lights",
-    trigger="motion_detected",
-    action="turn_on_lights",
-    target="living_room"
-)
-
-# List active automations
-automation_management.list_automations()</code></pre>
-                </div>
-            </div>
-
-            <!-- Analytics & Reporting -->
-            <div class="tool-card">
-                <h4>📊 analytics_management</h4>
-                <p><strong>System analytics and performance monitoring</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>performance_stats</code> - Get system performance metrics</li>
-                        <li><code>usage_analytics</code> - Analyze system usage patterns</li>
-                        <li><code>error_analysis</code> - Analyze error patterns and trends</li>
-                        <li><code>generate_report</code> - Generate analytics report (optional time_range)</li>
-                        <li><code>get_metrics</code> - Get real-time system metrics</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># Performance analysis
-analytics_management.performance_stats()
-
-# Generate weekly report
-analytics_management.generate_report(time_range="7d")
-
-# Real-time metrics
-analytics_management.get_metrics()</code></pre>
-                </div>
-            </div>
-
-            <!-- Grafana Integration -->
-            <div class="tool-card">
-                <h4>📈 grafana_management</h4>
-                <p><strong>Grafana dashboard and metrics integration</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>create_dashboard</code> - Create new Grafana dashboard</li>
-                        <li><code>update_dashboard</code> - Update existing dashboard</li>
-                        <li><code>add_panel</code> - Add panel to dashboard</li>
-                        <li><code>get_metrics</code> - Retrieve metrics for visualization</li>
-                        <li><code>export_dashboard</code> - Export dashboard configuration</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># Create energy dashboard
-grafana_management.create_dashboard(
-    name="energy_monitoring",
-    panels=["power_usage", "daily_cost", "efficiency"]
-)
-
-# Add metrics panel
-grafana_management.add_panel(
-    dashboard_id="energy_dash",
-    panel_type="graph",
-    metrics=["energy_consumption", "cost_analysis"]
-)</code></pre>
-                </div>
-            </div>
-
-            <!-- Robotics & Automation -->
-            <div class="tool-card">
-                <h4>🤖 robotics_management</h4>
-                <p><strong>Robotic device control and automation</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>robot_status</code> - Get robot status and position</li>
-                        <li><code>move_robot</code> - Move robot to coordinates (x, y, z)</li>
-                        <li><code>robot_tasks</code> - Assign tasks to robot</li>
-                        <li><code>calibrate</code> - Calibrate robot position and sensors</li>
-                        <li><code>emergency_stop</code> - Emergency stop all robot operations</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># Check robot status
-robotics_management.robot_status(robot_id="scout_1")
-
-# Move robot
-robotics_management.move_robot(robot_id="scout_1", x=10, y=5, z=0)
-
-# Emergency stop
-robotics_management.emergency_stop(robot_id="scout_1")</code></pre>
-                </div>
-            </div>
-
-            <!-- Medical Devices -->
-            <div class="tool-card">
-                <h4>🏥 medical_management</h4>
-                <p><strong>Medical device control and monitoring</strong></p>
-                <div class="tool-actions">
-                    <h5>Available Actions:</h5>
-                    <ul>
-                        <li><code>get_device_status</code> - Get medical device status (device_id required)</li>
-                        <li><code>scan_document</code> - Perform document scanning (device_id, filename optional)</li>
-                        <li><code>calibrate_device</code> - Calibrate medical device (device_id required)</li>
-                        <li><code>get_measurements</code> - Get medical measurements and readings</li>
-                    </ul>
-                </div>
-                <div class="tool-examples">
-                    <h5>Examples:</h5>
-                    <pre><code># Get otoscope status
-medical_management.get_device_status(device_id="otoscope_1")
-
-# Scan medical document
-medical_management.scan_document(device_id="scanner_1", filename="exam_results.jpg")
-
-# Calibrate device
-medical_management.calibrate_device(device_id="otoscope_1")</code></pre>
-                </div>
+                <h4>📸 media_management</h4>
+                <p>Image and video operations</p>
+                <ul>
+                    <li><code>action: capture</code> - Capture image</li>
+                    <li><code>action: analyze</code> - Analyze image with AI</li>
+                    <li><code>action: start_recording</code> - Start video recording</li>
+                    <li><code>action: get_stream_url</code> - Get stream URL</li>
+                </ul>
             </div>
         </div>
-
-        <h3>🚀 Using MCP Tools in Claude Desktop</h3>
-
-        <div class="claude-integration">
-            <h4>Configuration Steps:</h4>
-            <ol>
-                <li><strong>Install Claude Desktop</strong> from <a href="https://claude.ai/desktop" target="_blank">claude.ai/desktop</a></li>
-                <li><strong>Add MCP server</strong> to your Claude configuration</li>
-                <li><strong>Configure the server command:</strong>
-                    <pre><code>"mcpServers": {
-  "tapo-camera-mcp": {
-    "command": "python",
-    "args": ["-m", "tapo_camera_mcp.cli_v2", "serve"],
-    "cwd": "/path/to/tapo-camera-mcp"
-  }
-}</code></pre>
-                </li>
-                <li><strong>Restart Claude Desktop</strong> to load the MCP server</li>
-                <li><strong>Verify connection</strong> by asking "list all cameras" or "show system status"</li>
-            </ol>
-
-            <h4>Natural Language Commands:</h4>
-            <div class="command-examples">
-                <div class="command-category">
-                    <h5>📹 Camera Control:</h5>
-                    <ul>
-                        <li>"Show me all cameras and their status"</li>
-                        <li>"Take a snapshot from the kitchen camera"</li>
-                        <li>"Start recording from the front door camera for 30 seconds"</li>
-                        <li>"Move the living room camera to look at the couch"</li>
-                    </ul>
-                </div>
-
-                <div class="command-category">
-                    <h5>💡 Lighting Control:</h5>
-                    <ul>
-                        <li>"Turn on all lights in the living room"</li>
-                        <li>"Set bedroom lights to 50% brightness"</li>
-                        <li>"Apply the 'Reading' scene to the study"</li>
-                        <li>"Show me all available light scenes"</li>
-                    </ul>
-                </div>
-
-                <div class="command-category">
-                    <h5>⚡ Energy Monitoring:</h5>
-                    <ul>
-                        <li>"What's the current energy usage?"</li>
-                        <li>"Turn off the coffee maker"</li>
-                        <li>"Show me energy costs for the last week"</li>
-                        <li>"How much energy did the living room TV use today?"</li>
-                    </ul>
-                </div>
-
-                <div class="command-category">
-                    <h5>🔧 System Management:</h5>
-                    <ul>
-                        <li>"What's the system status?"</li>
-                        <li>"Show me recent system logs"</li>
-                        <li>"Run a health check on all devices"</li>
-                        <li>"Get system performance metrics"</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <h3>🔧 Advanced MCP Configuration</h3>
-
-        <div class="advanced-config">
-            <h4>Environment Variables:</h4>
-            <pre><code># Set log level for MCP server
-export MCP_LOG_LEVEL=DEBUG
-
-# Configure server timeouts
-export MCP_SERVER_TIMEOUT=30
-
-# Enable development mode (more verbose logging)
-export MCP_DEV_MODE=1
-
-# Configure custom tool registry
-export MCP_TOOL_REGISTRY=/path/to/custom/tools</code></pre>
-
-            <h4>Custom Tool Development:</h4>
-            <p>To add new portmanteau tools:</p>
-            <ol>
-                <li>Create tool implementation in <code>src/tapo_camera_mcp/tools/portmanteau/</code></li>
-                <li>Define action literals and parameter schemas</li>
-                <li>Register tool in <code>__init__.py</code></li>
-                <li>Add documentation to this help page</li>
-                <li>Test with both direct MCP calls and Claude integration</li>
-            </ol>
-
-            <h4>Performance Optimization:</h4>
-            <ul>
-                <li><strong>Connection Pooling:</strong> MCP clients reuse connections automatically</li>
-                <li><strong>Async Operations:</strong> All tool calls are fully asynchronous</li>
-                <li><strong>Caching:</strong> Frequently accessed data is cached for performance</li>
-                <li><strong>Batch Operations:</strong> Multiple tool calls can be batched together</li>
-                <li><strong>Health Monitoring:</strong> Automatic reconnection on connection failures</li>
-            </ul>
-        </div>
-
-        <div class="mcp-troubleshooting">
-            <h3>🔧 MCP Troubleshooting</h3>
-
-            <h4>Common Issues:</h4>
-            <dl>
-                <dt><strong>MCP server not connecting:</strong></dt>
-                <dd>Check that the Python path is correct and all dependencies are installed</dd>
-
-                <dt><strong>Tools not appearing in Claude:</strong></dt>
-                <dd>Restart Claude Desktop after configuration changes</dd>
-
-                <dt><strong>Tool calls failing:</strong></dt>
-                <dd>Check server logs for error details and device connectivity</dd>
-
-                <dt><strong>Slow response times:</strong></dt>
-                <dd>Verify network connectivity and consider enabling caching</dd>
-            </dl>
-
-            <h4>Debug Commands:</h4>
-            <pre><code># Test MCP server directly
-python -m tapo_camera_mcp.cli_v2 serve --help
-
-# Check tool registration
-python -c "from tapo_camera_mcp.tools import get_all_tools; print([t.name for t in get_all_tools()])"
-
-# Test individual tool
-python -c "from tapo_camera_mcp.mcp_client import call_mcp_tool; print(call_mcp_tool('system_management', {'action': 'status'}))"</code></pre>
-        </div>
-    </div>
         
         <p><strong>📚 Full tool list:</strong> 16 portmanteau tools covering cameras, PTZ, lighting, energy, Ring, weather, security, automation, media, onboarding, configuration, analytics, AI, and system management.</p>
     </div>
@@ -1356,25 +808,25 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
     </div>
     
     <!-- Configuration -->
-    <div id="configuration" class="help-section">
-        <h2>📡 Configuration & Files</h2>
-
-        <h3>📁 Important Locations</h3>
-        <div class="config-locations">
+    <div id="configuration" class="help-section" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: 2px solid #e91e63; border-left: 4px solid #e91e63; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+        <h2 style="color: white;">📡 Configuration & Files</h2>
+        
+        <h3 style="color: white;">📁 Important Locations</h3>
+        <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
             <p><strong>Project Root:</strong></p>
             <pre><code>D:\Dev\repos\tapo-camera-mcp\</code></pre>
-
+            
             <p><strong>Main Configuration:</strong></p>
             <pre><code>D:\Dev\repos\tapo-camera-mcp\config.yaml</code></pre>
-
+            
             <p><strong>Startup Script:</strong></p>
             <pre><code>D:\Dev\repos\tapo-camera-mcp\start_dashboard.ps1</code></pre>
-
+            
             <p><strong>Test Scripts:</strong></p>
             <pre><code>D:\Dev\repos\tapo-camera-mcp\scripts\</code></pre>
         </div>
-
-        <h3>⚙️ Configuration Keys</h3>
+        
+        <h3 style="color: white;">⚙️ Configuration Keys</h3>
         <p>Edit <code>config.yaml</code> to modify settings:</p>
         <ul>
             <li><strong>Cameras:</strong> <code>cameras.kitchen_cam.params</code></li>
@@ -1387,15 +839,15 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
     </div>
     
     <!-- Monitoring & Stability -->
-    <div id="monitoring" class="help-section">
-        <h2>💪 Monitoring & Stability System (v1.9.0)</h2>
+    <div id="monitoring" class="help-section" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: 2px solid #047857; border-left: 4px solid #047857; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+        <h2 style="color: white;">💪 Monitoring & Stability System (v1.8.0)</h2>
         
-        <h3>🔍 No More "It Worked Yesterday" Failures!</h3>
-        <div class="stability-banner">
-            <p><strong>Problem Solved:</strong> Dependencies can disappear when venv is recreated or packages are updated.</p>
-
+        <h3 style="color: white;">🔍 No More "It Worked Yesterday" Failures!</h3>
+        <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px; margin: 16px 0;">
+            <p style="margin-bottom: 12px;"><strong>Problem Solved:</strong> Dependencies can disappear when venv is recreated or packages are updated.</p>
+            
             <p><strong>Solution: Complete Stability System!</strong></p>
-            <ul>
+            <ul style="margin-top: 8px;">
                 <li><strong>Startup Validation:</strong> Checks all 20+ libraries before server starts</li>
                 <li><strong>Connection Supervisor:</strong> Polls ALL devices every 60 seconds</li>
                 <li><strong>Auto-Reconnect:</strong> Automatic recovery from device failures</li>
@@ -1404,26 +856,26 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
             </ul>
         </div>
         
-        <h3>🌐 Monitoring Dashboards</h3>
-        <div class="monitoring-dashboards">
-            <div class="dashboard-card">
-                <h4>🏥 Health Dashboard</h4>
-                <p><strong>URL:</strong> <a href="/health-dashboard">/health-dashboard</a></p>
-                <p>Real-time device status, online/offline counts, error details, auto-refresh 10s</p>
+        <h3 style="color: white;">🌐 Monitoring Dashboards</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-top: 16px;">
+            <div style="background: rgba(255,255,255,0.15); padding: 16px; border-radius: 8px;">
+                <h4 style="color: white; margin-top: 0;">🏥 Health Dashboard</h4>
+                <p style="font-size: 14px; margin-bottom: 8px;"><strong>URL:</strong> <a href="/health-dashboard" style="color: #ffd700;">/health-dashboard</a></p>
+                <p style="font-size: 13px;">Real-time device status, online/offline counts, error details, auto-refresh 10s</p>
             </div>
-            <div class="dashboard-card">
-                <h4>🚨 Alerts Dashboard</h4>
-                <p><strong>URL:</strong> <a href="/alerts">/alerts</a></p>
-                <p>Message center, filter by severity, acknowledge alerts, last 24 hours</p>
+            <div style="background: rgba(255,255,255,0.15); padding: 16px; border-radius: 8px;">
+                <h4 style="color: white; margin-top: 0;">🚨 Alerts Dashboard</h4>
+                <p style="font-size: 14px; margin-bottom: 8px;"><strong>URL:</strong> <a href="/alerts" style="color: #ffd700;">/alerts</a></p>
+                <p style="font-size: 13px;">Message center, filter by severity, acknowledge alerts, last 24 hours</p>
             </div>
-            <div class="dashboard-card">
-                <h4>📊 Prometheus Metrics</h4>
-                <p><strong>URL:</strong> <a href="/api/messages/prometheus">/api/messages/prometheus</a></p>
-                <p>Scrape endpoint for Grafana integration, alert counts, uptime metrics</p>
+            <div style="background: rgba(255,255,255,0.15); padding: 16px; border-radius: 8px;">
+                <h4 style="color: white; margin-top: 0;">📊 Prometheus Metrics</h4>
+                <p style="font-size: 14px; margin-bottom: 8px;"><strong>URL:</strong> <a href="/api/messages/prometheus" style="color: #ffd700;">/api/messages/prometheus</a></p>
+                <p style="font-size: 13px;">Scrape endpoint for Grafana integration, alert counts, uptime metrics</p>
             </div>
         </div>
         
-        <h3>📊 Monitoring Stack Integration</h3>
+        <h3 style="color: white; margin-top: 24px;">📊 Monitoring Stack Integration</h3>
         <p>Ready for Prometheus + Loki + Grafana:</p>
         <ul>
             <li><strong>Prometheus:</strong> Scrape metrics from <code>/api/messages/prometheus</code></li>
@@ -1515,7 +967,7 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
         <pre><code>// In Claude Desktop config (claude_desktop_config.json)
 "tapo-camera-mcp": {
   "command": "python",
-    "args": ["-m", "tapo_camera_mcp.cli_v2", "serve"],
+  "args": ["-m", "tapo_camera_mcp.server"],
   "cwd": "D:/Dev/repos/tapo-camera-mcp",
   "env": {
     "PYTHONPATH": "D:/Dev/repos/tapo-camera-mcp/src"
@@ -1523,21 +975,18 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
 }</code></pre>
         
         <h3>🧪 Testing Commands</h3>
-        <div class="testing-commands">
+        <div style="background: #f8f9fa; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
             <p><strong>Test all cameras:</strong></p>
             <pre><code>python scripts/demo.py --list</code></pre>
-
+            
             <p><strong>Test kitchen camera with PTZ:</strong></p>
             <pre><code>python scripts/demo.py --camera kitchen_cam</code></pre>
-
+            
             <p><strong>Test smart plugs:</strong></p>
             <pre><code>python scripts/test_both_p115_plugs.py</code></pre>
-
+            
             <p><strong>Test Hue lights:</strong></p>
             <pre><code>python scripts/test_list_lights.py</code></pre>
-
-            <p><strong>Test Ring doorbell:</strong></p>
-            <pre><code>python scripts/test_ring_integration.py</code></pre>
         </div>
         
         <h3>📖 Documentation</h3>
@@ -1552,104 +1001,6 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
         <p><strong>Dashboard:</strong> <a href="http://localhost:7777">http://localhost:7777</a></p>
         <p><strong>Health Check:</strong> <a href="http://localhost:7777/api/health">http://localhost:7777/api/health</a></p>
         <p><strong>Camera List:</strong> <a href="http://localhost:7777/api/cameras">http://localhost:7777/api/cameras</a></p>
-    </div>
-
-    <!-- WebSocket Support -->
-    <div id="websocket" class="help-section">
-        <h2>🌐 WebSocket Support</h2>
-        <p>Real-time updates are available via WebSocket connections for live monitoring:</p>
-
-        <h3>Available WebSocket Endpoints</h3>
-        <div class="websocket-endpoints">
-            <div class="ws-card">
-                <h4>📡 General Updates</h4>
-                <p><code>ws://localhost:7777/ws/updates</code></p>
-                <p>Real-time system-wide notifications and status changes</p>
-            </div>
-            <div class="ws-card">
-                <h4>📹 Camera Events</h4>
-                <p><code>ws://localhost:7777/ws/cameras</code></p>
-                <p>Live camera status updates and motion detection alerts</p>
-            </div>
-            <div class="ws-card">
-                <h4>⚡ Energy Monitoring</h4>
-                <p><code>ws://localhost:7777/ws/energy</code></p>
-                <p>Real-time power consumption and device status updates</p>
-            </div>
-            <div class="ws-card">
-                <h4>🚨 Security Alerts</h4>
-                <p><code>ws://localhost:7777/ws/security</code></p>
-                <p>Live security system notifications and alarm events</p>
-            </div>
-        </div>
-
-        <h3>JavaScript Example</h3>
-        <pre><code>const ws = new WebSocket('ws://localhost:7777/ws/updates');
-
-ws.onopen = function(event) {
-    console.log('Connected to real-time updates');
-};
-
-ws.onmessage = function(event) {
-    const data = JSON.parse(event.data);
-    console.log('Real-time update:', data);
-
-    // Handle different message types
-    switch(data.type) {
-        case 'camera_online':
-            updateCameraStatus(data.camera_id, 'online');
-            break;
-        case 'motion_detected':
-            showMotionAlert(data.camera_id, data.timestamp);
-            break;
-        case 'energy_update':
-            updatePowerConsumption(data.device_id, data.power);
-            break;
-    }
-};
-
-ws.onerror = function(error) {
-    console.error('WebSocket error:', error);
-};
-
-ws.onclose = function(event) {
-    console.log('WebSocket connection closed');
-};</code></pre>
-    </div>
-
-    <!-- Webhooks -->
-    <div id="webhooks" class="help-section">
-        <h2>🔄 Webhooks</h2>
-        <p>Configure webhooks for automated notifications and integrations:</p>
-
-        <h3>Webhook Configuration</h3>
-        <pre><code>{
-  "webhook_url": "https://your-server.com/webhooks/tapo-camera",
-  "events": ["device_status_change", "motion_detected", "energy_alert"],
-  "secret": "your_webhook_secret"
-}</code></pre>
-
-        <h3>Supported Events</h3>
-        <ul>
-            <li><code>device_status_change</code> - When devices come online/offline</li>
-            <li><code>motion_detected</code> - Camera motion detection events</li>
-            <li><code>energy_alert</code> - High energy usage or device alerts</li>
-            <li><code>security_alert</code> - Smoke/CO detection or security events</li>
-            <li><code>system_health</code> - System status and health updates</li>
-        </ul>
-
-        <h3>Webhook Payload Example</h3>
-        <pre><code>{
-  "event": "motion_detected",
-  "timestamp": "2025-01-15T10:30:00Z",
-  "device_id": "kitchen_cam",
-  "device_type": "camera",
-  "data": {
-    "camera_name": "Kitchen Camera",
-    "motion_level": 85,
-    "snapshot_url": "http://localhost:7777/api/cameras/kitchen_cam/snapshot"
-  }
-}</code></pre>
     </div>
 </div>
 
@@ -1688,19 +1039,6 @@ ws.onclose = function(event) {
     position: sticky;
     top: 80px;
     z-index: 10;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: 2px solid #4c51bf;
-    border-left: 4px solid #4c51bf;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-
-.toc-section h2 {
-    color: white;
-}
-
-.toc-item a {
-    color: #ffd700;
 }
 
 .toc-grid {
@@ -1714,26 +1052,6 @@ ws.onclose = function(event) {
     padding: 0.5rem;
     background: rgba(255,255,255,0.1);
     border-radius: 0.25rem;
-}
-
-#configuration {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    color: white;
-    border: 2px solid #e91e63;
-    border-left: 4px solid #e91e63;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-
-#configuration h2,
-#configuration h3 {
-    color: white;
-}
-
-.config-locations {
-    background: rgba(255,255,255,0.1);
-    padding: 1rem;
-    border-radius: 0.5rem;
-    margin: 1rem 0;
 }
 
 .info-grid {
@@ -1814,96 +1132,6 @@ ws.onclose = function(event) {
     font-size: 1.5rem;
     color: #0d6efd;
     margin: 0.25rem 0;
-}
-
-#monitoring {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    border: 2px solid #047857;
-    border-left: 4px solid #047857;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-
-#monitoring h2,
-#monitoring h3,
-#monitoring h4 {
-    color: white;
-}
-
-.stability-banner {
-    background: rgba(255,255,255,0.1);
-    padding: 16px;
-    border-radius: 8px;
-    margin: 16px 0;
-}
-
-.stability-banner p {
-    margin-bottom: 12px;
-}
-
-.stability-banner ul {
-    margin-top: 8px;
-}
-
-.monitoring-dashboards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 16px;
-    margin-top: 16px;
-}
-
-.dashboard-card {
-    background: rgba(255,255,255,0.15);
-    padding: 16px;
-    border-radius: 8px;
-}
-
-.dashboard-card h4 {
-    margin-top: 0;
-}
-
-.dashboard-card p {
-    font-size: 13px;
-}
-
-.dashboard-card a {
-    color: #ffd700;
-}
-
-.testing-commands {
-    background: #f8f9fa;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    margin: 1rem 0;
-}
-
-.websocket-endpoints {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-    margin: 1rem 0;
-}
-
-.ws-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    border: 1px solid #dee2e6;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.ws-card h4 {
-    color: #0d6efd;
-    margin-bottom: 0.5rem;
-}
-
-.ws-card code {
-    background: #f8f9fa;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    font-family: 'Courier New', monospace;
-    font-size: 0.9em;
-    color: #495057;
 }
 
 .hardware-grid, .tool-grid, .feature-grid, .api-grid {

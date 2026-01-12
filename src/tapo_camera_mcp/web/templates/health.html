@@ -3,7 +3,267 @@
 {% block title %}Server Health - Home Security MCP{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', path='/css/health.css') }}?v=20251203">
+<style>
+    .health-section {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e5e7eb;
+    }
+
+    [data-theme="dark"] .health-section {
+        background: #374151;
+        border-color: #4b5563;
+    }
+
+    .health-section h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    [data-theme="dark"] .health-section h3 {
+        color: #f9fafb;
+    }
+
+    .health-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+
+    .health-card {
+        background: #f9fafb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    [data-theme="dark"] .health-card {
+        background: #4b5563;
+        border-color: #6b7280;
+    }
+
+    .health-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .health-card-title {
+        font-weight: 500;
+        color: #374151;
+        font-size: 0.875rem;
+    }
+
+    [data-theme="dark"] .health-card-title {
+        color: #d1d5db;
+    }
+
+    .health-status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-healthy {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-critical {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .health-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+    }
+
+    [data-theme="dark"] .health-value {
+        color: #f9fafb;
+    }
+
+    .health-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    [data-theme="dark"] .health-label {
+        color: #9ca3af;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+
+    [data-theme="dark"] .progress-bar {
+        background: #4b5563;
+    }
+
+    .progress-fill {
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+
+    .progress-healthy {
+        background: #10b981;
+    }
+
+    .progress-warning {
+        background: #f59e0b;
+    }
+
+    .progress-critical {
+        background: #ef4444;
+    }
+
+    .metric-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    [data-theme="dark"] .metric-row {
+        border-bottom-color: #4b5563;
+    }
+
+    .metric-row:last-child {
+        border-bottom: none;
+    }
+
+    .metric-label {
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    [data-theme="dark"] .metric-label {
+        color: #9ca3af;
+    }
+
+    .metric-value {
+        font-weight: 500;
+        color: #1f2937;
+    }
+
+    [data-theme="dark"] .metric-value {
+        color: #f9fafb;
+    }
+
+    .issues-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .issue-item {
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        border-radius: 0.5rem;
+        border-left: 4px solid;
+    }
+
+    .issue-critical {
+        background: #fee2e2;
+        border-color: #ef4444;
+        color: #991b1b;
+    }
+
+    .issue-warning {
+        background: #fef3c7;
+        border-color: #f59e0b;
+        color: #92400e;
+    }
+
+    [data-theme="dark"] .issue-critical {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+    }
+
+    [data-theme="dark"] .issue-warning {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fcd34d;
+    }
+
+    .overall-status {
+        text-align: center;
+        padding: 2rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .overall-status.healthy {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .overall-status.warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .overall-status.critical {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    [data-theme="dark"] .overall-status.healthy {
+        background: rgba(16, 185, 129, 0.2);
+        color: #6ee7b7;
+    }
+
+    [data-theme="dark"] .overall-status.warning {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fcd34d;
+    }
+
+    [data-theme="dark"] .overall-status.critical {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+    }
+
+    .overall-status-icon {
+        font-size: 3rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .overall-status-text {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .overall-status-subtext {
+        font-size: 0.875rem;
+        opacity: 0.8;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
