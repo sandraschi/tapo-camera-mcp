@@ -905,7 +905,7 @@ httpx>=0.24.0
   "external_tool": {
     "type": "file",
     "title": "External Tool Executable",
-    "description": "Select your tool installation (tool.exe on Windows, tool on macOS/Linux)",
+    "description": "Select your tool installation (tool.exe on Windows)",
     "required": true,
     "default": "C:\\Program Files\\Tool\\tool.exe",
     "filter": [".exe"],

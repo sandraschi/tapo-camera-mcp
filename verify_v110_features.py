@@ -47,10 +47,10 @@ def check_files():
     print("\n=== CHECKING FILES ===")
 
     files_to_check = [
-        "src/tapo_camera_mcp/web/templates/plex.html",
-        "src/tapo_camera_mcp/web/templates/log_management.html",
-        "src/tapo_camera_mcp/web/static/css/plex.css",
-        "src/tapo_camera_mcp/web/api/plex.py",
+        "webapp/web/templates/plex.html",
+        "webapp/web/templates/log_management.html",
+        "webapp/web/static/css/plex.css",
+        "webapp/web/api/plex.py",
     ]
 
     for file_path in files_to_check:

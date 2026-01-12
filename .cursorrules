@@ -59,3 +59,25 @@ build_venv\Scripts\activate
 ```
 
 **Rule enforcement:** Any output with Linux syntax or Unicode emojis will be rejected.
+
+## 🪟 CRITICAL: Windows-Only Repository Rules
+
+**🚫 ABSOLUTE BAN on Unix/Linux assumptions:**
+- This is a **Windows-only MCP server** - no Linux support
+- **.exe files are Windows executables** - they don't run on Linux
+- **No Unix shell scripts (.sh)** - pointless and confusing for Windows-only project
+- **No cross-platform wrappers** - repository integrates with Windows hardware only
+
+**✅ REQUIRED Windows-only patterns:**
+- Use Windows .exe files from `integrations/` folder
+- Use Windows batch files (.bat) and PowerShell scripts (.ps1)
+- Repository structure assumes Windows environment
+- Hardware integrations are Windows-specific (USB webcams, Windows APIs)
+
+**🚫 NEVER create:**
+- Unix shell scripts (.sh files)
+- Linux command syntax in scripts
+- Cross-platform compatibility layers
+- Unix-style wrappers for Windows .exe files
+
+**Repository is Windows-only MCP server with Windows hardware integration. No Unix/Linux support.**

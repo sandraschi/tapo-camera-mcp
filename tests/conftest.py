@@ -28,6 +28,9 @@ from pydantic import BaseModel
 # Add the project root to the Python path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Also add src directory for MCP imports and webapp directory for webapp imports
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
 from tapo_camera_mcp import TapoCameraMCP
 from tapo_camera_mcp.core.models import TapoCameraConfig
 from tapo_camera_mcp.mcp_client import MCPClient, MCPClientManager
@@ -218,7 +221,7 @@ async def tapo_camera(config, mock_session) -> AsyncGenerator[TapoCameraMCP, Non
 @pytest.fixture
 def test_client():
     """Return a FastAPI test client."""
-    from tapo_camera_mcp.web.server import create_app
+    from webapp.web.server import create_app
 
     app = create_app()
     return TestClient(app)

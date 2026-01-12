@@ -440,7 +440,7 @@ The comprehensive CI/CD pipeline includes:
 4. **API Contract Tests**: OpenAPI specification validation
 5. **Performance Tests**: Benchmarking and load testing
 6. **Security Tests**: Vulnerability scanning and dependency analysis
-7. **Cross-Platform Tests**: Windows, macOS, Linux compatibility
+7. **Windows Tests**: Windows compatibility
 8. **Container Tests**: Docker image validation
 9. **Deployment Tests**: Production deployment validation
 
