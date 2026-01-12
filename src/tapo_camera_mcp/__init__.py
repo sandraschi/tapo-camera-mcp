@@ -10,6 +10,9 @@ __version__ = "1.1.0"
 __author__ = "Tapo Camera MCP Team <tapo-camera-mcp@example.com>"
 __license__ = "MIT"
 
+# Import compatibility shims FIRST, before any pytapo imports
+from . import compat  # noqa: F401
+
 from . import presets
 
 # Import core components

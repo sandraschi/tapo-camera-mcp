@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.1] - 2026-01-12 ✅ **Cursor IDE MCP Integration Fixed**
+
+### 🎯 **CURSOR IDE MCP SERVER INTEGRATION** ✅
+
+#### **MCP Server Now Works in Cursor IDE**
+- **✅ WORKING**: Tapo MCP server now successfully starts and runs in Cursor IDE
+- **Configuration Fixed**: Correct MCP server command, args, and environment variables
+- **Ready-to-Use Config**: `mcp-config.json` provided for easy Cursor setup
+- **Hardware Integration**: All cameras, lights, plugs, and sensors work through Cursor MCP tools
+
+#### **Installation & Setup**
+- **MCP Config File**: Added `mcp-config.json` with working Cursor configuration
+- **Documentation Updated**: Clear setup instructions for Cursor IDE integration
+- **Environment Variables**: Proper PYTHONPATH and hardware init settings
+- **Working Directory**: Correct cwd configuration for MCP server startup
+
+#### **MCP Tools Available in Cursor** 🎥📸
+- **Camera Control**: List, connect, control, and monitor all configured cameras
+- **PTZ Operations**: Pan, tilt, zoom, and preset management
+- **Media Capture**: Image capture and video recording
+- **System Management**: Camera reboot, LED control, motion detection
+- **Hardware Status**: Real-time status of all integrated devices
+
+### 🔧 **TECHNICAL FIXES**
+
+#### **MCP Server Stability**
+- **Dependency Compatibility**: Fixed python-kasa version conflicts with pytapo
+- **Import Path Resolution**: Added compatibility shim for kasa.transports module
+- **Stdio Transport**: Proper MCP stdio communication with Cursor IDE
+- **Hardware Initialization**: Optimized startup time with TAPO_MCP_SKIP_HARDWARE_INIT option
+
 ## [1.10.0] - 2026-01-12 🚀 **Critical Webapp Fixes & Plex Integration**
 
 ### 🔥 **WEBAPP STABILITY FIXES**
@@ -249,7 +280,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Test Data Factories**: Consistent, realistic test data generation
 - **Performance Timers**: Automated performance threshold validation
 - **Async Testing Support**: Full asyncio testing infrastructure
-- **Cross-Platform Testing**: Windows, macOS, Linux compatibility validation
+- **Windows Testing**: Windows compatibility validation
 
 #### **CI/CD Pipeline Enhancement**
 - **10 Comprehensive Jobs**: Quality checks, unit tests, integration tests, performance, security, deployment

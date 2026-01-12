@@ -1,15 +1,32 @@
 @echo off
 REM Windows batch file for Tapo LLMs CLI
-REM This provides cross-platform executable access
+REM Calls Python module directly
 
-REM Try to find Python in virtual environment first
+REM Find Python executable
+set PYTHON_EXE=
 if exist "%VIRTUAL_ENV%\Scripts\python.exe" (
-    "%VIRTUAL_ENV%\Scripts\python.exe" -m tapo_camera_mcp.cli %*
-) else if exist "venv\Scripts\python.exe" (
-    "venv\Scripts\python.exe" -m tapo_camera_mcp.cli %*
-) else if exist ".venv\Scripts\python.exe" (
-    ".venv\Scripts\python.exe" -m tapo_camera_mcp.cli %*
-) else (
-    REM Fall back to system Python
-    python -m tapo_camera_mcp.cli %*
+    set PYTHON_EXE=%VIRTUAL_ENV%\Scripts\python.exe
+    goto :found
 )
+if exist "venv\Scripts\python.exe" (
+    set PYTHON_EXE=venv\Scripts\python.exe
+    goto :found
+)
+if exist ".venv\Scripts\python.exe" (
+    set PYTHON_EXE=.venv\Scripts\python.exe
+    goto :found
+)
+for %%p in (python.exe) do (
+    if "%%~$PATH:p" ne "" (
+        set PYTHON_EXE=%%~$PATH:p
+        goto :found
+    )
+)
+
+echo ERROR: Python executable not found. Please install Python or activate a virtual environment.
+exit /b 1
+
+:found
+REM Execute the main module
+"%PYTHON_EXE%" -m tapo_camera_mcp.cli %*
+exit /b %ERRORLEVEL%

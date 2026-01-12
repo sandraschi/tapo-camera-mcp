@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "home-security-mcp-platform"
-version = "1.17.0"  # MCP Client Refactoring - Web API endpoints now use MCP client instead of direct manager calls
-description = "🏠 Beta home security MCP platform with unified surveillance dashboard, multi-device support (Tapo, Ring, Nest Protect, USB webcams), and Claude Desktop integration"
+version = "1.17.1"  # Cursor IDE MCP Integration Fixed - Tapo MCP server now works in Cursor IDE
+description = "Home Security MCP Platform - Beta home security platform with unified surveillance dashboard, multi-device support (Tapo, Ring, Nest Protect, USB webcams), and Claude Desktop integration"
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
@@ -36,7 +36,7 @@ dependencies = [
     # Core dependencies
     "fastmcp==2.14.1",              # MCP 2.14.1 stdio protocol
     "pytapo>=3.3.54,<4.0.0",        # Tapo camera control (Updated to 3.3.x)
-    "python-kasa>=0.7.0,<0.8.0",   # TP-Link Kasa (required by pytapo, 0.7.x compatible with Python 3.10)
+    "python-kasa>=0.6.0,<0.7.0",   # TP-Link Kasa (required by pytapo, compatibility shim in src/tapo_camera_mcp/compat/)
     "pydantic>=2.0.0,<3.0.0",      # Data validation and settings management
     "python-dotenv>=1.0.0,<2.0.0", # Environment variable management
     "aiohttp>=3.9.0,<4.0.0",       # Async HTTP client

@@ -1,11 +1,12 @@
 # 🏠 Home Security MCP Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.18.0-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/releases)
+[![Version](https://img.shields.io/badge/version-1.17.1-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/releases)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
-[![MCP Version](https://img.shields.io/badge/MCP-2.12.0-blue)](https://mcp-standard.org)
-[![FastMCP](https://img.shields.io/badge/FastMCP-2.13.0-green.svg)](https://github.com/jlowin/fastmcp)
+[![MCP Version](https://img.shields.io/badge/MCP-2.14.1-blue)](https://mcp-standard.org)
+[![FastMCP](https://img.shields.io/badge/FastMCP-2.14.1-green.svg)](https://github.com/jlowin/fastmcp)
+[![Cursor MCP](https://img.shields.io/badge/Cursor%20MCP-Working-success.svg)](https://cursor.sh)
 [![Status](https://img.shields.io/badge/status-Beta-yellow.svg)](https://github.com/sandraschi/tapo-camera-mcp)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/actions)
 [![Dashboard](https://img.shields.io/badge/Dashboard-Live-green.svg)](http://localhost:7777)
@@ -17,6 +18,12 @@
 
 ⚠️ **BETA**: Comprehensive home security platform in active development. Unified surveillance dashboard with multi-device MCP architecture - serving as both individual device MCP servers AND a complete security monitoring ecosystem. **Status: Beta - Active Development**
 
+✅ **CURSOR IDE MCP INTEGRATION**: Tapo MCP server now works perfectly in Cursor IDE with full camera control, PTZ operations, and hardware monitoring.
+
+> **✅ REPOSITORY STRUCTURE FIXED**: Refactored to separate MCP server (`src/tapo_camera_mcp/`) from webapp (`webapp/`). All .exe files properly organized in `integrations/` folder.
+>
+> **See: [EXE_FILES_ANALYSIS.md](EXE_FILES_ANALYSIS.md)** for detailed breakdown of all 50+ critical executables.
+>
 > **⚠️ Beta Status Notice**: This project is in active beta development. Features are working but may have bugs, APIs may change between versions, and some integrations are experimental. Not recommended for critical production use. Active development - contributions welcome.
 
 ## 🏗️ **DUAL ARCHITECTURE OVERVIEW**
@@ -41,7 +48,7 @@
 
 **The platform serves as the "conductor" that brings together multiple specialized security devices (MCP servers) into a cohesive home surveillance ecosystem.**
 
-## 🏆 **v1.10.0 RELEASE - WEBAPP STABILITY & PLEX INTEGRATION** (January 2026)
+## 🏆 **v1.17.1 RELEASE - CURSOR IDE MCP INTEGRATION FIXED** ✅ (January 2026)
 
 **⚠️ BETA STATUS - Active Development:**
 - **🔍 Dependency Validator**: Checks all libraries on EVERY startup - no more "it worked yesterday"!
@@ -107,6 +114,7 @@
 #### ✅ **WORKING NOW**
 - **🎥 Tapo Camera MCP**: TP-Link Tapo camera control and monitoring
 - **📹 USB Webcam MCP**: Auto-detection and management
+- **🎯 Cursor IDE Integration**: ✅ WORKING - Full MCP protocol compliance for Cursor IDE
 - **🤖 Claude Desktop Integration**: MCP protocol compliance for AI assistants
 - **🔧 Camera Management Tools**: Add, configure, and control cameras
 - **📊 Real-time Status**: Camera connection health and diagnostics
@@ -194,7 +202,7 @@ devices = result.get("data", {}).get("devices", [])
 - **Integration Tests**: Full MCP client-server interaction validation
 - **Performance Tests**: Automated benchmarking and regression detection
 - **API Contract Tests**: OpenAPI specification validation
-- **Cross-Platform Tests**: Windows, macOS, Linux compatibility
+- **Windows Testing**: Windows compatibility validation
 
 #### **Advanced Testing Features**
 - **Mock MCP Server**: Configurable mock server for realistic testing
@@ -212,7 +220,7 @@ devices = result.get("data", {}).get("devices", [])
 4. **API Contract Tests**: Live server API validation
 5. **Performance Tests**: Benchmarking and load testing
 6. **Security Tests**: Vulnerability scanning and dependency analysis
-7. **Cross-Platform Tests**: Windows, macOS, Linux compatibility validation
+7. **Windows Tests**: Windows compatibility validation
 8. **Container Tests**: Docker image validation and health checks
 9. **Deployment Tests**: Production deployment validation
 10. **Test Reporting**: Comprehensive results and artifact generation
@@ -303,7 +311,8 @@ cameras:
 - **Health Monitoring**: Real-time status of all integrated MCP servers
 
 #### **🤖 Claude Desktop Integration** (MCP Server Role)
-- **✅ MCP 2.12.0 Protocol**: Seamless Claude Desktop integration (WORKING)
+- **✅ MCP 2.14.1 Protocol**: Seamless Claude Desktop & Cursor IDE integration (WORKING)
+- **🎯 Cursor IDE**: ✅ WORKING - Full camera control through Cursor MCP tools
 - **🔧 Camera Management Tools**: Add, configure, and control cameras
 - **📊 Real-time Status**: Camera connection health and diagnostics
 - **🎯 AI Assistant Ready**: Full MCP compliance for intelligent camera control
@@ -738,9 +747,11 @@ When auth is first enabled, a default admin user is created with a random passwo
 
 After cloning and installing the repository, add the server to your MCP client configuration file.
 
-**Claude Desktop Configuration:**
+## ✅ **CURSOR IDE MCP INTEGRATION WORKING**
 
-Edit `~/.config/claude/claude_desktop_config.json` (macOS/Linux) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+**Cursor IDE Configuration** - ✅ WORKING:
+
+Edit `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 
 ```json
 {
@@ -767,17 +778,45 @@ If the server takes too long to start (>1 minute), add `TAPO_MCP_SKIP_HARDWARE_I
 
 **Cursor IDE Configuration:**
 
+**Option 1: Copy the configuration file**
+
+A ready-to-use configuration file is provided: `mcp-config.json`. Copy this file to:
+
+- **Cursor**: `~/.cursor/mcp.json` (or use Cursor Settings → MCP tab)
+- **Claude Desktop**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+**Option 2: Manual configuration**
+
 Edit Cursor settings (Cmd+, on Mac or Ctrl+, on Windows) → MCP tab, or edit `~/.cursor/mcp.json`:
 
 ```json
 {
   "mcpServers": {
     "tapo-camera-mcp": {
-      "command": "python",
+      "command": "D:/Dev/repos/tapo-camera-mcp/venv/Scripts/python.exe",
+      "args": ["-m", "tapo_camera_mcp.cli_v2"],
+      "cwd": "D:/Dev/repos/tapo-camera-mcp",
+      "env": {
+        "PYTHONPATH": "D:/Dev/repos/tapo-camera-mcp/src",
+        "TAPO_MCP_SKIP_HARDWARE_INIT": "true"
+      }
+    }
+  }
+}
+```
+
+**Alternative Configuration (if cli_v2 doesn't work):**
+
+```json
+{
+  "mcpServers": {
+    "tapo-camera-mcp": {
+      "command": "D:/Dev/repos/tapo-camera-mcp/venv/Scripts/python.exe",
       "args": ["-m", "tapo_camera_mcp.server_v2", "--direct"],
       "cwd": "D:/Dev/repos/tapo-camera-mcp",
       "env": {
-        "PYTHONPATH": "D:/Dev/repos/tapo-camera-mcp"
+        "PYTHONPATH": "D:/Dev/repos/tapo-camera-mcp/src",
+        "TAPO_MCP_SKIP_HARDWARE_INIT": "true"
       }
     }
   }
@@ -790,11 +829,13 @@ Edit Cursor settings (Cmd+, on Mac or Ctrl+, on Windows) → MCP tab, or edit `~
 - Ensure Python 3.10+ is in your PATH
 - Restart Claude Desktop or Cursor after configuration
 - Verify installation by asking Claude/Cursor: "List available camera tools"
+- ✅ **Cursor IDE**: All Tapo MCP tools should now be available in Cursor
 
 **Troubleshooting JSON Config:**
 - Check Python path: `python --version` or `python3 --version`
-- Verify module exists: `python -m tapo_camera_mcp.server_v2 --help`
-- Check logs: `%APPDATA%\Claude\logs\` (Windows) or `~/.config/claude/logs/` (macOS/Linux)
+- Verify module exists: `python -m tapo_camera_mcp.cli_v2 --help`
+- Check logs: `%APPDATA%\Claude\logs\` (Windows) or Cursor logs
+- ✅ **Cursor IDE**: If tools don't appear, check Cursor MCP settings and restart Cursor
 
 **Fast Startup (Skip Hardware Init):**
 
@@ -952,7 +993,7 @@ src/tapo_camera_mcp/
 │   ├── camera/         # Camera-related tools
 │   ├── ptz/            # PTZ controls
 │   └── system/         # System tools
-├── web/                # Web interface
+├── webapp/             # Web application (separated from MCP)
 └── cli_v2.py           # Command-line interface
 ```
 
@@ -970,9 +1011,9 @@ src/tapo_camera_mcp/
    python -m venv venv
    .\venv\Scripts\activate
    
-   # On macOS/Linux
-   python3 -m venv venv
-   source venv/bin/activate
+   # On Windows
+   python -m venv venv
+   venv\Scripts\activate
    ```
 
 3. Install development dependencies:
