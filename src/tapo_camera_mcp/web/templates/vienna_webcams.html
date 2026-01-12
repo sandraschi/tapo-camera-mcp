@@ -107,12 +107,12 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background-color: #6b7280;
+            background-color: var(--muted-text);
         }
 
-        .status-online { background-color: #10b981; }
+        .status-online { background-color: var(--success-green); }
         .status-offline { background-color: #dc2626; }
-        .status-loading { background-color: #f59e0b; }
+        .status-loading { background-color: var(--warning-yellow); }
 
         .btn {
             padding: 0.5rem 1rem;
@@ -144,7 +144,7 @@
         .btn-secondary:hover { background-color: var(--button-bg-secondary-hover); }
 
         .weather-highlight {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--info-blue) 0%, #764ba2 100%);
             color: white;
             padding: 1rem;
             border-radius: 0.75rem;

@@ -151,7 +151,7 @@ async def get_vlc_link(camera_id: str):
         <a href="vlc://{rtsp_url}" class="btn">🎬 Open in VLC</a>
 
         <div class="info">
-            <p>⚠️ <strong>Two-Way Audio Limitation:</strong></p>
+            <p>WARNING <strong>Two-Way Audio Limitation:</strong></p>
             <p>ONVIF protocol only supports <em>listening</em> to camera audio.</p>
             <p>For two-way communication, use the <strong>Tapo app</strong>.</p>
         </div>
@@ -339,7 +339,7 @@ async def audio_player_page(camera_id: str):
                 </div>
 
                 <div class="warning-box">
-                    <h3>⚠️ Two-Way Audio Limitation</h3>
+                    <h3>WARNING Two-Way Audio Limitation</h3>
                     <p>ONVIF protocol only supports <strong>listening</strong> to camera audio.</p>
                     <p>For two-way communication (talking to camera), use the <strong>Tapo app</strong>.</p>
                 </div>
@@ -378,7 +378,7 @@ async def audio_player_page(camera_id: str):
                     }});
                     hls.on(Hls.Events.ERROR, function(event, data) {{
                         if (data.fatal) {{
-                            setStatus('❌ HLS not available. Use VLC for full audio.', 'error');
+                            setStatus('ERROR HLS not available. Use VLC for full audio.', 'error');
                         }}
                     }});
                 }} else if (video.canPlayType('application/vnd.apple.mpegurl')) {{
@@ -389,7 +389,7 @@ async def audio_player_page(camera_id: str):
                         setStatus('🎬 Stream playing (Native HLS)', 'playing');
                     }});
                 }} else {{
-                    setStatus('❌ HLS not supported. Use VLC button for audio stream.', 'error');
+                    setStatus('ERROR HLS not supported. Use VLC button for audio stream.', 'error');
                 }}
             }}
 

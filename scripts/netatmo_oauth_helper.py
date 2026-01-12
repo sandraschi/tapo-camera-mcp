@@ -37,10 +37,10 @@ def exchange_code_for_tokens(client_id: str, client_secret: str, code: str, redi
             error_json = resp.json()
             error_msg = error_json.get("error", "Unknown error")
             error_desc = error_json.get("error_description", error_text)
-            print(f"❌ Error {resp.status_code}: {error_msg}")
+            print(f"ERROR: Error {resp.status_code}: {error_msg}")
             print(f"   Description: {error_desc}")
         except:
-            print(f"❌ Error {resp.status_code}: {error_text}")
+            print(f"ERROR: Error {resp.status_code}: {error_text}")
         resp.raise_for_status()
     return resp.json()
 
@@ -174,7 +174,7 @@ def main():
         if "localhost" in redirect_uri:
             redirect_uri = f"http://localhost:{port}/callback"
         
-        print(f"\n🚀 Starting OAuth Flow")
+        print(f"\nSTARTING OAuth Flow")
         print(f"   Client ID: {client_id}")
         print(f"   Redirect URI: {redirect_uri}\n")
         
@@ -195,7 +195,7 @@ def main():
         try:
             webbrowser.open(url)
         except Exception:
-            print("⚠️  Could not open browser automatically. Copy the URL above and open it manually.\n")
+            print("WARNING: Could not open browser automatically. Copy the URL above and open it manually.\n")
         
         # Wait for callback
         server_thread.join(timeout=300)

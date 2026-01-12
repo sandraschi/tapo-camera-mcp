@@ -48,7 +48,7 @@ def test_condense_logic():
     assert "Director" not in condensed
     assert "Media" not in condensed
 
-    print("✅ _condense_metadata logic passed!")
+    print("SUCCESS: _condense_metadata logic passed!")
     print(f" condensed output: {json.dumps(condensed, indent=2)}")
 
 

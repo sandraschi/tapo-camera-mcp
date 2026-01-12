@@ -281,6 +281,13 @@ addopts = "-v --cov=tapo_camera_mcp --cov-report=term-missing"
 markers = [
     "broken: marks tests as broken and should be skipped",
     "integration: marks tests as integration tests (require real services)",
+    "hardware: marks tests that require hardware connectivity",
+    "connectivity: marks hardware connectivity tests",
+    "critical: marks critical functionality tests (must pass)",
+    "optional: marks optional functionality tests (can be skipped)",
+    "webapp: marks webapp-specific tests",
+    "plex: marks Plex integration tests",
+    "theme: marks theme system tests",
 ]
 
 [tool.coverage.run]

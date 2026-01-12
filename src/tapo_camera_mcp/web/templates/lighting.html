@@ -20,12 +20,12 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
     
     .overview-card h3 {
         margin: 0 0 16px 0;
-        color: #1f2937;
+        color: var(--text-color);
         font-size: 18px;
         font-weight: 600;
     }
@@ -33,12 +33,12 @@
     .overview-value {
         font-size: 32px;
         font-weight: 700;
-        color: #3b82f6;
+        color: var(--primary-blue);
         margin-bottom: 8px;
     }
     
     .overview-label {
-        color: #6b7280;
+        color: var(--muted-text);
         font-size: 14px;
     }
     
@@ -47,16 +47,16 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         margin-bottom: 30px;
     }
     
     .light-card, .group-card, .scene-card {
-        background: #f9fafb;
+        background: var(--card-bg);
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 16px;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
     
@@ -80,11 +80,11 @@
     .light-name, .group-name {
         font-size: 18px;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
     }
     
     .light-room, .group-type {
-        color: #6b7280;
+        color: var(--muted-text);
         font-size: 14px;
     }
     
@@ -102,16 +102,16 @@
     }
     
     .status-on {
-        background-color: #10b981;
+        background-color: var(--success-green);
         box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
     }
     
     .status-off {
-        background-color: #6b7280;
+        background-color: var(--muted-text);
     }
     
     .status-unreachable {
-        background-color: #ef4444;
+        background-color: var(--error-red);
     }
     
     .light-controls, .group-controls {
@@ -130,7 +130,7 @@
         width: 100%;
         height: 8px;
         border-radius: 4px;
-        background: #e5e7eb;
+        background: var(--border-color);
         outline: none;
         -webkit-appearance: none;
     }
@@ -141,7 +141,7 @@
         width: 20px;
         height: 20px;
         border-radius: 50%;
-        background: #3b82f6;
+        background: var(--primary-blue);
         cursor: pointer;
     }
     
@@ -149,7 +149,7 @@
         width: 20px;
         height: 20px;
         border-radius: 50%;
-        background: #3b82f6;
+        background: var(--primary-blue);
         cursor: pointer;
         border: none;
     }
@@ -158,13 +158,13 @@
         text-align: center;
         margin-top: 8px;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
     }
     
     .color-controls {
         margin-top: 16px;
         padding-top: 16px;
-        border-top: 1px solid #e5e7eb;
+        border-top: 1px solid var(--border-color);
     }
     
     .color-picker-wrapper {
@@ -177,7 +177,7 @@
     .color-picker-input {
         width: 60px;
         height: 40px;
-        border: 2px solid #e5e7eb;
+        border: 2px solid var(--border-color);
         border-radius: 6px;
         cursor: pointer;
         -webkit-appearance: none;
@@ -209,7 +209,7 @@
     .rgb-input {
         flex: 1;
         padding: 6px 8px;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         border-radius: 4px;
         font-size: 12px;
         text-align: center;
@@ -218,7 +218,7 @@
     
     .color-label {
         font-size: 12px;
-        color: #6b7280;
+        color: var(--muted-text);
         font-weight: 500;
         margin-bottom: 8px;
     }
@@ -233,12 +233,12 @@
     }
     
     .color-mode-xy {
-        background-color: #dbeafe;
+        background-color: var(--info-bg);
         color: #1e40af;
     }
     
     .color-mode-ct {
-        background-color: #fef3c7;
+        background-color: var(--warning-bg);
         color: #92400e;
     }
     
@@ -257,7 +257,7 @@
     }
 
     .light-type-hue {
-        background-color: #dbeafe;
+        background-color: var(--info-bg);
         color: #1e40af;
     }
 
@@ -269,7 +269,7 @@
     .effect-controls {
         margin-top: 16px;
         padding-top: 16px;
-        border-top: 1px solid #e5e7eb;
+        border-top: 1px solid var(--border-color);
     }
 
     .effect-picker-wrapper {
@@ -280,7 +280,7 @@
 
     .effect-select {
         padding: 8px 12px;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         border-radius: 6px;
         font-size: 14px;
         background: white;
@@ -289,13 +289,13 @@
 
     .effect-select:focus {
         outline: none;
-        border-color: #3b82f6;
+        border-color: var(--primary-blue);
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
     .current-effect {
         font-size: 12px;
-        color: #6b7280;
+        color: var(--muted-text);
         font-style: italic;
     }
     
@@ -310,34 +310,34 @@
     }
     
     .btn-primary {
-        background-color: #3b82f6;
+        background-color: var(--primary-blue);
         color: white;
     }
     
     .btn-primary:hover {
-        background-color: #2563eb;
+        background-color: var(--primary-blue-dark);
     }
     
     .btn-secondary {
-        background-color: #6b7280;
+        background-color: var(--muted-text);
         color: white;
     }
     
     .btn-secondary:hover {
-        background-color: #4b5563;
+        background-color: var(--gray-600);
     }
     
     .btn-success {
-        background-color: #10b981;
+        background-color: var(--success-green);
         color: white;
     }
     
     .btn-success:hover {
-        background-color: #059669;
+        background-color: var(--success-dark);
     }
     
     .btn-danger {
-        background-color: #ef4444;
+        background-color: var(--error-red);
         color: white;
     }
     
@@ -346,8 +346,8 @@
     }
     
     .setup-notice {
-        background: #fef3c7;
-        border: 1px solid #f59e0b;
+        background: var(--warning-bg);
+        border: 1px solid var(--warning-yellow);
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 30px;
@@ -386,7 +386,7 @@
     }
     
     .status-disconnected {
-        background-color: #fee2e2;
+        background-color: var(--error-bg);
         color: #991b1b;
     }
 </style>
@@ -401,14 +401,14 @@
             <span id="connection-status" class="connection-status status-disconnected">Disconnected</span>
             <button id="rescan-btn" class="btn btn-sm" onclick="rescanDevices()" title="Full rescan - re-discovers all devices from bridge">🔄 Rescan</button>
             <button id="refresh-btn" class="btn btn-sm btn-secondary" onclick="loadData()" title="Quick refresh - updates light states">↻ Refresh</button>
-            <span id="last-scan" style="font-size: 12px; color: #6b7280;"></span>
-            <span style="font-size: 11px; color: #9ca3af;">Auto-refresh: 15s • Full rescan: 2min</span>
+            <span id="last-scan" style="font-size: 12px; color: var(--muted-text);"></span>
+            <span style="font-size: 11px; color: var(--gray-400);">Auto-refresh: 15s • Full rescan: 2min</span>
         </div>
     </div>
     
     <!-- Global Controls -->
-    <div class="global-controls" id="global-controls" style="margin-top: 16px; padding: 16px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-radius: 12px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
-        <span style="color: #94a3b8; font-weight: 500; margin-right: 8px;">⚡ Quick Actions:</span>
+    <div class="global-controls" id="global-controls" style="margin-top: 16px; padding: 16px; background: linear-gradient(135deg, var(--dark-bg-secondary) 0%, #334155 100%); border-radius: 12px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+        <span style="color: var(--dark-text-muted); font-weight: 500; margin-right: 8px;">⚡ Quick Actions:</span>
         <button class="btn btn-success" onclick="globalLightControl('on')" title="Turn all lights on">
             💡 All On
         </button>
@@ -421,10 +421,10 @@
         <button class="btn btn-secondary" onclick="globalBrightness(100)" title="Set all lights to 100%">
             ☀️ 100%
         </button>
-        <button class="btn" style="background: linear-gradient(45deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444); color: white; animation: disco-btn 2s linear infinite;" onclick="discoMode()" title="Party time! 🎉">
+        <button class="btn" style="background: linear-gradient(45deg, #ec4899, #8b5cf6, var(--primary-blue), var(--success-green), var(--warning-yellow), var(--error-red)); color: white; animation: disco-btn 2s linear infinite;" onclick="discoMode()" title="Party time! SUCCESS">
             🪩 Disco!
         </button>
-        <select class="btn" style="background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 8px 12px; border-radius: 6px; font-size: 14px;" onchange="globalEffect(this.value)" title="Apply effect to all Tapo lights">
+        <select class="btn" style="background: var(--gray-100); color: var(--text-color); border: 1px solid var(--gray-300); padding: 8px 12px; border-radius: 6px; font-size: 14px;" onchange="globalEffect(this.value)" title="Apply effect to all Tapo lights">
             <option value="">🎭 Effects</option>
             <option value="Rainbow">🌈 Rainbow</option>
             <option value="Ocean">🌊 Ocean</option>
@@ -444,7 +444,7 @@
     
     <!-- Setup Notice -->
     <div class="setup-notice" id="setup-notice" style="display: none;">
-        <h3>🔧 Setup Required</h3>
+        <h3>TOOLS Setup Required</h3>
         <p>To connect to your Philips Hue Bridge:</p>
         <ol style="margin: 8px 0; padding-left: 24px; color: #92400e;">
             <li>Find your Hue Bridge IP address (check your router or Hue app)</li>
@@ -857,9 +857,9 @@ async function loadData(forceRescan = false) {
         
     } catch (error) {
         console.error('Error loading data:', error);
-        document.getElementById('lights-container').innerHTML = '<p style="color: #ef4444;">Error loading lights. Check console for details.</p>';
-        document.getElementById('groups-container').innerHTML = '<p style="color: #ef4444;">Error loading groups. Check console for details.</p>';
-        document.getElementById('scenes-container').innerHTML = '<p style="color: #ef4444;">Error loading scenes. Check console for details.</p>';
+        document.getElementById('lights-container').innerHTML = '<p style="color: var(--error-red);">Error loading lights. Check console for details.</p>';
+        document.getElementById('groups-container').innerHTML = '<p style="color: var(--error-red);">Error loading groups. Check console for details.</p>';
+        document.getElementById('scenes-container').innerHTML = '<p style="color: var(--error-red);">Error loading scenes. Check console for details.</p>';
     }
 }
 
@@ -902,7 +902,7 @@ function renderScenes() {
                 <div class="scene-card" style="margin-bottom: 0; padding: 16px;">
                     <div style="margin-bottom: 12px;">
                         <div class="group-name" style="font-size: 16px; margin-bottom: 4px;">${scene.name}</div>
-                        <div class="group-type" style="font-size: 12px; color: #9ca3af;">${scene.lights.length} light${scene.lights.length !== 1 ? 's' : ''}</div>
+                        <div class="group-type" style="font-size: 12px; color: var(--gray-400);">${scene.lights.length} light${scene.lights.length !== 1 ? 's' : ''}</div>
                     </div>
                     <button class="btn btn-primary" onclick="activateScene('${scene.scene_id}', '${scene.group || ''}')" style="width: 100%; padding: 8px 12px; font-size: 13px;">
                         Activate

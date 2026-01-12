@@ -35,9 +35,17 @@ class RingCamera(BaseCamera):
             else:
                 # Use real camera for production
                 # Initialize Ring authentication
+                token_data = None
+                if "token_file" in self.config.params:
+                    # Load token from file
+                    token_file = Path(self.config.params["token_file"])
+                    if token_file.exists():
+                        import json
+                        token_data = json.loads(token_file.read_text())
+
                 auth = Auth(
                     self.config.params.get("token_updater", lambda _x: None),
-                    self.config.params.get("token"),
+                    token_data,
                 )
 
                 # Create Ring instance

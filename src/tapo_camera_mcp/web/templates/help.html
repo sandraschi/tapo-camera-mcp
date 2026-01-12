@@ -7,7 +7,7 @@
     <h1>🏠 Home Security MCP Platform - Help & Documentation</h1>
     
     <!-- Table of Contents -->
-    <div class="help-section toc-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: 2px solid #4c51bf; border-left: 4px solid #4c51bf; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+    <div class="help-section toc-section" style="background: linear-gradient(135deg, var(--info-blue) 0%, #764ba2 100%); color: white; border: 2px solid #4c51bf; border-left: 4px solid #4c51bf; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
         <h2 style="color: white; margin-top: 0;">📋 Table of Contents</h2>
         <div class="toc-grid">
             <div class="toc-item"><a href="#overview" style="color: #ffd700;">1. System Overview</a></div>
@@ -34,7 +34,7 @@
             </div>
             <div class="info-card">
                 <h4>MCP Server</h4>
-                <p><strong>FastMCP 2.13.0</strong> with 16 portmanteau tools (75% consolidation)</p>
+                <p><strong>FastMCP 2.14.1</strong> with 16 portmanteau tools (75% consolidation)</p>
             </div>
             <div class="info-card">
                 <h4>Dashboard URL</h4>
@@ -45,8 +45,8 @@
                 <p>✅ All hardware detected and operational</p>
             </div>
         </div>
-        <p><strong>Stability:</strong> 🔍 Dependency validation + 👁️ 60s device polling + 🚨 Alert system</p>
-        <p><strong>Monitoring:</strong> 📊 Prometheus metrics + 📝 Loki logs ready for Grafana</p>
+        <p><strong>Stability:</strong> 🔍 Dependency validation + MONITOR 60s device polling + ALERT Alert system</p>
+        <p><strong>Monitoring:</strong> DATA Prometheus metrics + LOG Loki logs ready for Grafana</p>
     </div>
     
     <!-- Architecture -->
@@ -58,7 +58,7 @@
         
         <div class="architecture-grid">
             <div class="arch-card">
-                <h4>🎯 Role 1: Individual MCP Servers</h4>
+                <h4>TARGET Role 1: Individual MCP Servers</h4>
                 <p>Standalone MCP servers for specific device types:</p>
                 <ul>
                     <li><strong>Tapo Camera MCP</strong> - TP-Link camera control</li>
@@ -68,7 +68,7 @@
                 </ul>
             </div>
             <div class="arch-card">
-                <h4>🎯 Role 2: Unified Dashboard</h4>
+                <h4>TARGET Role 2: Unified Dashboard</h4>
                 <p>Multi-MCP orchestration platform:</p>
                 <ul>
                     <li><strong>Single Interface</strong> - Monitor all devices</li>
@@ -92,7 +92,7 @@
             <div class="component-layer">
                 <h4>🔌 MCP Layer</h4>
                 <ul>
-                    <li><strong>FastMCP 2.13.0</strong> - MCP protocol implementation</li>
+                    <li><strong>FastMCP 2.14.1</strong> - MCP protocol implementation</li>
                     <li><strong>16 Portmanteau Tools</strong> - Consolidated tool interface</li>
                     <li><strong>Tool Registry</strong> - Dynamic tool registration</li>
                 </ul>
@@ -311,7 +311,7 @@
             </div>
         </div>
         
-        <h3>🚨 Security & Safety</h3>
+        <h3>ALERT Security & Safety</h3>
         <div class="hardware-grid">
             <div class="hardware-card">
                 <h4>🔥 Nest Protect</h4>
@@ -339,7 +339,7 @@
     
     <!-- Quick Start Guide -->
     <div id="quickstart" class="help-section">
-        <h2>🚀 Quick Start Guide</h2>
+        <h2>START Quick Start Guide</h2>
         
         <h3>1️⃣ View Live Cameras</h3>
         <ol>
@@ -390,7 +390,7 @@
     <!-- MCP Tools -->
     <div id="mcp-tools" class="help-section">
         <h2>🛠️ MCP Server Tools (16 Portmanteau)</h2>
-        <p>FastMCP 2.13.0 server with <strong>16 consolidated portmanteau tools</strong> (75% reduction from 64 individual tools)</p>
+        <p>FastMCP 2.14.1 server with <strong>16 consolidated portmanteau tools</strong> (75% reduction from 64 individual tools)</p>
         <p><em>Use these tools in Claude Desktop to control your entire smart home!</em></p>
         
         <div class="tool-grid">
@@ -465,7 +465,7 @@
             </div>
             
             <div class="tool-card">
-                <h4>🔧 system_management</h4>
+                <h4>TOOLS system_management</h4>
                 <p>Dashboard and server control</p>
                 <ul>
                     <li><code>action: status</code> - System health check</li>
@@ -488,7 +488,7 @@
             </div>
         </div>
         
-        <p><strong>📚 Full tool list:</strong> 16 portmanteau tools covering cameras, PTZ, lighting, energy, Ring, weather, security, automation, media, onboarding, configuration, analytics, AI, and system management.</p>
+        <p><strong>DOCS Full tool list:</strong> 16 portmanteau tools covering cameras, PTZ, lighting, energy, Ring, weather, security, automation, media, onboarding, configuration, analytics, AI, and system management.</p>
     </div>
     
     <!-- Dashboard Features -->
@@ -568,7 +568,7 @@
             </div>
             
             <div class="feature-card">
-                <h4>🚨 Alerts Dashboard</h4>
+                <h4>ALERT Alerts Dashboard</h4>
                 <ul>
                     <li>Message center</li>
                     <li>Filter by severity</li>
@@ -579,7 +579,7 @@
             </div>
             
             <div class="feature-card">
-                <h4>📊 Monitoring Integration</h4>
+                <h4>DATA Monitoring Integration</h4>
                 <ul>
                     <li>Prometheus metrics endpoint</li>
                     <li>Loki-compatible logs</li>
@@ -596,18 +596,18 @@
             <li>🔐 Session-based authentication (optional)</li>
             <li>📱 Mobile-responsive design</li>
             <li>🔄 Auto-refresh device status</li>
-            <li>🎯 User menu with settings</li>
+            <li>TARGET User menu with settings</li>
             <li>⌨️ Keyboard shortcuts</li>
         </ul>
     </div>
     
     <!-- Troubleshooting -->
     <div id="troubleshooting" class="help-section">
-        <h2>🔧 Troubleshooting & Common Issues</h2>
+        <h2>TOOLS Troubleshooting & Common Issues</h2>
         
         <h3>🎥 ONVIF Camera Streaming Issues</h3>
         <div class="troubleshooting-item">
-            <h4>❌ Camera stream not showing / "Failed to get stream URL"</h4>
+            <h4>ERROR Camera stream not showing / "Failed to get stream URL"</h4>
             <p><strong>Step-by-step fix:</strong></p>
             <ol>
                 <li><strong>Verify ONVIF is enabled:</strong> Check camera settings in Tapo app → Advanced → ONVIF (should be ON)</li>
@@ -637,7 +637,7 @@
         </div>
         
         <div class="troubleshooting-item">
-            <h4>❌ Camera page hangs / times out</h4>
+            <h4>ERROR Camera page hangs / times out</h4>
             <p><strong>Solutions:</strong></p>
             <ol>
                 <li><strong>Check camera connectivity:</strong> <code>ping 192.168.0.164</code></li>
@@ -649,7 +649,7 @@
         </div>
         
         <div class="troubleshooting-item">
-            <h4>❌ MJPEG stream shows "Failed to load" or black screen</h4>
+            <h4>ERROR MJPEG stream shows "Failed to load" or black screen</h4>
             <p><strong>Fix:</strong></p>
             <ol>
                 <li><strong>Check browser console:</strong> Press F12 → Console tab for errors</li>
@@ -662,7 +662,7 @@
         
         <h3>🎥 Tapo C200 Cameras</h3>
         <div class="troubleshooting-item">
-            <h4>❌ Camera offline</h4>
+            <h4>ERROR Camera offline</h4>
             <p><strong>Check:</strong></p>
             <ul>
                 <li>Camera powered on (LED indicator)</li>
@@ -675,7 +675,7 @@
         </div>
         
         <div class="troubleshooting-item">
-            <h4>❌ PTZ not responding</h4>
+            <h4>ERROR PTZ not responding</h4>
             <p><strong>Solutions:</strong></p>
             <ul>
                 <li>Wait 2-3 seconds between PTZ commands</li>
@@ -687,7 +687,7 @@
         
         <h3>📹 USB Webcam</h3>
         <div class="troubleshooting-item">
-            <h4>❌ Webcam not detected</h4>
+            <h4>ERROR Webcam not detected</h4>
             <p><strong>Solutions:</strong></p>
             <ul>
                 <li>Check Windows Camera app works</li>
@@ -699,7 +699,7 @@
         
         <h3>⚡ Tapo P115 Smart Plugs</h3>
         <div class="troubleshooting-item">
-            <h4>❌ Plug not responding</h4>
+            <h4>ERROR Plug not responding</h4>
             <p><strong>Check IPs:</strong></p>
             <ul>
                 <li>Aircon: 192.168.0.17</li>
@@ -712,7 +712,7 @@
         
         <h3>💡 Philips Hue</h3>
         <div class="troubleshooting-item">
-            <h4>❌ Lights not responding</h4>
+            <h4>ERROR Lights not responding</h4>
             <p><strong>Check:</strong></p>
             <ul>
                 <li>Hue Bridge at 192.168.0.83 is powered on</li>
@@ -725,7 +725,7 @@
         
         <h3>🔔 Ring Doorbell</h3>
         <div class="troubleshooting-item">
-            <h4>❌ Ring not initialized</h4>
+            <h4>ERROR Ring not initialized</h4>
             <p><strong>First-time setup requires 2FA:</strong></p>
             <ol>
                 <li>Run initialization script</li>
@@ -737,7 +737,7 @@
         
         <h3>🌤️ Netatmo Weather</h3>
         <div class="troubleshooting-item">
-            <h4>❌ Weather data not updating</h4>
+            <h4>ERROR Weather data not updating</h4>
             <p><strong>Check:</strong></p>
             <ul>
                 <li>Refresh token valid in <code>config.yaml</code></li>
@@ -750,7 +750,7 @@
         
         <h3>🖥️ Dashboard & Server Issues</h3>
         <div class="troubleshooting-item">
-            <h4>❌ Dashboard won't start / Port already in use</h4>
+            <h4>ERROR Dashboard won't start / Port already in use</h4>
             <p><strong>Check port 7777:</strong></p>
             <pre><code># PowerShell
 Get-NetTCPConnection -LocalPort 7777 | Select-Object OwningProcess
@@ -765,7 +765,7 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
         </div>
         
         <div class="troubleshooting-item">
-            <h4>❌ Server crashed / "Unhandled exception"</h4>
+            <h4>ERROR Server crashed / "Unhandled exception"</h4>
             <p><strong>Check error logs:</strong></p>
             <ul>
                 <li>View <code>tapo_mcp.log</code> for detailed error messages</li>
@@ -783,7 +783,7 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
         </div>
         
         <div class="troubleshooting-item">
-            <h4>❌ Weather stations not connecting / "NetworkError"</h4>
+            <h4>ERROR Weather stations not connecting / "NetworkError"</h4>
             <p><strong>Netatmo DNS fix applied:</strong> The system now uses sync DNS resolver to fix Windows async DNS issues.</p>
             <p><strong>If still failing:</strong></p>
             <ol>
@@ -795,7 +795,7 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
         </div>
         
         <div class="troubleshooting-item">
-            <h4>❌ "Simulated" or mock data showing</h4>
+            <h4>ERROR "Simulated" or mock data showing</h4>
             <p><strong>All simulated data removed:</strong> System now returns empty data instead of fake data when services are unavailable.</p>
             <p><strong>If you see empty data:</strong></p>
             <ul>
@@ -839,7 +839,7 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
     </div>
     
     <!-- Monitoring & Stability -->
-    <div id="monitoring" class="help-section" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: 2px solid #047857; border-left: 4px solid #047857; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+    <div id="monitoring" class="help-section" style="background: linear-gradient(135deg, var(--success-green) 0%, var(--success-dark) 100%); color: white; border: 2px solid #047857; border-left: 4px solid #047857; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
         <h2 style="color: white;">💪 Monitoring & Stability System (v1.8.0)</h2>
         
         <h3 style="color: white;">🔍 No More "It Worked Yesterday" Failures!</h3>
@@ -851,7 +851,7 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
                 <li><strong>Startup Validation:</strong> Checks all 20+ libraries before server starts</li>
                 <li><strong>Connection Supervisor:</strong> Polls ALL devices every 60 seconds</li>
                 <li><strong>Auto-Reconnect:</strong> Automatic recovery from device failures</li>
-                <li><strong>3-Level Alerts:</strong> Info (💬) → Warning (⚠️) → Alarm (🚨)</li>
+                <li><strong>3-Level Alerts:</strong> Info (INFO) → Warning (WARNING) → Alarm (ALERT)</li>
                 <li><strong>Alert Escalation:</strong> 1 failure = warning, 3 failures = alarm</li>
             </ul>
         </div>
@@ -864,18 +864,18 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
                 <p style="font-size: 13px;">Real-time device status, online/offline counts, error details, auto-refresh 10s</p>
             </div>
             <div style="background: rgba(255,255,255,0.15); padding: 16px; border-radius: 8px;">
-                <h4 style="color: white; margin-top: 0;">🚨 Alerts Dashboard</h4>
+                <h4 style="color: white; margin-top: 0;">ALERT Alerts Dashboard</h4>
                 <p style="font-size: 14px; margin-bottom: 8px;"><strong>URL:</strong> <a href="/alerts" style="color: #ffd700;">/alerts</a></p>
                 <p style="font-size: 13px;">Message center, filter by severity, acknowledge alerts, last 24 hours</p>
             </div>
             <div style="background: rgba(255,255,255,0.15); padding: 16px; border-radius: 8px;">
-                <h4 style="color: white; margin-top: 0;">📊 Prometheus Metrics</h4>
+                <h4 style="color: white; margin-top: 0;">DATA Prometheus Metrics</h4>
                 <p style="font-size: 14px; margin-bottom: 8px;"><strong>URL:</strong> <a href="/api/messages/prometheus" style="color: #ffd700;">/api/messages/prometheus</a></p>
                 <p style="font-size: 13px;">Scrape endpoint for Grafana integration, alert counts, uptime metrics</p>
             </div>
         </div>
         
-        <h3 style="color: white; margin-top: 24px;">📊 Monitoring Stack Integration</h3>
+        <h3 style="color: white; margin-top: 24px;">DATA Monitoring Stack Integration</h3>
         <p>Ready for Prometheus + Loki + Grafana:</p>
         <ul>
             <li><strong>Prometheus:</strong> Scrape metrics from <code>/api/messages/prometheus</code></li>
@@ -962,7 +962,7 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
     <div id="resources" class="help-section">
         <h2>🎓 Learning Resources & Quick Reference</h2>
         
-        <h3>📚 Claude Desktop Integration</h3>
+        <h3>DOCS Claude Desktop Integration</h3>
         <p>Use MCP tools in Claude to control your smart home:</p>
         <pre><code>// In Claude Desktop config (claude_desktop_config.json)
 "tapo-camera-mcp": {
@@ -974,7 +974,7 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
   }
 }</code></pre>
         
-        <h3>🧪 Testing Commands</h3>
+        <h3>TEST Testing Commands</h3>
         <div style="background: #f8f9fa; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
             <p><strong>Test all cameras:</strong></p>
             <pre><code>python scripts/demo.py --list</code></pre>
@@ -997,7 +997,7 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
             <li><strong>Changelog:</strong> <code>CHANGELOG.md</code></li>
         </ul>
         
-        <h3>📊 System Status</h3>
+        <h3>DATA System Status</h3>
         <p><strong>Dashboard:</strong> <a href="http://localhost:7777">http://localhost:7777</a></p>
         <p><strong>Health Check:</strong> <a href="http://localhost:7777/api/health">http://localhost:7777/api/health</a></p>
         <p><strong>Camera List:</strong> <a href="http://localhost:7777/api/cameras">http://localhost:7777/api/cameras</a></p>
@@ -1103,11 +1103,11 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
     padding: 1rem;
     margin: 0.5rem 0;
     border-radius: 0.5rem;
-    border-left: 4px solid #10b981;
+    border-left: 4px solid var(--success-green);
 }
 
 .component-layer h4 {
-    color: #10b981;
+    color: var(--success-green);
     margin-bottom: 0.5rem;
 }
 
@@ -1189,7 +1189,7 @@ code {
 
 pre {
     background: #2d3748;
-    color: #e2e8f0;
+    color: var(--dark-text-secondary);
     padding: 1rem;
     border-radius: 0.375rem;
     overflow-x: auto;

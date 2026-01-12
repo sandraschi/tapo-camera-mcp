@@ -2,11 +2,11 @@
   "include": ["src"],
   "exclude": ["**/node_modules", "**/__pycache__", "**/build_venv"],
   "pythonVersion": "3.10",
-  "pythonPath": "D:/Dev/repos/tapo-camera-mcp/build_venv/Scripts/python.exe",
+  "pythonPath": "./venv/Scripts/python.exe",
   "executionEnvironments": [
     {
       "root": "src",
-      "python": "D:/Dev/repos/tapo-camera-mcp/build_venv/Scripts/python.exe"
+      "python": "./venv/Scripts/python.exe"
     }
   ],
   "typeCheckingMode": "basic",

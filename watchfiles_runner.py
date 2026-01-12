@@ -136,7 +136,7 @@ class CrashproofRunner:
                 # Periodic health check
                 if current_time - self.last_health_check > self.health_check_interval:
                     if not await self.check_health():
-                        logger.warning("⚠️  Health check failed - initiating restart")
+                        logger.warning("WARNING: Health check failed - initiating restart")
                         await self.restart_process()
                     self.last_health_check = current_time
 
@@ -166,9 +166,9 @@ class CrashproofRunner:
                             except:
                                 pass
 
-                        logger.warning(f"⚠️  Tapo Camera MCP WebApp crashed with exit code {self.process.returncode}")
-                        logger.info(f"📊 Uptime before crash: {self.uptime_total:.1f}s")
-                        logger.info(f"🔄 Restart attempt {self.restart_count + 1}/{self.max_restarts}")
+                        logger.warning(f"CRASH: Tapo Camera MCP WebApp crashed with exit code {self.process.returncode}")
+                        logger.info(f"UPTIME: Uptime before crash: {self.uptime_total:.1f}s")
+                        logger.info(f"RESTART: Restart attempt {self.restart_count + 1}/{self.max_restarts}")
 
                         if self.notify_on_crash:
                             await self.notify_crash(crash_info)
@@ -300,12 +300,12 @@ class CrashproofRunner:
 
     async def run(self):
         """Main runner loop."""
-        logger.info("🚀 Starting Tapo Camera MCP WebApp Crashproof Runner")
+        logger.info("START: Starting Tapo Camera MCP WebApp Crashproof Runner")
         logger.info("==================================================")
-        logger.info(f"📍 Working directory: {self.cwd}")
-        logger.info(f"⚙️  Command: {' '.join(self.command)}")
-        logger.info(f"🔄 Max restarts: {self.max_restarts}")
-        logger.info(f"🏥 Health check: {self.health_check_url or 'Disabled'}")
+        logger.info(f"DIR: Working directory: {self.cwd}")
+        logger.info(f"CMD: Command: {' '.join(self.command)}")
+        logger.info(f"MAX_RESTARTS: Max restarts: {self.max_restarts}")
+        logger.info(f"HEALTH: Health check: {self.health_check_url or 'Disabled'}")
         logger.info("==================================================")
 
         # Set up signal handlers for graceful shutdown

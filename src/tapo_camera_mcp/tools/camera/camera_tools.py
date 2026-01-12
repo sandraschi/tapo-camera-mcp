@@ -172,7 +172,7 @@ class ListCamerasTool(BaseTool):
                 try:
                     from ...integrations.ring_client import get_ring_client
 
-                    ring_client = get_ring_client()
+                    ring_client = get_ring_client("default")
                     if ring_client and ring_client.is_initialized:
                         doorbells = await asyncio.wait_for(ring_client.get_doorbells(), timeout=3.0)
                         for doorbell in doorbells:

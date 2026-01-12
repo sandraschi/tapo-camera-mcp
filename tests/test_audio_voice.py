@@ -193,5 +193,5 @@ if __name__ == "__main__":
     test2.test_all_actions_defined()
 
     print("\n" + "=" * 60)
-    print("✅ All dependency checks passed!")
+    print("SUCCESS: All dependency checks passed!")
     print("=" * 60)

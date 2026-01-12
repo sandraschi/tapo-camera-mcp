@@ -20,7 +20,7 @@
     .stream-header h1 {
         font-size: 24px;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--text-color);
         margin: 0;
     }
     
@@ -35,17 +35,17 @@
     }
     
     .stream-status.live {
-        background: #dcfce7;
+        background: var(--success-light);
         color: #166534;
     }
     
     .stream-status.loading {
-        background: #fef3c7;
+        background: var(--warning-bg);
         color: #92400e;
     }
     
     .stream-status.error {
-        background: #fee2e2;
+        background: var(--error-bg);
         color: #dc2626;
     }
     
@@ -56,9 +56,9 @@
         animation: pulse 2s infinite;
     }
     
-    .status-dot.live { background: #22c55e; }
-    .status-dot.loading { background: #f59e0b; }
-    .status-dot.error { background: #ef4444; }
+    .status-dot.live { background: var(--success-green); }
+    .status-dot.loading { background: var(--warning-yellow); }
+    .status-dot.error { background: var(--error-red); }
     
     @keyframes pulse {
         0%, 100% { opacity: 1; }
@@ -128,7 +128,7 @@
     }
     
     .stream-loading {
-        color: #9ca3af;
+        color: var(--gray-400);
         text-align: center;
     }
     
@@ -177,7 +177,7 @@
     }
     
     .ctrl-btn-play {
-        background: #22c55e;
+        background: var(--success-green);
         color: white;
     }
     
@@ -186,7 +186,7 @@
     }
     
     .ctrl-btn-stop {
-        background: #ef4444;
+        background: var(--error-red);
         color: white;
     }
     
@@ -195,16 +195,16 @@
     }
     
     .ctrl-btn-secondary {
-        background: #374151;
+        background: var(--text-color);
         color: white;
     }
     
     .ctrl-btn-secondary:hover {
-        background: #4b5563;
+        background: var(--gray-600);
     }
     
     .stream-info-bar {
-        background: #f9fafb;
+        background: var(--card-bg);
         border-radius: 12px;
         padding: 16px 20px;
         display: flex;
@@ -218,12 +218,12 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        color: #6b7280;
+        color: var(--muted-text);
         font-size: 14px;
     }
     
     .info-item strong {
-        color: #1f2937;
+        color: var(--text-color);
     }
     
     .copy-toast {
@@ -231,7 +231,7 @@
         bottom: 24px;
         left: 50%;
         transform: translateX(-50%) translateY(100px);
-        background: #10b981;
+        background: var(--success-green);
         color: white;
         padding: 12px 24px;
         border-radius: 8px;
@@ -280,11 +280,11 @@
         align-items: center;
         margin-bottom: 12px;
         padding-bottom: 8px;
-        border-bottom: 1px solid #374151;
+        border-bottom: 1px solid var(--text-color);
     }
     
     .ptz-title {
-        color: #e5e7eb;
+        color: var(--border-color);
         font-weight: 600;
         font-size: 13px;
     }
@@ -292,7 +292,7 @@
     .ptz-close {
         background: none;
         border: none;
-        color: #9ca3af;
+        color: var(--gray-400);
         font-size: 20px;
         cursor: pointer;
         padding: 0;
@@ -326,7 +326,7 @@
         height: 40px;
         border: none;
         border-radius: 8px;
-        background: #3b82f6;
+        background: var(--primary-blue);
         color: white;
         font-size: 16px;
         cursor: pointer;
@@ -337,7 +337,7 @@
     }
     
     .ptz-btn:hover {
-        background: #2563eb;
+        background: var(--primary-blue-dark);
         transform: scale(1.05);
     }
     
@@ -347,12 +347,12 @@
     }
     
     .ptz-btn.ptz-home {
-        background: #6b7280;
+        background: var(--muted-text);
         font-size: 12px;
     }
     
     .ptz-btn.ptz-home:hover {
-        background: #4b5563;
+        background: var(--gray-600);
     }
     
     .ptz-zoom {
@@ -409,7 +409,7 @@
     }
 
     .preset-btn {
-        background: #059669;
+        background: var(--success-dark);
         color: white;
         border: none;
         border-radius: 6px;
@@ -465,7 +465,7 @@
     .preset-action-btn {
         background: none;
         border: none;
-        color: #9ca3af;
+        color: var(--gray-400);
         cursor: pointer;
         padding: 2px;
         border-radius: 3px;
@@ -479,7 +479,7 @@
     }
 
     .preset-action-btn.delete:hover {
-        color: #ef4444;
+        color: var(--error-red);
     }
 
     /* Preset Dialog */
@@ -497,7 +497,7 @@
     }
 
     .preset-dialog-content {
-        background: #1f2937;
+        background: var(--text-color);
         border-radius: 12px;
         padding: 20px;
         max-width: 400px;
@@ -515,9 +515,9 @@
         width: 100%;
         padding: 8px 12px;
         margin-bottom: 8px;
-        border: 1px solid #374151;
+        border: 1px solid var(--text-color);
         border-radius: 6px;
-        background: #111827;
+        background: var(--gray-900);
         color: white;
         font-size: 14px;
     }
@@ -544,16 +544,16 @@
     }
 
     .preset-dialog-buttons button:first-child {
-        background: #6b7280;
+        background: var(--muted-text);
         color: white;
     }
 
     .preset-dialog-buttons button:first-child:hover {
-        background: #4b5563;
+        background: var(--gray-600);
     }
 
     .preset-save-btn {
-        background: #059669;
+        background: var(--success-dark);
         color: white;
     }
 
@@ -589,7 +589,7 @@
         align-items: center;
         gap: 8px;
         font-size: 12px;
-        color: #e5e7eb;
+        color: var(--border-color);
     }
 
     .microscope-setting label {
@@ -599,9 +599,9 @@
     .microscope-setting input[type="number"] {
         width: 60px;
         padding: 2px 4px;
-        border: 1px solid #374151;
+        border: 1px solid var(--text-color);
         border-radius: 4px;
-        background: #111827;
+        background: var(--gray-900);
         color: white;
         font-size: 12px;
     }
@@ -612,7 +612,7 @@
     }
 
     .microscope-setting button {
-        background: #059669;
+        background: var(--success-dark);
         color: white;
         border: none;
         border-radius: 4px;
@@ -659,7 +659,7 @@
     </div>
     
     <div id="error-banner" class="error-banner" style="display: none;">
-        <span>⚠️</span>
+        <span>WARNING</span>
         <span id="error-text"></span>
     </div>
     
@@ -929,12 +929,12 @@ function refreshSnapshot() {
                     video.style.display = 'block';
                     loading.style.display = 'none';
                 } else {
-                    loading.innerHTML = '<p style="color: #9ca3af;">🎥 No recent recordings<br><small>Click "Start Stream" for live view</small></p>';
+                    loading.innerHTML = '<p style="color: var(--gray-400);">🎥 No recent recordings<br><small>Click "Start Stream" for live view</small></p>';
                 }
             })
             .catch(err => {
                 console.error('Failed to load Ring recording:', err);
-                loading.innerHTML = '<p style="color: #9ca3af;">🎥 Recording unavailable<br><small>Click "Start Stream" for live view</small></p>';
+                loading.innerHTML = '<p style="color: var(--gray-400);">🎥 Recording unavailable<br><small>Click "Start Stream" for live view</small></p>';
             });
     } else {
         // Regular snapshot for other cameras
@@ -950,7 +950,7 @@ function refreshSnapshot() {
             loading.style.display = 'none';
         };
         img.onerror = () => {
-            loading.innerHTML = '<p style="color: #9ca3af;">📷 Snapshot unavailable</p>';
+            loading.innerHTML = '<p style="color: var(--gray-400);">📷 Snapshot unavailable</p>';
         };
     }
 }
@@ -1063,7 +1063,7 @@ function updatePTZTitle() {
         titleElement.style.color = '#fbbf24'; // Yellow to indicate digital mode
     } else {
         titleElement.textContent = '🎮 PTZ Controls';
-        titleElement.style.color = '#e5e7eb'; // Normal color
+        titleElement.style.color = 'var(--border-color)'; // Normal color
     }
 }
 
@@ -1134,12 +1134,12 @@ async function ptzMove(event, pan, tilt, zoom) {
         const statusText = document.getElementById('status-text');
         if (statusText) {
             statusText.textContent = `${movementType} Moving...`;
-            statusText.style.color = '#10b981'; // Green to show immediate response
+            statusText.style.color = 'var(--success-green)'; // Green to show immediate response
         }
 
         // Add button press feedback
         if (event && event.target) {
-            event.target.style.background = '#10b981'; // Green flash
+            event.target.style.background = 'var(--success-green)'; // Green flash
             setTimeout(() => {
                 event.target.style.background = ''; // Reset after 100ms
             }, 100);
@@ -1202,7 +1202,7 @@ function renderPresets() {
     presetList.innerHTML = '';
 
     if (currentPresets.length === 0) {
-        presetList.innerHTML = '<div style="color: #9ca3af; font-size: 12px; text-align: center; padding: 8px;">No saved positions yet</div>';
+        presetList.innerHTML = '<div style="color: var(--gray-400); font-size: 12px; text-align: center; padding: 8px;">No saved positions yet</div>';
         return;
     }
 

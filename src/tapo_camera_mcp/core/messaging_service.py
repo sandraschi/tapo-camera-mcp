@@ -41,6 +41,7 @@ class MessageCategory(str, Enum):
     ENERGY_ALERT = "energy_alert"
     SECURITY_EVENT = "security_event"
     SYSTEM_EVENT = "system_event"
+    MEDIA_EVENT = "media_event"
 
 
 @dataclass

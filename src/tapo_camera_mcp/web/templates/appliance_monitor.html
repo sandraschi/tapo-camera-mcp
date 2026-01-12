@@ -16,7 +16,7 @@
         border-radius: 0.75rem;
         padding: 1.5rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         transition: all 0.2s ease-in-out;
     }
 
@@ -31,13 +31,13 @@
         align-items: center;
         margin-bottom: 1rem;
         padding-bottom: 0.75rem;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--border-color);
     }
 
     .appliance-name {
         font-size: 1.25rem;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
         margin: 0;
     }
 
@@ -51,28 +51,28 @@
     }
 
     .status-healthy {
-        background-color: #dcfce7;
+        background-color: var(--success-light);
         color: #166534;
     }
 
     .status-warning {
-        background-color: #fef3c7;
+        background-color: var(--warning-bg);
         color: #92400e;
     }
 
     .status-critical {
-        background-color: #fee2e2;
+        background-color: var(--error-bg);
         color: #991b1b;
     }
 
     .status-monitoring {
-        background-color: #dbeafe;
+        background-color: var(--info-bg);
         color: #1e40af;
     }
 
     .status-error {
-        background-color: #f3f4f6;
-        color: #374151;
+        background-color: var(--gray-100);
+        color: var(--text-color);
     }
 
     .appliance-details {
@@ -90,7 +90,7 @@
     .detail-label {
         font-size: 0.75rem;
         font-weight: 500;
-        color: #6b7280;
+        color: var(--muted-text);
         text-transform: uppercase;
         letter-spacing: 0.05em;
         margin-bottom: 0.25rem;
@@ -98,18 +98,18 @@
 
     .detail-value {
         font-size: 0.875rem;
-        color: #1f2937;
+        color: var(--text-color);
         font-weight: 500;
     }
 
     .power-display {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--text-color);
         text-align: center;
         margin: 1rem 0;
         padding: 1rem;
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        background: linear-gradient(135deg, #f8fafc 0%, var(--dark-text-secondary) 100%);
         border-radius: 0.5rem;
         border: 2px solid #cbd5e1;
     }
@@ -142,26 +142,26 @@
         white-space: nowrap;
         flex-shrink: 0;
         transition: all 0.2s ease-in-out;
-        border: 1px solid #d1d5db;
+        border: 1px solid var(--gray-300);
         background-color: white;
-        color: #374151;
+        color: var(--text-color);
         cursor: pointer;
     }
 
     .action-button:hover {
-        background-color: #f9fafb;
-        border-color: #9ca3af;
+        background-color: var(--card-bg);
+        border-color: var(--gray-400);
     }
 
     .action-button-primary {
-        background-color: #3b82f6;
+        background-color: var(--primary-blue);
         color: white;
-        border-color: #3b82f6;
+        border-color: var(--primary-blue);
     }
 
     .action-button-primary:hover {
-        background-color: #2563eb;
-        border-color: #2563eb;
+        background-color: var(--primary-blue-dark);
+        border-color: var(--primary-blue-dark);
     }
 
     .preset-grid {
@@ -173,7 +173,7 @@
 
     .preset-card {
         background: white;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         border-radius: 0.5rem;
         padding: 1rem;
         cursor: pointer;
@@ -181,25 +181,25 @@
     }
 
     .preset-card:hover {
-        border-color: #3b82f6;
+        border-color: var(--primary-blue);
         box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
     }
 
     .preset-name {
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
         margin-bottom: 0.25rem;
     }
 
     .preset-description {
         font-size: 0.875rem;
-        color: #6b7280;
+        color: var(--muted-text);
         margin-bottom: 0.5rem;
     }
 
     .preset-range {
         font-size: 0.75rem;
-        color: #374151;
+        color: var(--text-color);
         font-family: monospace;
     }
 
@@ -210,7 +210,7 @@
 
     .alert-item {
         background: white;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         border-radius: 0.5rem;
         padding: 1rem;
         margin-bottom: 0.75rem;
@@ -230,7 +230,7 @@
 
     .alert-time {
         font-size: 0.75rem;
-        color: #6b7280;
+        color: var(--muted-text);
     }
 
     @media (max-width: 768px) {
@@ -521,7 +521,7 @@ function updateAlertList() {
                 <span class="alert-time">${triggeredAt}</span>
             </div>
             <div class="alert-message">${alert.message}</div>
-            <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #6b7280;">
+            <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--muted-text);">
                 Device: ${alert.device_id} | Current Power: ${alert.current_power}W
             </div>
         `;
@@ -587,7 +587,7 @@ function showToast(message) {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: #10b981;
+        background: var(--success-green);
         color: white;
         padding: 0.75rem 1rem;
         border-radius: 0.5rem;

@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -1121,13 +1121,36 @@ class RingClient:
         }
 
 
-# Singleton instance
+# Singleton instance - DEPRECATED: Use server-level storage instead
 ring_client: Optional[RingClient] = None
 
+# Server-level storage for Ring clients (to avoid singleton issues in web apps)
+_server_ring_clients: Dict[str, RingClient] = {}
 
-def get_ring_client() -> Optional[RingClient]:
-    """Get the Ring client singleton."""
-    return ring_client
+
+def get_ring_client(server_id: str = "default") -> Optional[RingClient]:
+    """Get the Ring client for a specific server instance."""
+    # Try server-level storage first (preferred)
+    if server_id in _server_ring_clients:
+        client = _server_ring_clients[server_id]
+        if client and client.is_initialized:
+            return client
+
+    # Fall back to global singleton for backward compatibility
+    if ring_client and ring_client.is_initialized:
+        return ring_client
+
+    # Check all server clients as last resort
+    for client in _server_ring_clients.values():
+        if client and client.is_initialized:
+            return client
+
+    return None
+
+
+def set_ring_client(client: RingClient, server_id: str = "default") -> None:
+    """Store a Ring client for a specific server instance."""
+    _server_ring_clients[server_id] = client
 
 
 async def init_ring_client(
@@ -1135,14 +1158,28 @@ async def init_ring_client(
     password: Optional[str] = None,
     token_file: str = "ring_token.cache",
     cache_ttl: int = 60,
+    server_id: str = "default",
 ) -> RingClient:
-    """Initialize the Ring client singleton."""
-    global ring_client
-    ring_client = RingClient(
+    """Initialize the Ring client for a specific server instance."""
+    # Check if we already have a client for this server
+    existing_client = get_ring_client(server_id)
+    if existing_client and existing_client.is_initialized:
+        return existing_client
+
+    # Create new client
+    client = RingClient(
         email=email,
         password=password,
         token_file=token_file,
         cache_ttl=cache_ttl,
     )
-    await ring_client.initialize()
-    return ring_client
+    await client.initialize()
+
+    # Store in server-level storage
+    set_ring_client(client, server_id)
+
+    # Also store in global for backward compatibility
+    global ring_client
+    ring_client = client
+
+    return client

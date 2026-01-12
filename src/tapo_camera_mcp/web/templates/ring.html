@@ -5,7 +5,7 @@
 {% block extra_css %}
 <style>
     .status-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, var(--info-blue) 0%, #764ba2 100%);
         border-radius: 1rem;
         padding: 2rem;
         margin-bottom: 2rem;
@@ -68,12 +68,12 @@
         padding: 1.5rem;
         margin-bottom: 2rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border-left: 4px solid #3b82f6;
+        border-left: 4px solid var(--primary-blue);
     }
 
     .setup-instructions h3 {
         margin-top: 0;
-        color: #1f2937;
+        color: var(--text-color);
         font-size: 1.25rem;
         font-weight: 600;
     }
@@ -81,7 +81,7 @@
     .setup-instructions ol {
         margin: 1rem 0;
         padding-left: 1.5rem;
-        color: #4b5563;
+        color: var(--gray-600);
     }
 
     .setup-instructions li {
@@ -110,23 +110,23 @@
     }
 
     .btn-primary {
-        background: #3b82f6;
+        background: var(--primary-blue);
         color: white;
     }
 
     .btn-primary:hover {
-        background: #2563eb;
+        background: var(--primary-blue-dark);
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
     }
 
     .btn-secondary {
-        background: #6b7280;
+        background: var(--muted-text);
         color: white;
     }
 
     .btn-secondary:hover {
-        background: #4b5563;
+        background: var(--gray-600);
     }
 
     .btn:disabled {
@@ -146,7 +146,7 @@
         border-radius: 0.75rem;
         padding: 1.5rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         transition: all 0.2s ease-in-out;
     }
 
@@ -161,13 +161,13 @@
         align-items: center;
         margin-bottom: 1rem;
         padding-bottom: 0.75rem;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--border-color);
     }
 
     .ring-name {
         font-size: 1.25rem;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
         margin: 0;
     }
 
@@ -186,7 +186,7 @@
     .detail-label {
         font-size: 0.75rem;
         font-weight: 500;
-        color: #6b7280;
+        color: var(--muted-text);
         text-transform: uppercase;
         letter-spacing: 0.05em;
         margin-bottom: 0.25rem;
@@ -194,7 +194,7 @@
 
     .detail-value {
         font-size: 0.875rem;
-        color: #1f2937;
+        color: var(--text-color);
         font-weight: 500;
     }
 
@@ -204,7 +204,7 @@
         height: 250px;
         border-radius: 0.5rem;
         overflow: hidden;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         background: #000;
         margin: 1rem 0;
         object-fit: cover;
@@ -216,7 +216,7 @@
         gap: 0.5rem;
         margin-top: 1rem;
         padding-top: 1rem;
-        border-top: 1px solid #e5e7eb;
+        border-top: 1px solid var(--border-color);
     }
 
     .action-button {
@@ -227,25 +227,25 @@
         text-decoration: none;
         white-space: nowrap;
         transition: all 0.2s ease-in-out;
-        border: 1px solid #d1d5db;
+        border: 1px solid var(--gray-300);
         background-color: white;
-        color: #374151;
+        color: var(--text-color);
         cursor: pointer;
     }
 
     .action-button:hover {
-        background-color: #f9fafb;
-        border-color: #9ca3af;
+        background-color: var(--card-bg);
+        border-color: var(--gray-400);
     }
 
     .action-button-primary {
-        background-color: #3b82f6;
+        background-color: var(--primary-blue);
         color: white;
-        border-color: #3b82f6;
+        border-color: var(--primary-blue);
     }
 
     .action-button-primary:hover {
-        background-color: #2563eb;
+        background-color: var(--primary-blue-dark);
     }
 
     .alarm-section {
@@ -254,7 +254,7 @@
         padding: 1.5rem;
         margin-bottom: 2rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
 
     .alarm-controls {
@@ -274,17 +274,17 @@
     }
 
     .alarm-btn.disarm {
-        background: #10b981;
+        background: var(--success-green);
         color: white;
     }
 
     .alarm-btn.home {
-        background: #f59e0b;
+        background: var(--warning-yellow);
         color: white;
     }
 
     .alarm-btn.away {
-        background: #ef4444;
+        background: var(--error-red);
         color: white;
     }
 
@@ -293,7 +293,7 @@
         border-radius: 0.75rem;
         padding: 1.5rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
 
     .events-list {
@@ -305,28 +305,28 @@
 
     .event-item {
         padding: 1rem;
-        background: #f9fafb;
+        background: var(--card-bg);
         border-radius: 0.5rem;
-        border-left: 3px solid #3b82f6;
+        border-left: 3px solid var(--primary-blue);
     }
 
     .empty-state {
         text-align: center;
         padding: 3rem 1rem;
-        color: #6b7280;
+        color: var(--muted-text);
     }
 
     .empty-state-title {
         font-size: 1.25rem;
         font-weight: 600;
         margin-bottom: 0.5rem;
-        color: #374151;
+        color: var(--text-color);
     }
 
     .loading {
         text-align: center;
         padding: 2rem;
-        color: #6b7280;
+        color: var(--muted-text);
     }
 
     .toast {
@@ -334,7 +334,7 @@
         top: 20px;
         right: 20px;
         padding: 1rem 1.5rem;
-        background: #1f2937;
+        background: var(--text-color);
         color: white;
         border-radius: 0.5rem;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
@@ -401,7 +401,7 @@
         <p>Please enter the verification code sent to your email or phone:</p>
         <div class="action-buttons">
             <input type="text" id="2fa-code" placeholder="Enter 2FA code" 
-                   style="padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; width: 200px;">
+                   style="padding: 0.75rem; border: 1px solid var(--gray-300); border-radius: 0.5rem; font-size: 1rem; width: 200px;">
             <button class="btn btn-primary" onclick="submit2FA()">Submit Code</button>
         </div>
     </div>
@@ -690,7 +690,7 @@ function displayEvents(events) {
             <div style="display: flex; justify-content: space-between; align-items: start;">
                 <div>
                     <strong>${event.event_type || 'Event'}</strong>
-                    <div style="font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem;">
+                    <div style="font-size: 0.875rem; color: var(--muted-text); margin-top: 0.25rem;">
                         ${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Unknown time'}
                     </div>
                 </div>

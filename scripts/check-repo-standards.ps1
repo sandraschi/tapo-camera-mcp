@@ -384,7 +384,7 @@ $results.Summary["TotalFixes"] = $results.Fixes.Count
 
 # Determine grade
 $grade = switch ($overallScore) {
-    {$_ -ge 9.0} { "🏆 EXCELLENT"; break }
+    {$_ -ge 9.0} { "EXCELLENT"; break }
     {$_ -ge 8.0} { "✅ GOOD"; break }
     {$_ -ge 7.0} { "⚠️  NEEDS WORK"; break }
     {$_ -ge 6.0} { "❌ POOR"; break }
@@ -468,7 +468,7 @@ $(if($results.Scores.Cleanliness -ge 9){"✅ Clean repository root"}else{"⚠️
 
 ---
 
-## 🎯 Priority Actions
+## PRIORITY ACTIONS
 
 ### High Priority (Critical for Production)
 $(($results.Fixes | Where-Object { $_ -match "manifest|README|CI/CD" } | ForEach-Object { "- $_" }) -join "`n")
@@ -579,7 +579,7 @@ Write-Host "`n╔═════════════════════
 Write-Host "║              📊 Analysis Complete! 📊                  ║" -ForegroundColor Magenta
 Write-Host "╚═══════════════════════════════════════════════════════════╝`n" -ForegroundColor Magenta
 
-Write-Host "🎯 Overall Score: $($results.Summary.OverallScore)/10 - $grade" -ForegroundColor $(if($overallScore -ge 8){"Green"}else{"Yellow"})
+Write-Host "OVERALL Score: $($results.Summary.OverallScore)/10 - $grade" -ForegroundColor $(if($overallScore -ge 8){"Green"}else{"Yellow"})
 Write-Host ""
 Write-Host "📊 Category Scores:" -ForegroundColor White
 foreach ($category in $results.Scores.Keys | Sort-Object) {

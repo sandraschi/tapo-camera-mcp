@@ -20,12 +20,12 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
     
     .energy-card h3 {
         margin: 0 0 16px 0;
-        color: #1f2937;
+        color: var(--text-color);
         font-size: 18px;
         font-weight: 600;
     }
@@ -33,12 +33,12 @@
     .energy-value {
         font-size: 32px;
         font-weight: 700;
-        color: #059669;
+        color: var(--success-dark);
         margin-bottom: 8px;
     }
     
     .energy-unit {
-        color: #6b7280;
+        color: var(--muted-text);
         font-size: 14px;
     }
     
@@ -54,7 +54,7 @@
     }
     
     .trend-down {
-        color: #059669;
+        color: var(--success-dark);
     }
     
     .devices-section {
@@ -62,15 +62,15 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
     
     .device-card {
-        background: #f9fafb;
+        background: var(--card-bg);
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 16px;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
     
@@ -89,11 +89,11 @@
     .device-name {
         font-size: 18px;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
     }
     
     .device-location {
-        color: #6b7280;
+        color: var(--muted-text);
         font-size: 14px;
     }
     
@@ -110,11 +110,11 @@
     }
     
     .status-online {
-        background-color: #10b981;
+        background-color: var(--success-green);
     }
     
     .status-offline {
-        background-color: #ef4444;
+        background-color: var(--error-red);
     }
     
     .device-metrics {
@@ -131,12 +131,12 @@
     .metric-value {
         font-size: 20px;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
     }
     
     .metric-label {
         font-size: 12px;
-        color: #6b7280;
+        color: var(--muted-text);
         margin-top: 4px;
     }
     
@@ -157,25 +157,25 @@
     }
     
     .btn-primary {
-        background-color: #3b82f6;
+        background-color: var(--primary-blue);
         color: white;
     }
     
     .btn-primary:hover {
-        background-color: #2563eb;
+        background-color: var(--primary-blue-dark);
     }
     
     .btn-secondary {
-        background-color: #e5e7eb;
-        color: #374151;
+        background-color: var(--border-color);
+        color: var(--text-color);
     }
     
     .btn-secondary:hover {
-        background-color: #d1d5db;
+        background-color: var(--gray-300);
     }
     
     .btn-danger {
-        background-color: #ef4444;
+        background-color: var(--error-red);
         color: white;
     }
     
@@ -188,19 +188,19 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         margin-top: 20px;
     }
     
     .chart-placeholder {
         height: 300px;
-        background: #f9fafb;
-        border: 2px dashed #d1d5db;
+        background: var(--card-bg);
+        border: 2px dashed var(--gray-300);
         border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #6b7280;
+        color: var(--muted-text);
         font-size: 16px;
     }
     
@@ -220,13 +220,13 @@
     }
     
     .alert-warning {
-        border-left-color: #f59e0b !important;
-        background: #fef3c7 !important;
+        border-left-color: var(--warning-yellow) !important;
+        background: var(--warning-bg) !important;
     }
     
     .alert-critical {
         border-left-color: #dc2626 !important;
-        background: #fee2e2 !important;
+        background: var(--error-bg) !important;
     }
     
 </style>
@@ -242,7 +242,7 @@
     <!-- Energy Overview -->
     <div class="energy-overview">
         <div class="energy-card">
-            <h3>📊 Total Power Consumption</h3>
+            <h3>DATA Total Power Consumption</h3>
             <div class="energy-value">245.8</div>
             <div class="energy-unit">Watts</div>
             <div class="energy-trend trend-up">
@@ -262,7 +262,7 @@
         </div>
         
         <div class="energy-card">
-            <h3>📈 Monthly Usage</h3>
+            <h3>TREND Monthly Usage</h3>
             <div class="energy-value">189.0</div>
             <div class="energy-unit">kWh</div>
             <div class="energy-trend trend-up">
@@ -295,12 +295,12 @@
     
     <!-- Energy Chart -->
     <div class="chart-container">
-        <h3>📊 Energy Consumption Over Time</h3>
+        <h3>DATA Energy Consumption Over Time</h3>
         <div style="margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
             <div style="display: flex; align-items: center; gap: 8px;">
-                <label for="device-selector" style="font-weight: 500; color: #374151;">Device:</label>
-                <select id="device-selector" onchange="changeDevice(this.value)" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #d1d5db; background: white; font-size: 14px; min-width: 180px;">
-                    <option value="all">📊 All Devices (Combined)</option>
+                <label for="device-selector" style="font-weight: 500; color: var(--text-color);">Device:</label>
+                <select id="device-selector" onchange="changeDevice(this.value)" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--gray-300); background: white; font-size: 14px; min-width: 180px;">
+                    <option value="all">DATA All Devices (Combined)</option>
                 </select>
             </div>
             <div style="display: flex; gap: 8px;">
@@ -314,22 +314,22 @@
                 <button class="btn btn-secondary" onclick="resetZoom()" title="Reset Zoom">↺ Reset</button>
             </div>
         </div>
-        <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">
+        <div style="font-size: 12px; color: var(--muted-text); margin-bottom: 8px;">
             💡 Drag to pan, scroll to zoom, or use buttons above
         </div>
         <div style="position: relative; height: 400px;">
             <canvas id="powerChart"></canvas>
         </div>
-        <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
-            <strong>⚠️ Alert Thresholds:</strong>
-            <span style="margin-left: 16px;">Power Spike: <span style="color: #f59e0b;">>500W</span></span>
+        <div style="margin-top: 16px; padding: 12px; background: var(--warning-bg); border-radius: 8px; border-left: 4px solid var(--warning-yellow);">
+            <strong>WARNING Alert Thresholds:</strong>
+            <span style="margin-left: 16px;">Power Spike: <span style="color: var(--warning-yellow);">>500W</span></span>
             <span style="margin-left: 16px;">Power Surge: <span style="color: #dc2626;">>800W</span></span>
         </div>
     </div>
     
     <!-- Alerts Section -->
     <div class="chart-container" id="alerts-section" style="display: none;">
-        <h3>🚨 Active Power Alerts</h3>
+        <h3>ALERT Active Power Alerts</h3>
         <div id="alerts-container">
             <!-- Alerts will be populated here -->
         </div>
@@ -383,7 +383,7 @@ function populateDeviceSelector(devices) {
     if (!selector) return;
     
     // Keep "All Devices" option
-    selector.innerHTML = '<option value="all">📊 All Devices (Combined)</option>';
+    selector.innerHTML = '<option value="all">DATA All Devices (Combined)</option>';
     
     devices.forEach(device => {
         const option = document.createElement('option');
@@ -417,7 +417,7 @@ function initChart() {
                 {
                     label: 'Power Consumption (W)',
                     data: chartData.power,
-                    borderColor: '#3b82f6',
+                    borderColor: 'var(--primary-blue)',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     borderWidth: 2,
                     fill: true,
@@ -428,7 +428,7 @@ function initChart() {
                 {
                     label: 'Alert Threshold (500W)',
                     data: chartData.power.map(() => 500),
-                    borderColor: '#f59e0b',
+                    borderColor: 'var(--warning-yellow)',
                     backgroundColor: 'transparent',
                     borderWidth: 2,
                     borderDash: [5, 5],
@@ -655,7 +655,7 @@ function updateChartPlaceholder(message) {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.font = '16px Arial';
-    ctx.fillStyle = '#6b7280';
+    ctx.fillStyle = 'var(--muted-text)';
     ctx.textAlign = 'center';
     ctx.fillText(message, canvas.width / 2, canvas.height / 2);
 }
@@ -675,8 +675,8 @@ function updateAlerts() {
         const date = new Date(alert.timestamp);
         const severityClass = alert.severity === 'critical' ? 'alert-critical' : 'alert-warning';
         return `
-            <div class="alert-item ${severityClass}" style="padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid ${alert.severity === 'critical' ? '#dc2626' : '#f59e0b'}; background: ${alert.severity === 'critical' ? '#fee2e2' : '#fef3c7'};">
-                <strong>${alert.severity === 'critical' ? '🔴 Power Surge' : '⚠️ Power Spike'}</strong>
+            <div class="alert-item ${severityClass}" style="padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid ${alert.severity === 'critical' ? '#dc2626' : 'var(--warning-yellow)'}; background: ${alert.severity === 'critical' ? 'var(--error-bg)' : 'var(--warning-bg)'};">
+                <strong>${alert.severity === 'critical' ? 'CRITICAL Power Surge' : 'WARNING Power Spike'}</strong>
                 <div style="margin-top: 4px;">
                     <span>Power: <strong>${alert.power.toFixed(1)}W</strong></span>
                     <span style="margin-left: 16px;">Time: ${date.toLocaleString()}</span>
@@ -833,7 +833,7 @@ function createDeviceCard(device) {
                     <div class="device-name">${device.name || device.device_id}</div>
                     <div class="device-location">
                         ${device.location || 'Unknown'}
-                        ${isReadonly ? ' • <span style="color:#6b7280;font-size:12px;">Read-only</span>' : ''}
+                        ${isReadonly ? ' • <span style="color:var(--muted-text);font-size:12px;">Read-only</span>' : ''}
                     </div>
                 </div>
                 <div class="device-status">

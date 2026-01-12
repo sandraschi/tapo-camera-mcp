@@ -19,6 +19,7 @@
   - [6.1 Motion Detection](#61-motion-detection)
   - [6.2 PTZ Controls](#62-ptz-controls)
   - [6.3 Recording](#63-recording)
+  - [6.4 Plex Media Server Integration](#64-plex-media-server-integration)
 - [7. Troubleshooting](#7-troubleshooting)
 
 ## 1. Introduction
@@ -275,6 +276,33 @@ recording:
   pre_buffer: 5   # seconds before motion
   post_buffer: 10  # seconds after motion
   path: "/path/to/recordings"
+```
+
+### 6.4 Plex Media Server Integration
+
+Track media activity from your Plex server in the security dashboard.
+
+#### **Setup Instructions:**
+1. **Enable Webhooks in Plex:**
+   - Open Plex Web app
+   - Go to Settings → General → Webhooks
+   - Add webhook URL: `http://your-server:7777/api/plex/webhook`
+
+2. **Configure Events:**
+   - Enable events: `media.play`, `media.pause`, `media.stop`, `media.resume`
+   - All media activity will be logged and displayed in the dashboard
+
+#### **Features:**
+- **Real-time Activity**: See who's watching what on which device
+- **Event Timeline**: Media events appear in the security dashboard timeline
+- **Status Display**: Current playback status at `/plex` page
+- **API Access**: Query current activity via `/api/plex/now-playing`
+
+#### **Plex Page (`/plex`):**
+- Browse your media library
+- View "Continue Watching" progress
+- See recently added content
+- Monitor active playback sessions
   retention_days: 30
 ```
 

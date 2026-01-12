@@ -1,7 +1,7 @@
 # 🏠 Home Security MCP Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.17.0-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/releases)
+[![Version](https://img.shields.io/badge/version-1.18.0-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp/releases)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![MCP Version](https://img.shields.io/badge/MCP-2.12.0-blue)](https://mcp-standard.org)
@@ -12,7 +12,7 @@
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
 [![Energy Dashboard](https://img.shields.io/badge/Energy%20Dashboard-Operational-success.svg)](http://localhost:7777/energy)
 [![Lighting Dashboard](https://img.shields.io/badge/Lighting%20Dashboard-Operational-success.svg)](http://localhost:7777/lighting)
-[![Multi-Device](https://img.shields.io/badge/Devices-Tapo%20%7C%20Ring%20%7C%20Nest%20%7C%20USB-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp)
+[![Multi-Device](https://img.shields.io/badge/Devices-Tapo%20%7C%20Ring%20%7C%20Nest%20%7C%20Plex%20%7C%20USB-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp)
 [![LLM Integration](https://img.shields.io/badge/LLM-Multi--Provider-orange.svg)](https://github.com/sandraschi/tapo-camera-mcp)
 
 ⚠️ **BETA**: Comprehensive home security platform in active development. Unified surveillance dashboard with multi-device MCP architecture - serving as both individual device MCP servers AND a complete security monitoring ecosystem. **Status: Beta - Active Development**
@@ -29,17 +29,19 @@
 - **USB Webcam MCP**: Direct webcam management
 - **Ring MCP**: Doorbell and security camera integration
 - **Nest Protect MCP**: Smoke/CO detector monitoring
+- **Plex MCP**: Media server integration and webhook handling
 
 ### **🎯 Role 2: Unified Security Dashboard**
 **Multi-MCP orchestration platform** that coordinates multiple MCP servers:
-- **Single Interface**: Monitor all cameras + sensors + alarms in one dashboard
+- **Single Interface**: Monitor all cameras + sensors + alarms + media in one dashboard
 - **Cross-System Integration**: Correlate events across different security systems
 - **Real-time Monitoring**: Live status updates from all integrated devices
+- **Media Integration**: Plex media server webhook support for activity tracking
 - **Remote Access**: Mobile monitoring via Tailscale VPN
 
 **The platform serves as the "conductor" that brings together multiple specialized security devices (MCP servers) into a cohesive home surveillance ecosystem.**
 
-## 🏆 **v1.8.0 RELEASE - STABILITY & MONITORING SYSTEM** (December 2025)
+## 🏆 **v1.10.0 RELEASE - WEBAPP STABILITY & PLEX INTEGRATION** (January 2026)
 
 **⚠️ BETA STATUS - Active Development:**
 - **🔍 Dependency Validator**: Checks all libraries on EVERY startup - no more "it worked yesterday"!
@@ -51,6 +53,9 @@
 - **📝 Loki-Compatible Logs**: Structured JSON logging for Promtail/Loki
 - **📈 Dual-Line Weather Graphs**: Compare main station + bathroom + outdoor modules
 - **🔌 Tapo P115 Fixed**: Smart plugs now showing real-time power data
+- **🎬 Plex Integration**: Media server webhook support with activity tracking
+- **🔗 Complete Routing**: All 25+ webapp pages now functional (no more 404s!)
+- **🎨 Enhanced Theming**: Camera cards and status indicators fully theme-aware
 
 **v1.7.0:**
 - **🔐 Session-Based Auth**: Complete authentication system with secure password hashing
@@ -77,6 +82,7 @@
 **✅ PREVIOUS:
 - **🔔 Ring Doorbell WebRTC**: Live video streaming + push-to-talk (NO subscription required!)
 - **🚨 Ring Alerts**: Full-screen DING popup + motion toast notifications on dashboard
+- **🎬 Plex Media Server**: Webhook integration for media activity tracking
 - **🔥 Nest Protect Setup**: Home Assistant bridge for smoke/CO detector integration
 - **📹 Two-Way Talk**: WebRTC audio for speaking to visitors at door
 - **🧪 Ring Tests**: Comprehensive pytest suite for Ring client and API

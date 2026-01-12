@@ -539,7 +539,7 @@ class ConnectionSupervisor:
         try:
             from ..integrations.ring_client import get_ring_client
 
-            client = get_ring_client()
+            client = get_ring_client("default")
             if client and client.is_initialized:
                 try:
                     summary = await client.get_summary()

@@ -16,7 +16,7 @@
         border-radius: 0.75rem;
         padding: 1.5rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         transition: all 0.2s ease-in-out;
     }
 
@@ -31,13 +31,13 @@
         align-items: center;
         margin-bottom: 1rem;
         padding-bottom: 0.75rem;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--border-color);
     }
 
     .camera-name {
         font-size: 1.25rem;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
         margin: 0;
     }
 
@@ -51,18 +51,18 @@
     }
 
     .status-online {
-        background-color: #dcfce7;
-        color: #166534;
+        background-color: var(--success-light);
+        color: var(--camera-online);
     }
 
     .status-offline {
-        background-color: #fef3c7;
-        color: #92400e;
+        background-color: var(--warning-bg);
+        color: var(--camera-warning);
     }
 
     .status-error {
-        background-color: #fee2e2;
-        color: #991b1b;
+        background-color: var(--error-bg);
+        color: var(--camera-offline);
     }
 
     .camera-details {
@@ -80,7 +80,7 @@
     .detail-label {
         font-size: 0.75rem;
         font-weight: 500;
-        color: #6b7280;
+        color: var(--muted-text);
         text-transform: uppercase;
         letter-spacing: 0.05em;
         margin-bottom: 0.25rem;
@@ -88,7 +88,7 @@
 
     .detail-value {
         font-size: 0.875rem;
-        color: #1f2937;
+        color: var(--text-color);
         font-weight: 500;
     }
 
@@ -104,25 +104,25 @@
         align-items: center;
         gap: 0.5rem;
         padding: 0.5rem;
-        background-color: #f9fafb;
+        background-color: var(--card-bg);
         border-radius: 0.375rem;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
 
     .capability-icon {
         width: 1rem;
         height: 1rem;
-        color: #6b7280;
+        color: var(--muted-text);
     }
 
     .capability-supported .capability-icon {
-        color: #16a34a;
+        color: var(--camera-online);
     }
 
     .capability-name {
         font-size: 0.75rem;
         font-weight: 500;
-        color: #374151;
+        color: var(--text-color);
     }
 
     .camera-actions {
@@ -131,7 +131,7 @@
         gap: 0.5rem;
         margin-top: 1rem;
         padding-top: 1rem;
-        border-top: 1px solid #e5e7eb;
+        border-top: 1px solid var(--border-color);
     }
 
     .action-button {
@@ -143,25 +143,25 @@
         white-space: nowrap;
         flex-shrink: 0;
         transition: all 0.2s ease-in-out;
-        border: 1px solid #d1d5db;
+        border: 1px solid var(--gray-300);
         background-color: white;
-        color: #374151;
+        color: var(--text-color);
     }
 
     .action-button:hover {
-        background-color: #f9fafb;
-        border-color: #9ca3af;
+        background-color: var(--card-bg);
+        border-color: var(--gray-400);
     }
 
     .action-button-primary {
-        background-color: #3b82f6;
+        background-color: var(--primary-blue);
         color: white;
-        border-color: #3b82f6;
+        border-color: var(--primary-blue);
     }
 
     .action-button-primary:hover {
-        background-color: #2563eb;
-        border-color: #2563eb;
+        background-color: var(--primary-blue-dark);
+        border-color: var(--primary-blue-dark);
     }
 
     .stats-overview {
@@ -170,7 +170,7 @@
         padding: 1.5rem;
         margin-bottom: 1.5rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
 
     .stats-grid {
@@ -186,13 +186,13 @@
     .stat-value {
         font-size: 2rem;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--text-color);
         line-height: 1;
     }
 
     .stat-label {
         font-size: 0.875rem;
-        color: #6b7280;
+        color: var(--muted-text);
         font-weight: 500;
         margin-top: 0.25rem;
     }
@@ -200,7 +200,7 @@
     .empty-state {
         text-align: center;
         padding: 3rem 1rem;
-        color: #6b7280;
+        color: var(--muted-text);
     }
 
     .empty-state-icon {
@@ -213,13 +213,13 @@
     .empty-state-title {
         font-size: 1.125rem;
         font-weight: 500;
-        color: #374151;
+        color: var(--text-color);
         margin-bottom: 0.5rem;
     }
 
     .empty-state-description {
         font-size: 0.875rem;
-        color: #6b7280;
+        color: var(--muted-text);
     }
 
     @media (max-width: 768px) {
@@ -253,9 +253,9 @@
     .ptz-panel {
         margin-top: 1rem;
         padding: 1rem;
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        background: linear-gradient(135deg, var(--dark-bg-secondary) 0%, var(--gray-700) 100%);
         border-radius: 0.75rem;
-        border: 1px solid #475569;
+        border: 1px solid var(--dark-border);
     }
 
     .ptz-header {
@@ -266,7 +266,7 @@
     }
 
     .ptz-title {
-        color: #e2e8f0;
+        color: var(--dark-text-secondary);
         font-weight: 600;
         font-size: 0.9rem;
     }
@@ -274,14 +274,14 @@
     .ptz-close {
         background: none;
         border: none;
-        color: #94a3b8;
+        color: var(--dark-text-muted);
         font-size: 1.25rem;
         cursor: pointer;
         padding: 0 0.25rem;
     }
 
     .ptz-close:hover {
-        color: #f1f5f9;
+        color: var(--dark-text-primary);
     }
 
     .ptz-controls {
@@ -308,7 +308,7 @@
         height: 44px;
         border: none;
         border-radius: 0.5rem;
-        background: #3b82f6;
+        background: var(--primary-blue);
         color: white;
         font-size: 1rem;
         cursor: pointer;
@@ -320,22 +320,22 @@
     }
 
     .ptz-btn:hover {
-        background: #2563eb;
+        background: var(--primary-blue-dark);
         transform: scale(1.05);
     }
 
     .ptz-btn:active {
-        background: #1d4ed8;
+        background: var(--camera-blue);
         transform: scale(0.95);
     }
 
     .ptz-center {
-        background: #64748b;
+        background: var(--camera-gray);
         font-size: 0.75rem;
     }
 
     .ptz-center:hover {
-        background: #475569;
+        background: var(--dark-border);
     }
 
     .ptz-zoom {
@@ -351,7 +351,7 @@
 
     .zoom-label {
         font-size: 0.75rem;
-        color: #fbbf24;
+        color: var(--camera-yellow);
         font-weight: 600;
         text-align: center;
         margin-bottom: 0.25rem;
@@ -361,9 +361,9 @@
     .audio-panel {
         margin-top: 1rem;
         padding: 1rem;
-        background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+        background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-700) 100%);
         border-radius: 0.75rem;
-        border: 1px solid #3d5a7f;
+        border: 1px solid var(--gray-600);
     }
 
     .audio-header {
@@ -374,7 +374,7 @@
     }
 
     .audio-title {
-        color: #e2e8f0;
+        color: var(--dark-text-secondary);
         font-weight: 600;
         font-size: 0.9rem;
     }
@@ -382,14 +382,14 @@
     .audio-close {
         background: none;
         border: none;
-        color: #94a3b8;
+        color: var(--dark-text-muted);
         font-size: 1.25rem;
         cursor: pointer;
         padding: 0 0.25rem;
     }
 
     .audio-close:hover {
-        color: #f1f5f9;
+        color: var(--dark-text-primary);
     }
 
     .audio-content {
@@ -403,7 +403,7 @@
         padding: 0.5rem 1rem;
         border-radius: 0.5rem;
         text-align: center;
-        color: #94a3b8;
+        color: var(--dark-text-muted);
         font-size: 0.85rem;
     }
 
@@ -431,19 +431,19 @@
     }
 
     .audio-btn-primary {
-        background: #3b82f6;
+        background: var(--primary-blue);
     }
 
     .audio-btn-primary:hover {
-        background: #2563eb;
+        background: var(--primary-blue-dark);
     }
 
     .audio-btn-vlc {
-        background: #ff6600;
+        background: var(--camera-orange);
     }
 
     .audio-btn-vlc:hover {
-        background: #e55c00;
+        background: var(--camera-orange-dark);
     }
 
     .audio-warning {
@@ -452,7 +452,7 @@
         border-radius: 0.5rem;
         padding: 0.75rem;
         font-size: 0.8rem;
-        color: #fde68a;
+        color: var(--camera-yellow-light);
         text-align: center;
     }
 </style>
@@ -499,7 +499,7 @@
                     <h3 class="camera-name" id="camera-name-{{ camera.name or camera.id }}">
                         {{ camera.custom_name if camera.custom_name else (camera.name or camera.id) }}
                         {% if camera.custom_name %}
-                        <span style="font-size: 0.8rem; color: #6b7280; font-weight: normal;">({{ camera.name or camera.id }})</span>
+                        <span style="font-size: 0.8rem; color: var(--muted-text); font-weight: normal;">({{ camera.name or camera.id }})</span>
                         {% endif %}
                     </h3>
                     <button onclick="openRenameDialog('{{ camera.name or camera.id }}')" class="action-button" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" title="Rename Camera">
@@ -517,12 +517,12 @@
 
             <!-- Teams/Webcam Blocking Warning -->
             {% if camera.teams_blocked or (camera.warning and ('teams' in camera.warning.lower() or 'in use' in camera.warning.lower() or 'locked' in camera.warning.lower())) %}
-            <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem;">
+            <div style="background: var(--warning-bg); border: 2px solid var(--warning-yellow); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem;">
                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                    <span style="font-size: 1.25rem;">⚠️</span>
-                    <strong style="color: #92400e;">Camera Blocked by Another Application</strong>
+                    <span style="font-size: 1.25rem;">WARNING</span>
+                    <strong style="color: var(--camera-warning);">Camera Blocked by Another Application</strong>
                 </div>
-                <p style="color: #78350f; margin: 0.5rem 0; font-size: 0.9rem;">
+                <p style="color: var(--camera-warning-light); margin: 0.5rem 0; font-size: 0.9rem;">
                     {{ camera.error_message or camera.warning or 'This USB camera is currently locked by Microsoft Teams, Zoom, Skype, or another video application.' }}
                 </p>
                 <p style="color: #78350f; margin: 0.5rem 0 0 0; font-size: 0.85rem;">
@@ -553,7 +553,7 @@
 
             <!-- Live Thumbnail (160x160) - Always show, try to load snapshot -->
             <div style="margin-top: 0.75rem; display: flex; gap: 0.75rem; align-items: center;">
-                <div style="width: 160px; height: 160px; border-radius: 0.5rem; overflow: hidden; border: 1px solid #e5e7eb; background:#000; position: relative;">
+                <div style="width: 160px; height: 160px; border-radius: 0.5rem; overflow: hidden; border: 1px solid var(--border-color); background:#000; position: relative;">
                     {% if camera.type == 'ring' %}
                     <img src="/api/ring/snapshot/{{ camera.id }}"
                          alt="{{ camera.custom_name or camera.name }}"
@@ -567,11 +567,11 @@
                          onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';"
                          onload="this.nextElementSibling.style.display='none';">
                     {% endif %}
-                    <div style="width: 100%; height: 100%; display: none; align-items: center; justify-content: center; color: #9ca3af; font-size: 0.75rem; position: absolute; top: 0; left: 0;">
+                    <div style="width: 100%; height: 100%; display: none; align-items: center; justify-content: center; color: var(--gray-400); font-size: 0.75rem; position: absolute; top: 0; left: 0;">
                         Camera Offline
                     </div>
                 </div>
-                <div style="font-size: 0.8rem; color: #6b7280;">
+                <div style="font-size: 0.8rem; color: var(--muted-text);">
                     <div>Live thumbnail (click stream button below for full view).</div>
                     {% if camera.type == 'ring' and camera.battery_life %}
                     <div style="margin-top: 0.5rem;">
@@ -744,7 +744,7 @@
                         </button>
                     </div>
                 <div class="audio-warning">
-                    <strong>⚠️ Two-Way Audio Limitation</strong><br>
+                    <strong>WARNING Two-Way Audio Limitation</strong><br>
                     ONVIF only supports <em>listening</em>. For two-way talk, use the <strong>Tapo app</strong>.
                 </div>
             </div>
@@ -758,7 +758,7 @@
                         📹 Start Plant Growth Timelapse
                     </button>
                     <button class="control-btn" onclick="getTimelapseStatus('{{ camera.name or camera.id }}')">
-                        📊 Check Timelapse Status
+                        DATA Check Timelapse Status
                     </button>
                 </div>
                 <div class="microscope-info">
@@ -796,7 +796,7 @@
                 <div class="bg-white p-4 rounded border border-green-200">
                     <h4 class="font-semibold text-green-800 mb-2">Quick Start</h4>
                     <button onclick="startQuickTimelapse()" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-medium">
-                        🚀 Start 10min Intervals (24h)
+                        START Start 10min Intervals (24h)
                     </button>
                     <p class="text-xs text-gray-600 mt-2">Perfect for germinating seeds</p>
                 </div>
@@ -812,7 +812,7 @@
                 <div class="bg-white p-4 rounded border border-green-200">
                     <h4 class="font-semibold text-green-800 mb-2">Analyze Growth</h4>
                     <button onclick="analyzePlantGrowth()" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded font-medium">
-                        📊 Analyze Growth
+                        DATA Analyze Growth
                     </button>
                     <p class="text-xs text-gray-600 mt-2">AI growth pattern analysis</p>
                 </div>
@@ -841,7 +841,7 @@
             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                 <div class="flex">
                     <div class="ml-3">
-                        <h3 class="text-sm font-medium text-yellow-800">⚠️ Warning: High Volume Printing!</h3>
+                        <h3 class="text-sm font-medium text-yellow-800">WARNING Warning: High Volume Printing!</h3>
                         <div class="mt-2 text-sm text-yellow-700">
                             <p>This will print up to 50 labels! Make sure you have plenty of tape loaded in your Dymo printer. Perfect for maximum fridge coverage with humor.</p>
                         </div>
@@ -894,12 +894,12 @@
                 <div class="flex space-x-4">
                     <button type="button" onclick="generateHumorousLabels()"
                             class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-md font-medium">
-                        🚀 Print Humorous Labels!
+                        START Print Humorous Labels!
                     </button>
 
                     <button type="button" onclick="previewHumorousLabels()"
                             class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-md font-medium">
-                        👁️ Preview Sample
+                        MONITOR Preview Sample
                     </button>
                 </div>
             </form>
@@ -916,18 +916,18 @@
     <!-- Camera Rename Dialog -->
     <div id="rename-dialog" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
         <div style="background: white; padding: 2rem; border-radius: 0.75rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); max-width: 400px; width: 90%;">
-            <h3 style="margin: 0 0 1rem 0; font-size: 1.25rem; font-weight: 600; color: #1f2937;">Rename Camera</h3>
+            <h3 style="margin: 0 0 1rem 0; font-size: 1.25rem; font-weight: 600; color: var(--text-color);">Rename Camera</h3>
             <div style="margin-bottom: 1rem;">
-                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">Camera ID:</label>
-                <div id="rename-camera-id" style="font-size: 0.875rem; color: #6b7280; padding: 0.5rem; background: #f9fafb; border-radius: 0.375rem; border: 1px solid #e5e7eb;"></div>
+                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-color); margin-bottom: 0.5rem;">Camera ID:</label>
+                <div id="rename-camera-id" style="font-size: 0.875rem; color: var(--muted-text); padding: 0.5rem; background: var(--card-bg); border-radius: 0.375rem; border: 1px solid var(--border-color);"></div>
             </div>
             <div style="margin-bottom: 1.5rem;">
-                <label for="rename-input" style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem;">New Name:</label>
-                <input type="text" id="rename-input" placeholder="Enter camera name (e.g., Kitchen Cam, USB Microscope)" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
+                <label for="rename-input" style="display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-color); margin-bottom: 0.5rem;">New Name:</label>
+                <input type="text" id="rename-input" placeholder="Enter camera name (e.g., Kitchen Cam, USB Microscope)" style="width: 100%; padding: 0.5rem; border: 1px solid var(--gray-300); border-radius: 0.375rem; font-size: 0.875rem;">
             </div>
             <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
-                <button onclick="closeRenameDialog()" style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; background: white; color: #374151; border-radius: 0.375rem; font-size: 0.875rem; cursor: pointer;">Cancel</button>
-                <button onclick="saveCameraName()" style="padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 0.375rem; font-size: 0.875rem; cursor: pointer;">Save</button>
+                <button onclick="closeRenameDialog()" style="padding: 0.5rem 1rem; border: 1px solid var(--gray-300); background: white; color: var(--text-color); border-radius: 0.375rem; font-size: 0.875rem; cursor: pointer;">Cancel</button>
+                <button onclick="saveCameraName()" style="padding: 0.5rem 1rem; background: var(--primary-blue); color: white; border: none; border-radius: 0.375rem; font-size: 0.875rem; cursor: pointer;">Save</button>
             </div>
         </div>
     </div>
@@ -1416,7 +1416,7 @@ async function saveCameraName() {
             // Update the display name in the UI
             const nameElement = document.getElementById('camera-name-' + currentRenameCameraId);
             if (nameElement) {
-                nameElement.innerHTML = `${newName} <span style="font-size: 0.8rem; color: #6b7280; font-weight: normal;">(${currentRenameCameraId})</span>`;
+                nameElement.innerHTML = `${newName} <span style="font-size: 0.8rem; color: var(--muted-text); font-weight: normal;">(${currentRenameCameraId})</span>`;
             }
 
             showToast(`Camera renamed to "${newName}"`);
@@ -1472,7 +1472,7 @@ function showToast(message) {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: #10b981;
+        background: var(--success-green);
         color: white;
         padding: 0.75rem 1rem;
         border-radius: 0.5rem;

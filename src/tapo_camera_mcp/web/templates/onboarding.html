@@ -21,13 +21,13 @@
     .wizard-header h1 {
         font-size: 32px;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--text-color);
         margin-bottom: 8px;
     }
     
     .wizard-header p {
         font-size: 18px;
-        color: #6b7280;
+        color: var(--muted-text);
     }
     
     .step-indicator {
@@ -43,19 +43,19 @@
         gap: 8px;
         padding: 12px 20px;
         border-radius: 25px;
-        background: #f3f4f6;
-        color: #6b7280;
+        background: var(--gray-100);
+        color: var(--muted-text);
         font-weight: 500;
         transition: all 0.3s ease;
     }
     
     .step.active {
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        background: linear-gradient(135deg, var(--primary-blue), #1d4ed8);
         color: white;
     }
     
     .step.completed {
-        background: #10b981;
+        background: var(--success-green);
         color: white;
     }
     
@@ -84,7 +84,7 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         transition: all 0.2s ease;
         position: relative;
     }
@@ -118,15 +118,15 @@
     }
     
     .device-icon.tapo {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
+        background: linear-gradient(135deg, var(--warning-yellow), #d97706);
     }
     
     .device-icon.nest {
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        background: linear-gradient(135deg, var(--primary-blue), #1d4ed8);
     }
     
     .device-icon.ring {
-        background: linear-gradient(135deg, #10b981, #059669);
+        background: linear-gradient(135deg, var(--success-green), var(--success-dark));
     }
     
     .device-icon.webcam {
@@ -140,16 +140,16 @@
     .device-title {
         font-size: 18px;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
     }
     
     .device-subtitle {
         font-size: 14px;
-        color: #6b7280;
+        color: var(--muted-text);
     }
     
     .device-description {
-        color: #4b5563;
+        color: var(--gray-600);
         font-size: 14px;
         line-height: 1.5;
         margin-bottom: 16px;
@@ -166,13 +166,13 @@
         align-items: center;
         gap: 8px;
         font-size: 13px;
-        color: #6b7280;
+        color: var(--muted-text);
         margin-bottom: 4px;
     }
     
     .device-features li::before {
-        content: "✓";
-        color: #10b981;
+        content: "OK";
+        color: var(--success-green);
         font-weight: bold;
     }
     
@@ -196,21 +196,21 @@
     }
     
     .btn-primary {
-        background-color: #3b82f6;
+        background-color: var(--primary-blue);
         color: white;
     }
     
     .btn-primary:hover {
-        background-color: #2563eb;
+        background-color: var(--primary-blue-dark);
     }
     
     .btn-secondary {
-        background-color: #e5e7eb;
-        color: #374151;
+        background-color: var(--border-color);
+        color: var(--text-color);
     }
     
     .btn-secondary:hover {
-        background-color: #d1d5db;
+        background-color: var(--gray-300);
     }
     
     .btn:disabled {
@@ -223,7 +223,7 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         margin-bottom: 24px;
     }
     
@@ -237,20 +237,20 @@
     .progress-title {
         font-size: 18px;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
     }
     
     .progress-bar {
         width: 100%;
         height: 8px;
-        background-color: #e5e7eb;
+        background-color: var(--border-color);
         border-radius: 4px;
         overflow: hidden;
     }
     
     .progress-fill {
         height: 100%;
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        background: linear-gradient(135deg, var(--primary-blue), #1d4ed8);
         transition: width 0.3s ease;
     }
     
@@ -258,7 +258,7 @@
         text-align: center;
         margin-top: 12px;
         font-size: 14px;
-        color: #6b7280;
+        color: var(--muted-text);
     }
     
     .discovery-status {
@@ -286,7 +286,7 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
     
     .device-item {
@@ -294,10 +294,10 @@
         align-items: center;
         justify-content: space-between;
         padding: 16px;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         border-radius: 8px;
         margin-bottom: 12px;
-        background: #f9fafb;
+        background: var(--card-bg);
     }
     
     .device-item:last-child {
@@ -320,7 +320,7 @@
     }
     
     .status-discovered {
-        background: #fef3c7;
+        background: var(--warning-bg);
         color: #92400e;
     }
     
@@ -330,7 +330,7 @@
     }
     
     .status-error {
-        background: #fee2e2;
+        background: var(--error-bg);
         color: #991b1b;
     }
     
@@ -364,7 +364,7 @@
 <div class="onboarding-dashboard">
     <div class="setup-wizard">
         <div class="wizard-header">
-            <h1>🚀 Device Setup Wizard</h1>
+            <h1>START Device Setup Wizard</h1>
             <p>Set up your home security and energy monitoring devices</p>
         </div>
         
@@ -450,7 +450,7 @@
             <!-- Nest Protect -->
             <div class="device-card" data-device-type="nest_protect">
                 <div class="device-header">
-                    <div class="device-icon nest">🚨</div>
+                    <div class="device-icon nest">ALERT</div>
                     <div>
                         <div class="device-title">Nest Protect</div>
                         <div class="device-subtitle">Smoke & CO Detection</div>
@@ -689,7 +689,7 @@ function showDiscoveredDevices() {
     container.style.display = 'block';
     
     if (discoveredDevices.length === 0) {
-        devicesList.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 20px;">No devices discovered. Please check your network connection and device setup.</p>';
+        devicesList.innerHTML = '<p style="text-align: center; color: var(--muted-text); padding: 20px;">No devices discovered. Please check your network connection and device setup.</p>';
         return;
     }
     
@@ -698,8 +698,8 @@ function showDiscoveredDevices() {
             <div class="device-info">
                 <div class="device-icon ${device.type}">${getDeviceIcon(device.type)}</div>
                 <div>
-                    <div style="font-weight: 600; color: #1f2937;">${device.name}</div>
-                    <div style="font-size: 12px; color: #6b7280;">${device.ip || 'Local Device'}</div>
+                    <div style="font-weight: 600; color: var(--text-color);">${device.name}</div>
+                    <div style="font-size: 12px; color: var(--muted-text);">${device.ip || 'Local Device'}</div>
                 </div>
             </div>
             <div class="device-status status-${device.status}">
@@ -712,7 +712,7 @@ function showDiscoveredDevices() {
 function getDeviceIcon(deviceType) {
     const icons = {
         'tapo_p115': '⚡',
-        'nest_protect': '🚨',
+        'nest_protect': 'ALERT',
         'ring': '🛡️',
         'webcam': '📹',
         'netatmo': '🌡️'

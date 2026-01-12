@@ -16,7 +16,7 @@ async def add_test_webcam():
     try:
         from tapo_camera_mcp.core.server import TapoCameraServer
 
-        print("📹 Adding test USB webcam...")
+        print("CAMERA: Adding test USB webcam...")
 
         # Get the server instance
         server = await TapoCameraServer.get_instance()
@@ -31,13 +31,13 @@ async def add_test_webcam():
         success = await server.camera_manager.add_camera(config)
 
         if success:
-            print("✅ Test webcam added successfully!")
+            print("SUCCESS: Test webcam added successfully!")
             return True
-        print("❌ Failed to add webcam: Camera manager returned False")
+        print("ERROR Failed to add webcam: Camera manager returned False")
         return False
 
     except Exception as e:
-        print(f"❌ Failed to add webcam: {e}")
+        print(f"ERROR Failed to add webcam: {e}")
         import traceback
 
         traceback.print_exc()
@@ -49,7 +49,7 @@ async def add_tapo_camera(ip_address, username, password, camera_name="tapo_came
     try:
         from tapo_camera_mcp.core.server import TapoCameraServer
 
-        print(f"📹 Adding Tapo camera '{camera_name}' at {ip_address}...")
+        print(f"CAMERA: Adding Tapo camera '{camera_name}' at {ip_address}...")
 
         # Get the server instance
         server = await TapoCameraServer.get_instance()
@@ -64,13 +64,13 @@ async def add_tapo_camera(ip_address, username, password, camera_name="tapo_came
         success = await server.camera_manager.add_camera(config)
 
         if success:
-            print("✅ Tapo camera added successfully!")
+            print("SUCCESS: Tapo camera added successfully!")
             return True
-        print("❌ Failed to add Tapo camera: Camera manager returned False")
+        print("ERROR Failed to add Tapo camera: Camera manager returned False")
         return False
 
     except Exception as e:
-        print(f"❌ Failed to add Tapo camera: {e}")
+        print(f"ERROR Failed to add Tapo camera: {e}")
         import traceback
 
         traceback.print_exc()
@@ -97,7 +97,7 @@ def main():
 
     if args.type == "tapo":
         if not args.ip:
-            print("❌ Error: --ip is required for Tapo cameras")
+            print("ERROR Error: --ip is required for Tapo cameras")
             return 1
 
         success = asyncio.run(add_tapo_camera(args.ip, args.username, args.password, args.name))

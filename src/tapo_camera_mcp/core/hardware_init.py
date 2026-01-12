@@ -18,7 +18,8 @@ _hardware_initializer: Optional["HardwareInitializer"] = None
 class HardwareInitializer:
     """Initialize and test all hardware connections at startup."""
 
-    def __init__(self):
+    def __init__(self, camera_manager=None):
+        self.camera_manager = camera_manager
         self.initialization_results: Dict[str, Dict] = {}
         self._initialized = False
 
@@ -81,7 +82,7 @@ class HardwareInitializer:
             self._init_tapo_lighting(),
             self._init_tapo_plugs(),
             self._init_netatmo(),
-            self._init_ring(),
+                self._init_ring(),
             self._init_home_assistant(),
             return_exceptions=True,
         )
@@ -455,7 +456,7 @@ class HardwareInitializer:
                 return {"success": True, "message": "Ring not enabled in config"}
 
             # Initialize Ring client if not already done
-            ring_client = get_ring_client()
+            ring_client = get_ring_client("default")
             if not ring_client:
                 # Initialize the Ring client with config credentials
                 from ..integrations.ring_client import init_ring_client
@@ -470,7 +471,8 @@ class HardwareInitializer:
 
                 try:
                     ring_client = await init_ring_client(
-                        email=email, password=password, token_file=token_file, cache_ttl=cache_ttl
+                        email=email, password=password, token_file=token_file, cache_ttl=cache_ttl,
+                        server_id="default"
                     )
 
                     if not ring_client.is_initialized and not ring_client.is_2fa_pending:
@@ -490,6 +492,24 @@ class HardwareInitializer:
                 device_count = len(devices)
 
                 logger.info(f"  [OK] Ring: {device_count} devices")
+
+                # Register Ring cameras with the camera manager
+                for device in devices:
+                    camera_config = {
+                        "name": f"ring_{device.id}",
+                        "type": "ring",
+                        "params": {
+                            "device_id": device.id,
+                            "token_file": str(ring_client.token_file),
+                            "username": email,
+                            "password": password,
+                        }
+                    }
+                    try:
+                        await self.camera_manager.add_camera(camera_config)
+                        logger.info(f"Registered Ring camera: {camera_config['name']}")
+                    except Exception as e:
+                        logger.warning(f"Failed to register Ring camera {device.id}: {e}")
 
                 return {
                     "success": True,
@@ -672,10 +692,10 @@ class HardwareInitializer:
 
             device_type, name, reachable, msg = result
             if reachable:
-                logger.info(f"  [NETWORK] ✅ {name} ({device_type}): {msg}")
+                logger.info(f"  [NETWORK] OK {name} ({device_type}): {msg}")
                 reachable_count += 1
             else:
-                logger.warning(f"  [NETWORK] ❌ {name} ({device_type}): {msg}")
+                logger.warning(f"  [NETWORK] FAILED {name} ({device_type}): {msg}")
 
         if reachable_count == len(test_ips):
             logger.info(f"  [NETWORK] All {reachable_count} device(s) reachable from container")
@@ -696,14 +716,14 @@ class HardwareInitializer:
 _init_lock = asyncio.Lock()
 
 
-async def initialize_all_hardware() -> Dict[str, Dict]:
+async def initialize_all_hardware(camera_manager) -> Dict[str, Dict]:
     """Initialize all hardware components at startup."""
     global _hardware_initializer
 
     # Use lock to prevent concurrent initialization
     async with _init_lock:
         if _hardware_initializer is None:
-            _hardware_initializer = HardwareInitializer()
+            _hardware_initializer = HardwareInitializer(camera_manager)
         elif _hardware_initializer._initialized:
             # Already initialized, return cached results
             return _hardware_initializer.initialization_results

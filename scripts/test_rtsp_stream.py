@@ -21,7 +21,7 @@ def test_rtsp_stream(rtsp_url: str, timeout: int = 10):
             ret, frame = cap.read()
             if ret and frame is not None:
                 height, width = frame.shape[:2]
-                print(f"✅ SUCCESS: Stream opened! Resolution: {width}x{height}")
+                print(f"SUCCESS: Stream opened! Resolution: {width}x{height}")
                 cap.release()
                 return True
             else:
@@ -31,7 +31,7 @@ def test_rtsp_stream(rtsp_url: str, timeout: int = 10):
 
         time.sleep(0.5)
 
-    print("❌ FAILED: Could not open RTSP stream within timeout")
+    print("ERROR: Could not open RTSP stream within timeout")
     cap.release()
     return False
 

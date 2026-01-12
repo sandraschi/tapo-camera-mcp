@@ -16,7 +16,7 @@
     }
 
     .security-card {
-        background: var(--card-bg, #1e293b);
+        background: var(--card-bg, var(--dark-bg-secondary));
         border-radius: 12px;
         padding: 20px;
         border: 1px solid var(--border-color, rgba(99, 102, 241, 0.2));
@@ -24,7 +24,7 @@
 
     .security-card h3 {
         margin: 0 0 12px 0;
-        color: var(--text-secondary, #94a3b8);
+        color: var(--text-secondary, var(--dark-text-muted));
         font-size: 13px;
         font-weight: 500;
         text-transform: uppercase;
@@ -37,9 +37,9 @@
         margin-bottom: 4px;
     }
 
-    .security-value.secure { color: #22c55e; }
-    .security-value.warning { color: #f59e0b; }
-    .security-value.alert { color: #ef4444; }
+    .security-value.secure { color: var(--success-green); }
+    .security-value.warning { color: var(--warning-yellow); }
+    .security-value.alert { color: var(--error-red); }
     .security-value.neutral { color: #a5b4fc; }
 
     .security-unit {
@@ -55,12 +55,12 @@
         font-size: 12px;
     }
 
-    .status-secure { color: #22c55e; }
-    .status-warning { color: #f59e0b; }
-    .status-alert { color: #ef4444; }
+    .status-secure { color: var(--success-green); }
+    .status-warning { color: var(--warning-yellow); }
+    .status-alert { color: var(--error-red); }
 
     .devices-section {
-        background: var(--card-bg, #1e293b);
+        background: var(--card-bg, var(--dark-bg-secondary));
         border-radius: 12px;
         padding: 20px;
         border: 1px solid var(--border-color, rgba(99, 102, 241, 0.2));
@@ -79,7 +79,7 @@
     .section-title {
         font-size: 18px;
         font-weight: 600;
-        color: var(--text-primary, #e2e8f0);
+        color: var(--text-primary, var(--dark-text-secondary));
         margin: 0;
         display: flex;
         align-items: center;
@@ -139,7 +139,7 @@
     .device-name {
         font-size: 15px;
         font-weight: 600;
-        color: var(--text-primary, #e2e8f0);
+        color: var(--text-primary, var(--dark-text-secondary));
     }
 
     .device-location {
@@ -161,9 +161,9 @@
         border-radius: 50%;
     }
 
-    .status-online { background-color: #22c55e; box-shadow: 0 0 6px #22c55e; }
-    .status-offline { background-color: #ef4444; }
-    .status-warning { background-color: #f59e0b; }
+    .status-online { background-color: var(--success-green); box-shadow: 0 0 6px var(--success-green); }
+    .status-offline { background-color: var(--error-red); }
+    .status-warning { background-color: var(--warning-yellow); }
 
     .device-metrics {
         display: grid;
@@ -181,7 +181,7 @@
     .metric-value {
         font-size: 14px;
         font-weight: 600;
-        color: var(--text-primary, #e2e8f0);
+        color: var(--text-primary, var(--dark-text-secondary));
     }
 
     .metric-label {
@@ -253,7 +253,7 @@
         border-radius: 8px;
         border: 2px solid transparent;
         background: rgba(99, 102, 241, 0.1);
-        color: #94a3b8;
+        color: var(--dark-text-muted);
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s;
@@ -267,19 +267,19 @@
     }
 
     .alarm-mode-btn.disarmed.active {
-        border-color: #22c55e;
+        border-color: var(--success-green);
         background: rgba(34, 197, 94, 0.15);
         color: #4ade80;
     }
 
     .alarm-mode-btn.home.active {
-        border-color: #3b82f6;
+        border-color: var(--primary-blue);
         background: rgba(59, 130, 246, 0.15);
         color: #60a5fa;
     }
 
     .alarm-mode-btn.away.active {
-        border-color: #ef4444;
+        border-color: var(--error-red);
         background: rgba(239, 68, 68, 0.15);
         color: #f87171;
     }
@@ -300,9 +300,9 @@
         border-left: 3px solid #6366f1;
     }
 
-    .event-item.motion { border-left-color: #3b82f6; }
-    .event-item.ding { border-left-color: #f59e0b; }
-    .event-item.alert { border-left-color: #ef4444; }
+    .event-item.motion { border-left-color: var(--primary-blue); }
+    .event-item.ding { border-left-color: var(--warning-yellow); }
+    .event-item.alert { border-left-color: var(--error-red); }
 
     .event-icon {
         font-size: 20px;
@@ -314,7 +314,7 @@
 
     .event-title {
         font-weight: 600;
-        color: var(--text-primary, #e2e8f0);
+        color: var(--text-primary, var(--dark-text-secondary));
         font-size: 13px;
     }
 
@@ -325,7 +325,7 @@
 
     .event-device {
         font-size: 12px;
-        color: #94a3b8;
+        color: var(--dark-text-muted);
         margin-top: 2px;
     }
 
@@ -420,7 +420,7 @@
     .ding-alert-text {
         font-size: 72px;
         font-weight: bold;
-        color: #1e293b;
+        color: var(--dark-bg-secondary);
         margin-top: 20px;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     }
@@ -433,7 +433,7 @@
 
     .ding-alert-time {
         font-size: 20px;
-        color: #475569;
+        color: var(--dark-border);
         margin-top: 20px;
     }
 
@@ -441,7 +441,7 @@
         margin-top: 40px;
         padding: 16px 48px;
         font-size: 20px;
-        background: #1e293b;
+        background: var(--dark-bg-secondary);
         color: white;
         border: none;
         border-radius: 12px;
@@ -459,7 +459,7 @@
         position: fixed;
         top: 20px;
         right: 20px;
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        background: linear-gradient(135deg, var(--primary-blue), #1d4ed8);
         color: white;
         padding: 16px 24px;
         border-radius: 12px;
@@ -505,7 +505,7 @@
     }
 
     .webrtc-container {
-        background: #1e293b;
+        background: var(--dark-bg-secondary);
         border-radius: 16px;
         padding: 20px;
         max-width: 800px;
@@ -522,7 +522,7 @@
     .webrtc-title {
         font-size: 20px;
         font-weight: bold;
-        color: #e2e8f0;
+        color: var(--dark-text-secondary);
     }
 
     .webrtc-close {
@@ -536,7 +536,7 @@
 
     .webrtc-video-container {
         position: relative;
-        background: #0f172a;
+        background: var(--dark-bg-primary);
         border-radius: 12px;
         overflow: hidden;
         aspect-ratio: 16/9;
@@ -583,7 +583,7 @@
     }
 
     .webrtc-btn-talk {
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        background: linear-gradient(135deg, var(--primary-blue), #1d4ed8);
         color: white;
     }
 
@@ -592,7 +592,7 @@
     }
 
     .webrtc-btn-talk.active {
-        background: linear-gradient(135deg, #ef4444, #dc2626);
+        background: linear-gradient(135deg, var(--error-red), #dc2626);
         animation: talkPulse 1s ease-in-out infinite;
     }
 
@@ -603,7 +603,7 @@
 
     .webrtc-btn-mute {
         background: rgba(100, 116, 139, 0.3);
-        color: #94a3b8;
+        color: var(--dark-text-muted);
         border: 1px solid rgba(100, 116, 139, 0.4);
     }
 
@@ -614,7 +614,7 @@
     }
 
     .live-view-btn {
-        background: linear-gradient(135deg, #10b981, #059669);
+        background: linear-gradient(135deg, var(--success-green), var(--success-dark));
         color: white;
         border: none;
         padding: 10px 20px;
@@ -632,7 +632,7 @@
     }
 
     .live-view-btn:disabled {
-        background: #475569;
+        background: var(--dark-border);
         cursor: not-allowed;
     }
 
@@ -664,7 +664,7 @@
 
     .integration-notice p {
         margin: 0;
-        color: #94a3b8;
+        color: var(--dark-text-muted);
         font-size: 13px;
     }
 
@@ -717,7 +717,7 @@
         </div>
 
         <div class="security-card">
-            <h3>🚨 Active Devices</h3>
+            <h3>ALERT Active Devices</h3>
             <div class="security-value neutral" id="devices-online">0/0</div>
             <div class="security-unit">Online</div>
             <div class="security-status" id="devices-status-text">
@@ -747,7 +747,7 @@
 
         <!-- Ring Alarm Mode Controls -->
         <div id="ring-alarm-controls" style="display: none;">
-            <h4 style="color: #94a3b8; font-size: 12px; text-transform: uppercase; margin-bottom: 10px;">Alarm Mode</h4>
+            <h4 style="color: var(--dark-text-muted); font-size: 12px; text-transform: uppercase; margin-bottom: 10px;">Alarm Mode</h4>
             <div class="alarm-modes">
                 <button class="alarm-mode-btn disarmed" data-mode="disarmed" onclick="setRingAlarmMode('disarmed')">
                     <i class="fas fa-unlock"></i><br>Disarmed
@@ -771,7 +771,7 @@
 
         <!-- Ring Events -->
         <div id="ring-events-section" style="margin-top: 20px; display: none;">
-            <h4 style="color: #94a3b8; font-size: 12px; text-transform: uppercase; margin-bottom: 10px;">Recent Events</h4>
+            <h4 style="color: var(--dark-text-muted); font-size: 12px; text-transform: uppercase; margin-bottom: 10px;">Recent Events</h4>
             <div class="events-list" id="ring-events">
                 <!-- Events loaded dynamically -->
             </div>
@@ -782,7 +782,7 @@
     <div class="devices-section">
         <div class="section-header">
             <div>
-                <h2 class="section-title">🚨 Nest Protect</h2>
+                <h2 class="section-title">ALERT Nest Protect</h2>
                 <p class="section-subtitle">Smoke and CO detectors</p>
             </div>
             <span class="section-badge pending" id="nest-connection-badge">Loading...</span>
@@ -867,7 +867,7 @@ function renderRingStatus(data) {
                 <p>Two-Factor Authentication Required</p>
                 <div style="margin-top: 16px;">
                     <input type="text" id="ring-2fa-input" placeholder="Enter 2FA code"
-                           style="padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(99,102,241,0.3); background: #1e293b; color: #e2e8f0; margin-right: 8px;">
+                           style="padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(99,102,241,0.3); background: var(--dark-bg-secondary); color: var(--dark-text-secondary); margin-right: 8px;">
                     <button onclick="submitRing2FA()" class="btn btn-primary">Submit</button>
                 </div>
             </div>
@@ -1093,7 +1093,7 @@ function renderSensorCard(sensor) {
             statusClass = sensor.is_open ? 'status-warning' : 'status-online';
             break;
         case 'motion':
-            icon = '👁️';
+            icon = 'MONITOR';
             typeName = 'Motion Sensor';
             statusText = sensor.motion_detected ? 'Motion!' : 'Clear';
             statusClass = sensor.motion_detected ? 'status-warning' : 'status-online';
@@ -1129,7 +1129,7 @@ function renderSensorCard(sensor) {
 
     // Tamper check
     const tamperWarning = sensor.tamper_status === 'tamper' ?
-        '<div style="color: #f59e0b; font-size: 11px; margin-top: 4px;">⚠️ Tamper detected</div>' : '';
+        '<div style="color: var(--warning-yellow); font-size: 11px; margin-top: 4px;">WARNING Tamper detected</div>' : '';
 
     return `
         <div class="device-card">
@@ -1244,7 +1244,7 @@ function renderKeypadCard(keypad) {
                     <div class="metric-label">Battery</div>
                 </div>
                 <div class="metric">
-                    <div class="metric-value">${keypad.is_online ? '✓' : '✗'}</div>
+                    <div class="metric-value">${keypad.is_online ? 'OK' : 'OFFLINE'}</div>
                     <div class="metric-label">Status</div>
                 </div>
             </div>
@@ -1259,7 +1259,7 @@ async function testSirenWithCountdown() {
     const countdown = 5;
     const duration = 3;
     
-    if (!confirm(`⚠️ SIREN TEST\n\nThis will:\n1. Count down ${countdown} seconds (WARN EVERYONE!)\n2. Sound 104dB siren for ${duration} seconds\n\nProceed?`)) {
+    if (!confirm(`WARNING SIREN TEST\n\nThis will:\n1. Count down ${countdown} seconds (WARN EVERYONE!)\n2. Sound 104dB siren for ${duration} seconds\n\nProceed?`)) {
         return;
     }
 
@@ -1300,7 +1300,7 @@ function showCountdownOverlay(seconds) {
                 <div class="countdown-icon">🔔</div>
                 <div class="countdown-text">SIREN TEST IN</div>
                 <div class="countdown-number" id="countdown-number">${seconds}</div>
-                <div class="countdown-warning">⚠️ COVER YOUR EARS! ⚠️</div>
+                <div class="countdown-warning">WARNING COVER YOUR EARS! WARNING</div>
                 <button class="btn btn-danger" onclick="cancelSirenTest()">CANCEL</button>
             </div>
         `;
@@ -1374,7 +1374,7 @@ async function cancelSirenTest() {
 }
 
 async function triggerSiren(activate) {
-    if (activate && !confirm('⚠️ IMMEDIATE SIREN!\n\nNo countdown - siren sounds NOW for 3 seconds.\n\nSure?')) {
+    if (activate && !confirm('WARNING IMMEDIATE SIREN!\n\nNo countdown - siren sounds NOW for 3 seconds.\n\nSure?')) {
         return;
     }
 
@@ -1727,7 +1727,7 @@ async function startWebRTC(deviceId) {
                     break;
                 case 'disconnected':
                 case 'failed':
-                    statusEl.textContent = '🔴 Disconnected';
+                    statusEl.textContent = 'CRITICAL Disconnected';
                     statusEl.className = 'webrtc-status error';
                     break;
                 case 'connecting':
@@ -1798,7 +1798,7 @@ async function startWebRTC(deviceId) {
         
     } catch (error) {
         console.error('WebRTC error:', error);
-        statusEl.textContent = '🔴 ' + error.message;
+        statusEl.textContent = 'CRITICAL ' + error.message;
         statusEl.className = 'webrtc-status error';
     }
 }
@@ -1987,7 +1987,7 @@ function renderNestStatus(data) {
 
         // Show setup instructions
         if (data.setup_instructions) {
-            setupSteps.innerHTML = '<ol style="margin: 0; padding-left: 20px; color: #94a3b8;">' +
+            setupSteps.innerHTML = '<ol style="margin: 0; padding-left: 20px; color: var(--dark-text-muted);">' +
                 data.setup_instructions.map(step => `<li style="margin-bottom: 6px;">${escapeHtml(step)}</li>`).join('') +
                 '</ol>';
         } else if (data.error) {
@@ -2060,11 +2060,11 @@ function renderNestDeviceCard(device) {
             </div>
             <div class="device-metrics">
                 <div class="metric">
-                    <div class="metric-value ${smokeOk ? '' : 'text-red-500'}">${smokeOk ? '✓' : '⚠️'}</div>
+                    <div class="metric-value ${smokeOk ? '' : 'text-red-500'}">${smokeOk ? 'OK' : 'WARNING'}</div>
                     <div class="metric-label">Smoke</div>
                 </div>
                 <div class="metric">
-                    <div class="metric-value ${coOk ? '' : 'text-red-500'}">${coOk ? '✓' : '⚠️'}</div>
+                    <div class="metric-value ${coOk ? '' : 'text-red-500'}">${coOk ? 'OK' : 'WARNING'}</div>
                     <div class="metric-label">CO</div>
                 </div>
                 <div class="metric">
@@ -2072,7 +2072,7 @@ function renderNestDeviceCard(device) {
                     <div class="metric-label">Battery</div>
                 </div>
                 <div class="metric">
-                    <div class="metric-value">${device.is_online ? '✓' : '✗'}</div>
+                    <div class="metric-value">${device.is_online ? 'OK' : 'OFFLINE'}</div>
                     <div class="metric-label">Online</div>
                 </div>
             </div>

@@ -89,7 +89,7 @@ async def get_cameras(request: Request):
         from ...config import get_config
         import asyncio
 
-        ring_client = get_ring_client()
+        ring_client = get_ring_client("default")
         if not ring_client or not ring_client.is_initialized:
             # Try to initialize Ring client
             config = get_config()
@@ -103,7 +103,8 @@ async def get_cameras(request: Request):
                 if email:
                     try:
                         ring_client = await init_ring_client(
-                            email=email, password=password, token_file=token_file, cache_ttl=cache_ttl
+                            email=email, password=password, token_file=token_file, cache_ttl=cache_ttl,
+                            server_id="default"
                         )
                         logger.info("Ring client initialized in API")
                     except Exception as init_e:

@@ -2,15 +2,18 @@
 # Run this script to install the required dependencies for crashproofing
 
 Write-Host "Installing watchfiles crashproofing dependencies..." -ForegroundColor Green
+Write-Host "This installs watchfiles.exe and related tools for crashproofing" -ForegroundColor Cyan
 
 # Check if we're in a virtual environment
 if ($env:VIRTUAL_ENV) {
     Write-Host "Virtual environment detected: $env:VIRTUAL_ENV" -ForegroundColor Yellow
 } else {
     Write-Host "Warning: No virtual environment detected. Consider activating one first." -ForegroundColor Yellow
+    Write-Host "For full development setup, use: pip install -e .[dev]" -ForegroundColor Yellow
 }
 
-# Install dependencies
+# Install watchfiles dependencies
+Write-Host "Installing watchfiles dependencies..." -ForegroundColor Cyan
 pip install -r requirements-watchfiles.txt
 
 if ($LASTEXITCODE -eq 0) {

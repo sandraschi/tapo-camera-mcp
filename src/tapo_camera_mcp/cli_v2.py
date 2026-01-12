@@ -1,5 +1,5 @@
 """
-Command-line interface for Tapo Camera MCP (FastMCP 2.10).
+Command-line interface for Tapo Camera MCP (FastMCP 2.14.1).
 """
 
 import argparse
@@ -37,7 +37,7 @@ def print_info(message: str) -> None:
 
 
 class TapoCameraCLI:
-    """Command-line interface for Tapo Camera MCP (FastMCP 2.10)."""
+    """Command-line interface for Tapo Camera MCP (FastMCP 2.14.1)."""
 
     def __init__(self):
         self.parser = self._create_parser()
@@ -45,7 +45,7 @@ class TapoCameraCLI:
 
     def _create_parser(self) -> argparse.ArgumentParser:
         """Create the argument parser."""
-        parser = argparse.ArgumentParser(description="Tapo Camera MCP CLI (FastMCP 2.10)")
+        parser = argparse.ArgumentParser(description="Tapo Camera MCP CLI (FastMCP 2.14.1)")
         parser.add_argument(
             "--url",
             default="http://localhost:8000",

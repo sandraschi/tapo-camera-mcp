@@ -174,7 +174,7 @@ def register_ring_management_tool(mcp: FastMCP) -> None:
                         "data": {"message": "Ring client initialized successfully"},
                     }
                 # Check if 2FA is needed
-                client = get_ring_client()
+                client = get_ring_client("default")
                 if client and client.needs_2fa:
                     return {
                         "success": False,
@@ -196,7 +196,7 @@ def register_ring_management_tool(mcp: FastMCP) -> None:
                         "action": action,
                         "error": "code is required for 2fa action",
                     }
-                client = get_ring_client()
+                client = get_ring_client("default")
                 if not client:
                     return {
                         "success": False,

@@ -10,18 +10,18 @@
         padding: 1.5rem;
         margin-bottom: 1.5rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
 
     [data-theme="dark"] .health-section {
-        background: #374151;
-        border-color: #4b5563;
+        background: var(--text-color);
+        border-color: var(--gray-600);
     }
 
     .health-section h3 {
         font-size: 1.125rem;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
         margin-bottom: 1rem;
         display: flex;
         align-items: center;
@@ -29,7 +29,7 @@
     }
 
     [data-theme="dark"] .health-section h3 {
-        color: #f9fafb;
+        color: var(--card-bg);
     }
 
     .health-grid {
@@ -39,15 +39,15 @@
     }
 
     .health-card {
-        background: #f9fafb;
+        background: var(--card-bg);
         border-radius: 0.5rem;
         padding: 1rem;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
 
     [data-theme="dark"] .health-card {
-        background: #4b5563;
-        border-color: #6b7280;
+        background: var(--gray-600);
+        border-color: var(--muted-text);
     }
 
     .health-card-header {
@@ -59,12 +59,12 @@
 
     .health-card-title {
         font-weight: 500;
-        color: #374151;
+        color: var(--text-color);
         font-size: 0.875rem;
     }
 
     [data-theme="dark"] .health-card-title {
-        color: #d1d5db;
+        color: var(--gray-300);
     }
 
     .health-status-badge {
@@ -81,48 +81,48 @@
     }
 
     .status-warning {
-        background: #fef3c7;
+        background: var(--warning-bg);
         color: #92400e;
     }
 
     .status-critical {
-        background: #fee2e2;
+        background: var(--error-bg);
         color: #991b1b;
     }
 
     .health-value {
         font-size: 1.5rem;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
         margin-bottom: 0.25rem;
     }
 
     [data-theme="dark"] .health-value {
-        color: #f9fafb;
+        color: var(--card-bg);
     }
 
     .health-label {
         font-size: 0.75rem;
-        color: #6b7280;
+        color: var(--muted-text);
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
 
     [data-theme="dark"] .health-label {
-        color: #9ca3af;
+        color: var(--gray-400);
     }
 
     .progress-bar {
         width: 100%;
         height: 8px;
-        background: #e5e7eb;
+        background: var(--border-color);
         border-radius: 4px;
         overflow: hidden;
         margin-top: 0.5rem;
     }
 
     [data-theme="dark"] .progress-bar {
-        background: #4b5563;
+        background: var(--gray-600);
     }
 
     .progress-fill {
@@ -131,15 +131,15 @@
     }
 
     .progress-healthy {
-        background: #10b981;
+        background: var(--success-green);
     }
 
     .progress-warning {
-        background: #f59e0b;
+        background: var(--warning-yellow);
     }
 
     .progress-critical {
-        background: #ef4444;
+        background: var(--error-red);
     }
 
     .metric-row {
@@ -147,11 +147,11 @@
         justify-content: space-between;
         align-items: center;
         padding: 0.5rem 0;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--border-color);
     }
 
     [data-theme="dark"] .metric-row {
-        border-bottom-color: #4b5563;
+        border-bottom-color: var(--gray-600);
     }
 
     .metric-row:last-child {
@@ -159,21 +159,21 @@
     }
 
     .metric-label {
-        color: #6b7280;
+        color: var(--muted-text);
         font-size: 0.875rem;
     }
 
     [data-theme="dark"] .metric-label {
-        color: #9ca3af;
+        color: var(--gray-400);
     }
 
     .metric-value {
         font-weight: 500;
-        color: #1f2937;
+        color: var(--text-color);
     }
 
     [data-theme="dark"] .metric-value {
-        color: #f9fafb;
+        color: var(--card-bg);
     }
 
     .issues-list {
@@ -190,14 +190,14 @@
     }
 
     .issue-critical {
-        background: #fee2e2;
-        border-color: #ef4444;
+        background: var(--error-bg);
+        border-color: var(--error-red);
         color: #991b1b;
     }
 
     .issue-warning {
-        background: #fef3c7;
-        border-color: #f59e0b;
+        background: var(--warning-bg);
+        border-color: var(--warning-yellow);
         color: #92400e;
     }
 
@@ -224,12 +224,12 @@
     }
 
     .overall-status.warning {
-        background: #fef3c7;
+        background: var(--warning-bg);
         color: #92400e;
     }
 
     .overall-status.critical {
-        background: #fee2e2;
+        background: var(--error-bg);
         color: #991b1b;
     }
 

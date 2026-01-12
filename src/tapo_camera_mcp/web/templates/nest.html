@@ -5,7 +5,7 @@
 {% block extra_css %}
 <style>
     .status-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, var(--info-blue) 0%, #764ba2 100%);
         border-radius: 1rem;
         padding: 2rem;
         margin-bottom: 2rem;
@@ -68,12 +68,12 @@
         padding: 1.5rem;
         margin-bottom: 2rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border-left: 4px solid #3b82f6;
+        border-left: 4px solid var(--primary-blue);
     }
 
     .setup-instructions h3 {
         margin-top: 0;
-        color: #1f2937;
+        color: var(--text-color);
         font-size: 1.25rem;
         font-weight: 600;
     }
@@ -81,7 +81,7 @@
     .setup-instructions ol {
         margin: 1rem 0;
         padding-left: 1.5rem;
-        color: #4b5563;
+        color: var(--gray-600);
     }
 
     .setup-instructions li {
@@ -110,23 +110,23 @@
     }
 
     .btn-primary {
-        background: #3b82f6;
+        background: var(--primary-blue);
         color: white;
     }
 
     .btn-primary:hover {
-        background: #2563eb;
+        background: var(--primary-blue-dark);
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
     }
 
     .btn-secondary {
-        background: #6b7280;
+        background: var(--muted-text);
         color: white;
     }
 
     .btn-secondary:hover {
-        background: #4b5563;
+        background: var(--gray-600);
     }
 
     .nest-grid {
@@ -141,9 +141,9 @@
         border-radius: 0.75rem;
         padding: 1.5rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         transition: all 0.2s ease-in-out;
-        border-left: 4px solid #10b981;
+        border-left: 4px solid var(--success-green);
     }
 
     .nest-card:hover {
@@ -152,12 +152,12 @@
     }
 
     .nest-card.alert {
-        border-left-color: #ef4444;
+        border-left-color: var(--error-red);
         background: #fef2f2;
     }
 
     .nest-card.warning {
-        border-left-color: #f59e0b;
+        border-left-color: var(--warning-yellow);
         background: #fffbeb;
     }
 
@@ -167,13 +167,13 @@
         align-items: center;
         margin-bottom: 1rem;
         padding-bottom: 0.75rem;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--border-color);
     }
 
     .nest-name {
         font-size: 1.25rem;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
         margin: 0;
     }
 
@@ -187,17 +187,17 @@
     }
 
     .status-online {
-        background-color: #dcfce7;
+        background-color: var(--success-light);
         color: #166534;
     }
 
     .status-offline {
-        background-color: #fef3c7;
+        background-color: var(--warning-bg);
         color: #92400e;
     }
 
     .status-emergency {
-        background-color: #fee2e2;
+        background-color: var(--error-bg);
         color: #991b1b;
         animation: pulse 2s infinite;
     }
@@ -222,7 +222,7 @@
     .detail-label {
         font-size: 0.75rem;
         font-weight: 500;
-        color: #6b7280;
+        color: var(--muted-text);
         text-transform: uppercase;
         letter-spacing: 0.05em;
         margin-bottom: 0.25rem;
@@ -230,20 +230,20 @@
 
     .detail-value {
         font-size: 0.875rem;
-        color: #1f2937;
+        color: var(--text-color);
         font-weight: 500;
     }
 
     .detail-value.ok {
-        color: #10b981;
+        color: var(--success-green);
     }
 
     .detail-value.warning {
-        color: #f59e0b;
+        color: var(--warning-yellow);
     }
 
     .detail-value.emergency {
-        color: #ef4444;
+        color: var(--error-red);
         font-weight: 700;
     }
 
@@ -253,7 +253,7 @@
         padding: 1.5rem;
         margin-bottom: 2rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
 
     .alerts-list {
@@ -266,17 +266,17 @@
     .alert-item {
         padding: 1rem;
         border-radius: 0.5rem;
-        border-left: 4px solid #6b7280;
+        border-left: 4px solid var(--muted-text);
     }
 
     .alert-item.emergency {
         background: #fef2f2;
-        border-left-color: #ef4444;
+        border-left-color: var(--error-red);
     }
 
     .alert-item.warning {
         background: #fffbeb;
-        border-left-color: #f59e0b;
+        border-left-color: var(--warning-yellow);
     }
 
     .alert-type {
@@ -287,29 +287,29 @@
     }
 
     .alert-type.emergency {
-        color: #ef4444;
+        color: var(--error-red);
     }
 
     .alert-type.warning {
-        color: #f59e0b;
+        color: var(--warning-yellow);
     }
 
     .alert-location {
         font-size: 0.875rem;
-        color: #6b7280;
+        color: var(--muted-text);
     }
 
     .empty-state {
         text-align: center;
         padding: 3rem 1rem;
-        color: #6b7280;
+        color: var(--muted-text);
     }
 
     .empty-state-title {
         font-size: 1.25rem;
         font-weight: 600;
         margin-bottom: 0.5rem;
-        color: #374151;
+        color: var(--text-color);
     }
 
     .connection-status {
@@ -318,13 +318,13 @@
         padding: 1.5rem;
         margin-bottom: 2rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
 
     .loading {
         text-align: center;
         padding: 2rem;
-        color: #6b7280;
+        color: var(--muted-text);
     }
 
     .toast {
@@ -332,7 +332,7 @@
         top: 20px;
         right: 20px;
         padding: 1rem 1.5rem;
-        background: #1f2937;
+        background: var(--text-color);
         color: white;
         border-radius: 0.5rem;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);

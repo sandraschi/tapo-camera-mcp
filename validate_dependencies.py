@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 def check_dependencies():
     """Check all required dependencies and provide actionable errors."""
     print("\n" + "=" * 70)
-    print("🔍 DEPENDENCY VALIDATION - Smart Home Dashboard")
+    print("VALIDATION: DEPENDENCY VALIDATION - Smart Home Dashboard")
     print("=" * 70 + "\n")
 
     missing = []
@@ -50,34 +50,34 @@ def check_dependencies():
         ("PIL", "Pillow (image processing)", "pip install pillow", "Image Processing"),
     ]
 
-    print("📦 CORE DEPENDENCIES:")
+    print("CORE: CORE DEPENDENCIES:")
     print("-" * 70)
     for module, name, install_cmd in checks:
         try:
             __import__(module)
-            print(f"   ✅ {name}")
+            print(f"   SUCCESS: {name}")
         except ImportError:
-            print(f"   ❌ {name} - MISSING!")
+            print(f"   ERROR: {name} - MISSING!")
             missing.append((name, install_cmd))
 
-    print("\n🔌 HARDWARE DEPENDENCIES:")
+    print("\nHARDWARE: HARDWARE DEPENDENCIES:")
     print("-" * 70)
     for module, name, install_cmd, hardware in hardware_checks:
         try:
             __import__(module)
             print(f"   ✅ {name} ({hardware})")
         except ImportError:
-            print(f"   ⚠️  {name} - MISSING (affects: {hardware})")
+            print(f"   WARNING: {name} - MISSING (affects: {hardware})")
             issues.append((name, install_cmd, hardware))
 
-    print("\n⚙️ SYSTEM DEPENDENCIES:")
+    print("\nSYSTEM DEPENDENCIES:")
     print("-" * 70)
     for module, name, install_cmd, feature in system_checks:
         try:
             __import__(module)
-            print(f"   ✅ {name}")
+            print(f"   SUCCESS: {name}")
         except ImportError:
-            print(f"   ❌ {name} - MISSING!")
+            print(f"   ERROR: {name} - MISSING!")
             missing.append((name, install_cmd))
 
     print("\n" + "=" * 70)
@@ -92,7 +92,7 @@ def check_dependencies():
         return False
 
     if issues:
-        print("\n⚠️  OPTIONAL HARDWARE DEPENDENCIES MISSING:")
+        print("\nWARNING: OPTIONAL HARDWARE DEPENDENCIES MISSING:")
         print("-" * 70)
         for name, install_cmd, hardware in issues:
             print(f"   {name} - {hardware} won't work")
@@ -101,7 +101,7 @@ def check_dependencies():
         print("   Install missing dependencies to enable full functionality.")
         return True  # Can still start
 
-    print("\n🎉 ALL DEPENDENCIES SATISFIED!")
+    print("\nSUCCESS: ALL DEPENDENCIES SATISFIFIED!")
     print("   Server is ready for full operation.")
     print("=" * 70 + "\n")
     return True

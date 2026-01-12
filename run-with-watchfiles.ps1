@@ -11,7 +11,7 @@ param(
     [switch]$Test
 )
 
-Write-Host "🚀 Starting Tapo Camera MCP WebApp with Watchfiles Crashproofing" -ForegroundColor Green
+Write-Host "STARTING Tapo Camera MCP WebApp with Watchfiles Crashproofing" -ForegroundColor Green
 Write-Host "=================================================================" -ForegroundColor Cyan
 
 # Set environment variables

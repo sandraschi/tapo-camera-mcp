@@ -5,6 +5,90 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2026-01-12 🚀 **Critical Webapp Fixes & Plex Integration**
+
+### 🔥 **WEBAPP STABILITY FIXES**
+
+#### **Routing System Overhaul**
+- **Fixed Missing Routes**: Added 25+ missing page routes that were causing 404 errors
+- **Complete Page Coverage**: All templates now have corresponding API endpoints
+- **Navigation Consistency**: All sidebar links now point to working pages
+
+#### **Pages Now Working** ✅
+- `/logs` - Log management interface
+- `/alerts` - Alert management system
+- `/alarms` - Security alarm controls
+- `/appliance-monitor` - Appliance monitoring dashboard
+- `/events` - Event timeline and history
+- `/health-dashboard` - Connection health monitoring
+- `/human-health` - Human health monitoring
+- `/onboarding` - Device setup wizard
+- And 15+ other previously broken pages
+
+### 🎬 **PLEX MEDIA SERVER INTEGRATION**
+
+#### **Complete Plex Support**
+- **Webhook Integration**: Real-time media activity tracking from Plex
+- **API Endpoints**: `/api/plex/webhook`, `/api/plex/now-playing`, `/api/plex/status`
+- **Web Interface**: Beautiful media library at `/plex` with posters and progress
+- **Event Logging**: Media events integrated into security dashboard timeline
+
+#### **Plex Features**
+- **Media Activity Tracking**: See who's watching what, when, and where
+- **Current Status**: Live playback status and metadata
+- **Webhook Support**: Handles all Plex media events (play/pause/stop/resume)
+- **Theme Integration**: Full dark/light theme support for media interface
+
+#### **Setup Instructions**
+- Configure Plex webhook URL: `http://your-server:7777/api/plex/webhook`
+- Enable desired events in Plex settings
+- Access media dashboard at `/plex`
+
+### 🔧 **THEME SYSTEM IMPROVEMENTS**
+
+#### **Enhanced CSS Variables**
+- **Expanded Color Palette**: Added 20+ new CSS variables for comprehensive theming
+- **Camera-Specific Colors**: Dedicated color variables for camera status indicators
+- **Status Colors**: Success, warning, error, and info color schemes
+- **Gray Scale**: Complete gray scale for proper contrast
+
+#### **Template Updates**
+- **Camera Cards**: All camera status indicators now follow theme
+- **Status Badges**: Online/offline/warning states use proper colors
+- **Modal Dialogs**: All popups and overlays theme-aware
+- **Button States**: All interactive elements properly themed
+
+### 📚 **DOCUMENTATION UPDATES**
+
+#### **README.md**
+- Added Plex integration to feature list and badges
+- Updated architecture overview to include Plex MCP
+- Enhanced device compatibility badges
+
+#### **API Documentation**
+- Added complete Plex API reference
+- Documented webhook endpoints and payload formats
+- Updated MCP tool categories to include media management
+
+#### **User Guide**
+- Added Plex integration setup instructions
+- Documented webhook configuration steps
+- Included media dashboard usage guide
+
+### 🐛 **BUG FIXES**
+
+#### **Critical Fixes**
+- **Port Environment Variable**: Fixed PORT environment variable support in `start.py`
+- **Message Categories**: Added missing `MEDIA_EVENT` category for Plex integration
+- **Webhook Error Handling**: Improved error handling for malformed webhook payloads
+- **Request Parsing**: Enhanced support for both multipart/form-data and JSON webhook formats
+
+#### **Webapp Fixes**
+- **Navigation Links**: All sidebar links now functional
+- **Page Loading**: Eliminated 404 errors across all pages
+- **Theme Consistency**: Fixed hardcoded colors in camera and status displays
+- **Modal Theming**: All dialog boxes now properly themed
+
 ## [1.9.0] - 2026-01-09 🎨 **Web Interface CSS Cleanup & Theme Support**
 
 ### 🎨 **COMPREHENSIVE CSS CLEANUP**

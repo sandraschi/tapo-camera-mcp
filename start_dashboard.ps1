@@ -15,22 +15,22 @@ $env:PYTHONIOENCODING = "utf-8"
 & .\venv\Scripts\Activate.ps1
 
 # Validate dependencies BEFORE starting
-Write-Host "🔍 Validating dependencies..." -ForegroundColor Cyan
+Write-Host "CHECK: Validating dependencies..." -ForegroundColor Cyan
 python validate_dependencies.py
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "`n❌ DEPENDENCY CHECK FAILED!" -ForegroundColor Red
+    Write-Host "`nERROR: DEPENDENCY CHECK FAILED!" -ForegroundColor Red
     Write-Host "   Server cannot start with missing critical dependencies." -ForegroundColor Yellow
     Write-Host "   Install missing packages shown above and try again.`n" -ForegroundColor White
     exit 1
 }
 
-Write-Host "`n✅ Dependencies validated!" -ForegroundColor Green
+Write-Host "`nSUCCESS: Dependencies validated!" -ForegroundColor Green
 Write-Host ""
 
 # Check for port conflicts
 $port = 7777
-Write-Host "🔍 Checking port 7777 availability..." -ForegroundColor Cyan
+Write-Host "CHECK: Checking port 7777 availability..." -ForegroundColor Cyan
 # Add timeout to port check (max 1 second)
 $portCheckJob = Start-Job -ScriptBlock { 
     Get-NetTCPConnection -LocalPort 7777 -ErrorAction SilentlyContinue 
@@ -41,7 +41,7 @@ if (Wait-Job -Job $portCheckJob -Timeout 1) {
     Remove-Job -Job $portCheckJob
 } else {
     Remove-Job -Job $portCheckJob -Force
-    Write-Host "⚠️  Port check timed out, assuming port is available" -ForegroundColor Yellow
+    Write-Host "WARNING: Port check timed out, assuming port is available" -ForegroundColor Yellow
 }
 
 if ($portInUse) {
@@ -50,12 +50,12 @@ if ($portInUse) {
     $processName = if ($process) { $process.ProcessName } else { "Unknown" }
     $processPath = if ($process) { $process.Path } else { "N/A" }
     
-    Write-Host "`n❌ PORT CONFLICT DETECTED!" -ForegroundColor Red
+    Write-Host "`nERROR: PORT CONFLICT DETECTED!" -ForegroundColor Red
     Write-Host "   Port 7777 is already in use by:" -ForegroundColor Yellow
     Write-Host "   • Process: $processName (PID: $processId)" -ForegroundColor White
     Write-Host "   • Path: $processPath" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "💡 Solutions:" -ForegroundColor Cyan
+    Write-Host "SOLUTION: Solutions:" -ForegroundColor Cyan
     Write-Host "   1. Stop the conflicting process:" -ForegroundColor White
     Write-Host "      Stop-Process -Id $processId -Force" -ForegroundColor Gray
     Write-Host ""
@@ -69,11 +69,11 @@ if ($portInUse) {
     exit 1
 }
 
-Write-Host "✅ Port 7777 is available!" -ForegroundColor Green
+Write-Host "SUCCESS: Port 7777 is available!" -ForegroundColor Green
 Write-Host ""
 
 # Start dashboard
-Write-Host "🚀 Starting dashboard on http://localhost:7777..." -ForegroundColor Yellow
+Write-Host "START: Starting dashboard on http://localhost:7777..." -ForegroundColor Yellow
 Write-Host "   Connection supervisor will monitor all devices" -ForegroundColor Gray
 Write-Host "   Health dashboard: http://localhost:7777/health-dashboard" -ForegroundColor Gray
 Write-Host "   Alerts dashboard: http://localhost:7777/alerts`n" -ForegroundColor Gray

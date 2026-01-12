@@ -1650,6 +1650,144 @@ Provide a concise summary:"""
                     "error": str(e),
                 }
 
+        @self.app.get("/api/logs/stats")
+        async def get_log_stats():
+            """Get log file statistics."""
+            try:
+                from pathlib import Path
+                import os
+
+                config = get_config()
+                log_file = config.get("logging", {}).get("file")
+
+                if not log_file:
+                    # Try to find log file in default location
+                    user_data_dir = Path("~/.local/share/tapo-camera-mcp").expanduser()
+                    log_file = user_data_dir / "tapo-camera-mcp.log"
+
+                log_file = Path(log_file)
+
+                stats = {
+                    "enabled": True,
+                    "total_files": 0,
+                    "total_size_mb": 0,
+                    "files_by_type": {
+                        "active_logs": 0,
+                        "compressed_logs": 0,
+                        "rotated_logs": 0
+                    }
+                }
+
+                if log_file.exists():
+                    stats["total_files"] = 1
+                    stats["total_size_mb"] = log_file.stat().st_size / (1024 * 1024)
+
+                    # Check if it's an active log file
+                    if log_file.name.endswith('.log'):
+                        stats["files_by_type"]["active_logs"] = 1
+
+                # Look for compressed/rotated log files in the same directory
+                if log_file.parent.exists():
+                    for f in log_file.parent.glob("*.log.*"):
+                        stats["total_files"] += 1
+                        stats["total_size_mb"] += f.stat().st_size / (1024 * 1024)
+
+                        if f.name.endswith('.gz') or f.name.endswith('.bz2'):
+                            stats["files_by_type"]["compressed_logs"] += 1
+                        else:
+                            stats["files_by_type"]["rotated_logs"] += 1
+
+                return stats
+
+            except Exception as e:
+                logger.exception("Error getting log stats")
+                return {
+                    "enabled": False,
+                    "error": str(e),
+                    "total_files": 0,
+                    "total_size_mb": 0,
+                    "files_by_type": {
+                        "active_logs": 0,
+                        "compressed_logs": 0,
+                        "rotated_logs": 0
+                    }
+                }
+
+        @self.app.post("/api/logs/sanitize")
+        async def sanitize_logs():
+            """Sanitize sensitive information from log files."""
+            try:
+                from pathlib import Path
+                import re
+
+                config = get_config()
+                log_file = config.get("logging", {}).get("file")
+
+                if not log_file:
+                    user_data_dir = Path("~/.local/share/tapo-camera-mcp").expanduser()
+                    log_file = user_data_dir / "tapo-camera-mcp.log"
+
+                log_file = Path(log_file)
+
+                if not log_file.exists():
+                    return {"success": False, "error": "Log file not found"}
+
+                # Read and sanitize the log file
+                with open(log_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+
+                # Simple sanitization patterns (can be expanded)
+                sanitized = re.sub(r'password[=:]\s*["\'][^"\']*["\']', 'password: "***"', content, flags=re.IGNORECASE)
+                sanitized = re.sub(r'api_key[=:]\s*["\'][^"\']*["\']', 'api_key: "***"', sanitized, flags=re.IGNORECASE)
+                sanitized = re.sub(r'token[=:]\s*["\'][^"\']*["\']', 'token: "***"', sanitized, flags=re.IGNORECASE)
+
+                # Write back sanitized content
+                with open(log_file, 'w', encoding='utf-8') as f:
+                    f.write(sanitized)
+
+                return {"success": True, "message": "Log file sanitized"}
+
+            except Exception as e:
+                logger.exception("Error sanitizing logs")
+                return {"success": False, "error": str(e)}
+
+        @self.app.post("/api/logs/rotate/{filename}")
+        async def rotate_log_file(filename: str):
+            """Rotate a specific log file."""
+            try:
+                from pathlib import Path
+                import shutil
+                from datetime import datetime
+
+                config = get_config()
+                log_dir = Path(config.get("logging", {}).get("file", "~/.local/share/tapo-camera-mcp/tapo-camera-mcp.log")).parent
+
+                source_file = log_dir / filename
+                if not source_file.exists():
+                    return {"success": False, "error": f"File {filename} not found"}
+
+                # Create rotated filename with timestamp
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                rotated_name = f"{source_file.stem}_{timestamp}{source_file.suffix}.gz"
+
+                rotated_file = log_dir / rotated_name
+
+                # Compress and rotate the file
+                import gzip
+                with open(source_file, 'rb') as f_in:
+                    with gzip.open(rotated_file, 'wb') as f_out:
+                        shutil.copyfileobj(f_in, f_out)
+
+                # Truncate the original file
+                with open(source_file, 'w') as f:
+                    f.write("")
+
+                return {"success": True, "message": f"Log file rotated to {rotated_name}"}
+
+            except Exception as e:
+                logger.exception("Error rotating log file")
+                return {"success": False, "error": str(e)}
+
         @self.app.get("/metrics", summary="Prometheus metrics endpoint")
         async def get_prometheus_metrics() -> Response:
             """
@@ -1884,6 +2022,7 @@ Provide a concise summary:"""
         from .api.shelly import router as shelly_router
         from .api.thermal import router as thermal_router
         from .api.weather import router as weather_router
+        from .api.plex import router as plex_router
 
         if onboarding_available and onboarding_router:
             self.app.include_router(onboarding_router)
@@ -1893,6 +2032,7 @@ Provide a concise summary:"""
         self.app.include_router(sensors_router)
         self.app.include_router(energy_router)
         self.app.include_router(weather_router)
+        self.app.include_router(plex_router)
         self.app.include_router(security_router)
         self.app.include_router(ring_router)
         self.app.include_router(ptz_router)
@@ -2575,6 +2715,14 @@ Provide a concise summary:"""
                 logger.exception("Error scrubbing old data")
                 return {"success": False, "error": str(e)}
 
+        @self.app.get("/plex", response_class=HTMLResponse, name="plex")
+        async def plex_page(request: Request):
+            """Plex media library page."""
+            return self.templates.TemplateResponse(
+                "plex.html",
+                {"request": request},
+            )
+
         @self.app.get("/recordings", response_class=HTMLResponse, name="recordings")
         async def recordings(request: Request):
             """Serve the recordings page."""
@@ -2666,12 +2814,32 @@ Provide a concise summary:"""
                     },
                 )
 
+        @self.app.get("/alerts", response_class=HTMLResponse, name="alerts")
+        async def alerts_page(request: Request):
+            """Serve the alerts page."""
+            return self.templates.TemplateResponse("alerts.html", {"request": request})
+
+        @self.app.get("/alarms", response_class=HTMLResponse, name="alarms")
+        async def alarms_page(request: Request):
+            """Serve the alarms page."""
+            return self.templates.TemplateResponse("alarms.html", {"request": request})
+
+        @self.app.get("/appliance-monitor", response_class=HTMLResponse, name="appliance_monitor")
+        async def appliance_monitor_page(request: Request):
+            """Serve the appliance monitor page."""
+            return self.templates.TemplateResponse("appliance_monitor.html", {"request": request})
+
         @self.app.get("/help", response_class=HTMLResponse, name="help")
         async def help_page(request: Request):
             """Serve the help and documentation page."""
             return self.templates.TemplateResponse(
                 "help.html", {"request": request, "active_page": "help"}
             )
+
+        @self.app.get("/logs", response_class=HTMLResponse, name="logs")
+        async def logs_page(request: Request):
+            """Serve the log management page."""
+            return self.templates.TemplateResponse("log_management.html", {"request": request})
 
         @self.app.get("/health-dashboard", response_class=HTMLResponse, name="health_dashboard")
         async def health_dashboard_page(request: Request):

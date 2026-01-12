@@ -14,12 +14,12 @@
         
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            background: linear-gradient(135deg, var(--dark-bg-primary) 0%, var(--dark-bg-secondary) 50%, var(--dark-bg-primary) 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #e2e8f0;
+            color: var(--dark-text-secondary);
         }
         
         .login-container {
@@ -60,12 +60,12 @@
         .login-header h1 {
             font-size: 24px;
             font-weight: 600;
-            color: #f1f5f9;
+            color: var(--dark-text-primary);
             margin-bottom: 8px;
         }
         
         .login-header p {
-            color: #94a3b8;
+            color: var(--dark-text-muted);
             font-size: 14px;
         }
         
@@ -77,7 +77,7 @@
             display: block;
             font-size: 13px;
             font-weight: 500;
-            color: #94a3b8;
+            color: var(--dark-text-muted);
             margin-bottom: 8px;
         }
         
@@ -87,7 +87,7 @@
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid rgba(99, 102, 241, 0.2);
             border-radius: 10px;
-            color: #f1f5f9;
+            color: var(--dark-text-primary);
             font-size: 15px;
             transition: all 0.2s ease;
         }
@@ -133,7 +133,7 @@
         }
         
         .password-toggle:hover {
-            color: #94a3b8;
+            color: var(--dark-text-muted);
         }
         
         .remember-row {
@@ -148,7 +148,7 @@
             align-items: center;
             gap: 8px;
             cursor: pointer;
-            color: #94a3b8;
+            color: var(--dark-text-muted);
             font-size: 13px;
         }
         

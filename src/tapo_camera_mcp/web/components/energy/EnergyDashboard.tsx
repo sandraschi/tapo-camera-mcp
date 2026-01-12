@@ -636,7 +636,7 @@ export const EnergyDashboard: React.FC<EnergyDashboardProps> = ({ className }) =
               </ul>
             </div>
             <div className="space-y-2">
-              <h4 className="font-semibold text-blue-600">📊 This Month's Savings</h4>
+              <h4 className="font-semibold text-blue-600">DATA This Month's Savings</h4>
               <div className="text-lg font-bold text-green-600">
                 ${(getTotalMonthlyCost() * 0.15).toFixed(2)}
               </div>

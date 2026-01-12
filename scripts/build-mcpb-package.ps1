@@ -216,7 +216,13 @@ Write-Host "📦 Package: $packageName" -ForegroundColor Cyan
 Write-Host "📁 Location: $outputPath" -ForegroundColor Cyan
 Write-Host "📊 Size: $sizeMB MB" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "🚀 Next Steps:" -ForegroundColor Yellow
+Write-Host "NEXT Steps:" -ForegroundColor Yellow
+Write-Host "  1. Install with dev tools: pip install -e .[dev]" -ForegroundColor White
+Write-Host "     (includes watchfiles.exe, pytest, ruff, mypy, etc.)" -ForegroundColor Gray
+Write-Host "  2. Or install minimal: pip install -e ." -ForegroundColor White
+Write-Host "     (then add watchfiles: pip install -r requirements-watchfiles.txt)" -ForegroundColor Gray
+Write-Host "  3. Run tests: pytest" -ForegroundColor White
+Write-Host "  4. Lint code: ruff check . --fix" -ForegroundColor White
 Write-Host "  1. Test installation: Drag $packageName to Claude Desktop" -ForegroundColor White
 Write-Host "  2. Configure settings when prompted" -ForegroundColor White
 Write-Host "  3. Test all 26+ tools" -ForegroundColor White

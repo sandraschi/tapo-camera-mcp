@@ -50,7 +50,7 @@ if ($Detach) {
     $upArgs += "-d"
 }
 
-Write-Host "🚀 Starting dashboard..." -ForegroundColor Green
+Write-Host "STARTING dashboard..." -ForegroundColor Green
 docker compose up @upArgs
 
 if ($Detach -and $Logs) {

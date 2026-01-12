@@ -26,7 +26,7 @@ tests/
 └── README.md                  # This file
 ```
 
-## 🧪 Test Categories
+## TEST Test Categories
 
 ### Unit Tests (`tests/unit/`)
 - **Isolation**: Each test focuses on a single component
@@ -92,7 +92,7 @@ client = MockMCPClient(server)
 result = await client.call_tool("energy_management", "status")
 ```
 
-## 🚀 Running Tests
+## RUN Running Tests
 
 ### Quick Start
 
@@ -134,7 +134,7 @@ poetry run pytest tests/unit/ -x
 poetry run pytest --cov=tapo_camera_mcp --cov-fail-under=90
 ```
 
-## 📊 Test Configuration
+## CONFIG Test Configuration
 
 ### pytest.ini
 
@@ -173,7 +173,7 @@ exclude_lines = [
 ]
 ```
 
-## 🔧 Writing Tests
+## WRITE Writing Tests
 
 ### Unit Test Example
 
@@ -243,7 +243,7 @@ class TestPerformance:
         performance_timer.assert_under_limit(1.0)  # 1 second max
 ```
 
-## 🎯 Test Data Management
+## DATA Test Data Management
 
 ### Test Data Factories
 
@@ -324,7 +324,7 @@ def test_mock_inspection(self, client):
         print(f"Called with: {call_args}")
 ```
 
-## 📈 Coverage Reporting
+## COVERAGE Coverage Reporting
 
 ### Generate Coverage Reports
 
@@ -347,7 +347,7 @@ poetry run pytest --cov=tapo_camera_mcp --cov-report=xml
 - **Critical Paths**: 100% coverage
 - **API Endpoints**: 100% coverage
 
-## 🚀 CI/CD Integration
+## RUN CI/CD Integration
 
 ### GitHub Actions Workflow
 
@@ -417,7 +417,7 @@ poetry run pytest --profile
 poetry run pytest --memusage
 ```
 
-## 📚 Best Practices
+## PRACTICES Best Practices
 
 ### Test Organization
 - **One concept per test**: Each test should verify one behavior

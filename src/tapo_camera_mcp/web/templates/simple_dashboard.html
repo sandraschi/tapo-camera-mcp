@@ -9,7 +9,7 @@
         border-radius: 0.5rem;
         padding: 1rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
 
     /* Camera thumbnail styles - compact for dashboard */
@@ -33,8 +33,8 @@
         display: none;
         align-items: center;
         justify-content: center;
-        background: #374151;
-        color: #9CA3AF;
+        background: var(--text-color);
+        color: var(--gray-400);
         font-size: 36px;
     }
 
@@ -60,12 +60,12 @@
     }
 
     .status-online { border-left-color: #16a34a; }
-    .status-offline { border-left-color: #6b7280; }
+    .status-offline { border-left-color: var(--muted-text); }
     .status-alert { border-left-color: #dc2626; }
 
     .alert-critical { border-left-color: #dc2626; background-color: #fef2f2; }
     .alert-warning { border-left-color: #d97706; background-color: #fffbeb; }
-    .alert-info { border-left-color: #2563eb; background-color: #eff6ff; }
+    .alert-info { border-left-color: var(--primary-blue-dark); background-color: #eff6ff; }
 
     .stats-grid {
         display: grid;
@@ -106,10 +106,10 @@
     }
 
     [data-theme="dark"] {
-        --bg-color: #1f2937;
-        --text-color: #f9fafb;
-        --card-bg: #374151;
-        --border-color: #4b5563;
+        --bg-color: var(--text-color);
+        --text-color: var(--card-bg);
+        --card-bg: var(--text-color);
+        --border-color: var(--gray-600);
     }
 
     [data-theme="dark"] body {
@@ -166,7 +166,7 @@
         <!-- Vienna Public Alerts -->
         <div class="card mb-6" id="vienna-alerts-section">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold">🚨 Vienna Public Alerts</h3>
+                <h3 class="text-lg font-semibold">ALERT Vienna Public Alerts</h3>
                 <button onclick="refreshAlerts()" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                     <i class="fas fa-sync-alt"></i> Refresh
                 </button>
@@ -186,7 +186,7 @@
                 <a href="/cameras" class="text-blue-600 hover:text-blue-800 text-sm">View All →</a>
             </div>
             <div id="camera-row" style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; flex-wrap: nowrap;">
-                <div style="text-align: center; color: #6b7280; font-size: 14px; padding: 16px 0; width: 100%;">
+                <div style="text-align: center; color: var(--muted-text); font-size: 14px; padding: 16px 0; width: 100%;">
                     <i class="fas fa-spinner fa-spin"></i> Loading cameras...
                 </div>
             </div>
@@ -252,7 +252,7 @@
                         </div>
                         <div class="text-right">
                             <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                ✓ OK
+                                OK OK
                             </span>
                         </div>
                     </div>
@@ -268,7 +268,7 @@
                         </div>
                         <div class="text-right">
                             <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                ✓ OK
+                                OK OK
                             </span>
                         </div>
                     </div>
@@ -403,7 +403,7 @@
                     sensorHtml += `
                         <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-cyan-500">
                             <div class="flex items-center gap-3">
-                                <span class="text-3xl">👁️</span>
+                                <span class="text-3xl">MONITOR</span>
                                 <div class="flex-1">
                                     <h4 class="font-semibold text-gray-800">Motion Detection</h4>
                                     <p class="text-sm text-gray-600">Ring Sensors</p>
@@ -436,7 +436,7 @@
                 } else if (openDoors.length > 0) {
                     statusBanner.className = 'mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center gap-3';
                     statusBanner.innerHTML = `
-                        <span class="text-2xl">⚠️</span>
+                        <span class="text-2xl">WARNING</span>
                         <div>
                             <span class="font-semibold text-yellow-800">Entry Point Open</span>
                             <span class="text-yellow-600 text-sm ml-2">${openDoors.map(s => s.name).join(', ')}</span>
@@ -533,8 +533,8 @@
             
             if (cameras.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align: center; color: #6b7280; font-size: 14px; padding: 8px 0; width: 100%;">
-                        No cameras configured. <a href="/cameras" style="color: #2563eb; text-decoration: underline;">Add cameras</a>
+                    <div style="text-align: center; color: var(--muted-text); font-size: 14px; padding: 8px 0; width: 100%;">
+                        No cameras configured. <a href="/cameras" style="color: var(--primary-blue-dark); text-decoration: underline;">Add cameras</a>
                     </div>
                 `;
                 return;
@@ -544,12 +544,12 @@
             let html = '';
             for (const cam of cameras) {
                 const name = cam.name || cam.id || 'Camera';
-                const status = cam.status === 'online' ? '🟢' : '🔴';
+                const status = cam.status === 'online' ? '🟢' : 'CRITICAL';
                 const streamUrl = `/api/cameras/${encodeURIComponent(name)}/stream`;
                 
                 html += `
                     <a href="/cameras" class="camera-thumb-link" style="flex-shrink: 0; text-decoration: none;">
-                        <div class="camera-thumb-container" style="background: #1f2937; border-radius: 8px; overflow: hidden; position: relative;">
+                        <div class="camera-thumb-container" style="background: var(--text-color); border-radius: 8px; overflow: hidden; position: relative;">
                             <img src="${streamUrl}" 
                                  alt="${name}" 
                                  class="camera-thumb-img"
@@ -570,8 +570,8 @@
         } catch (error) {
             console.error('Error loading cameras:', error);
             container.innerHTML = `
-                <div style="text-align: center; color: #6b7280; font-size: 14px; padding: 8px 0; width: 100%;">
-                    <a href="/cameras" style="color: #2563eb; text-decoration: underline;">View cameras</a>
+                <div style="text-align: center; color: var(--muted-text); font-size: 14px; padding: 8px 0; width: 100%;">
+                    <a href="/cameras" style="color: var(--primary-blue-dark); text-decoration: underline;">View cameras</a>
                 </div>
             `;
         }
@@ -620,8 +620,8 @@
             const summary = {
                 total_alerts: data.total,
                 highest_severity: data.alerts.length > 0 ? data.alerts[0].severity : 'unknown',
-                highest_severity_color: data.alerts.length > 0 ? data.alerts[0].severity_color : '#9CA3AF',
-                highest_severity_icon: data.alerts.length > 0 ? data.alerts[0].severity_icon : '✓',
+                highest_severity_color: data.alerts.length > 0 ? data.alerts[0].severity_color : 'var(--gray-400)',
+                highest_severity_icon: data.alerts.length > 0 ? data.alerts[0].severity_icon : 'OK',
                 alerts: data.alerts.slice(0, 5),
                 status: data.total === 0 ? 'ok' : 'warning'
             };
@@ -692,7 +692,7 @@
             'snow': '❄️', 'ice': '🧊', 'fog': '🌫️', 'heat': '🌡️',
             'cold': '🥶', 'thunderstorm': '⛈️', 'flood': '🌊', 'fire': '🔥'
         };
-        return icons[type] || '⚠️';
+        return icons[type] || 'WARNING';
     }
     
     function escapeHtml(text) {

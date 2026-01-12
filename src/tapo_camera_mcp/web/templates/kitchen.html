@@ -20,12 +20,12 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
     
     .overview-card h3 {
         margin: 0 0 16px 0;
-        color: #1f2937;
+        color: var(--text-color);
         font-size: 18px;
         font-weight: 600;
     }
@@ -33,12 +33,12 @@
     .overview-value {
         font-size: 32px;
         font-weight: 700;
-        color: #3b82f6;
+        color: var(--primary-blue);
         margin-bottom: 8px;
     }
     
     .overview-label {
-        color: #6b7280;
+        color: var(--muted-text);
         font-size: 14px;
     }
     
@@ -47,16 +47,16 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         margin-bottom: 30px;
     }
     
     .appliance-card {
-        background: #f9fafb;
+        background: var(--card-bg);
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 16px;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
     
@@ -75,11 +75,11 @@
     .appliance-name {
         font-size: 18px;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
     }
     
     .appliance-type {
-        color: #6b7280;
+        color: var(--muted-text);
         font-size: 14px;
     }
     
@@ -97,20 +97,20 @@
     }
     
     .status-online {
-        background-color: #10b981;
+        background-color: var(--success-green);
         box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
     }
     
     .status-offline {
-        background-color: #6b7280;
+        background-color: var(--muted-text);
     }
     
     .status-smart-plug {
-        background-color: #3b82f6;
+        background-color: var(--primary-blue);
     }
     
     .status-coming-soon {
-        background-color: #f59e0b;
+        background-color: var(--warning-yellow);
     }
     
     .appliance-controls {
@@ -131,34 +131,34 @@
     }
     
     .btn-primary {
-        background-color: #3b82f6;
+        background-color: var(--primary-blue);
         color: white;
     }
     
     .btn-primary:hover {
-        background-color: #2563eb;
+        background-color: var(--primary-blue-dark);
     }
     
     .btn-secondary {
-        background-color: #6b7280;
+        background-color: var(--muted-text);
         color: white;
     }
     
     .btn-secondary:hover {
-        background-color: #4b5563;
+        background-color: var(--gray-600);
     }
     
     .btn-success {
-        background-color: #10b981;
+        background-color: var(--success-green);
         color: white;
     }
     
     .btn-success:hover {
-        background-color: #059669;
+        background-color: var(--success-dark);
     }
     
     .btn-danger {
-        background-color: #ef4444;
+        background-color: var(--error-red);
         color: white;
     }
     
@@ -174,14 +174,14 @@
     .appliance-info {
         margin-top: 12px;
         padding-top: 12px;
-        border-top: 1px solid #e5e7eb;
-        color: #6b7280;
+        border-top: 1px solid var(--border-color);
+        color: var(--muted-text);
         font-size: 14px;
     }
     
     .info-box {
         background: #eff6ff;
-        border: 1px solid #3b82f6;
+        border: 1px solid var(--primary-blue);
         border-radius: 8px;
         padding: 16px;
         margin-bottom: 20px;
@@ -200,8 +200,8 @@
     }
     
     .warning-box {
-        background: #fef3c7;
-        border: 1px solid #f59e0b;
+        background: var(--warning-bg);
+        border: 1px solid var(--warning-yellow);
         border-radius: 8px;
         padding: 16px;
         margin-bottom: 20px;
@@ -268,7 +268,7 @@
             </div>
             <div class="appliance-info">
                 <p><strong>Features:</strong></p>
-                <ul style="margin: 8px 0; padding-left: 20px; color: #6b7280;">
+                <ul style="margin: 8px 0; padding-left: 20px; color: var(--muted-text);">
                     <li>Automatic Sensor Cooking - detects number and thickness of items</li>
                     <li>Auto-adjusts temperature and cooking time</li>
                     <li>Multiple cooking programs: Burgers, Poultry, Sandwiches, Sausages, Red Meat, Fish</li>
@@ -308,7 +308,7 @@
             </div>
             <div class="appliance-info">
                 <p><strong>Features:</strong></p>
-                <ul style="margin: 8px 0; padding-left: 20px; color: #6b7280;">
+                <ul style="margin: 8px 0; padding-left: 20px; color: var(--muted-text);">
                     <li>Microcomputerized temperature control</li>
                     <li>Multiple keep-warm settings (160°F, 175°F, 195°F, 208°F)</li>
                     <li>Energy-saving timer function</li>
@@ -328,7 +328,7 @@
         <div class="appliance-card">
             <div class="appliance-header">
                 <div>
-                    <div class="appliance-name">Smarter iKettle <span style="color: #f59e0b; font-size: 12px; font-weight: 600;">(Alternative Option)</span></div>
+                    <div class="appliance-name">Smarter iKettle <span style="color: var(--warning-yellow); font-size: 12px; font-weight: 600;">(Alternative Option)</span></div>
                     <div class="appliance-type">WiFi-Enabled Smart Kettle • 1.8L Capacity • ~$80-$150</div>
                 </div>
                 <div class="appliance-status">
@@ -338,20 +338,20 @@
             </div>
             <div class="appliance-info">
                 <p><strong>What is Smarter iKettle?</strong></p>
-                <p style="margin: 8px 0; color: #6b7280;">
+                <p style="margin: 8px 0; color: var(--muted-text);">
                     The Smarter iKettle is a WiFi-enabled electric kettle that allows remote control via smartphone app or voice commands (Alexa, Google Assistant).
                 </p>
 
                 <!-- iKettle Control Panel -->
-                <div id="ikettle-controls" style="margin-top: 20px; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb;">
-                    <h4 style="margin: 0 0 15px 0; color: #1f2937;">iKettle Controls</h4>
+                <div id="ikettle-controls" style="margin-top: 20px; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg);">
+                    <h4 style="margin: 0 0 15px 0; color: var(--text-color);">iKettle Controls</h4>
 
                     <div id="ikettle-status" style="margin-bottom: 15px; display: none;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <div id="ikettle-status-indicator" style="width: 12px; height: 12px; border-radius: 50%; background: #6b7280;"></div>
+                            <div id="ikettle-status-indicator" style="width: 12px; height: 12px; border-radius: 50%; background: var(--muted-text);"></div>
                             <span id="ikettle-status-text" style="font-weight: 500;">Connecting...</span>
                         </div>
-                        <div style="margin-top: 10px; font-size: 14px; color: #6b7280;">
+                        <div style="margin-top: 10px; font-size: 14px; color: var(--muted-text);">
                             <div id="ikettle-temp-display">Temperature: --°C</div>
                             <div id="ikettle-water-display">Water Level: --</div>
                             <div id="ikettle-mode-display">Mode: --</div>
@@ -359,13 +359,13 @@
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px;">
-                        <button onclick="ikettleBoilCoffee()" style="padding: 8px 12px; background: #059669; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        <button onclick="ikettleBoilCoffee()" style="padding: 8px 12px; background: var(--success-dark); color: white; border: none; border-radius: 6px; cursor: pointer;">
                             ☕ Coffee (95°C)
                         </button>
                         <button onclick="ikettleBoilTea()" style="padding: 8px 12px; background: #0891b2; color: white; border: none; border-radius: 6px; cursor: pointer;">
                             🍵 Tea (100°C)
                         </button>
-                        <button onclick="ikettleKeepWarm()" style="padding: 8px 12px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        <button onclick="ikettleKeepWarm()" style="padding: 8px 12px; background: var(--warning-yellow); color: white; border: none; border-radius: 6px; cursor: pointer;">
                             🌡️ Keep Warm
                         </button>
                         <button onclick="ikettleStop()" style="padding: 8px 12px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer;">
@@ -377,20 +377,20 @@
                         <button onclick="ikettleMorningCoffee()" style="padding: 10px 15px; background: #7c3aed; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
                             🌅 Setup Morning Coffee
                         </button>
-                        <button onclick="ikettleRefreshStatus()" style="padding: 10px 15px; background: #6b7280; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        <button onclick="ikettleRefreshStatus()" style="padding: 10px 15px; background: var(--muted-text); color: white; border: none; border-radius: 6px; cursor: pointer;">
                             🔄 Refresh Status
                         </button>
                     </div>
                 </div>
                 <p><strong>Price:</strong> Approximately $80-$150 USD (varies by retailer - Best Buy: $149.99, Bstock: $79.99)</p>
                 <p><strong>Key Advantages Over Current Setup:</strong></p>
-                <ul style="margin: 8px 0; padding-left: 20px; color: #6b7280;">
+                <ul style="margin: 8px 0; padding-left: 20px; color: var(--muted-text);">
                     <li><strong>✅ Temperature Control:</strong> Adjustable 68°F to 212°F - Perfect for green tea (typically 160-180°F, not boiling)</li>
                     <li><strong>✅ Water Level Monitoring:</strong> See filling state/water level remotely</li>
                     <li><strong>✅ Precise Control:</strong> Set exact temperature for different tea types</li>
                 </ul>
                 <p><strong>Features:</strong></p>
-                <ul style="margin: 8px 0; padding-left: 20px; color: #6b7280;">
+                <ul style="margin: 8px 0; padding-left: 20px; color: var(--muted-text);">
                     <li>WiFi connectivity with smartphone app</li>
                     <li>Adjustable temperature: 68°F to 212°F (20°C to 100°C)</li>
                     <li>1.8L capacity</li>
@@ -401,7 +401,7 @@
                     <li>Water level monitoring</li>
                 </ul>
                 <div class="warning-box" style="margin-top: 12px;">
-                    <h4>⚠️ Reliability Concerns</h4>
+                    <h4>WARNING Reliability Concerns</h4>
                     <p>Recent user reviews report connectivity issues, loss of smart features, and unresponsive customer support. Research thoroughly before purchasing.</p>
                 </div>
                 <p><strong>API Status:</strong> App-based control, potential for integration if API is available</p>
@@ -430,7 +430,7 @@ async function ikettleRefreshStatus() {
             statusDiv.style.display = 'block';
 
             if (status.connected) {
-                indicator.style.background = '#10b981'; // green
+                indicator.style.background = 'var(--success-green)'; // green
                 statusText.textContent = `Connected - ${status.state || 'Ready'}`;
 
                 // Update displays
@@ -442,7 +442,7 @@ async function ikettleRefreshStatus() {
                     `Mode: ${status.mode || 'Unknown'}`;
 
                 if (status.state === 'boiling') {
-                    indicator.style.background = '#f59e0b'; // orange
+                    indicator.style.background = 'var(--warning-yellow)'; // orange
                     statusText.textContent = 'Boiling...';
                 }
             } else {
@@ -594,7 +594,7 @@ function showToast(message) {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: #10b981;
+        background: var(--success-green);
         color: white;
         padding: 0.75rem 1rem;
         border-radius: 0.5rem;

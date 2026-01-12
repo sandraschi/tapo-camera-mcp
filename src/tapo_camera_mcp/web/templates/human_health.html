@@ -20,12 +20,12 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
 
     .health-card h3 {
         margin: 0 0 16px 0;
-        color: #1f2937;
+        color: var(--text-color);
         font-size: 18px;
         font-weight: 600;
     }
@@ -33,12 +33,12 @@
     .health-value {
         font-size: 32px;
         font-weight: 700;
-        color: #10b981;
+        color: var(--success-green);
         margin-bottom: 8px;
     }
 
     .health-unit {
-        color: #6b7280;
+        color: var(--muted-text);
         font-size: 14px;
     }
 
@@ -56,15 +56,15 @@
     }
 
     .status-normal {
-        background-color: #10b981;
+        background-color: var(--success-green);
     }
 
     .status-warning {
-        background-color: #f59e0b;
+        background-color: var(--warning-yellow);
     }
 
     .status-critical {
-        background-color: #ef4444;
+        background-color: var(--error-red);
     }
 
     .devices-section {
@@ -72,15 +72,15 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
 
     .device-card {
-        background: #f9fafb;
+        background: var(--card-bg);
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 16px;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
 
@@ -99,11 +99,11 @@
     .device-name {
         font-size: 18px;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
     }
 
     .device-location {
-        color: #6b7280;
+        color: var(--muted-text);
         font-size: 14px;
     }
 
@@ -127,12 +127,12 @@
     .metric-value {
         font-size: 20px;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
     }
 
     .metric-label {
         font-size: 12px;
-        color: #6b7280;
+        color: var(--muted-text);
         margin-top: 4px;
     }
 
@@ -153,25 +153,25 @@
     }
 
     .btn-primary {
-        background-color: #3b82f6;
+        background-color: var(--primary-blue);
         color: white;
     }
 
     .btn-primary:hover {
-        background-color: #2563eb;
+        background-color: var(--primary-blue-dark);
     }
 
     .btn-secondary {
-        background-color: #e5e7eb;
-        color: #374151;
+        background-color: var(--border-color);
+        color: var(--text-color);
     }
 
     .btn-secondary:hover {
-        background-color: #d1d5db;
+        background-color: var(--gray-300);
     }
 
     .btn-danger {
-        background-color: #ef4444;
+        background-color: var(--error-red);
         color: white;
     }
 
@@ -180,8 +180,8 @@
     }
 
     .setup-notice {
-        background: #fef3c7;
-        border: 1px solid #f59e0b;
+        background: var(--warning-bg);
+        border: 1px solid var(--warning-yellow);
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 30px;
@@ -213,7 +213,7 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         margin-top: 20px;
     }
 
@@ -234,12 +234,12 @@
 
     .alert-critical {
         border-left-color: #dc2626 !important;
-        background: #fee2e2 !important;
+        background: var(--error-bg) !important;
     }
 
     .alert-warning {
-        border-left-color: #f59e0b !important;
-        background: #fef3c7 !important;
+        border-left-color: var(--warning-yellow) !important;
+        background: var(--warning-bg) !important;
     }
 </style>
 {% endblock %}
@@ -314,7 +314,7 @@
 
     <!-- Health Alerts Section -->
     <div class="health-alerts" id="alerts-section" style="display: none;">
-        <h3>⚠️ Health Alerts</h3>
+        <h3>WARNING Health Alerts</h3>
         <div id="alerts-container">
             <!-- Alerts will be populated here -->
         </div>

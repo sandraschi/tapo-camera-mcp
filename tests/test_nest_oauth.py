@@ -203,5 +203,5 @@ if __name__ == "__main__":
     asyncio.run(run_async_tests())
 
     print("\n" + "=" * 60)
-    print("✅ All Nest OAuth tests passed!")
+    print("SUCCESS: All Nest OAuth tests passed!")
     print("=" * 60)

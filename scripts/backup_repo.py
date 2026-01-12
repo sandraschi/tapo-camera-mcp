@@ -107,14 +107,14 @@ def get_files_to_backup(exclusions):
 def create_backup():
     print(f"📦 Starting backup for {REPO_ROOT.name}")
     exclusions = load_exclusions()
-    print(f"📋 Loaded {len(exclusions)} exclusion rules")
+    print(f"LIST: Loaded {len(exclusions)} exclusion rules")
 
-    print("🔍 Scanning files...")
+    print("SCAN: Scanning files...")
     files = get_files_to_backup(exclusions)
-    print(f"✅ Found {len(files)} files to backup")
+    print(f"SUCCESS: Found {len(files)} files to backup")
 
     total_size = sum(f.stat().st_size for f in files)
-    print(f"📊 Total size: {total_size / 1024 / 1024:.2f} MB")
+    print(f"SIZE: Total size: {total_size / 1024 / 1024:.2f} MB")
 
     for dest_dir in BACKUP_DESTINATIONS:
         dest_dir = Path(dest_dir)
@@ -122,20 +122,20 @@ def create_backup():
             try:
                 dest_dir.mkdir(parents=True, exist_ok=True)
             except Exception as e:
-                print(f"⚠️ Could not create backup dir {dest_dir}: {e}")
+                print(f"WARNING: Could not create backup dir {dest_dir}: {e}")
                 continue
 
         backup_path = dest_dir / BACKUP_NAME
-        print(f"💾 Creating backup at {backup_path}...")
+        print(f"BACKUP: Creating backup at {backup_path}...")
 
         try:
             with zipfile.ZipFile(backup_path, "w", zipfile.ZIP_DEFLATED) as zf:
                 for file in files:
                     arcname = file.relative_to(REPO_ROOT)
                     zf.write(file, arcname)
-            print(f"✅ Backup created successfully: {backup_path}")
+            print(f"SUCCESS: Backup created successfully: {backup_path}")
         except Exception as e:
-            print(f"❌ Failed to create backup at {dest_dir}: {e}")
+            print(f"ERROR: Failed to create backup at {dest_dir}: {e}")
 
 
 if __name__ == "__main__":

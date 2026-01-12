@@ -393,6 +393,40 @@ def mock_database():
     return MockDatabase()
 
 
+# ============================================================================
+# HARDWARE TESTING FIXTURES
+# ============================================================================
+
+
+@pytest_asyncio.fixture
+async def hardware_initializer():
+    """Return a HardwareInitializer instance for testing."""
+    from tapo_camera_mcp.core.hardware_init import HardwareInitializer
+    from tapo_camera_mcp.camera.manager import CameraManager
+
+    camera_manager = CameraManager()
+    initializer = HardwareInitializer(camera_manager=camera_manager)
+
+    yield initializer
+
+    # Cleanup
+    await camera_manager.cleanup()
+
+
+@pytest.fixture
+def mock_hardware_responses():
+    """Mock responses for hardware connectivity testing."""
+    return {
+        "cameras": {"success": True, "count": 2, "cameras": ["cam1", "cam2"]},
+        "hue_bridge": {"success": True, "lights_count": 5, "groups_count": 2, "scenes_count": 10},
+        "tapo_lighting": {"success": True, "devices_count": 1},
+        "tapo_plugs": {"success": True, "devices_count": 3},
+        "netatmo": {"success": True, "stations_count": 1, "modules_count": 3},
+        "ring": {"success": True, "doorbells_count": 1, "cameras_count": 1},
+        "home_assistant": {"success": True, "devices_count": 0}
+    }
+
+
 @pytest.fixture
 def mock_config_file(temp_dir, sample_config_data):
     """Create a mock configuration file."""

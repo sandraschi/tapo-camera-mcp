@@ -18,7 +18,7 @@ All web API endpoints now use the MCP (Model Context Protocol) client architectu
 - `motion_management` - Motion detection and camera event management
 - `camera_management` - Camera control and streaming operations
 - `ptz_management` - Pan-Tilt-Zoom control and presets
-- `media_management` - Media capture and streaming operations
+- `media_management` - Media capture, streaming, and Plex integration operations
 - `system_management` - System operations and logging
 - `medical_management` - Medical device control operations
 - `security_management` - Security system integration
@@ -597,6 +597,89 @@ Get system health status.
     "security_manager": "healthy"
   },
   "last_check": "2025-01-15T10:30:00Z"
+}
+```
+
+## 🎬 **Plex Media Server API**
+
+Integration with Plex Media Server for media activity tracking and webhook handling.
+
+### **POST /api/plex/webhook**
+
+Receive Plex webhook events for media playback tracking.
+
+**Request Format:**
+- **Content-Type**: `multipart/form-data` (standard Plex) or `application/json` (testing)
+- **Body**: Plex webhook payload with event data
+
+**Plex Webhook Setup:**
+```
+URL: http://your-server:7777/api/plex/webhook
+Method: POST
+```
+
+**Example Payload:**
+```json
+{
+  "event": "media.play",
+  "Account": {
+    "title": "username"
+  },
+  "Player": {
+    "title": "Living Room TV"
+  },
+  "Metadata": {
+    "title": "The Matrix"
+  }
+}
+```
+
+**Supported Events:**
+- `media.play` - Media started playing
+- `media.pause` - Media paused
+- `media.stop` - Media stopped
+- `media.resume` - Media resumed
+- `media.scrobble` - Media marked as watched
+
+**Response:**
+```json
+{
+  "status": "success",
+  "event": "media.play"
+}
+```
+
+### **GET /api/plex/now-playing**
+
+Get current media playback status.
+
+**Response:**
+```json
+{
+  "active": true,
+  "event": "media.play",
+  "user": "username",
+  "player": "Living Room TV",
+  "media": "The Matrix",
+  "timestamp": "2025-12-26T10:30:45.123456",
+  "metadata": {
+    "title": "The Matrix",
+    "type": "movie",
+    "year": 1999
+  }
+}
+```
+
+### **GET /api/plex/status**
+
+Get Plex integration status.
+
+**Response:**
+```json
+{
+  "status": "Plex webhook listener active",
+  "last_event": "media.play",
+  "active_stream": true
 }
 ```
 

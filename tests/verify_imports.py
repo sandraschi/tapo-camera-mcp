@@ -24,14 +24,14 @@ for module_name in modules_to_test:
     try:
         print(f"Testing import: {module_name}")
         __import__(module_name, fromlist=["*"])
-        print(f"✅ Successfully imported {module_name}")
+        print(f"SUCCESS: Successfully imported {module_name}")
     except ImportError as e:
-        print(f"❌ Failed to import {module_name}: {e}")
+        print(f"ERROR Failed to import {module_name}: {e}")
         import traceback
 
         traceback.print_exc()
     except Exception as e:
-        print(f"⚠️ Error importing {module_name}: {e}")
+        print(f"WARNING Error importing {module_name}: {e}")
         import traceback
 
         traceback.print_exc()

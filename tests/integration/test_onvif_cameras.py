@@ -123,7 +123,7 @@ async def test_onvif_camera_connection(onvif_cameras):
             status = await asyncio.wait_for(camera.get_status(), timeout=10.0)
             assert status.get("connected", False), f"Camera {camera_info['name']} not connected"
 
-            print(f"✅ {camera_info['name']}: Connected successfully")
+            print(f"SUCCESS: {camera_info['name']}: Connected successfully")
             print(f"   Model: {status.get('model', 'Unknown')}")
             print(f"   Resolution: {status.get('resolution', 'Unknown')}")
 
@@ -177,7 +177,7 @@ async def test_onvif_stream_url(onvif_cameras):
             assert stream_url.startswith("rtsp://"), f"Invalid stream URL format: {stream_url}"
             assert camera_info["host"] in stream_url, "Stream URL doesn't contain camera host"
 
-            print(f"✅ {camera_info['name']}: Stream URL retrieved")
+            print(f"SUCCESS: {camera_info['name']}: Stream URL retrieved")
             print(f"   URL: {stream_url[:60]}...")
 
             # Test getting stream URL again (should still work, fresh connection)
@@ -218,7 +218,7 @@ async def test_onvif_stream_endpoint(onvif_cameras):
             stream_url = await asyncio.wait_for(camera.get_stream_url(), timeout=15.0)
             assert stream_url is not None, f"No stream URL for {camera_info['name']}"
 
-            print(f"✅ {camera_info['name']}: Stream endpoint test passed")
+            print(f"SUCCESS: {camera_info['name']}: Stream endpoint test passed")
             print(f"   Stream URL available: {stream_url[:50]}...")
 
         except asyncio.TimeoutError:
@@ -272,10 +272,10 @@ async def test_onvif_snapshot(onvif_cameras):
                     "Snapshot should have valid dimensions"
                 )
                 print(
-                    f"✅ {camera_info['name']}: Snapshot retrieved ({snapshot_image.size[0]}x{snapshot_image.size[1]})"
+                    f"SUCCESS: {camera_info['name']}: Snapshot retrieved ({snapshot_image.size[0]}x{snapshot_image.size[1]})"
                 )
             else:
-                print(f"⚠️  {camera_info['name']}: Snapshot not supported (this is OK)")
+                print(f"WARNING: {camera_info['name']}: Snapshot not supported (this is OK)")
 
         except asyncio.TimeoutError:
             pytest.fail(f"Snapshot retrieval for {camera_info['name']} timed out")
@@ -319,7 +319,7 @@ async def test_onvif_mjpeg_stream_endpoint(onvif_cameras):
                 url = await asyncio.wait_for(camera.get_stream_url(), timeout=15.0)
                 assert url == stream_url, f"Stream URL changed on iteration {i + 1}"
 
-            print(f"✅ {camera_info['name']}: MJPEG stream endpoint test passed")
+            print(f"SUCCESS: {camera_info['name']}: MJPEG stream endpoint test passed")
             print(f"   Stream URL: {stream_url[:60]}...")
             print("   Multiple requests: OK (fresh connections)")
 
@@ -370,7 +370,7 @@ async def test_onvif_fresh_connection_each_time(onvif_cameras):
             assert stream_url2 is not None, "Second stream URL should work"
             assert stream_url1 == stream_url2, "Stream URLs should be the same"
 
-            print(f"✅ {camera_info['name']}: Fresh connections work correctly")
+            print(f"SUCCESS: {camera_info['name']}: Fresh connections work correctly")
 
         except asyncio.TimeoutError:
             pytest.fail(f"Fresh connection test for {camera_info['name']} timed out")
@@ -425,7 +425,7 @@ async def test_onvif_camera_manager_integration(onvif_cameras, camera_manager):
             stream_url = await asyncio.wait_for(camera.get_stream_url(), timeout=15.0)
             assert stream_url is not None, f"No stream URL for {camera_info['name']}"
 
-        print(f"✅ Camera manager integration: {len(onvif_cameras)} cameras working")
+        print(f"SUCCESS: Camera manager integration: {len(onvif_cameras)} cameras working")
 
     except asyncio.TimeoutError:
         pytest.fail("Camera manager integration test timed out")

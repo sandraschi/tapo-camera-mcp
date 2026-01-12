@@ -8,11 +8,144 @@
     <link rel="stylesheet" href="{{ url_for('static', path='/css/chatbot.css') }}?v=20251203">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
     <style>
+        :root {
+            /* Base colors */
+            --bg-color: #ffffff;
+            --text-color: #111827;
+            --card-bg: #f9fafb;
+            --card-border: #e5e7eb;
+            --card-shadow: rgba(0, 0, 0, 0.1);
+            --border-color: #e5e7eb;
+            --hover-bg: #f3f4f6;
+            --input-bg: #ffffff;
+            --muted-text: #6b7280;
+            --light-text: #9ca3af;
+
+            /* Additional theme colors */
+            --primary-blue: #3b82f6;
+            --primary-blue-dark: #2563eb;
+            --primary-blue-darker: #1d4ed8;
+            --secondary-gray: #6b7280;
+            --success-green: #10b981;
+            --success-light: #dcfce7;
+            --success-dark: #059669;
+            --warning-yellow: #f59e0b;
+            --warning-bg: #fef3c7;
+            --error-red: #ef4444;
+            --error-bg: #fee2e2;
+            --info-blue: #667eea;
+            --info-bg: #dbeafe;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+
+            /* Camera and status specific colors */
+            --camera-online: #16a34a;
+            --camera-offline: #991b1b;
+            --camera-warning: #92400e;
+            --camera-warning-light: #78350f;
+            --camera-blue: #1d4ed8;
+            --camera-gray: #64748b;
+            --camera-yellow: #fbbf24;
+            --camera-orange: #ff6600;
+            --camera-orange-dark: #e55c00;
+            --camera-yellow-light: #fde68a;
+
+            /* Card and panel specific */
+            --panel-bg: #ffffff;
+            --panel-border: #e5e7eb;
+            --panel-shadow: rgba(0, 0, 0, 0.1);
+            --modal-bg: #ffffff;
+            --modal-border: #e5e7eb;
+            --modal-shadow: rgba(0, 0, 0, 0.25);
+
+            /* Dark theme specific */
+            --dark-bg-primary: #0f172a;
+            --dark-bg-secondary: #1e293b;
+            --dark-text-primary: #f1f5f9;
+            --dark-text-secondary: #e2e8f0;
+            --dark-text-muted: #94a3b8;
+            --dark-border: #475569;
+            --dark-card-bg: #374151;
+            --dark-panel-bg: #374151;
+            --dark-modal-bg: #1f2937;
+            --dark-shadow: rgba(0, 0, 0, 0.4);
+        }
+
         [data-theme="dark"] {
+            /* Base colors */
             --bg-color: #1f2937;
             --text-color: #f9fafb;
             --card-bg: #374151;
+            --card-border: #4b5563;
+            --card-shadow: rgba(0, 0, 0, 0.4);
             --border-color: #4b5563;
+            --hover-bg: #4b5563;
+            --input-bg: #374151;
+            --muted-text: #6b7280;
+            --light-text: #9ca3af;
+
+            /* Additional theme colors */
+            --primary-blue: #3b82f6;
+            --primary-blue-dark: #2563eb;
+            --primary-blue-darker: #1d4ed8;
+            --secondary-gray: #6b7280;
+            --success-green: #10b981;
+            --success-light: #dcfce7;
+            --success-dark: #059669;
+            --warning-yellow: #f59e0b;
+            --warning-bg: #fef3c7;
+            --error-red: #ef4444;
+            --error-bg: #fee2e2;
+            --info-blue: #667eea;
+            --info-bg: #dbeafe;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+
+            /* Camera and status specific colors */
+            --camera-online: #16a34a;
+            --camera-offline: #991b1b;
+            --camera-warning: #92400e;
+            --camera-warning-light: #78350f;
+            --camera-blue: #1d4ed8;
+            --camera-gray: #64748b;
+            --camera-yellow: #fbbf24;
+            --camera-orange: #ff6600;
+            --camera-orange-dark: #e55c00;
+            --camera-yellow-light: #fde68a;
+
+            /* Card and panel specific */
+            --panel-bg: #374151;
+            --panel-border: #4b5563;
+            --panel-shadow: rgba(0, 0, 0, 0.4);
+            --modal-bg: #1f2937;
+            --modal-border: #374151;
+            --modal-shadow: rgba(0, 0, 0, 0.45);
+
+            /* Dark theme specific */
+            --dark-bg-primary: #0f172a;
+            --dark-bg-secondary: #1e293b;
+            --dark-text-primary: #f1f5f9;
+            --dark-text-secondary: #e2e8f0;
+            --dark-text-muted: #94a3b8;
+            --dark-border: #475569;
+            --dark-card-bg: #374151;
+            --dark-panel-bg: #374151;
+            --dark-modal-bg: #1f2937;
+            --dark-shadow: rgba(0, 0, 0, 0.4);
         }
 
         [data-theme="dark"] body {
@@ -45,7 +178,7 @@
 
         [data-theme="dark"] .nav-links li.active a,
         [data-theme="dark"] .nav-links li a:hover {
-            background-color: #4b5563;
+            background-color: var(--hover-bg);
             color: var(--text-color);
         }
 
@@ -55,13 +188,13 @@
         }
 
         [data-theme="dark"] .search-bar input {
-            background-color: #374151;
+            background-color: var(--input-bg);
             color: var(--text-color);
             border-color: var(--border-color);
         }
 
         .search-bar i.fas {
-            color: #6b7280 !important;
+            color: var(--muted-text) !important;
             font-family: "Font Awesome 6 Free" !important;
             font-weight: 900 !important;
             display: inline-block !important;
@@ -72,7 +205,7 @@
         .search-button {
             background: none !important;
             border: none !important;
-            color: #6b7280 !important;
+            color: var(--muted-text) !important;
             cursor: pointer;
             padding: 6px;
             border-radius: 50%;
@@ -84,7 +217,7 @@
         }
 
         .search-button i.fas {
-            color: #6b7280 !important;
+            color: var(--muted-text) !important;
             font-family: "Font Awesome 6 Free" !important;
             font-weight: 900 !important;
             display: inline-block !important;
@@ -101,15 +234,15 @@
         }
 
         [data-theme="dark"] .search-bar i {
-            color: #9ca3af !important;
+            color: var(--light-text) !important;
         }
 
         [data-theme="dark"] .search-button {
-            color: #9ca3af !important;
+            color: var(--light-text) !important;
         }
 
         [data-theme="dark"] .search-button i {
-            color: #9ca3af !important;
+            color: var(--light-text) !important;
         }
 
         [data-theme="dark"] .search-button:hover i {
@@ -122,7 +255,7 @@
             color: var(--text-color);
         }
         [data-theme="dark"] .theme-toggle:hover {
-            background-color: #4b5563;
+            background-color: var(--hover-bg);
             border-color: #6b7280;
         }
 
@@ -164,11 +297,11 @@
         }
 
         [data-theme="dark"] .icon-button {
-            color: #9ca3af !important;
+            color: var(--light-text) !important;
         }
 
         [data-theme="dark"] .icon-button i {
-            color: #9ca3af !important;
+            color: var(--light-text) !important;
             font-family: "Font Awesome 6 Free" !important;
             font-weight: 900 !important;
         }
@@ -878,9 +1011,76 @@
             background: rgba(0, 0, 0, 0.5);
             z-index: 999;
         }
-        .sidebar-open .sidebar-overlay {
-            display: block;
-        }
+            .sidebar-open .sidebar-overlay {
+                display: block;
+            }
+
+            /* Card and Panel Styles */
+            .card, .panel {
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                border-radius: 0.5rem;
+                box-shadow: 0 1px 3px var(--card-shadow);
+                color: var(--text-color);
+            }
+
+            .panel {
+                background: var(--panel-bg);
+                border: 1px solid var(--panel-border);
+                box-shadow: 0 4px 6px var(--panel-shadow);
+                padding: 1.5rem;
+            }
+
+            .modal-dialog {
+                background: var(--modal-bg);
+                color: var(--text-color);
+                border: 1px solid var(--modal-border);
+                box-shadow: 0 30px 80px var(--modal-shadow);
+            }
+
+            .card-header, .panel-header {
+                background: var(--card-bg);
+                border-bottom: 1px solid var(--card-border);
+                color: var(--text-color);
+                padding: 1rem 1.5rem;
+                border-radius: 0.5rem 0.5rem 0 0;
+            }
+
+            .card-body, .panel-body {
+                background: var(--card-bg);
+                color: var(--text-color);
+                padding: 1.5rem;
+            }
+
+            .card-footer, .panel-footer {
+                background: var(--card-bg);
+                border-top: 1px solid var(--card-border);
+                color: var(--text-color);
+                padding: 1rem 1.5rem;
+                border-radius: 0 0 0.5rem 0.5rem;
+            }
+
+            .status-card {
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                border-radius: 0.5rem;
+                padding: 1rem;
+                box-shadow: 0 1px 3px var(--card-shadow);
+                color: var(--text-color);
+            }
+
+            .status-card .status-icon {
+                color: var(--primary-blue);
+            }
+
+            .status-card .status-value {
+                color: var(--text-color);
+                font-weight: 600;
+            }
+
+            .status-card .status-label {
+                color: var(--muted-text);
+            }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -904,6 +1104,12 @@
                         <span>Cameras</span>
                     </a>
                 </li>
+                <li class="nav-item {% if request.url.path == '/plex' %}active{% endif %}">
+                    <a href="/plex">
+                        <i class="fas fa-play"></i>
+                        <span>Plex Media</span>
+                    </a>
+                </li>
                 <li class="nav-item {% if request.url.path.startswith('/recordings') %}
                 active{% endif %}">
                     <a href="{{ url_for('recordings') }}">
@@ -915,6 +1121,12 @@
                     <a href="/energy">
                         <i class="fas fa-bolt"></i>
                         <span>Energy</span>
+                    </a>
+                </li>
+                <li class="nav-item {% if request.url.path == '/logs' %}active{% endif %}">
+                    <a href="/logs">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Log Management</span>
                     </a>
                 </li>
                 <li class="nav-item {% if request.url.path == '/lighting' %}active{% endif %}">
@@ -1223,7 +1435,7 @@
                             <ul>
                                 <li>🎥 Add camera via MCP tool <code>add_camera</code>.</li>
                                 <li>🔌 Configure Tapo P115 credentials in <code>config.yaml</code>.</li>
-                                <li>📊 Import Grafana provisioning bundle for dashboards.</li>
+                                <li>DATA Import Grafana provisioning bundle for dashboards.</li>
                             </ul>
                         </article>
                         <article class="help-section" data-help-section="cameras">

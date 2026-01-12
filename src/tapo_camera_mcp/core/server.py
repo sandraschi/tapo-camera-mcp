@@ -204,9 +204,9 @@ class TapoCameraServer:
 
                 logger.info("Initializing all hardware components...")
                 try:
-                    # Reduced timeout from 30s to 10s for faster startup
+                    # Increased timeout to allow Ring camera registration to complete
                     hardware_results = await asyncio.wait_for(
-                        initialize_all_hardware(), timeout=10.0
+                        initialize_all_hardware(self.camera_manager), timeout=20.0
                     )
                     # Log summary
                     successful = sum(

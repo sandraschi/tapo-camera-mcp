@@ -1,102 +1,61 @@
-# Central Documentation Rules
+# Cursor Rules: tapo-camera-mcp
+# Read at: Cursor IDE workspace open + each new chat session
+# Proof of read: hi! (acknowledged)
 
-## Rule #1: Read Central Docs First
+## 🚨 CRITICAL: No Unicode Emojis (Crash Prevention)
 
-**BEFORE making any changes or starting work, ALWAYS:**
+**DEADLY EMOJIS (NEVER USE):**
+- 🎉 (partypopper) - causes immediate crashes
+- 🏆 (trophy) - system instability
+- 🚀 (rocket) - serialization failures
+- Any Unicode emoji in Python/PS1/logger contexts
 
-1. **Read the Central Documentation README:**
-   - Location: `D:\Dev\repos\mcp-central-docs\README.md`
-   - This shows all important documentation "branches" (folder trees)
-   - Navigate from there to find specific information
+**STRICT BAN in these file types:**
+- **Python files (.py)** - All Unicode emojis forbidden
+- **PowerShell scripts (.ps1)** - All Unicode emojis forbidden
+- **Logger messages** - `logger.info("🚀 Started")` → `logger.info("STARTED")`
 
-2. **Follow Documentation Branches:**
-   - Central docs are organized by topic (Anthropic ecosystem, Google ecosystem, patterns, projects, etc.)
-   - Each branch has its own README explaining what's inside
-   - Use the branch structure to find relevant docs
+**FORBIDDEN contexts:**
+- Logger messages (`logger.info("🚀 Started")`) - causes crashes and restart loops
+- API parameters - serialization failures
+- MCP responses - client crashes
+- Error messages - encoding failures
+- Variable names, function names, comments
 
-3. **Check for Existing Patterns:**
-   - Look in `docs/patterns/` for design patterns
-   - Check `templates/` for reusable templates
-   - Review `docs/projects/` for similar project examples
+**✅ ALLOWED in HTML for pretty UI:**
+- Emojis can be used in HTML templates and UI strings
+- Web dashboard displays and user-facing content
+- README.md and documentation files
 
-4. **Avoid Duplication:**
-   - Search existing docs before creating new ones
-   - Update existing docs rather than creating duplicates
-   - Reference central docs instead of copying content
+**✅ SAFE alternatives:**
+- ASCII text only: "Process started" instead of "🚀 Started"
+- NO Unicode emojis in Python/PS1/logger contexts EVER
 
----
+## 🐧 CRITICAL: No Linux Syntax in PowerShell Chats
 
-## Documentation Branches (from Central README)
+**🚫 FORBIDDEN in PowerShell environments:**
+- `&&` (command chaining)
+- `||` (logical OR)
+- `|` (pipes)
+- `;` (command separators)
+- `&` (background)
+- `mkdir -p` (use `New-Item -ItemType Directory -Force`)
+- `ls -la` (use `Get-ChildItem`)
+- `rm -rf` (use `Remove-Item -Recurse -Force`)
 
-### Core Standards
-- `STANDARDS.md` - Documentation quality standards
-- `STRUCTURE.md` - Directory layout guide
-- `CONTRIBUTING.md` - How to contribute
+**✅ REQUIRED PowerShell syntax:**
+```powershell
+# Directory operations
+New-Item -ItemType Directory -Force -Path "folder"
+Get-ChildItem -Recurse
+Remove-Item -Recurse -Force "folder"
 
-### Anthropic Ecosystem (`docs/anthropic-ecosystem/`)
-- MCP Protocol, FastMCP, MCPB, Claude Desktop, Glama
+# Command separation (one per line)
+command1
+if ($?) { command2 }
 
-### Google Ecosystem (`docs/google-ecosystem/`)
-- Gemini 3, Antigravity IDE, Nano Banana Pro, DeepMind, TPU infrastructure
-
-### Patterns (`docs/patterns/`)
-- Design patterns for MCP servers and development
-
-### Projects (`docs/projects/`)
-- myai, veogen, mywienerlinien, autohotkey
-
-### Monitoring (`monitoring/`)
-- Prometheus/Grafana/Loki stack
-
-### Templates (`templates/`)
-- Reusable templates and scripts
-
----
-
-## Quick Reference
-
-**Central Docs Location:** `D:\Dev\repos\mcp-central-docs\`
-
-**Start Here:** `D:\Dev\repos\mcp-central-docs\README.md`
-
-**When in doubt:** Read the central README and navigate from there.
-
----
-
-## Rule #2: Always Use Current Date/Time
-
-**NEVER hallucinate or guess dates!**
-
-**When adding timestamps to files (MD, PY, etc.):**
-
-1. **Check user_info for current date:**
-   - User info contains: `Current Date: Tuesday Dec 2, 2025`
-   - Use this exact date, not made-up dates
-
-2. **If writing Python code needing timestamps:**
-   ```python
-   from datetime import datetime
-   current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-   ```
-
-3. **If writing Markdown with timestamps:**
-   - Use format: `**Timestamp**: YYYY-MM-DD`
-   - Use format: `**Last Updated**: YYYY-MM-DD`
-   - Always get from user_info or system
-
-4. **NEVER write dates like:**
-   - ❌ `2025-01-17` (when it's actually December)
-   - ❌ `2024-XX-XX` (placeholder dates)
-   - ❌ Any date not verified from user_info
-
-**Example correct usage:**
-```markdown
-**Timestamp**: 2025-12-02  
-**Last Updated**: 2025-12-02  
+# Virtual environment
+build_venv\Scripts\activate
 ```
 
-**Why this matters:**
-- Hallucinated dates break documentation chronology
-- Users rely on accurate timestamps
-- It's just bloody annoying (eejit behavior!)
-
+**Rule enforcement:** Any output with Linux syntax or Unicode emojis will be rejected.

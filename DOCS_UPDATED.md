@@ -1,13 +1,111 @@
-# Documentation Update - v1.8.0 Complete
+# Documentation Update - v1.10.0 Complete
 
-**Date**: 2025-12-04  
-**Version**: 1.8.0 (Stability & Monitoring Release)
+**Date**: 2026-01-12
+**Version**: 1.10.0 (Webapp Stability & Plex Integration Release)
 
 ---
 
 ## Files Updated
 
 ### **Core Documentation**
+
+1. **README.md** ✅
+   - Updated to v1.10.0 with Plex integration
+   - Added Plex MCP to architecture overview
+   - Enhanced device compatibility badges (added Plex)
+   - Updated release notes with webapp stability fixes
+   - Added Plex integration to feature list
+
+2. **CHANGELOG.md** ✅
+   - Added complete v1.10.0 changelog entry
+   - Documented all routing fixes (25+ missing routes)
+   - Documented Plex integration features
+   - Documented theme system improvements
+   - Documented documentation updates
+
+3. **API_DOCUMENTATION.md** ✅
+   - Added complete Plex API reference
+   - Documented `/api/plex/webhook`, `/api/plex/now-playing`, `/api/plex/status`
+   - Updated MCP tool categories to include media management
+   - Added webhook payload formats and examples
+
+4. **USER_GUIDE.md** ✅
+   - Added Plex Media Server Integration section
+   - Documented webhook setup instructions
+   - Added Plex dashboard usage guide
+   - Updated table of contents
+
+5. **DOCS_UPDATED.md** ✅ (THIS FILE)
+   - Updated for v1.10.0 documentation changes
+   - Documented all new Plex-related documentation
+   - Added webapp routing fixes documentation
+
+### **New Features Documented**
+
+#### 1. **Plex Media Server Integration**
+- **Webhook Setup**: Complete instructions for Plex webhook configuration
+- **API Endpoints**: Full documentation of all Plex-related APIs
+- **Dashboard Features**: Media library browsing, activity tracking
+- **Event Types**: Supported media events (play/pause/stop/resume)
+
+#### 2. **Webapp Stability Fixes**
+- **Routing System**: Documentation of 25+ fixed routes
+- **Navigation Links**: All sidebar links now functional
+- **Page Coverage**: Complete list of working pages
+- **Error Resolution**: 404 errors eliminated across webapp
+
+#### 3. **Enhanced Theming System**
+- **CSS Variables**: Expanded color palette documentation
+- **Camera Theming**: Status indicators now theme-aware
+- **Component Coverage**: Cards, modals, buttons all follow theme
+- **Consistency**: No more hardcoded colors in UI components
+
+#### 4. **API Improvements**
+- **Webhook Handling**: Both multipart/form-data and JSON support
+- **Error Handling**: Better error messages and debugging
+- **Documentation**: Complete API reference with examples
+
+### **Files Updated (v1.10.0)**
+
+#### **Core Files**
+- README.md - v1.10.0 release, Plex integration, routing fixes
+- CHANGELOG.md - Complete v1.10.0 changelog
+- API_DOCUMENTATION.md - Plex API reference
+- USER_GUIDE.md - Plex setup instructions
+- DOCS_UPDATED.md - Documentation status
+
+#### **Code Files Updated**
+- src/tapo_camera_mcp/web/server.py - Added 25+ missing routes
+- src/tapo_camera_mcp/web/templates/base.html - Added Plex navigation, theme variables
+- src/tapo_camera_mcp/web/api/plex.py - Webhook error handling improvements
+- src/tapo_camera_mcp/core/messaging_service.py - Added MEDIA_EVENT category
+- start.py - Fixed PORT environment variable support
+
+#### **Template Files Updated**
+- All camera/status templates - Theme variable conversion
+- base.html - Navigation and CSS variables
+- plex.html - New Plex media interface
+
+### **Key Documentation Additions**
+
+#### **Plex Integration Guide**
+```
+Setup Steps:
+1. Enable Plex webhooks → Settings → General → Webhooks
+2. Add URL: http://your-server:7777/api/plex/webhook
+3. Enable events: media.play, media.pause, media.stop, media.resume
+4. Access dashboard: http://localhost:7777/plex
+```
+
+#### **Webapp Stability**
+- **Before**: 15+ pages returning 404 errors
+- **After**: All 25+ pages functional
+- **Fixed Routes**: /logs, /alerts, /alarms, /appliance-monitor, /events, etc.
+
+#### **Theme System**
+- **Before**: Hardcoded colors in camera cards, inconsistent theming
+- **After**: CSS variables throughout, proper light/dark theme support
+- **Coverage**: All status indicators, buttons, modals, alerts
 
 1. **README.md** ✅
    - Added v1.8.0 release notes
@@ -313,29 +411,34 @@ tapo_unacknowledged_alarms 0
 
 ## Summary
 
-**v1.8.0 Documentation Complete:**
+**v1.10.0 Documentation Complete:**
 
-✅ **README.md** - Updated with v1.8.0 features  
-✅ **help.html** - New stability & monitoring sections  
-✅ **MONITORING_INTEGRATION.md** - Prometheus/Loki/Grafana setup guide  
-✅ **STABILITY_SYSTEM_COMPLETE.md** - Reliability features  
-✅ **11 feature-specific docs** - Comprehensive troubleshooting  
+✅ **README.md** - v1.10.0 release with Plex integration
+✅ **CHANGELOG.md** - Complete v1.10.0 changelog
+✅ **API_DOCUMENTATION.md** - Plex API reference
+✅ **USER_GUIDE.md** - Plex setup instructions
+✅ **DOCS_UPDATED.md** - Documentation status
 
-**Demo-Ready:**
-- Dependency validation on startup
-- All devices monitored every 60s
-- Health dashboard shows status
-- Alerts dashboard shows issues
-- Prometheus/Loki ready for Grafana
+**New Features Documented:**
+- **Plex Media Server Integration** - Webhook setup, API endpoints, dashboard usage
+- **Webapp Stability** - 25+ fixed routes, navigation fixes, 404 error elimination
+- **Enhanced Theming** - CSS variables, camera status theming, consistent UI
+- **API Improvements** - Webhook handling, error messages, documentation
 
-**No more "it worked yesterday" failures!** 🎉
+**Webapp Now Stable:**
+- All navigation links functional (no more 404s)
+- Complete theme support across all pages
+- Plex integration fully documented
+- Camera/status indicators properly themed
+
+**No more broken pages or inconsistent theming!** 🎉
 
 **Next Steps:**
-1. Test demo: http://localhost:7777
-2. Check health: http://localhost:7777/health-dashboard
-3. Review alerts: http://localhost:7777/alerts
+1. Test webapp: http://localhost:7777 (all pages work!)
+2. Test Plex: Configure webhook → http://localhost:7777/plex
+3. Check themes: Toggle light/dark mode on any page
 4. Optional: Set up Grafana monitoring stack
 
-All documentation complete and ready for reliable demos! 💪
+All documentation complete and webapp fully functional! 🚀
 
 

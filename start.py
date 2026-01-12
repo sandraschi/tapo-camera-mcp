@@ -17,13 +17,13 @@ logger = logging.getLogger(__name__)
 
 def run_command(cmd, description):
     """Run a command and handle errors."""
-    logger.info(f"🚀 {description}")
+    logger.info(f"START: {description}")
     try:
         result = subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True)
-        logger.info(f"✅ {description} completed successfully")
+        logger.info(f"SUCCESS: {description} completed successfully")
         return True
     except subprocess.CalledProcessError as e:
-        logger.error(f"❌ {description} failed: {e}")
+        logger.error(f"ERROR: {description} failed: {e}")
         logger.error(f"Error output: {e.stderr}")
         return False
 
@@ -78,6 +78,12 @@ def start_web_dashboard(port: int = 7777):
 
     try:
         # Use system Python directly - no venv needed if dependencies are installed
+        # Check for PORT environment variable
+        env_port = os.getenv("PORT")
+        if env_port:
+            port = int(env_port)
+            logger.info(f"Using port from PORT environment variable: {port}")
+
         cmd = f"python -m tapo_camera_mcp.web.server --port {port}"
         subprocess.run(cmd, check=False, shell=True)
     except KeyboardInterrupt:
@@ -86,45 +92,45 @@ def start_web_dashboard(port: int = 7777):
 
 def test_webcam():
     """Test webcam functionality."""
-    logger.info("📹 Testing webcam functionality...")
+    logger.info("CAMERA: Testing webcam functionality...")
 
     if run_command("python test_webcam_streaming.py", "Webcam test"):
-        logger.info("✅ Webcam test completed successfully!")
-        logger.info("🎥 Your webcam is ready for streaming")
+        logger.info("SUCCESS: Webcam test completed successfully!")
+        logger.info("STREAM: Your webcam is ready for streaming")
     else:
-        logger.error("❌ Webcam test failed")
-        logger.error("💡 Make sure you have a USB webcam connected")
+        logger.error("ERROR: Webcam test failed")
+        logger.error("HINT: Make sure you have a USB webcam connected")
 
 
 def check_dependencies():
     """Check if all dependencies are installed."""
-    logger.info("🔍 Checking dependencies...")
+    logger.info("CHECK: Checking dependencies...")
 
     try:
         import cv2
 
-        logger.info("✅ OpenCV installed")
+        logger.info("SUCCESS: OpenCV installed")
     except ImportError:
-        logger.error("❌ OpenCV not installed. Run: pip install opencv-python")
+        logger.error("ERROR: OpenCV not installed. Run: pip install opencv-python")
         return False
 
     try:
         import fastapi
 
-        logger.info("✅ FastAPI installed")
+        logger.info("SUCCESS: FastAPI installed")
     except ImportError:
-        logger.error("❌ FastAPI not installed. Run: pip install fastapi")
+        logger.error("ERROR: FastAPI not installed. Run: pip install fastapi")
         return False
 
     try:
         import uvicorn
 
-        logger.info("✅ Uvicorn installed")
+        logger.info("SUCCESS: Uvicorn installed")
     except ImportError:
-        logger.error("❌ Uvicorn not installed. Run: pip install uvicorn")
+        logger.error("ERROR: Uvicorn not installed. Run: pip install uvicorn")
         return False
 
-    logger.info("✅ All dependencies are installed!")
+    logger.info("SUCCESS: All dependencies are installed!")
     return True
 
 
@@ -158,10 +164,10 @@ def main():
         print("\n" + "=" * 40)
         start_web_dashboard()
     elif args.command == "both":
-        print("🚀 Starting both MCP server and web dashboard...")
-        print("📡 MCP Server: Available for Claude Desktop")
-        print("🌐 Web Dashboard: http://localhost:7777")
-        print("🛑 Press Ctrl+C to stop both services")
+        print("START: Starting both MCP server and web dashboard...")
+        print("SERVER: MCP Server: Available for Claude Desktop")
+        print("WEB: Web Dashboard: http://localhost:7777")
+        print("STOP: Press Ctrl+C to stop both services")
         print("\n" + "=" * 40)
 
         # Start both services

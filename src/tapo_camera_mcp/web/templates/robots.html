@@ -20,12 +20,12 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
     
     .overview-card h3 {
         margin: 0 0 16px 0;
-        color: #1f2937;
+        color: var(--text-color);
         font-size: 18px;
         font-weight: 600;
     }
@@ -33,12 +33,12 @@
     .overview-value {
         font-size: 32px;
         font-weight: 700;
-        color: #3b82f6;
+        color: var(--primary-blue);
         margin-bottom: 8px;
     }
     
     .overview-label {
-        color: #6b7280;
+        color: var(--muted-text);
         font-size: 14px;
     }
     
@@ -47,16 +47,16 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         margin-bottom: 30px;
     }
     
     .robot-card {
-        background: #f9fafb;
+        background: var(--card-bg);
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 16px;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
     
@@ -75,11 +75,11 @@
     .robot-name {
         font-size: 18px;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
     }
     
     .robot-type {
-        color: #6b7280;
+        color: var(--muted-text);
         font-size: 14px;
     }
     
@@ -97,16 +97,16 @@
     }
     
     .status-online {
-        background-color: #10b981;
+        background-color: var(--success-green);
         box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
     }
     
     .status-offline {
-        background-color: #6b7280;
+        background-color: var(--muted-text);
     }
     
     .status-coming-soon {
-        background-color: #f59e0b;
+        background-color: var(--warning-yellow);
     }
     
     .robot-controls {
@@ -127,21 +127,21 @@
     }
     
     .btn-primary {
-        background-color: #3b82f6;
+        background-color: var(--primary-blue);
         color: white;
     }
     
     .btn-primary:hover {
-        background-color: #2563eb;
+        background-color: var(--primary-blue-dark);
     }
     
     .btn-secondary {
-        background-color: #6b7280;
+        background-color: var(--muted-text);
         color: white;
     }
     
     .btn-secondary:hover {
-        background-color: #4b5563;
+        background-color: var(--gray-600);
     }
     
     .btn:disabled {
@@ -152,15 +152,15 @@
     .robot-info {
         margin-top: 12px;
         padding-top: 12px;
-        border-top: 1px solid #e5e7eb;
-        color: #6b7280;
+        border-top: 1px solid var(--border-color);
+        color: var(--muted-text);
         font-size: 14px;
     }
     
     .coming-soon-badge {
         display: inline-block;
         padding: 4px 8px;
-        background-color: #fef3c7;
+        background-color: var(--warning-bg);
         color: #92400e;
         border-radius: 4px;
         font-size: 12px;
@@ -170,7 +170,7 @@
     
     .info-box {
         background: #eff6ff;
-        border: 1px solid #3b82f6;
+        border: 1px solid var(--primary-blue);
         border-radius: 8px;
         padding: 16px;
         margin-bottom: 20px;
@@ -224,7 +224,7 @@
         <p>Control your Roomba and other vacuum robots</p>
         
         <div class="info-box">
-            <h4>📝 Roomba Integration</h4>
+            <h4>LOG Roomba Integration</h4>
             <p>Roomba integration coming soon. We'll support iRobot Roomba via local API or cloud integration.</p>
         </div>
         
@@ -275,7 +275,7 @@
             </div>
             <div class="robot-info">
                 <p><strong>Specifications:</strong></p>
-                <ul style="margin: 8px 0; padding-left: 20px; color: #6b7280;">
+                <ul style="margin: 8px 0; padding-left: 20px; color: var(--muted-text);">
                     <li>4D LiDAR system for 360° environmental recognition</li>
                     <li>HD wide-angle camera for surveillance</li>
                     <li>AI-driven gaits and obstacle avoidance</li>
@@ -307,7 +307,7 @@
             </div>
             <div class="robot-info">
                 <p><strong>Specifications:</strong></p>
-                <ul style="margin: 8px 0; padding-left: 20px; color: #6b7280;">
+                <ul style="margin: 8px 0; padding-left: 20px; color: var(--muted-text);">
                     <li>Tiny AI-powered autonomous mobile robot</li>
                     <li>1080p HD camera with night vision</li>
                     <li>Autonomous 24/7 home patrol</li>
@@ -319,7 +319,7 @@
                     <li><strong>Open Source</strong> - GitHub repo with full API</li>
                 </ul>
                 <p><strong>Use Cases:</strong> Indoor home patrol, pet monitoring, elderly check-in, security surveillance</p>
-                <p><strong>API Status:</strong> <span style="color: #10b981;">✓ Full API available</span> - ROS integration ready, GitHub SDK</p>
+                <p><strong>API Status:</strong> <span style="color: var(--success-green);">OK Full API available</span> - ROS integration ready, GitHub SDK</p>
             </div>
             <div class="robot-controls">
                 <button class="btn btn-primary" disabled>Start Patrol</button>

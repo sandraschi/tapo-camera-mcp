@@ -20,7 +20,7 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         position: relative;
         overflow: hidden;
     }
@@ -32,12 +32,12 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(90deg, #3b82f6, #10b981);
+        background: linear-gradient(90deg, var(--primary-blue), var(--success-green));
     }
     
     .weather-card h3 {
         margin: 0 0 16px 0;
-        color: #1f2937;
+        color: var(--text-color);
         font-size: 18px;
         font-weight: 600;
         display: flex;
@@ -48,12 +48,12 @@
     .weather-value {
         font-size: 32px;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--text-color);
         margin-bottom: 8px;
     }
     
     .weather-unit {
-        color: #6b7280;
+        color: var(--muted-text);
         font-size: 14px;
     }
     
@@ -70,11 +70,11 @@
     }
     
     .trend-down {
-        color: #059669;
+        color: var(--success-dark);
     }
     
     .trend-stable {
-        color: #6b7280;
+        color: var(--muted-text);
     }
     
     .health-indicator {
@@ -93,17 +93,17 @@
     }
     
     .health-good {
-        background-color: #dbeafe;
+        background-color: var(--info-bg);
         color: #1e40af;
     }
     
     .health-fair {
-        background-color: #fef3c7;
+        background-color: var(--warning-bg);
         color: #92400e;
     }
     
     .health-poor {
-        background-color: #fee2e2;
+        background-color: var(--error-bg);
         color: #991b1b;
     }
     
@@ -112,16 +112,16 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         margin-bottom: 20px;
     }
     
     .station-card {
-        background: #f9fafb;
+        background: var(--card-bg);
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 16px;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         transition: all 0.2s ease;
     }
     
@@ -140,11 +140,11 @@
     .station-name {
         font-size: 18px;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
     }
     
     .station-location {
-        color: #6b7280;
+        color: var(--muted-text);
         font-size: 14px;
     }
     
@@ -161,11 +161,11 @@
     }
     
     .status-online {
-        background-color: #10b981;
+        background-color: var(--success-green);
     }
     
     .status-offline {
-        background-color: #ef4444;
+        background-color: var(--error-red);
     }
     
     .station-modules {
@@ -179,13 +179,13 @@
         background: white;
         border-radius: 6px;
         padding: 16px;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
     
     .module-name {
         font-size: 14px;
         font-weight: 600;
-        color: #374151;
+        color: var(--text-color);
         margin-bottom: 8px;
     }
     
@@ -202,12 +202,12 @@
     .data-value {
         font-size: 16px;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
     }
     
     .data-label {
         font-size: 11px;
-        color: #6b7280;
+        color: var(--muted-text);
         margin-top: 2px;
     }
     
@@ -216,7 +216,7 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
         margin-top: 20px;
     }
     
@@ -224,39 +224,39 @@
         display: flex;
         gap: 8px;
         margin-bottom: 20px;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--border-color);
     }
     
     .chart-tab {
         padding: 8px 16px;
         border: none;
         background: none;
-        color: #6b7280;
+        color: var(--muted-text);
         cursor: pointer;
         border-bottom: 2px solid transparent;
         transition: all 0.2s ease;
     }
     
     .chart-tab.active {
-        color: #3b82f6;
-        border-bottom-color: #3b82f6;
+        color: var(--primary-blue);
+        border-bottom-color: var(--primary-blue);
     }
     
     .chart-placeholder {
         height: 300px;
-        background: #f9fafb;
-        border: 2px dashed #d1d5db;
+        background: var(--card-bg);
+        border: 2px dashed var(--gray-300);
         border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #6b7280;
+        color: var(--muted-text);
         font-size: 16px;
     }
     
     .setup-notice {
-        background: #fef3c7;
-        border: 1px solid #f59e0b;
+        background: var(--warning-bg);
+        border: 1px solid var(--warning-yellow);
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 30px;
@@ -293,12 +293,12 @@
     .section-title {
         font-size: 24px;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
         margin: 0;
     }
     
     .section-subtitle {
-        color: #6b7280;
+        color: var(--muted-text);
         margin: 4px 0 0 0;
         font-size: 14px;
     }
@@ -308,7 +308,7 @@
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
     }
     
     .alert-item {
@@ -343,16 +343,16 @@
     
     .alert-title {
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-color);
     }
     
     .alert-time {
         font-size: 12px;
-        color: #6b7280;
+        color: var(--muted-text);
     }
     
     .alert-description {
-        color: #4b5563;
+        color: var(--gray-600);
         font-size: 14px;
     }
 </style>
@@ -364,11 +364,11 @@
         <div>
             <h1>🌡️ Weather Monitoring</h1>
             <p><strong>🏠 HOME Weather</strong> (Netatmo sensors) vs <strong>🌍 VIENNA City</strong> (external weather)</p>
-            <p style="font-size: 14px; color: #6b7280; margin: 4px 0 0 0;">
+            <p style="font-size: 14px; color: var(--muted-text); margin: 4px 0 0 0;">
                 Left: Your indoor air quality | Right: Vienna's outdoor weather
             </p>
         </div>
-        <button onclick="refreshDashboard()" id="refresh-btn" style="background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600; transition: background 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <button onclick="refreshDashboard()" id="refresh-btn" style="background: var(--primary-blue); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600; transition: background 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
             <i class="fas fa-sync-alt"></i> <span>Refresh Now</span>
         </button>
     </div>
@@ -377,7 +377,7 @@
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 30px;">
         
         <!-- Internal Weather (Netatmo) -->
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 24px; color: white;">
+        <div style="background: linear-gradient(135deg, var(--info-blue) 0%, #764ba2 100%); border-radius: 16px; padding: 24px; color: white;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <div>
                     <h2 style="margin: 0; font-size: 20px; font-weight: 600;">🏠 YOUR HOME</h2>
@@ -407,7 +407,7 @@
                     🔇 <span id="internal-noise">--</span> dB
                 </div>
                 <div style="background: rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 8px; font-size: 12px;" id="internal-trend">
-                    📈 Stable
+                    TREND Stable
                 </div>
             </div>
         </div>
@@ -440,7 +440,7 @@
             </div>
             <div style="margin-top: 12px; display: flex; gap: 12px;">
                 <div style="background: rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 8px; font-size: 12px;">
-                    📊 <span id="external-pressure">--</span> hPa
+                    DATA <span id="external-pressure">--</span> hPa
                 </div>
                 <div style="background: rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 8px; font-size: 12px;" id="external-daynight">
                     🌙 Night
@@ -451,17 +451,17 @@
     
     <!-- 5-Day Forecast -->
     <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px;">
-        <h3 style="margin: 0 0 16px 0; color: #1f2937;">📅 VIENNA City Forecast (Next 5 Days)</h3>
+        <h3 style="margin: 0 0 16px 0; color: var(--text-color);">📅 VIENNA City Forecast (Next 5 Days)</h3>
         <div id="forecast-container" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;">
             <!-- Forecast will be loaded dynamically -->
-            <div style="text-align: center; padding: 16px; background: #f3f4f6; border-radius: 8px;">
-                <div style="color: #6b7280;">Loading...</div>
+            <div style="text-align: center; padding: 16px; background: var(--gray-100); border-radius: 8px;">
+                <div style="color: var(--muted-text);">Loading...</div>
             </div>
         </div>
     </div>
     
     <!-- Detailed Weather Cards -->
-    <h3 style="margin: 0 0 16px 0; color: #1f2937;">📊 Indoor Details (Netatmo)</h3>
+    <h3 style="margin: 0 0 16px 0; color: var(--text-color);">DATA Indoor Details (Netatmo)</h3>
     <div class="weather-overview">
         <div class="weather-card">
             <h3>🌡️ Temperature</h3>
@@ -494,7 +494,7 @@
         </div>
         
         <div class="weather-card">
-            <h3>📊 Pressure</h3>
+            <h3>DATA Pressure</h3>
             <div class="weather-value" id="card-pressure">--</div>
             <div class="weather-unit">hPa</div>
             <div class="weather-trend" id="card-pressure-trend">
@@ -521,7 +521,7 @@
         <!-- Dynamic Station Cards (populated via JavaScript from real API data) -->
         <div id="weather-stations-container">
             <div class="station-card" style="text-align: center; padding: 40px;">
-                <div style="color: #6b7280; font-size: 16px;">
+                <div style="color: var(--muted-text); font-size: 16px;">
                     <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 12px;"></i>
                     <p>Loading weather stations...</p>
                 </div>
@@ -533,72 +533,72 @@
     <div class="chart-container">
         <div class="section-header">
             <div>
-                <h3 class="section-title">📊 Historical Data</h3>
+                <h3 class="section-title">DATA Historical Data</h3>
                 <p class="section-subtitle">Track environmental trends over time</p>
             </div>
         </div>
         
-        <div style="background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+        <div style="background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); border-left: 4px solid var(--primary-blue); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
             <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
                 <div style="flex: 1; min-width: 200px;">
-                    <strong style="font-size: 15px;">📊 Multi-Module Comparison</strong>
-                    <p style="margin: 4px 0 0 0; font-size: 13px; color: #6b7280;">
+                    <strong style="font-size: 15px;">DATA Multi-Module Comparison</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--muted-text);">
                         Comparing data from all your Netatmo modules
                     </p>
                 </div>
                 <div style="display: flex; gap: 16px; flex-wrap: wrap;">
                     <div style="display: flex; align-items: center; gap: 6px;">
-                        <div style="width: 20px; height: 3px; background: #ef4444; border-radius: 2px;"></div>
-                        <span style="font-size: 13px; color: #374151;">Main Station</span>
+                        <div style="width: 20px; height: 3px; background: var(--error-red); border-radius: 2px;"></div>
+                        <span style="font-size: 13px; color: var(--text-color);">Main Station</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px;">
                         <div style="width: 20px; height: 3px; background: #f97316; border-radius: 2px;"></div>
-                        <span style="font-size: 13px; color: #374151;">Bathroom 🔋 60%</span>
+                        <span style="font-size: 13px; color: var(--text-color);">Bathroom 🔋 60%</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px; opacity: 0.4;">
                         <div style="width: 20px; height: 3px; background: #14b8a6; border-radius: 2px;"></div>
-                        <span style="font-size: 13px; color: #9ca3af;">Outdoor (not installed yet)</span>
+                        <span style="font-size: 13px; color: var(--gray-400);">Outdoor (not installed yet)</span>
                     </div>
                 </div>
             </div>
         </div>
         
         <div style="margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
-            <span style="color: #6b7280; font-size: 13px; margin-right: 8px;">Local DB:</span>
+            <span style="color: var(--muted-text); font-size: 13px; margin-right: 8px;">Local DB:</span>
             <button class="btn btn-secondary" onclick="changeTimeRange('24h')" id="btn-24h">24h</button>
             <button class="btn btn-secondary" onclick="changeTimeRange('7d')" id="btn-7d">7d</button>
             <button class="btn btn-secondary" onclick="changeTimeRange('30d')" id="btn-30d">30d</button>
             
-            <span style="color: #6b7280; font-size: 13px; margin-left: 16px; margin-right: 8px;">Netatmo API:</span>
+            <span style="color: var(--muted-text); font-size: 13px; margin-left: 16px; margin-right: 8px;">Netatmo API:</span>
             <button class="btn btn-secondary" onclick="fetchNetatmoHistory('7d')" id="btn-netatmo-7d" title="Fetch 7 days from Netatmo servers">📡 7d</button>
             <button class="btn btn-secondary" onclick="fetchNetatmoHistory('30d')" id="btn-netatmo-30d" title="Fetch 30 days from Netatmo servers">📡 30d</button>
             <button class="btn btn-secondary" onclick="fetchNetatmoHistory('90d')" id="btn-netatmo-90d" title="Fetch 90 days from Netatmo servers">📡 90d</button>
             <button class="btn btn-secondary" onclick="fetchNetatmoHistory('1y')" id="btn-netatmo-1y" title="Fetch 1 year from Netatmo servers">📡 1y</button>
             
-            <span id="netatmo-status" style="font-size: 12px; color: #6b7280; margin-left: 16px;"></span>
+            <span id="netatmo-status" style="font-size: 12px; color: var(--muted-text); margin-left: 16px;"></span>
         </div>
         
         <div class="chart-tabs">
             <button class="chart-tab active" data-chart="temperature" onclick="switchChart('temperature')">🌡️ Temperature</button>
             <button class="chart-tab" data-chart="humidity" onclick="switchChart('humidity')">💧 Humidity</button>
             <button class="chart-tab" data-chart="co2" onclick="switchChart('co2')">💨 CO2 Levels</button>
-            <button class="chart-tab" data-chart="pressure" onclick="switchChart('pressure')">📊 Pressure</button>
+            <button class="chart-tab" data-chart="pressure" onclick="switchChart('pressure')">DATA Pressure</button>
         </div>
         
         <div style="position: relative; height: 400px; margin-top: 20px;">
             <canvas id="environmentChart"></canvas>
         </div>
         
-        <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
-            <strong>⚠️ CO2 Alert Threshold:</strong>
+        <div style="margin-top: 16px; padding: 12px; background: var(--warning-bg); border-radius: 8px; border-left: 4px solid var(--warning-yellow);">
+            <strong>WARNING CO2 Alert Threshold:</strong>
             <span style="margin-left: 16px;">Headache Danger: <span style="color: #dc2626; font-weight: bold;">≥1000 ppm</span> - Ventilate immediately!</span>
-            <span style="margin-left: 16px;">Warning Level: <span style="color: #f59e0b;">≥800 ppm</span></span>
+            <span style="margin-left: 16px;">Warning Level: <span style="color: var(--warning-yellow);">≥800 ppm</span></span>
         </div>
     </div>
     
     <!-- CO2 Alert Section -->
     <div class="alert-section" id="co2-alert-section" style="display: none;">
-        <h3>🚨 CO2 Alert - Headache Danger!</h3>
+        <h3>ALERT CO2 Alert - Headache Danger!</h3>
         <div id="co2-alert-container">
             <!-- CO2 alerts will be populated here -->
         </div>
@@ -669,9 +669,9 @@ function initChart() {
 // Get chart configuration based on type
 function getChartConfig(chartType) {
     const colors = {
-        temperature: { main: '#ef4444', bathroom: '#f97316', outdoor: '#14b8a6', bg_main: 'rgba(239, 68, 68, 0.1)', bg_bathroom: 'rgba(249, 115, 22, 0.1)', bg_outdoor: 'rgba(20, 184, 166, 0.1)' },
-        humidity: { main: '#3b82f6', bathroom: '#f97316', outdoor: '#06b6d4', bg_main: 'rgba(59, 130, 246, 0.1)', bg_bathroom: 'rgba(249, 115, 22, 0.1)', bg_outdoor: 'rgba(6, 182, 212, 0.1)' },
-        co2: { main: '#10b981', bathroom: '#f97316', outdoor: '#84cc16', bg_main: 'rgba(16, 185, 129, 0.1)', bg_bathroom: 'rgba(249, 115, 22, 0.1)', bg_outdoor: 'rgba(132, 204, 22, 0.1)' },
+        temperature: { main: 'var(--error-red)', bathroom: '#f97316', outdoor: '#14b8a6', bg_main: 'rgba(239, 68, 68, 0.1)', bg_bathroom: 'rgba(249, 115, 22, 0.1)', bg_outdoor: 'rgba(20, 184, 166, 0.1)' },
+        humidity: { main: 'var(--primary-blue)', bathroom: '#f97316', outdoor: '#06b6d4', bg_main: 'rgba(59, 130, 246, 0.1)', bg_bathroom: 'rgba(249, 115, 22, 0.1)', bg_outdoor: 'rgba(6, 182, 212, 0.1)' },
+        co2: { main: 'var(--success-green)', bathroom: '#f97316', outdoor: '#84cc16', bg_main: 'rgba(16, 185, 129, 0.1)', bg_bathroom: 'rgba(249, 115, 22, 0.1)', bg_outdoor: 'rgba(132, 204, 22, 0.1)' },
         pressure: { main: '#8b5cf6', bathroom: '#f97316', outdoor: '#a855f7', bg_main: 'rgba(139, 92, 246, 0.1)', bg_bathroom: 'rgba(249, 115, 22, 0.1)', bg_outdoor: 'rgba(168, 85, 247, 0.1)' }
     };
     
@@ -754,7 +754,7 @@ function getChartConfig(chartType) {
         datasets.push({
             label: 'Warning Threshold (800 ppm)',
             data: (chartData.co2.values || []).map(() => 800),
-            borderColor: '#f59e0b',
+            borderColor: 'var(--warning-yellow)',
             backgroundColor: 'transparent',
             borderWidth: 2,
             borderDash: [5, 5],
@@ -1061,10 +1061,10 @@ function checkCO2Alerts() {
     if (currentCO2 && currentCO2 >= 1000) {
         alertSection.style.display = 'block';
         alertContainer.innerHTML = `
-            <div class="alert-item" style="background: #fee2e2; border-color: #dc2626; border-left: 4px solid #dc2626;">
+            <div class="alert-item" style="background: var(--error-bg); border-color: #dc2626; border-left: 4px solid #dc2626;">
                 <div class="alert-header">
                     <div class="alert-title" style="color: #dc2626; font-weight: bold; font-size: 18px;">
-                        🚨 CO2 DANGER - HEADACHE RISK!
+                        ALERT CO2 DANGER - HEADACHE RISK!
                     </div>
                     <div class="alert-time">Current: ${currentCO2.toFixed(0)} ppm</div>
                 </div>
@@ -1089,7 +1089,7 @@ function checkCO2Alerts() {
         alertContainer.innerHTML = `
             <div class="alert-item warning">
                 <div class="alert-header">
-                    <div class="alert-title">⚠️ CO2 Warning</div>
+                    <div class="alert-title">WARNING CO2 Warning</div>
                     <div class="alert-time">Current: ${currentCO2.toFixed(0)} ppm</div>
                 </div>
                 <div class="alert-description">
@@ -1124,7 +1124,7 @@ function changeTimeRange(range) {
 async function fetchNetatmoHistory(range) {
     const statusEl = document.getElementById('netatmo-status');
     statusEl.textContent = `⏳ Fetching ${range} from Netatmo...`;
-    statusEl.style.color = '#f59e0b';
+    statusEl.style.color = 'var(--warning-yellow)';
     
     try {
         // Get station ID
@@ -1132,8 +1132,8 @@ async function fetchNetatmoHistory(range) {
         const stations = await stationsResponse.json();
         
         if (!stations || stations.length === 0) {
-            statusEl.textContent = '❌ No stations found';
-            statusEl.style.color = '#ef4444';
+            statusEl.textContent = 'ERROR No stations found';
+            statusEl.style.color = 'var(--error-red)';
             return;
         }
         
@@ -1157,14 +1157,14 @@ async function fetchNetatmoHistory(range) {
         
         if (totalPoints > 0) {
             statusEl.textContent = `✅ Fetched ${totalPoints} points, stored in local DB`;
-            statusEl.style.color = '#22c55e';
+            statusEl.style.color = 'var(--success-green)';
             
             // Now reload chart from local DB to show new data
             currentTimeRange = range;
             await loadChartData();
         } else {
-            statusEl.textContent = `⚠️ No data returned for ${range}`;
-            statusEl.style.color = '#f59e0b';
+            statusEl.textContent = `WARNING No data returned for ${range}`;
+            statusEl.style.color = 'var(--warning-yellow)';
         }
         
         // Clear status after 5 seconds
@@ -1174,8 +1174,8 @@ async function fetchNetatmoHistory(range) {
         
     } catch (error) {
         console.error('Error fetching Netatmo history:', error);
-        statusEl.textContent = `❌ Error: ${error.message}`;
-        statusEl.style.color = '#ef4444';
+        statusEl.textContent = `ERROR Error: ${error.message}`;
+        statusEl.style.color = 'var(--error-red)';
     }
 }
 
@@ -1186,7 +1186,7 @@ function updateChartPlaceholder(message) {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.font = '16px Arial';
-    ctx.fillStyle = '#6b7280';
+    ctx.fillStyle = 'var(--muted-text)';
     ctx.textAlign = 'center';
     ctx.fillText(message, canvas.width / 2, canvas.height / 2);
 }
@@ -1245,10 +1245,10 @@ async function loadWeatherStations(forceRefresh = false) {
         if (!stations || stations.length === 0) {
             container.innerHTML = `
                 <div class="station-card" style="text-align: center; padding: 40px;">
-                    <div style="color: #6b7280; font-size: 16px;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 12px; color: #f59e0b;"></i>
+                    <div style="color: var(--muted-text); font-size: 16px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 12px; color: var(--warning-yellow);"></i>
                         <p>Netatmo stations unavailable</p>
-                        <p style="font-size: 14px; margin-top: 8px;">Check Netatmo API token or network connection. <a href="/help#netatmo" style="color: #3b82f6;">Troubleshoot</a></p>
+                        <p style="font-size: 14px; margin-top: 8px;">Check Netatmo API token or network connection. <a href="/help#netatmo" style="color: var(--primary-blue);">Troubleshoot</a></p>
                     </div>
                 </div>
             `;
@@ -1303,7 +1303,7 @@ async function loadWeatherStations(forceRefresh = false) {
                             ` : ''}
                             ${indoor.co2 != null ? `
                             <div class="data-item">
-                                <div class="data-value" style="color: ${indoor.co2 >= 1000 ? '#dc2626' : '#059669'}">${indoor.co2}ppm</div>
+                                <div class="data-value" style="color: ${indoor.co2 >= 1000 ? '#dc2626' : 'var(--success-dark)'}">${indoor.co2}ppm</div>
                                 <div class="data-label">CO2</div>
                             </div>
                             ` : ''}
@@ -1333,7 +1333,7 @@ async function loadWeatherStations(forceRefresh = false) {
                     modulesHTML += `
                         <div class="module-card" style="border-left: 4px solid #8b5cf6;">
                             <div class="module-name">${extraModule.name || 'Extra Indoor Module'} 
-                                ${extraModule.battery_percent != null ? `<span style="font-size: 12px; color: #6b7280;"> 🔋 ${extraModule.battery_percent}%</span>` : ''}
+                                ${extraModule.battery_percent != null ? `<span style="font-size: 12px; color: var(--muted-text);"> 🔋 ${extraModule.battery_percent}%</span>` : ''}
                             </div>
                             <div class="module-data">
                                 ${extraModule.temperature != null ? `
@@ -1350,7 +1350,7 @@ async function loadWeatherStations(forceRefresh = false) {
                                 ` : ''}
                                 ${extraModule.co2 != null ? `
                                 <div class="data-item">
-                                    <div class="data-value" style="color: ${extraModule.co2 >= 1000 ? '#dc2626' : '#059669'}">${extraModule.co2}ppm</div>
+                                    <div class="data-value" style="color: ${extraModule.co2 >= 1000 ? '#dc2626' : 'var(--success-dark)'}">${extraModule.co2}ppm</div>
                                     <div class="data-label">CO2</div>
                                 </div>
                                 ` : ''}
@@ -1364,7 +1364,7 @@ async function loadWeatherStations(forceRefresh = false) {
             if (allData.outdoor && allData.outdoor.temperature != null) {
                 const outdoor = allData.outdoor;
                 modulesHTML += `
-                    <div class="module-card" style="border-left: 4px solid #10b981;">
+                    <div class="module-card" style="border-left: 4px solid var(--success-green);">
                         <div class="module-name">Outdoor Module</div>
                         <div class="module-data">
                             ${outdoor.temperature != null ? `
@@ -1387,8 +1387,8 @@ async function loadWeatherStations(forceRefresh = false) {
             // Show message if no data available
             if (!modulesHTML) {
                 modulesHTML = `
-                    <div class="module-card" style="text-align: center; padding: 20px; color: #6b7280;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 8px; color: #f59e0b;"></i>
+                    <div class="module-card" style="text-align: center; padding: 20px; color: var(--muted-text);">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 8px; color: var(--warning-yellow);"></i>
                         <p>No sensor data available for this station</p>
                         <p style="font-size: 12px; margin-top: 4px;">The station may be offline or data is not yet available</p>
                     </div>
@@ -1481,7 +1481,7 @@ async function loadCombinedWeather(forceRefresh = false) {
             document.getElementById('internal-co2').textContent = `${indoor.co2 != null ? indoor.co2 : '--'} ppm`;
             document.getElementById('internal-pressure').textContent = `${indoor.pressure != null ? indoor.pressure.toFixed(0) : '--'} hPa`;
             document.getElementById('internal-noise').textContent = indoor.noise != null ? indoor.noise : '--';
-            document.getElementById('internal-trend').textContent = `📈 ${indoor.temp_trend || 'Stable'}`;
+            document.getElementById('internal-trend').textContent = `TREND ${indoor.temp_trend || 'Stable'}`;
             
             // Update detail cards
             document.getElementById('card-temp').textContent = `${indoor.temperature != null ? indoor.temperature.toFixed(1) : '--'}°`;
@@ -1564,16 +1564,16 @@ async function loadCombinedWeather(forceRefresh = false) {
                 const date = new Date(day.date);
                 const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
                 return `
-                    <div style="text-align: center; padding: 16px; background: #f3f4f6; border-radius: 8px;">
-                        <div style="font-weight: 600; color: #374151; margin-bottom: 8px;">${dayName}</div>
+                    <div style="text-align: center; padding: 16px; background: var(--gray-100); border-radius: 8px;">
+                        <div style="font-weight: 600; color: var(--text-color); margin-bottom: 8px;">${dayName}</div>
                         <div style="font-size: 28px; margin-bottom: 8px;">${weatherIcon}</div>
-                        <div style="font-size: 18px; font-weight: 600; color: #1f2937;">
+                        <div style="font-size: 18px; font-weight: 600; color: var(--text-color);">
                             ${day.temp_max?.toFixed(0) || '--'}°
                         </div>
-                        <div style="font-size: 14px; color: #6b7280;">
+                        <div style="font-size: 14px; color: var(--muted-text);">
                             ${day.temp_min?.toFixed(0) || '--'}°
                         </div>
-                        <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">
+                        <div style="font-size: 11px; color: var(--gray-400); margin-top: 4px;">
                             ${day.weather_description}
                         </div>
                     </div>

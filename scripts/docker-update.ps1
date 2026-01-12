@@ -43,7 +43,7 @@ try {
     }
     
     # Restart containers
-    Write-Host "`n🚀 Restarting containers..." -ForegroundColor Cyan
+    Write-Host "`nRESTARTING containers..." -ForegroundColor Cyan
     docker compose -f (Split-Path $composeFile -Leaf) up -d
     
     if ($LASTEXITCODE -ne 0) {
