@@ -130,5 +130,101 @@ All fixes have been tested and verified:
 
 ---
 
-*Documentation created: November 26, 2025*
+## January 13, 2026 - Critical Fix: Tapo P115 Devices Not Showing (Regression)
+
+### Problem
+After recent changes, the energy page was showing 0 devices instead of the configured 3 Tapo P115 smart plugs. This broke functionality that had been working for months.
+
+### Root Causes
+
+1. **Broken `__init__` method in `TapoP115IngestionService`**: The `_hosts` attribute was being set inside `_get_db()` method instead of `__init__`, causing `AttributeError: 'TapoP115IngestionService' object has no attribute '_hosts'`
+
+2. **Failed devices not included**: When devices failed to connect (403 Forbidden, timeout), they were being skipped entirely instead of being shown as offline devices
+
+3. **Exception handling**: `_fetch_device_snapshot` was returning `None` on failure, which prevented proper error handling in discovery
+
+### Solutions Applied
+
+#### 1. Fixed `TapoP115IngestionService.__init__` Structure
+- Moved `_hosts` initialization to proper location in `__init__`
+- Fixed method ordering so `_get_db()` is defined after all initialization code
+- Ensured all required attributes (`_email`, `_password`, `_hosts`, etc.) are set during initialization
+
+**Files Changed:**
+- `src/tapo_camera_mcp/ingest/tapo_p115.py`
+  - Fixed `__init__` method structure
+  - Moved `_hosts` initialization before `_get_db()` definition
+  - Ensured proper attribute initialization order
+
+#### 2. Enhanced Device Discovery to Include Failed Devices
+- Modified `discover_devices()` to create device entries from config even when connection fails
+- Failed devices now show with `power_state: false`, `current_power: 0.0`, and error information
+- All 3 configured devices now appear in the API response
+
+**Files Changed:**
+- `src/tapo_camera_mcp/ingest/tapo_p115.py`
+  - Updated `discover_devices()` to create device entries for failed connections
+  - Changed `_fetch_device_snapshot` to return exceptions instead of `None`
+  - Added proper device creation from config metadata for failed connections
+
+#### 3. Removed Aggressive Timeouts
+- Removed overly aggressive timeouts that were preventing device discovery
+- Restored proper initialization flow without premature timeouts
+
+**Files Changed:**
+- `src/tapo_camera_mcp/tools/energy/tapo_plug_tools.py`
+  - Removed 5-second timeout from initialization discovery
+  - Removed 3-second timeout from rediscovery in `get_all_devices()`
+  - Ensured devices are discovered even if some fail
+
+### Current Device Status
+
+1. **Aircon** (192.168.0.17) - `tapo_p115_aircon`
+   - Status: Offline (403 Forbidden error)
+   - Location: Living Room
+   - Readonly: false
+
+2. **Kitchen Zojirushi** (192.168.0.137) - `tapo_p115_kitchen`
+   - Status: Offline (Connection timeout)
+   - Location: Kitchen
+   - Readonly: false
+
+3. **Server** (192.168.0.38) - `tapo_p115_server`
+   - Status: Online and working
+   - Location: Server Room
+   - Readonly: true
+   - Current power: ~310W
+
+### Testing
+
+✅ **All 3 devices now appear** in `/api/energy/devices` response  
+✅ **Failed devices show with error information** but are still visible  
+✅ **Online device shows real-time data** correctly  
+✅ **Energy page loads** and displays all devices  
+
+### Impact
+
+- **User Experience**: All configured devices are now visible, even if offline
+- **Reliability**: Failed devices are properly handled and displayed
+- **Debugging**: Error information is included for failed devices
+- **Backward Compatibility**: No breaking changes to API or configuration
+
+### Next Steps
+
+- Investigate why Aircon (192.168.0.17) returns 403 Forbidden - may need credential refresh
+- Investigate why Kitchen Zojirushi (192.168.0.137) times out - network connectivity issue
+- Consider adding retry logic for failed devices
+- Add health status indicators to frontend for offline devices
+
+### Related Files
+
+- `src/tapo_camera_mcp/ingest/tapo_p115.py` - Fixed `__init__` structure and exception handling
+- `src/tapo_camera_mcp/tools/energy/tapo_plug_tools.py` - Removed aggressive timeouts, fixed initialization
+- `src/tapo_camera_mcp/web/api/energy.py` - Removed unnecessary timeout wrappers
+- `src/tapo_camera_mcp/core/hardware_init.py` - Fixed import to use `tapo_plug_manager` directly
+
+---
+
+*Documentation created: November 26, 2025*  
+*Updated: January 13, 2026*
 

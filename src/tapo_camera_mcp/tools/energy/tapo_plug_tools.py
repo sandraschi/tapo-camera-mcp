@@ -91,13 +91,20 @@ class TapoPlugManager:
         except Exception:
             self._enable_mock_fallback = False
 
-        # Load per-device readonly settings from configuration (by host or device_id)
+        # Load per-device readonly settings from configuration (deferred until first use)
+        self._config_loaded = False
+        self._readonly_by_host: Dict[str, bool] = {}
+        self._readonly_by_device_id: Dict[str, bool] = {}
+
+    def _load_config(self):
+        """Load configuration settings (called lazily)."""
+        if self._config_loaded:
+            return
+
         try:
             cfg = get_config() or {}
             energy_cfg = cfg.get("energy", {}).get("tapo_p115", {})
             devices_cfg = energy_cfg.get("devices", []) or []
-            self._readonly_by_host: Dict[str, bool] = {}
-            self._readonly_by_device_id: Dict[str, bool] = {}
             for dev in devices_cfg:
                 host = str(dev.get("host") or "").strip()
                 device_id = str(dev.get("device_id") or "").strip()
@@ -108,26 +115,46 @@ class TapoPlugManager:
                     self._readonly_by_device_id[device_id] = readonly_flag
         except Exception:
             # If config is not readable, default to no readonly
-            self._readonly_by_host = {}
-            self._readonly_by_device_id = {}
+            pass
+
+        self._config_loaded = True
 
         try:
-            self._ingestion = TapoP115IngestionService()
-            logger.debug("Real Tapo P115 ingestion enabled.")
-        except IngestionUnavailableError as exc:
+            logger.info("Creating TapoP115IngestionService...")
+            # Load config here and pass it to avoid hanging in ingestion constructor
+            try:
+                config = get_config().get("energy", {}).get("tapo_p115", {})
+                logger.info("Config loaded for Tapo ingestion")
+            except Exception as e:
+                logger.warning(f"Failed to load config for Tapo ingestion: {e}")
+                config = {}
+            self._ingestion = TapoP115IngestionService(config)
+            logger.info("Tapo P115 ingestion created successfully")
+        except Exception as exc:
+            logger.error(f"Failed to create Tapo P115 ingestion service: {exc}")
+            self._ingestion = None
             self._ingestion_error = str(exc)
-            logger.info("Using simulated Tapo P115 data: %s", exc)
 
     async def initialize(self, _tapo_account: Dict[str, str]) -> bool:
         """Initialize connection to Tapo smart plugs."""
         try:
             logger.info("Initializing Tapo smart plug connection...")
 
-            # Simulate device discovery
-            await self._discover_devices()
+            # Load config and initialize ingestion service first
+            self._load_config()
 
-            # Load historical data
-            await self._load_historical_data()
+            # Try device discovery, but don't fail if it doesn't work
+            try:
+                await self._discover_devices()
+            except Exception as e:
+                logger.warning("Device discovery failed during initialization: %s", e)
+                logger.info("Tapo plug manager will initialize without devices - they will be discovered on-demand")
+
+            # Load historical data (don't fail if this doesn't work either)
+            try:
+                await self._load_historical_data()
+            except Exception as e:
+                logger.warning("Failed to load historical data: %s", e)
 
             self._initialized = True
             logger.info("Tapo smart plug connection initialized successfully")
@@ -139,9 +166,13 @@ class TapoPlugManager:
 
     async def _discover_devices(self):
         """Discover Tapo P115 smart plugs on the network."""
+        logger.info("Starting Tapo P115 device discovery...")
+        logger.info(f"Ingestion service available: {self._ingestion is not None}")
         if self._ingestion:
             try:
+                logger.info("Calling ingestion.discover_devices()...")
                 real_devices = await self._ingestion.discover_devices()
+                logger.info(f"Discovery returned {len(real_devices) if real_devices else 0} devices")
                 if real_devices:
                     logger.info("Loaded %s real Tapo P115 devices", len(real_devices))
                     self.devices.clear()
@@ -154,13 +185,17 @@ class TapoPlugManager:
                         if isinstance(host, str):
                             self._device_hosts[device.device_id] = host
                             # Evaluate readonly based on host or device_id from config
+                            self._load_config()  # Ensure config is loaded
                             ro = False
-                            if host in getattr(self, "_readonly_by_host", {}):
+                            if host in self._readonly_by_host:
                                 ro = self._readonly_by_host[host]
-                            elif device.device_id in getattr(self, "_readonly_by_device_id", {}):
+                            elif device.device_id in self._readonly_by_device_id:
                                 ro = self._readonly_by_device_id[device.device_id]
                             self._device_readonly[device.device_id] = ro
+                    logger.info(f"Successfully loaded {len(self.devices)} devices")
                     return
+                else:
+                    logger.warning("No devices returned from discovery")
             except IngestionUnavailableError as exc:
                 logger.warning(
                     "Real Tapo ingestion unavailable, falling back to simulated data: %s", exc
@@ -168,14 +203,12 @@ class TapoPlugManager:
             except Exception:
                 logger.exception("Failed to load real Tapo P115 data; falling back to mock data.")
 
-        # NEVER use mock data - only real devices from ingestion service
+        # No real devices available - manager will still initialize but with no devices
         logger.warning(
-            "Real Tapo P115 data unavailable. No devices will be shown. Check ingestion service configuration."
+            "Real Tapo P115 data unavailable. Manager will initialize but no devices will be available. Check device connectivity and credentials."
         )
-        # Clear any existing devices (including old mock devices)
-        self.devices.clear()
-        self._device_hosts.clear()
-        self._device_readonly.clear()
+        # Don't clear existing devices if any were loaded successfully
+        # Just log the warning and continue
         return
 
         # REMOVED: Mock device fallback - we only want real devices
@@ -395,9 +428,13 @@ class TapoPlugManager:
         """Get all Tapo smart plug devices."""
         if not self._initialized:
             await self.initialize({})
-        else:
-            # Re-discover devices to ensure we have the latest real devices (not cached mocks)
-            await self._discover_devices()
+        
+        # If we have no devices, try to discover them
+        if not self.devices:
+            try:
+                await self._discover_devices()
+            except Exception as e:
+                logger.warning("Device discovery failed in get_all_devices: %s", e)
 
         return list(self.devices.values())
 
@@ -414,6 +451,7 @@ class TapoPlugManager:
 
     def is_device_readonly(self, device_id: str) -> bool:
         """Return True if device is configured as read-only."""
+        self._load_config()  # Ensure config is loaded
         return bool(self._device_readonly.get(device_id, False))
 
     async def toggle_device(self, device_id: str, power_state: bool) -> bool:

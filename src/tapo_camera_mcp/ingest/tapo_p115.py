@@ -44,20 +44,36 @@ class TapoP115IngestionService:
     """
 
     def __init__(self, config: dict | None = None):
-        self._config = config or get_config().get("energy", {}).get("tapo_p115", {})
+        if config is not None:
+            self._config = config
+            logger.info("Tapo P115 ingestion using provided config")
+        else:
+            try:
+                self._config = get_config().get("energy", {}).get("tapo_p115", {})
+                logger.info("Tapo P115 ingestion config loaded successfully")
+            except Exception as e:
+                logger.warning(f"Failed to load config for Tapo P115 ingestion: {e}, using defaults")
+                self._config = {}
         self._account = self._config.get("account", {})
         self._devices_cfg = self._config.get("devices", [])
         self._discovery_cfg = self._config.get("discovery", {})
-        self._db = TimeSeriesDB()  # Initialize database for time series storage
+        # Delay DB initialization until needed
+        self._db = None
+
         self._hosts: list[str] = [
             device.get("host") for device in self._devices_cfg if device.get("host")
         ]
+
+        logger.info(f"Tapo P115 configured devices: {len(self._devices_cfg)}")
+        logger.info(f"Tapo P115 configured hosts: {self._hosts}")
+        logger.info(f"Tapo P115 account: {self._account.get('email', 'no email')}")
 
         env_hosts = os.getenv("TAPO_P115_HOSTS")
         if env_hosts:
             self._hosts.extend(host.strip() for host in env_hosts.split(",") if host.strip())
 
         self._hosts = list(dict.fromkeys(self._hosts))  # deduplicate while preserving order
+        logger.info(f"Tapo P115 final hosts: {self._hosts}")
 
         self._email = (
             self._account.get("email")
@@ -92,6 +108,12 @@ class TapoP115IngestionService:
                 "`energy.tapo_p115.devices` or set TAPO_P115_HOSTS."
             )
 
+    def _get_db(self):
+        """Get database instance lazily."""
+        if self._db is None:
+            self._db = TimeSeriesDB()
+        return self._db
+
     async def _get_client(self) -> ApiClient:
         """Get or create ApiClient instance."""
         if self._client is None:
@@ -106,6 +128,7 @@ class TapoP115IngestionService:
         """
         Discover and fetch real-time statistics for configured Tapo P115 plugs.
         """
+        logger.info(f"Starting Tapo P115 discovery for hosts: {self._hosts}")
         discovered_host_data: list[dict[str, object]] = []
         hosts = list(self._hosts)
 
@@ -115,18 +138,68 @@ class TapoP115IngestionService:
             logger.warning("No P115 hosts configured for discovery")
             return []
 
+        logger.info(f"Querying {len(hosts)} hosts: {hosts}")
+
         results = await asyncio.gather(
             *(self._fetch_device_snapshot(host) for host in hosts),
             return_exceptions=True,
         )
 
-        for result in results:
+        logger.info(f"Discovery completed, processing {len(results)} results")
+        for i, result in enumerate(results):
+            host = hosts[i]
             if isinstance(result, Exception):
-                logger.debug("Tapo P115 snapshot error: %s", result)
-                continue
-            if result:
+                logger.warning(f"Host {host} failed: {result}")
+                # Create device entry from config even if connection failed
+                device_cfg = self._metadata_by_host.get(host, {})
+                device_id = device_cfg.get("device_id") or f"tapo_p115_{host.replace('.', '_')}"
+                device_entry = {
+                    "device_id": device_id,
+                    "name": device_cfg.get("name", f"P115 {host}"),
+                    "location": device_cfg.get("location", "Unknown"),
+                    "type": "tapo_p115",
+                    "device_model": "P115",
+                    "power_state": False,
+                    "current_power": 0.0,
+                    "voltage": 0.0,
+                    "current": 0.0,
+                    "daily_energy": 0.0,
+                    "monthly_energy": 0.0,
+                    "daily_cost": 0.0,
+                    "monthly_cost": 0.0,
+                    "last_seen": None,
+                    "error": str(result),
+                }
+                logger.info(f"Adding failed device {device_id} ({device_entry['name']}) to results")
+                discovered_host_data.append(device_entry)
+            elif result and isinstance(result, dict):
+                logger.info(f"Host {host} succeeded: {result.get('name')}")
                 discovered_host_data.append(result)
+            else:
+                logger.warning(f"Host {host} returned unexpected result: {type(result)}")
+                # Still create device entry from config
+                device_cfg = self._metadata_by_host.get(host, {})
+                device_id = device_cfg.get("device_id") or f"tapo_p115_{host.replace('.', '_')}"
+                device_entry = {
+                    "device_id": device_id,
+                    "name": device_cfg.get("name", f"P115 {host}"),
+                    "location": device_cfg.get("location", "Unknown"),
+                    "type": "tapo_p115",
+                    "device_model": "P115",
+                    "power_state": False,
+                    "current_power": 0.0,
+                    "voltage": 0.0,
+                    "current": 0.0,
+                    "daily_energy": 0.0,
+                    "monthly_energy": 0.0,
+                    "daily_cost": 0.0,
+                    "monthly_cost": 0.0,
+                    "last_seen": None,
+                    "error": "Unknown error",
+                }
+                discovered_host_data.append(device_entry)
 
+        logger.info(f"Discovery returning {len(discovered_host_data)} devices")
         return discovered_host_data
 
     async def _fetch_device_snapshot(self, host: str) -> dict[str, object] | None:
@@ -134,11 +207,11 @@ class TapoP115IngestionService:
         Collect realtime metrics for a single plug using tapo library.
         """
         try:
-            client = await self._get_client()
-            plug = await client.p115(host)
+            client = await asyncio.wait_for(self._get_client(), timeout=5.0)
+            plug = await asyncio.wait_for(client.p115(host), timeout=5.0)
 
             # Get device info
-            device_info = await plug.get_device_info()
+            device_info = await asyncio.wait_for(plug.get_device_info(), timeout=3.0)
             device_name = getattr(
                 device_info, "nickname", getattr(device_info, "name", f"P115 {host}")
             )
@@ -148,7 +221,7 @@ class TapoP115IngestionService:
             # Get power state
             try:
                 # Use device_info.device_on instead of is_on() method
-                device_info_for_state = await plug.get_device_info()
+                device_info_for_state = await asyncio.wait_for(plug.get_device_info(), timeout=3.0)
                 power_state = bool(getattr(device_info_for_state, "device_on", False))
             except Exception:
                 power_state = False
@@ -159,7 +232,7 @@ class TapoP115IngestionService:
             current = 0.0
             try:
                 # Use get_current_power() method for real-time power reading
-                power_data = await plug.get_current_power()
+                power_data = await asyncio.wait_for(plug.get_current_power(), timeout=3.0)
                 # Try multiple attribute names for current power
                 for attr in ["current_power", "power", "power_mw", "power_w"]:
                     val = getattr(power_data, attr, None)
@@ -199,7 +272,7 @@ class TapoP115IngestionService:
             today_energy = 0.0
             month_energy = 0.0
             try:
-                energy = await plug.get_energy_usage()
+                energy = await asyncio.wait_for(plug.get_energy_usage(), timeout=3.0)
                 # Energy values are in Wh (watt-hours), convert to kWh
                 today_energy = float(getattr(energy, "today_energy", 0)) / 1000.0
                 month_energy = float(getattr(energy, "month_energy", 0)) / 1000.0
@@ -233,7 +306,7 @@ class TapoP115IngestionService:
             # Store data point in database
             try:
                 timestamp = datetime.now(tz=timezone.utc)
-                self._db.store_energy_data(
+                self._get_db().store_energy_data(
                     device_id=device_id,
                     timestamp=timestamp,
                     power_w=current_power,

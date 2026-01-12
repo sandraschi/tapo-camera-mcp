@@ -224,6 +224,10 @@ class HardwareInitializer:
             if not hue_cfg.get("bridge_ip"):
                 return {"success": False, "message": "Hue Bridge not configured"}
 
+            # Get the lazy-loaded manager
+            from tapo_camera_mcp.tools.lighting.hue_tools import get_hue_manager
+            hue_manager = get_hue_manager()
+
             # Initialize Hue manager
             if not hue_manager._initialized:
                 success = await hue_manager.initialize()
@@ -323,6 +327,9 @@ class HardwareInitializer:
             account = energy_cfg.get("account", {})
             if not account.get("email") or not account.get("password"):
                 return {"success": False, "error": "Tapo account credentials not configured"}
+
+            # Get the manager
+            from tapo_camera_mcp.tools.energy.tapo_plug_tools import tapo_plug_manager
 
             # Initialize the manager
             if not tapo_plug_manager._initialized:

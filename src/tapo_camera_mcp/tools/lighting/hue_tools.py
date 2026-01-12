@@ -134,8 +134,21 @@ class HueManager:
                     self._connection_error += " - Press the button on your Hue Bridge and try again"
                 return False
 
-            # Discover devices (initial scan)
-            await self._discover_devices()
+            # Discover devices (initial scan) with timeout protection
+            try:
+                import asyncio
+                await asyncio.wait_for(self._discover_devices(), timeout=30.0)  # 30 second timeout
+            except asyncio.TimeoutError:
+                logger.warning("Hue bridge discovery timed out after 30 seconds - proceeding with empty cache")
+                self.lights.clear()
+                self.groups.clear()
+                self.scenes.clear()
+            except Exception as e:
+                logger.warning(f"Hue bridge discovery failed: {e} - proceeding with empty cache")
+                self.lights.clear()
+                self.groups.clear()
+                self.scenes.clear()
+
             self._initialized = True
             self._cache_loaded = True
             self._last_scan_time = datetime.now()
@@ -375,9 +388,13 @@ class HueManager:
         if not self._initialized:
             await self.initialize()
 
-        # Auto-rescan if cache looks stale (all lights off + not reachable = likely stale)
-        if self.lights and all(not l.on and not l.reachable for l in self.lights.values()):
-            logger.info("Cache appears stale (all lights off + unreachable), rescanning...")
+        # Auto-rescan if cache is older than 30 minutes OR if we have no cache at all
+        # Removed the flawed "all lights off" logic that caused constant rescanning
+        now = datetime.now()
+        cache_age_minutes = (now - self._last_scan_time).total_seconds() / 60 if self._last_scan_time else float('inf')
+
+        if not self.lights or cache_age_minutes > 30:
+            logger.info(f"Cache is stale (age: {cache_age_minutes:.1f} minutes), rescanning...")
             await self.rescan()
 
         return list(self.lights.values())
@@ -581,9 +598,12 @@ class HueManager:
         if not self._initialized:
             await self.initialize()
 
-        # Auto-rescan if cache looks stale (all groups off + 0 reachable = likely stale)
-        if self.groups and all(not g.on and g.reachable_lights == 0 for g in self.groups.values()):
-            logger.info("Cache appears stale (all groups off + 0 reachable), rescanning...")
+        # Use same time-based staleness check as lights
+        now = datetime.now()
+        cache_age_minutes = (now - self._last_scan_time).total_seconds() / 60 if self._last_scan_time else float('inf')
+
+        if not self.groups or cache_age_minutes > 30:
+            logger.info(f"Groups cache is stale (age: {cache_age_minutes:.1f} minutes), rescanning...")
             await self.rescan()
 
         return list(self.groups.values())
@@ -600,7 +620,17 @@ class HueManager:
         if not self._bridge:
             raise RuntimeError("Hue Bridge not connected")
 
-        await self._discover_devices()
+        # Add timeout protection to prevent hanging
+        try:
+            import asyncio
+            await asyncio.wait_for(self._discover_devices(), timeout=15.0)  # 15 second timeout for rescans
+        except asyncio.TimeoutError:
+            logger.warning("Hue bridge rescan timed out after 15 seconds")
+            raise RuntimeError("Hue bridge rescan timed out - bridge may be unresponsive")
+        except Exception as e:
+            logger.exception("Hue bridge rescan failed")
+            raise
+
         self._last_scan_time = datetime.now()
 
         return {
@@ -700,7 +730,18 @@ class HueManager:
 
 
 # Global manager instance
-hue_manager = HueManager()
+# Global Hue manager instance (lazy initialization)
+_hue_manager_instance: Optional[HueManager] = None
+
+def get_hue_manager() -> HueManager:
+    """Get the global Hue manager instance (lazy initialization)."""
+    global _hue_manager_instance
+    if _hue_manager_instance is None:
+        _hue_manager_instance = HueManager()
+    return _hue_manager_instance
+
+# For backward compatibility
+hue_manager = None  # Will be set on first access
 
 
 # MCP Tools
