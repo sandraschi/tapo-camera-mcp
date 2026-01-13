@@ -233,6 +233,9 @@ ring:
   token_file: ring_token.cache
   cache_ttl: 60
 
+ring_mcp:
+  enabled: true
+
 # Shelly Temperature Sensors (DS18B20 probes for freezer/fridge monitoring)
 shelly:
   enabled: false  # Set to true when you have Shelly devices
@@ -276,6 +279,8 @@ security:
       # Get token: HA Profile > Security > Long-Lived Access Tokens > Create Token
       access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJmZjZhNzU4NTE5ODk0OWRhYTNlNWQzNzcxYjE4MzA5NCIsImlhdCI6MTc2NDM3NDYxMiwiZXhwIjoyMDc5NzM0NjEyfQ.sbpnoqFypKnt7hYB-FHHrFxVVTrekacJvYcXGF1nqnY"
       cache_ttl: 30
+    ring_mcp:
+      enabled: true
 
 # Vienna Public Emergency Alerts
 # Sources: GeoSphere Austria (ZAMG), Meteoalarm

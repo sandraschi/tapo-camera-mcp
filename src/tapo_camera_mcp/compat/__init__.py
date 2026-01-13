@@ -9,35 +9,37 @@ import sys
 
 
 def _patch_kasa():
-    """Patch kasa module for pytapo compatibility."""
+    """Patch kasa module for pytapo compatibility at sys.modules level."""
+    # Create kasa.transports module in sys.modules BEFORE any imports
+    if 'kasa.transports' not in sys.modules:
+        from types import ModuleType
+        transports_module = ModuleType('kasa.transports')
+
+        # Try to import from klaptransport, but don't fail if not available
+        try:
+            import kasa.klaptransport
+            transports_module.KlapTransport = kasa.klaptransport.KlapTransport
+            transports_module.KlapTransportV2 = kasa.klaptransport.KlapTransportV2
+        except (ImportError, AttributeError):
+            # Create dummy classes if klaptransport doesn't exist
+            class DummyTransport:
+                pass
+            transports_module.KlapTransport = DummyTransport
+            transports_module.KlapTransportV2 = DummyTransport
+
+        transports_module.__all__ = ['KlapTransport', 'KlapTransportV2']
+
+        # Add to sys.modules BEFORE any pytapo imports
+        sys.modules['kasa.transports'] = transports_module
+
+    # Also patch kasa.exceptions if kasa is available
     try:
-        import kasa
-        
-        # Create kasa.transports module if it doesn't exist
-        if not hasattr(kasa, 'transports'):
-            from types import ModuleType
-            transports_module = ModuleType('kasa.transports')
-            
-            # Import from klaptransport
-            from kasa.klaptransport import KlapTransport, KlapTransportV2
-            transports_module.KlapTransport = KlapTransport
-            transports_module.KlapTransportV2 = KlapTransportV2
-            transports_module.__all__ = ['KlapTransport', 'KlapTransportV2']
-            
-            # Add to kasa module
-            sys.modules['kasa.transports'] = transports_module
-            kasa.transports = transports_module
-        
-        # Add AuthenticationError alias if it doesn't exist
+        import kasa.exceptions
         if not hasattr(kasa.exceptions, 'AuthenticationError'):
-            from kasa.exceptions import AuthenticationException
-            kasa.exceptions.AuthenticationError = AuthenticationException
-            kasa.exceptions.__all__ = getattr(kasa.exceptions, '__all__', []) + ['AuthenticationError']
-            
+            kasa.exceptions.AuthenticationError = kasa.exceptions.AuthenticationException
     except ImportError:
-        # kasa not installed, skip patching
         pass
 
 
-# Auto-patch on import
+# Patch BEFORE any other imports in this module
 _patch_kasa()
