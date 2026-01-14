@@ -35,18 +35,58 @@ class ThermalInitRequest(BaseModel):
 @router.get("/status")
 async def get_thermal_status():
     """Get thermal sensor connection status."""
-    client = get_thermal_client()
-    if not client:
+    from ...config import get_config
+
+    # Check if thermal is enabled in config
+    config = get_config()
+    thermal_config = config.get("thermal", {})
+    enabled = thermal_config.get("enabled", False)
+
+    if not enabled:
         return {
             "connected": False,
             "initialized": False,
-            "message": "Thermal client not configured",
+            "message": "Thermal integration disabled in config",
         }
+
+    client = get_thermal_client()
+    if not client:
+        # Try to initialize on-demand
+        try:
+            sensors_config = thermal_config.get("sensors", [])
+            cache_ttl = thermal_config.get("cache_ttl", 5)
+
+            # Convert config format to expected format
+            sensors = []
+            for sensor_cfg in sensors_config:
+                if isinstance(sensor_cfg, dict):
+                    sensors.append({
+                        "ip": sensor_cfg.get("ip"),
+                        "name": sensor_cfg.get("name", f"Thermal Sensor {len(sensors) + 1}"),
+                        "threshold_c": sensor_cfg.get("threshold_c"),
+                        "location": sensor_cfg.get("location", "Unknown"),
+                    })
+
+            if sensors:  # Only initialize if we have sensors configured
+                client = await init_thermal_client(sensors=sensors, cache_ttl=cache_ttl)
+            else:
+                return {
+                    "connected": False,
+                    "initialized": False,
+                    "message": "Thermal enabled but no sensors configured",
+                }
+        except Exception as e:
+            return {
+                "connected": False,
+                "initialized": False,
+                "message": f"Failed to initialize thermal client: {str(e)}",
+            }
 
     return {
         "connected": True,
-        "initialized": client.is_initialized,
-        "message": "Connected" if client.is_initialized else "Not initialized",
+        "initialized": client.is_initialized if client else False,
+        "message": "Connected" if client and client.is_initialized else "Initializing...",
+        "sensors": len(client._sensors) if client else 0,
     }
 
 

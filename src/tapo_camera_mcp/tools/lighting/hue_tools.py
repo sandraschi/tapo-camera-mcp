@@ -134,27 +134,16 @@ class HueManager:
                     self._connection_error += " - Press the button on your Hue Bridge and try again"
                 return False
 
-            # Discover devices (initial scan) with timeout protection
-            try:
-                import asyncio
-                await asyncio.wait_for(self._discover_devices(), timeout=30.0)  # 30 second timeout
-            except asyncio.TimeoutError:
-                logger.warning("Hue bridge discovery timed out after 30 seconds - proceeding with empty cache")
-                self.lights.clear()
-                self.groups.clear()
-                self.scenes.clear()
-            except Exception as e:
-                logger.warning(f"Hue bridge discovery failed: {e} - proceeding with empty cache")
-                self.lights.clear()
-                self.groups.clear()
-                self.scenes.clear()
+            # Skip initial discovery - do lazy loading instead
+            # This makes initialization near-instant instead of 10-30 seconds
+            self.lights.clear()
+            self.groups.clear()
+            self.scenes.clear()
 
             self._initialized = True
-            self._cache_loaded = True
-            self._last_scan_time = datetime.now()
-            logger.info(
-                f"Philips Hue initialized: {len(self.lights)} lights, {len(self.groups)} groups, {len(self.scenes)} scenes"
-            )
+            self._cache_loaded = False  # Will load on first access
+            self._last_scan_time = None
+            logger.info("Philips Hue bridge connection initialized (lazy loading enabled)")
             return True
 
         except Exception as e:
@@ -169,14 +158,15 @@ class HueManager:
 
         try:
             # Discover lights (handle individual light errors gracefully)
+            # Limit processing to essential data for faster startup
             self.lights.clear()
             bridge_lights = self._bridge.lights
-            for light in bridge_lights:
+            for light in bridge_lights[:50]:  # Limit to first 50 lights for faster discovery
                 try:
                     light_data = self._create_light_from_bridge(light)
                     self.lights[light_data.light_id] = light_data
                 except Exception as e:
-                    logger.warning(
+                    logger.debug(
                         f"Failed to process light {getattr(light, 'light_id', 'unknown')}: {e}"
                     )
                     # Continue with other lights even if one fails
@@ -393,7 +383,7 @@ class HueManager:
         now = datetime.now()
         cache_age_minutes = (now - self._last_scan_time).total_seconds() / 60 if self._last_scan_time else float('inf')
 
-        if not self.lights or cache_age_minutes > 30:
+        if not self.lights or cache_age_minutes > 10:
             logger.info(f"Cache is stale (age: {cache_age_minutes:.1f} minutes), rescanning...")
             await self.rescan()
 
@@ -602,17 +592,25 @@ class HueManager:
         now = datetime.now()
         cache_age_minutes = (now - self._last_scan_time).total_seconds() / 60 if self._last_scan_time else float('inf')
 
-        if not self.groups or cache_age_minutes > 30:
+        if not self.groups or cache_age_minutes > 10:
             logger.info(f"Groups cache is stale (age: {cache_age_minutes:.1f} minutes), rescanning...")
             await self.rescan()
 
         return list(self.groups.values())
 
     async def get_all_scenes(self) -> List[HueScene]:
-        """Get all discovered scenes (from cache)."""
+        """Get all scenes (from cache, with auto-rescan if stale)."""
         if not self._initialized:
             await self.initialize()
-        # Use cached data - don't re-query bridge
+
+        # Use same time-based staleness check as lights/groups
+        now = datetime.now()
+        cache_age_minutes = (now - self._last_scan_time).total_seconds() / 60 if self._last_scan_time else float('inf')
+
+        if not self.scenes or cache_age_minutes > 10:
+            logger.info(f"Scenes cache is stale (age: {cache_age_minutes:.1f} minutes), rescanning...")
+            await self.rescan()
+
         return list(self.scenes.values())
 
     async def rescan(self) -> Dict[str, int]:
@@ -632,6 +630,7 @@ class HueManager:
             raise
 
         self._last_scan_time = datetime.now()
+        self._cache_loaded = True
 
         return {
             "lights": len(self.lights),
@@ -740,8 +739,8 @@ def get_hue_manager() -> HueManager:
         _hue_manager_instance = HueManager()
     return _hue_manager_instance
 
-# For backward compatibility
-hue_manager = None  # Will be set on first access
+# For backward compatibility - initialize immediately since it's a singleton
+hue_manager = get_hue_manager()
 
 
 # MCP Tools

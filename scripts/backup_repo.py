@@ -105,7 +105,7 @@ def get_files_to_backup(exclusions):
 
 
 def create_backup():
-    print(f"📦 Starting backup for {REPO_ROOT.name}")
+    print(f"START: Starting backup for {REPO_ROOT.name}")
     exclusions = load_exclusions()
     print(f"LIST: Loaded {len(exclusions)} exclusion rules")
 

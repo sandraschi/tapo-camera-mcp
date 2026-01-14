@@ -277,7 +277,7 @@ def initialize_sample_robots():
 
     _robots[go2.id] = go2
 
-    # Roomba (no API)
+    # Roomba - dormant until robotics MCP reports availability
     roomba = Robot(
         id="roomba_01",
         name="Kitchen Roomba",

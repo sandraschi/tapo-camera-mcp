@@ -4,6 +4,7 @@ Compatibility shims for pytapo dependencies.
 This module patches kasa to provide compatibility with pytapo's expectations:
 - kasa.transports module (imports from klaptransport)
 - AuthenticationError exception alias
+- TPLinkSmartHomeProtocol (deprecated/removed in newer kasa versions)
 """
 import sys
 
@@ -31,6 +32,23 @@ def _patch_kasa():
 
         # Add to sys.modules BEFORE any pytapo imports
         sys.modules['kasa.transports'] = transports_module
+
+    # Patch TPLinkSmartHomeProtocol in kasa.protocol if it's missing
+    try:
+        import kasa.protocol
+        if not hasattr(kasa.protocol, 'TPLinkSmartHomeProtocol'):
+            # Create a compatibility class that inherits from BaseProtocol
+            class TPLinkSmartHomeProtocol(kasa.protocol.BaseProtocol):
+                """Compatibility shim for deprecated TPLinkSmartHomeProtocol."""
+                def __init__(self, *args, **kwargs):
+                    super().__init__(*args, **kwargs)
+
+            # Add to both the module and sys.modules
+            kasa.protocol.TPLinkSmartHomeProtocol = TPLinkSmartHomeProtocol
+            if 'kasa.protocol' in sys.modules:
+                sys.modules['kasa.protocol'].TPLinkSmartHomeProtocol = TPLinkSmartHomeProtocol
+    except ImportError:
+        pass
 
     # Also patch kasa.exceptions if kasa is available
     try:

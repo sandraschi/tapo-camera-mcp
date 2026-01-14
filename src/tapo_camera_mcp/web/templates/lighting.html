@@ -521,6 +521,7 @@
 let lights = [];
 let groups = [];
 let scenes = [];
+let initialLoadDone = false;
 
 // Rescan all devices from bridge (force refresh)
 async function rescanDevices() {
@@ -733,7 +734,9 @@ async function globalEffect(effect) {
 async function loadData(forceRescan = false) {
     try {
         // Check connection status - use combined lighting status
-        const statusResponse = await fetch('/api/lighting/lights?refresh=' + (forceRescan ? 'true' : 'false'));
+        // On first load, always refresh to ensure bridge is connected immediately
+        const shouldRefresh = forceRescan || (!window.initialLoadDone);
+        const statusResponse = await fetch('/api/lighting/lights?refresh=' + (shouldRefresh ? 'true' : 'false'));
         const statusData = await statusResponse.json();
 
         // Create a combined status object
@@ -761,28 +764,8 @@ async function loadData(forceRescan = false) {
                 lastScanEl.textContent = `Last scan: ${scanDate.toLocaleTimeString()}`;
             }
             
-            // Auto-rescan only if forced, or if no lights found after reasonable delay
-            // Don't immediately rescan on first load - give the bridge time to respond
-            if (forceRescan) {
-                console.log('Forced rescan requested...');
-                await rescanDevices();
-                initialScanDone = true;
-                return; // rescanDevices will reload data
-            }
-
-            // Only rescan if we've waited and still have no lights (after 3 load attempts)
-            if (!initialScanDone && status.lights_count === 0) {
-                initialLoadAttempts = (initialLoadAttempts || 0) + 1;
-                if (initialLoadAttempts >= 3) {
-                    console.log('No lights found after multiple attempts, triggering rescan...');
-                    await rescanDevices();
-                    initialScanDone = true;
-                    return;
-                } else {
-                    console.log(`No lights found (attempt ${initialLoadAttempts}/3), will retry...`);
-                }
-            }
-            initialScanDone = true;
+            // Mark initial load as done after first successful connection
+            window.initialLoadDone = true;
         } else {
             statusEl.textContent = 'Disconnected';
             statusEl.className = 'connection-status status-disconnected';

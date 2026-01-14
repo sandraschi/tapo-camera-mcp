@@ -16,8 +16,13 @@ from ...ingest import IngestionUnavailableError, WienEnergieIngestionService
 from ...tools.energy.tapo_plug_tools import tapo_plug_manager
 
 router = APIRouter(prefix="/api/energy", tags=["energy"])
-_db = TimeSeriesDB()
 logger = logging.getLogger(__name__)
+
+def get_energy_db() -> TimeSeriesDB:
+    """Lazy initialization of energy database."""
+    if not hasattr(get_energy_db, '_db'):
+        get_energy_db._db = TimeSeriesDB()
+    return get_energy_db._db
 
 
 # Global smart meter service instance
@@ -418,7 +423,7 @@ async def get_usage_history(
     else:
         start = end - timedelta(days=1)
 
-    history = _db.get_energy_history(start_time=start, end_time=end)
+    history = get_energy_db().get_energy_history(start_time=start, end_time=end)
 
     return {
         "period": period,

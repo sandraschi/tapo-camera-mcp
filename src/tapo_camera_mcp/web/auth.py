@@ -56,9 +56,18 @@ def is_auth_enabled() -> bool:
 
 
 def get_users() -> dict[str, dict]:
-    """Get configured users."""
+    """Get configured users (simplified to single user)."""
     auth_config = get_auth_config()
-    return auth_config.get("users", {})
+    username = auth_config.get("username", "admin")
+    password = auth_config.get("password", "admin")
+
+    # Return single user configuration
+    return {
+        username: {
+            "password": password,  # Plain text for simplicity
+            "role": "admin"
+        }
+    }
 
 
 def validate_credentials(username: str, password: str) -> bool:

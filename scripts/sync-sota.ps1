@@ -48,7 +48,7 @@ $skipped = 0
 # 3. Perform Sync
 foreach ($mapping in $sotaMapping) {
     if (-not (Test-Path $mapping.Source)) {
-        Write-Host "⚠️  Warning: SOTA source not found: $($mapping.Source)" -ForegroundColor Yellow
+        Write-Host "WARNING: SOTA source not found: $($mapping.Source)" -ForegroundColor Yellow
         continue
     }
 
@@ -58,20 +58,20 @@ foreach ($mapping in $sotaMapping) {
         $targetHash = (Get-FileHash $mapping.Target -Algorithm SHA256).Hash
         
         if ($sourceHash -eq $targetHash) {
-            Write-Host "  ⏭️  $(Split-Path $mapping.Target -Leaf) is already up-to-date." -ForegroundColor Gray
+            Write-Host "  SKIPPED: $(Split-Path $mapping.Target -Leaf) is already up-to-date." -ForegroundColor Gray
             $skipped++
         }
         else {
             Copy-Item $mapping.Source $mapping.Target -Force
-            Write-Host "  ✅ Updated $(Split-Path $mapping.Target -Leaf) to latest SOTA." -ForegroundColor Green
+            Write-Host "  SUCCESS: Updated $(Split-Path $mapping.Target -Leaf) to latest SOTA." -ForegroundColor Green
             $updated++
         }
     }
     else {
         Copy-Item $mapping.Source $mapping.Target -Force
-        Write-Host "  ✨ Installed $(Split-Path $mapping.Target -Leaf) from SOTA." -ForegroundColor Cyan
+        Write-Host "  INSTALLED: $(Split-Path $mapping.Target -Leaf) from SOTA." -ForegroundColor Cyan
         $updated++
     }
 }
 
-Write-Host "`n📊 Sync Summary: $updated updated, $skipped skipped.`n" -ForegroundColor White
+Write-Host "`nSUMMARY: Sync Summary: $updated updated, $skipped skipped.`n" -ForegroundColor White

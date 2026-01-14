@@ -92,6 +92,10 @@ class WebServer:
         self.web_config = get_model(WebUISettings)
         self.security_config = get_model(SecuritySettings)
 
+        self.config = get_config()
+        self.web_config = get_model(WebUISettings)
+        self.security_config = get_model(SecuritySettings)
+
         # Initialize FastAPI app
         self.app = FastAPI(
             title="Tapo Camera MCP",
@@ -102,13 +106,28 @@ class WebServer:
             debug=self.config.get("debug", False),
         )
 
+        # Setup everything
+        self._setup_middleware()
+        self._setup_exception_handlers()
+        self._setup_routes()
+
+        # Setup templates
+        self.templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+        self.templates.env.globals.update(
+            {
+                "app_title": self.web_config.title,
+                "app_version": "1.0.0",
+                "theme": self.web_config.theme,
+            }
+        )
+
         # Setup middleware
         self._setup_middleware()
 
         # Setup exception handlers
         self._setup_exception_handlers()
 
-        # Setup routes
+        # Setup routes (load everything for now to avoid hanging)
         self._setup_routes()
 
         # Setup templates
@@ -126,8 +145,123 @@ class WebServer:
         # Connection Supervisor will handle device monitoring in background
         logger.info("Server starting - hardware will initialize on-demand (no DNS required for startup)")
 
+        # Skip log management initialization during startup to speed up server launch
+        # self._init_log_management()  # Deferred until first API call
+
+    def _setup_core_routes(self) -> None:
+        """Setup core routes (static files, etc.)."""
+        # Mount static files
+        static_dir = Path(__file__).parent / "static"
+        self.app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+    def _setup_routes(self) -> None:
+        """Setup all API routes and web pages."""
+        # Core routes
+        self._setup_core_routes()
+
+        # API routers - import here to avoid circular imports
+        from .api.alerts import router as alerts_router
+        from .api.camera_names import router as camera_names_router
+        from .api.custom_presets import router as custom_presets_router
+        from .api.energy import router as energy_router
+        from .api.audio import router as audio_router
+
+        # Optional imports
+        onboarding_router = None
+        try:
+            from .api.onboarding import router as onboarding_router_import
+            onboarding_router = onboarding_router_import
+            onboarding_available = True
+        except ImportError:
+            onboarding_available = False
+
+        from .api.health import router as health_router
+        from .api.lighting import router as lighting_router
+        from .api.messages import router as messages_router
+        from .api.microscope import router as microscope_router
+        from .api.otoscope import router as otoscope_router
+        from .api.scanner import router as scanner_router
+        from .api.dymo import router as dymo_router
+        from .api.appliance_monitor import router as appliance_monitor_router
+        # from .api.ikettle import router as ikettle_router  # Commented out - no hardware available
+        from .api.motion import router as motion_router
+        from .api.ptz import router as ptz_router
+        from .api.ring import router as ring_router
+        from .api.security import router as security_router
+        from .api.sensors import router as sensors_router
+        # from .api.shelly import router as shelly_router  # Commented out - no hardware available
+        from .api.thermal import router as thermal_router
+        from .api.weather import router as weather_router
+        from .api.plex import router as plex_router
+        from .api.robots import router as robots_router
+
+        if onboarding_available and onboarding_router:
+            self.app.include_router(onboarding_router)
+        self.app.include_router(alerts_router)
+        self.app.include_router(camera_names_router)
+        self.app.include_router(custom_presets_router)
+        self.app.include_router(sensors_router)
+        self.app.include_router(energy_router)
+        self.app.include_router(weather_router)
+        self.app.include_router(plex_router)
+        self.app.include_router(robots_router)
+        self.app.include_router(security_router)
+        self.app.include_router(ring_router)
+        self.app.include_router(ptz_router)
+        self.app.include_router(audio_router)
+        self.app.include_router(motion_router)
+        self.app.include_router(lighting_router)
+        # self.app.include_router(shelly_router)  # Commented out - no hardware available
+        self.app.include_router(thermal_router)
+        self.app.include_router(health_router)
+        self.app.include_router(messages_router)
+        self.app.include_router(microscope_router)
+        self.app.include_router(otoscope_router)
+        self.app.include_router(scanner_router)
+        self.app.include_router(dymo_router)
+        self.app.include_router(appliance_monitor_router)
+        # self.app.include_router(ikettle_router)  # Commented out - no hardware available
+
+        # LLM router
+        from .api.llm import router as llm_router
+        self.app.include_router(llm_router)
+
+
         # Shelly initialization happens on-demand when needed
         # No blocking startup initialization required
+
+    def _init_log_management(self):
+        """Initialize automatic log management for rotation and cleanup."""
+        try:
+            from tapo_camera_mcp.utils.log_manager import default_log_manager
+
+            # Run initial log sanitization (rotate + compress + cleanup)
+            logger.info("Running initial log sanitization on startup...")
+            results = default_log_manager.sanitize_logs()
+            logger.info(f"Initial log sanitization completed: {results}")
+
+            # Schedule periodic log maintenance (every 24 hours)
+            import asyncio
+            from tapo_camera_mcp.utils.log_manager import LogConfig
+
+            async def periodic_log_maintenance():
+                """Run log maintenance periodically."""
+                while True:
+                    try:
+                        await asyncio.sleep(24 * 60 * 60)  # 24 hours
+                        logger.info("Running scheduled log maintenance...")
+                        results = default_log_manager.sanitize_logs()
+                        logger.info(f"Scheduled log maintenance completed: {results}")
+                    except Exception as e:
+                        logger.error(f"Scheduled log maintenance failed: {e}")
+
+            # Schedule periodic task - will start when event loop is available
+            # Don't create task here to avoid "no running event loop" error during import
+            logger.info("Log management initialized - periodic cleanup will start with server")
+
+        except Exception as e:
+            logger.warning(f"Failed to initialize log management: {e}")
+            # Don't fail startup if log management fails
 
         # Thermal sensor initialization happens on-demand when needed
         # No blocking startup initialization required
@@ -173,6 +307,8 @@ class WebServer:
             # Allow fullscreen API
             response.headers["Permissions-Policy"] = "fullscreen=(self)"
             return response
+
+        # API routers are loaded immediately now
 
     def _setup_exception_handlers(self) -> None:
         """Setup exception handlers for the FastAPI app."""
@@ -699,11 +835,6 @@ class WebServer:
             },
         )
 
-    def _setup_routes(self) -> None:
-        """Setup routes for the FastAPI app."""
-        # Mount static files
-        static_dir = Path(__file__).parent / "static"
-        self.app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
         # Auth routes
         @self.app.get("/login", response_class=HTMLResponse, name="login")
@@ -2019,16 +2150,17 @@ Provide a concise summary:"""
         from .api.scanner import router as scanner_router
         from .api.dymo import router as dymo_router
         from .api.appliance_monitor import router as appliance_monitor_router
-        from .api.ikettle import router as ikettle_router
+        # from .api.ikettle import router as ikettle_router  # Commented out - no hardware available
         from .api.motion import router as motion_router
         from .api.ptz import router as ptz_router
         from .api.ring import router as ring_router
         from .api.security import router as security_router
         from .api.sensors import router as sensors_router
-        from .api.shelly import router as shelly_router
+        # from .api.shelly import router as shelly_router  # Commented out - no hardware available
         from .api.thermal import router as thermal_router
         from .api.weather import router as weather_router
         from .api.plex import router as plex_router
+        from .api.robots import router as robots_router
 
         if onboarding_available and onboarding_router:
             self.app.include_router(onboarding_router)
@@ -2039,13 +2171,14 @@ Provide a concise summary:"""
         self.app.include_router(energy_router)
         self.app.include_router(weather_router)
         self.app.include_router(plex_router)
+        self.app.include_router(robots_router)
         self.app.include_router(security_router)
         self.app.include_router(ring_router)
         self.app.include_router(ptz_router)
         self.app.include_router(audio_router)
         self.app.include_router(motion_router)
         self.app.include_router(lighting_router)
-        self.app.include_router(shelly_router)
+        # self.app.include_router(shelly_router)  # Commented out - no hardware available
         self.app.include_router(thermal_router)
         self.app.include_router(health_router)
         self.app.include_router(messages_router)
@@ -2054,7 +2187,7 @@ Provide a concise summary:"""
         self.app.include_router(scanner_router)
         self.app.include_router(dymo_router)
         self.app.include_router(appliance_monitor_router)
-        self.app.include_router(ikettle_router)
+        # self.app.include_router(ikettle_router)  # Commented out - no hardware available
 
         # LLM router
         from .api.llm import router as llm_router
@@ -2242,204 +2375,17 @@ Provide a concise summary:"""
         # Web UI routes
         @self.app.get("/", response_class=HTMLResponse, name="dashboard")
         async def index(request: Request):
-            """Serve the main dashboard page."""
-            # Initialize variables to avoid undefined errors in template
-            cameras = []
-            online_cameras = 0
-            total_cameras = 0
-            security_devices = []
-            security_alerts = []
-            security_overview = {}
-
-            server = None  # Initialize to avoid undefined variable errors
-            try:
-                # Get real camera data from the MCP server
-                import asyncio
-
-                from tapo_camera_mcp.core.server import TapoCameraServer
-
-                try:
-                    server = await asyncio.wait_for(
-                        TapoCameraServer.get_instance(),
-                        timeout=5.0
-                    )
-
-                    # Load camera list and security data in parallel
-                    camera_task = asyncio.wait_for(
-                        server.camera_manager.list_cameras(),
-                        timeout=5.0
-                    )
-
-                    # Prepare security data loading task
-                    security_task = None
-                    try:
-                        from tapo_camera_mcp.security import security_manager
-                        if not hasattr(security_manager, "_initialized"):
-                            security_config = (
-                                self.security_config.integrations.dict() if self.security_config else {}
-                            )
-                            # Add timeout to prevent hanging
-                            await asyncio.wait_for(
-                                security_manager.initialize(security_config),
-                                timeout=5.0
-                            )
-                            security_manager._initialized = True
-
-                        # Create security data loading task with timeout
-                        security_task = asyncio.wait_for(
-                            asyncio.gather(
-                                security_manager.get_all_devices(),
-                                security_manager.get_all_alerts(),
-                                security_manager.get_system_overview(),
-                                return_exceptions=True
-                            ),
-                            timeout=5.0
-                        )
-                    except asyncio.TimeoutError:
-                        logger.warning("Security manager initialization or data loading timed out")
-                        security_task = None
-                    except Exception as e:
-                        logger.warning(f"Failed to prepare security data loading: {e}")
-                        security_task = None
-
-                    # Wait for camera data
-                    cameras = await camera_task
-
-                    # Wait for security data if task was created
-                    if security_task:
-                        try:
-                            sec_devices, sec_alerts, sec_overview = await security_task
-                            security_devices = sec_devices if not isinstance(sec_devices, Exception) else []
-                            security_alerts = sec_alerts if not isinstance(sec_alerts, Exception) else []
-                            security_overview = sec_overview if not isinstance(sec_overview, Exception) else {}
-                        except asyncio.TimeoutError:
-                            logger.warning("Security data loading timed out - using empty data")
-                            security_devices = []
-                            security_alerts = []
-                            security_overview = {}
-                        except Exception as e:
-                            logger.warning(f"Failed to load security data: {e}")
-                            security_devices = []
-                            security_alerts = []
-                            security_overview = {}
-
-                except asyncio.TimeoutError:
-                    logger.warning("Server instance access timed out - using empty camera list")
-                    cameras = []
-                total_cameras = len(cameras)
-                online_cameras = sum(1 for cam in cameras if cam.get("status") == "online")
-
-                # If no cameras configured, try to auto-add USB webcam
-                if total_cameras == 0 and server:
-                    try:
-                        global _last_webcam_attempt
-                        now = datetime.utcnow()
-                        if (
-                            _last_webcam_attempt is None
-                            or now - _last_webcam_attempt >= AUTO_WEBCAM_RETRY_INTERVAL
-                        ):
-                            _last_webcam_attempt = now
-                            logger.info(
-                                "No cameras configured, attempting to auto-add USB webcam..."
-                            )
-                            config = {
-                                "name": "usb_webcam_0",
-                                "type": "webcam",
-                                "params": {"device_id": 0},
-                            }
-                            # Add timeout to prevent hanging
-                            success = await asyncio.wait_for(
-                                server.camera_manager.add_camera(config),
-                                timeout=5.0
-                            )
-                            if success:
-                                logger.info("Successfully auto-added USB webcam")
-                                # Refresh camera list with timeout
-                                cameras = await asyncio.wait_for(
-                                    server.camera_manager.list_cameras(),
-                                    timeout=5.0
-                                )
-                                total_cameras = len(cameras)
-                                online_cameras = sum(
-                                    1 for cam in cameras if cam.get("status") == "online"
-                                )
-                            else:
-                                logger.warning(
-                                    "Failed to auto-add webcam: camera manager returned False"
-                                )
-                    except asyncio.TimeoutError:
-                        logger.warning("Auto-add webcam timed out - skipping")
-                    except Exception as e:
-                        logger.warning(f"Error auto-adding webcam: {e}")
-
-            except Exception as e:
-                logger.exception(f"Failed to get camera data for dashboard: {e}")
-                # Variables already initialized above
-
-            # Calculate actual storage usage
-            storage_used = 0
-            try:
-                import psutil
-                disk = psutil.disk_usage("/")
-                storage_used = round(disk.percent, 1)
-            except Exception:
-                storage_used = 0
-
-            # Get system status for template - ensure all fields have defaults
-            system_status = {
-                "cpu_usage": 0,
-                "memory_usage": 0,
-                "disk_usage": storage_used,
-                "network": {
-                    "upload": 0.0,
-                    "download": 0.0,
-                }
-            }
-            try:
-                import psutil
-                system_status["cpu_usage"] = round(psutil.cpu_percent(interval=0.1), 1)
-                memory = psutil.virtual_memory()
-                system_status["memory_usage"] = round(memory.percent, 1)
-                try:
-                    net_io = psutil.net_io_counters()
-                    # Note: These are cumulative bytes, not rates
-                    # For rates, we'd need to track previous values and time delta
-                    # For dashboard display, showing cumulative is acceptable
-                    system_status["network"]["upload"] = round(net_io.bytes_sent / (1024 * 1024), 2)
-                    system_status["network"]["download"] = round(net_io.bytes_recv / (1024 * 1024), 2)
-                except Exception as e:
-                    logger.debug(f"Could not get network stats: {e}")
-                    # Keep defaults
-            except Exception as e:
-                logger.debug(f"Could not get system stats: {e}")
-                # Keep defaults
-
-            # Safely serialize security devices and alerts
-            def safe_serialize(obj):
-                """Safely convert object to dict."""
-                if hasattr(obj, '__dict__'):
-                    return obj.__dict__
-                if hasattr(obj, 'dict'):
-                    return obj.dict()
-                if isinstance(obj, dict):
-                    return obj
-                return str(obj)
-
+            """Serve the main dashboard page with fast loading (data loads via API)."""
+            # Use placeholder data for fast initial load - real data loads via JavaScript API calls
             return self.templates.TemplateResponse(
-                "simple_dashboard.html",
+                "dashboard.html",
                 {
                     "request": request,
-                    "active_page": "dashboard",
-                    "online_cameras": online_cameras,
-                    "total_cameras": total_cameras,
-                    "storage_used": storage_used,
-                    "active_alerts": len(security_alerts),
-                    "active_recordings": 0,
-                    "cameras": cameras,
-                    "security_devices": [safe_serialize(device) for device in security_devices],
-                    "security_alerts": [safe_serialize(alert) for alert in security_alerts],
-                    "security_overview": security_overview or {},
-                    "system_status": system_status,
+                    "online_cameras": 0,  # Will be updated by JavaScript
+                    "total_cameras": 0,   # Will be updated by JavaScript
+                    "storage_used": 0,    # Will be updated by JavaScript
+                    "active_alerts": 0,   # Will be updated by JavaScript
+                    "active_recordings": 0,  # Will be updated by JavaScript
                 },
             )
 

@@ -2019,13 +2019,13 @@ Provide a concise summary:"""
         from .api.scanner import router as scanner_router
         from .api.dymo import router as dymo_router
         from .api.appliance_monitor import router as appliance_monitor_router
-        from .api.ikettle import router as ikettle_router
+        # from .api.ikettle import router as ikettle_router  # Commented out - no hardware available
         from .api.motion import router as motion_router
         from .api.ptz import router as ptz_router
         from .api.ring import router as ring_router
         from .api.security import router as security_router
         from .api.sensors import router as sensors_router
-        from .api.shelly import router as shelly_router
+        # from .api.shelly import router as shelly_router  # Commented out - no hardware available
         from .api.thermal import router as thermal_router
         from .api.weather import router as weather_router
         from .api.plex import router as plex_router
@@ -2045,7 +2045,7 @@ Provide a concise summary:"""
         self.app.include_router(audio_router)
         self.app.include_router(motion_router)
         self.app.include_router(lighting_router)
-        self.app.include_router(shelly_router)
+        # self.app.include_router(shelly_router)  # Commented out - no hardware available
         self.app.include_router(thermal_router)
         self.app.include_router(health_router)
         self.app.include_router(messages_router)
@@ -2054,7 +2054,7 @@ Provide a concise summary:"""
         self.app.include_router(scanner_router)
         self.app.include_router(dymo_router)
         self.app.include_router(appliance_monitor_router)
-        self.app.include_router(ikettle_router)
+        # self.app.include_router(ikettle_router)  # Commented out - no hardware available
 
         # LLM router
         from .api.llm import router as llm_router

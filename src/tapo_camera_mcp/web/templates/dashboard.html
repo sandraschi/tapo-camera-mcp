@@ -176,10 +176,10 @@
                 progress.style.width = `${value}%`;
             }
         });
-        
-        // Load Vienna alerts (check cache first)
-        loadAlerts(true);
-        
+
+        // Load Vienna alerts asynchronously after page loads (non-blocking)
+        setTimeout(() => loadAlerts(true), 100);
+
         // Refresh alerts every 5 minutes
         alertsInterval = setInterval(() => loadAlerts(false), 5 * 60 * 1000);
         
@@ -284,7 +284,7 @@
         try {
             // Add timeout to prevent hanging requests
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+            const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
             
             const response = await fetch('/alerts/summary', {
                 signal: controller.signal

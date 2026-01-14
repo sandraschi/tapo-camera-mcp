@@ -326,13 +326,25 @@ class ConfigManager:
         return model_class(**model_config)
 
 
-# Global configuration instance
-config_manager = ConfigManager()
+# Lazy-loaded global configuration instance
+_config_manager_instance: Optional[ConfigManager] = None
 
-# Shortcut functions
-get_config = config_manager.load_config
-get_setting = config_manager.get
-get_model = config_manager.get_model
+def _get_config_manager() -> ConfigManager:
+    """Get the global config manager instance (lazy initialization)."""
+    global _config_manager_instance
+    if _config_manager_instance is None:
+        _config_manager_instance = ConfigManager()
+    return _config_manager_instance
+
+# Shortcut functions with lazy loading
+def get_config() -> Dict[str, Any]:
+    return _get_config_manager().load_config()
+
+def get_setting(key: str, default: Any = None) -> Any:
+    return _get_config_manager().get(key, default)
+
+def get_model(model_class: Type[T]) -> T:
+    return _get_config_manager().get_model(model_class)
 
 # Export models and utilities
 __all__ = [

@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 # Import robot clients
 from ...integrations.moorebot_client import MoorebotScoutClient, MoorebotStatus
-from ...integrations.go2_client import UnitreeGo2Client, Go2Status
+# from ...integrations.go2_client import UnitreeGo2Client, Go2Status  # Commented out - no hardware available, planned for 2027
 from ...integrations.vbot_client import VbotClient, VbotStatus, VbotType
 
 # Global vbot client instance
@@ -26,7 +26,7 @@ class RobotType(str, Enum):
     SCOUT_E = "scout_e"  # Moorebot Scout E (physical)
     GO2 = "go2"  # Unitree Go2 (physical)
     G1 = "g1"  # Unitree G1 (physical)
-    ROOMBOT = "roombot"  # Roomba/iRobot (physical)
+    DREAME = "dreame"  # Dreame/Diome (physical)
     PETBOT = "petbot"  # Petbot Loona (physical)
     VSCOUT = "vscout"  # Virtual Moorebot Scout
     VSCOUT_E = "vscout_e"  # Virtual Moorebot Scout E
@@ -152,12 +152,14 @@ def get_default_capabilities(robot_type: RobotType) -> RobotCapabilities:
             battery_capacity=15000,
             max_runtime=180
         ),
-        RobotType.ROOMBOT: RobotCapabilities(
+        RobotType.DREAME: RobotCapabilities(
+            has_lidar=True,
             can_patrol=True,
             can_navigate=True,
             supports_autonomous=True,
-            battery_capacity=3000,
-            max_runtime=90
+            supports_room_cleaning=True,
+            battery_capacity=5200,
+            max_runtime=180
         ),
         RobotType.PETBOT: RobotCapabilities(
             has_camera=True,
@@ -218,7 +220,7 @@ def initialize_sample_robots():
     """Initialize sample robots for demonstration."""
     now = datetime.now()
 
-    # Moorebot Scout - try to connect to real robot
+    # Moorebot Scout - dormant until robotics MCP reports availability (arriving soon)
     scout = Robot(
         id="scout_01",
         name="Living Room Scout",
@@ -231,24 +233,11 @@ def initialize_sample_robots():
         ip_address="192.168.1.150"
     )
 
-    # Try to connect to real Moorebot Scout
-    scout_client = MoorebotScoutClient("192.168.1.150", mock_mode=True)  # Start in mock mode
-    try:
-        # Attempt connection (will use mock mode if hardware not available)
-        connection_result = asyncio.run(scout_client.connect())
-        if connection_result.get("success"):
-            scout.status = RobotStatus.ONLINE if connection_result.get("mock_mode") else RobotStatus.IDLE
-            scout.firmware_version = connection_result.get("firmware_version", "1.4.2")
-            scout.connected_since = now
-            logger.info(f"Moorebot Scout connected: {connection_result}")
-        else:
-            logger.warning(f"Failed to connect to Moorebot Scout: {connection_result.get('error')}")
-    except Exception as e:
-        logger.error(f"Error initializing Moorebot Scout: {e}")
-
+    # Scout logic remains dormant - will be activated if robotics MCP reports it as available
+    # Connection attempts only happen after MCP confirms hardware presence
     _robots[scout.id] = scout
 
-    # Unitree Go2 (planned for Spring 2025)
+    # Unitree Go2 - dormant until robotics MCP reports availability
     go2 = Robot(
         id="go2_01",
         name="Patrol Go2",
@@ -258,45 +247,19 @@ def initialize_sample_robots():
         position=RobotPosition(x=0, y=0, z=0, heading=0, floor="ground"),
         last_seen=now,
         firmware_version=None,
-        ip_address="192.168.1.120"  # Planned IP
+        ip_address="192.168.1.120"
     )
 
-    # Go2 client (mock mode until hardware arrives)
-    go2_client = UnitreeGo2Client("192.168.1.120", mock_mode=True)
-    try:
-        connection_result = asyncio.run(go2_client.connect())
-        if connection_result.get("success"):
-            go2.status = RobotStatus.IDLE
-            go2.firmware_version = connection_result.get("firmware_version", "planned")
-            go2.connected_since = now
-            logger.info(f"Unitree Go2 connected: {connection_result}")
-        else:
-            logger.warning(f"Failed to connect to Unitree Go2: {connection_result.get('error')}")
-    except Exception as e:
-        logger.error(f"Error initializing Unitree Go2: {e}")
-
+    # Go2 remains dormant - will be activated if robotics MCP reports it as available
     _robots[go2.id] = go2
 
-    # Roomba (no API)
-    roomba = Robot(
-        id="roomba_01",
-        name="Kitchen Roomba",
-        type=RobotType.ROOMBOT,
-        status=RobotStatus.OFFLINE,
-        capabilities=get_default_capabilities(RobotType.ROOMBOT),
-        position=RobotPosition(x=0, y=0, z=0, heading=0, floor="ground"),
-        last_seen=now,
-        firmware_version=None,
-        ip_address=None
-    )
-    _robots[roomba.id] = roomba
 
 # Initialize sample data
 initialize_sample_robots()
 
 # Initialize vbot client and load virtual robots
-async def initialize_vbot_integration():
-    """Initialize virtual robot integration with robotics-mcp server."""
+async def initialize_robotics_integration():
+    """Initialize robotics integration with robotics-mcp server."""
     global _vbot_client
 
     try:
@@ -306,7 +269,7 @@ async def initialize_vbot_integration():
         robotics_config = config.get("robotics_mcp", {})
 
         if not robotics_config.get("enabled", False):
-            logger.info("Robotics MCP integration disabled")
+            logger.info("Robotics MCP integration disabled - robots remain dormant")
             return
 
         server_url = robotics_config.get("server_url", "http://localhost:8080")
@@ -328,9 +291,10 @@ async def initialize_vbot_integration():
 
         logger.info("Connected to robotics-mcp server for virtual robot integration")
 
-        # Load virtual robots from robotics-mcp server
+        # Load robots from robotics-mcp server
         if auto_discover:
             await load_virtual_robots_from_server()
+            await load_physical_robots_from_server()
 
     except Exception as e:
         logger.exception(f"Error initializing vbot integration: {e}")
@@ -400,6 +364,51 @@ async def load_virtual_robots_from_server():
 
     except Exception as e:
         logger.exception(f"Error loading virtual robots from server: {e}")
+
+async def load_physical_robots_from_server():
+    """Query robotics MCP for available physical robots and activate/deactivate accordingly."""
+    global _vbot_client
+
+    if not _vbot_client:
+        logger.info("No robotics MCP client - physical robots remain dormant")
+        return
+
+    try:
+        # Query for available physical robots
+        physical_robots = await _vbot_client.list_physical_robots()
+        if not physical_robots.get("success"):
+            logger.warning(f"Failed to query physical robots: {physical_robots}")
+            return
+
+        available_robots = physical_robots.get("robots", [])
+        logger.info(f"Robotics MCP reports {len(available_robots)} physical robots available")
+
+        # Track which robot types are available
+        available_types = set()
+        for robot_data in available_robots:
+            robot_type = robot_data.get("robot_type", "").lower()
+            available_types.add(robot_type)
+
+        # Activate/deactivate robots based on availability
+        robot_status_updates = {
+            "go2": "go2_01",  # Our Go2 robot ID
+            "scout": "scout_01"  # Our Moorebot Scout ID
+        }
+
+        for robot_type, robot_id in robot_status_updates.items():
+            if robot_id in _robots:
+                robot = _robots[robot_id]
+                if robot_type in available_types:
+                    # Activate robot - mark as available for connection attempts
+                    robot.status = RobotStatus.OFFLINE  # Ready for connection attempts
+                    logger.info(f"Activated {robot_type} robot ({robot_id}) - available via robotics MCP")
+                else:
+                    # Robot logic remains dormant - not available via MCP
+                    robot.status = RobotStatus.OFFLINE  # Will remain dormant
+                    logger.debug(f"{robot_type} robot ({robot_id}) not reported by robotics MCP - logic remains dormant")
+
+    except Exception as e:
+        logger.exception(f"Error querying physical robots from robotics MCP: {e}")
 
 async def execute_vbot_command(robot: Robot, command_request: RobotCommandRequest):
     """Execute command on a virtual robot."""
@@ -543,7 +552,7 @@ async def execute_robot_command(robot_id: str, command_request: RobotCommandRequ
                 result = {"success": True, "message": f"Command {command_request.command} simulated"}
 
         elif robot.type == RobotType.GO2:
-            # Use Go2 client
+            # Use Go2 client - only active if robotics MCP reports Go2 as available
             go2_client = UnitreeGo2Client(robot.ip_address or "192.168.1.120", mock_mode=True)
 
             if command_request.command == RobotCommand.START_PATROL:
@@ -673,7 +682,7 @@ async def get_robot_telemetry(robot_id: str):
             robot.position.heading = status_data.get("position", {}).get("heading", robot.position.heading)
 
         elif robot.type == RobotType.GO2:
-            # Use Go2 client
+            # Use Go2 client - only active if robotics MCP reports Go2 as available
             go2_client = UnitreeGo2Client(robot.ip_address or "192.168.1.120", mock_mode=True)
             status_data = await go2_client.get_status()
 

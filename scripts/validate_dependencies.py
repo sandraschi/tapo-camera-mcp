@@ -7,17 +7,25 @@ all dependencies on startup and providing clear error messages.
 """
 
 import sys
+import logging
 from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 
 def check_dependencies():
     """Check all required dependencies and provide actionable errors."""
-    print("\n" + "=" * 70)
-    print("VALIDATION: DEPENDENCY VALIDATION - Smart Home Dashboard")
-    print("=" * 70 + "\n")
+    logger.info("=" * 70)
+    logger.info("VALIDATION: DEPENDENCY VALIDATION - Smart Home Dashboard")
+    logger.info("=" * 70)
 
     missing = []
     issues = []
@@ -50,60 +58,60 @@ def check_dependencies():
         ("PIL", "Pillow (image processing)", "pip install pillow", "Image Processing"),
     ]
 
-    print("CORE: CORE DEPENDENCIES:")
-    print("-" * 70)
+    logger.info("CORE: CORE DEPENDENCIES:")
+    logger.info("-" * 70)
     for module, name, install_cmd in checks:
         try:
             __import__(module)
-            print(f"   SUCCESS: {name}")
+            logger.info(f"   SUCCESS: {name}")
         except ImportError:
-            print(f"   ERROR: {name} - MISSING!")
+            logger.error(f"   ERROR: {name} - MISSING!")
             missing.append((name, install_cmd))
 
-    print("\nHARDWARE: HARDWARE DEPENDENCIES:")
-    print("-" * 70)
+    logger.info("HARDWARE: HARDWARE DEPENDENCIES:")
+    logger.info("-" * 70)
     for module, name, install_cmd, hardware in hardware_checks:
         try:
             __import__(module)
-            print(f"   ✅ {name} ({hardware})")
+            logger.info(f"   SUCCESS: {name} ({hardware})")
         except ImportError:
-            print(f"   WARNING: {name} - MISSING (affects: {hardware})")
+            logger.warning(f"   WARNING: {name} - MISSING (affects: {hardware})")
             issues.append((name, install_cmd, hardware))
 
-    print("\nSYSTEM DEPENDENCIES:")
-    print("-" * 70)
+    logger.info("SYSTEM DEPENDENCIES:")
+    logger.info("-" * 70)
     for module, name, install_cmd, feature in system_checks:
         try:
             __import__(module)
-            print(f"   SUCCESS: {name}")
+            logger.info(f"   SUCCESS: {name}")
         except ImportError:
-            print(f"   ERROR: {name} - MISSING!")
+            logger.error(f"   ERROR: {name} - MISSING!")
             missing.append((name, install_cmd))
 
-    print("\n" + "=" * 70)
+    logger.info("=" * 70)
 
     if missing:
-        print("\n❌ CRITICAL MISSING DEPENDENCIES:")
-        print("-" * 70)
+        logger.error("CRITICAL MISSING DEPENDENCIES:")
+        logger.error("-" * 70)
         for name, install_cmd in missing:
-            print(f"   {name}")
-            print(f"      Fix: {install_cmd}")
-        print("\n🚨 Server may not start! Install critical dependencies first.")
+            logger.error(f"   {name}")
+            logger.error(f"      Fix: {install_cmd}")
+        logger.error("CRITICAL: Server may not start! Install critical dependencies first.")
         return False
 
     if issues:
-        print("\nWARNING: OPTIONAL HARDWARE DEPENDENCIES MISSING:")
-        print("-" * 70)
+        logger.warning("OPTIONAL HARDWARE DEPENDENCIES MISSING:")
+        logger.warning("-" * 70)
         for name, install_cmd, hardware in issues:
-            print(f"   {name} - {hardware} won't work")
-            print(f"      Fix: {install_cmd}")
-        print("\n✅ Server will start, but some hardware won't be available.")
-        print("   Install missing dependencies to enable full functionality.")
+            logger.warning(f"   {name} - {hardware} won't work")
+            logger.warning(f"      Fix: {install_cmd}")
+        logger.info("Server will start, but some hardware won't be available.")
+        logger.info("   Install missing dependencies to enable full functionality.")
         return True  # Can still start
 
-    print("\nSUCCESS: ALL DEPENDENCIES SATISFIFIED!")
-    print("   Server is ready for full operation.")
-    print("=" * 70 + "\n")
+    logger.info("SUCCESS: ALL DEPENDENCIES SATISFIFIED!")
+    logger.info("   Server is ready for full operation.")
+    logger.info("=" * 70)
     return True
 
 

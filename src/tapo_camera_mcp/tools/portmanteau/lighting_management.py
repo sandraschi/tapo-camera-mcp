@@ -13,6 +13,13 @@ from typing import Any, Literal, Union
 from fastmcp import FastMCP
 
 from tapo_camera_mcp.tools.lighting.hue_tools import hue_manager
+from tapo_camera_mcp.utils.response_builders import (
+    build_success_response,
+    build_error_response,
+    build_hardware_error_response,
+    build_network_error_response,
+    build_configuration_error_response,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -552,26 +559,65 @@ def register_lighting_management_tool(mcp: FastMCP) -> None:
 
             if action == "activate_scene":
                 if not scene_id:
-                    return {
-                        "success": False,
-                        "error": "scene_id is required for activate_scene action",
-                    }
+                    return build_error_response(
+                        error="Missing scene identifier",
+                        error_code="MISSING_SCENE_ID",
+                        message="scene_id parameter is required for activate_scene action",
+                        suggestions=[
+                            "Provide a valid scene_id from the 'list_scenes' action",
+                            "Check available scenes with 'list_scenes' first"
+                        ]
+                    )
                 success = await hue_manager.activate_scene(scene_id, group_id)
                 return {"success": success, "action": action, "data": {"scene_id": scene_id}}
 
             if action == "status":
-                return {
-                    "success": True,
-                    "action": action,
-                    "data": {
-                        "connected": hue_manager._initialized,
-                        "bridge_ip": hue_manager._bridge_ip,
-                        "lights_count": len(hue_manager.lights),
-                        "groups_count": len(hue_manager.groups),
-                        "scenes_count": len(hue_manager.scenes),
-                        "error": hue_manager._connection_error,
-                    },
+                connected = hue_manager._initialized
+                lights_count = len(hue_manager.lights)
+                groups_count = len(hue_manager.groups)
+                scenes_count = len(hue_manager.scenes)
+
+                status_data = {
+                    "connected": connected,
+                    "bridge_ip": hue_manager._bridge_ip,
+                    "lights_count": lights_count,
+                    "groups_count": groups_count,
+                    "scenes_count": scenes_count,
+                    "error": hue_manager._connection_error,
                 }
+
+                if connected and lights_count > 0:
+                    return build_success_response(
+                        operation="bridge_status",
+                        summary=f"Hue Bridge connected with {lights_count} lights, {groups_count} groups, {scenes_count} scenes",
+                        result=status_data,
+                        recommendations=[
+                            "Use 'list_lights' to see all available lights" if lights_count > 0 else None,
+                            "Try 'control_light' to change light settings" if lights_count > 0 else None,
+                            "Use 'list_scenes' to see available lighting scenes" if scenes_count > 0 else None
+                        ],
+                        next_steps=[
+                            "Try controlling lights with 'control_light' action",
+                            "Create custom scenes with 'activate_scene'",
+                            "Set up automated lighting with smart home integration"
+                        ]
+                    )
+                else:
+                    return build_success_response(
+                        operation="bridge_status",
+                        summary=f"Hue Bridge {'connected but no lights found' if connected else 'not connected'}",
+                        result=status_data,
+                        recommendations=[
+                            "Run 'rescan' action to discover lights" if connected else "Check bridge power and network connection",
+                            "Press bridge link button if authorization is needed" if not connected else None,
+                            "Verify bridge IP address configuration" if not connected else None
+                        ],
+                        next_steps=[
+                            "Run 'rescan' to discover lights" if connected else "Fix bridge connection first",
+                            "Check bridge status again after fixes",
+                            "Contact support if issues persist"
+                        ]
+                    )
 
             if action == "rescan":
                 result = await hue_manager.rescan()
@@ -583,10 +629,16 @@ def register_lighting_management_tool(mcp: FastMCP) -> None:
 
             if action == "prank":
                 if not prank_mode:
-                    return {
-                        "success": False,
-                        "error": "prank_mode is required (chaos, wave, disco, sos)",
-                    }
+                    return build_error_response(
+                        error="Missing prank mode",
+                        error_code="MISSING_PRANK_MODE",
+                        message="prank_mode parameter is required for prank action",
+                        suggestions=[
+                            "Choose from available modes: chaos, wave, disco, sos",
+                            "Start with 'chaos' mode for random light effects",
+                            "Try 'wave' mode for sequential room lighting"
+                        ]
+                    )
 
                 # Cap duration at 10 seconds for safety
                 safe_duration = min(max(1, duration), 10)
@@ -610,8 +662,60 @@ def register_lighting_management_tool(mcp: FastMCP) -> None:
                     "data": {"duration": safe_duration, **result},
                 }
 
-            return {"success": False, "error": f"Action '{action}' not implemented"}
+            return build_error_response(
+                error=f"Lighting action '{action}' not implemented",
+                error_code="ACTION_NOT_IMPLEMENTED",
+                message=f"The requested lighting action '{action}' is not yet available",
+                suggestions=[
+                    "Use available actions: list_lights, control_light, list_groups, etc.",
+                    "Check for MCP server updates that may add this functionality"
+                ]
+            )
 
         except Exception as e:
             logger.error(f"Error in lighting management action '{action}': {e}", exc_info=True)
-            return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
+
+            # Intelligent error analysis for Hue bridge issues
+            error_str = str(e).lower()
+            recovery_options = []
+
+            if "bridge" in error_str or "connection" in error_str:
+                recovery_options = [
+                    "Ensure Hue Bridge is powered on and connected to network",
+                    "Check that MCP server is on same network as Hue Bridge",
+                    "Verify Hue Bridge IP address is correct in configuration",
+                    "Press Hue Bridge link button and try action again within 30 seconds"
+                ]
+            elif "unauthorized" in error_str or "not authorized" in error_str:
+                recovery_options = [
+                    "Press Hue Bridge link button and retry within 30 seconds",
+                    "Check if another device is already linked to the bridge",
+                    "Try power cycling the Hue Bridge",
+                    "Verify bridge firmware is up to date"
+                ]
+            elif "timeout" in error_str or "unreachable" in error_str:
+                recovery_options = [
+                    "Check network connectivity to Hue Bridge",
+                    "Verify firewall allows communication on port 80/443",
+                    "Try restarting the MCP server",
+                    "Check if Hue Bridge has power and network connectivity"
+                ]
+            else:
+                recovery_options = [
+                    "Check Hue Bridge status with 'status' action",
+                    "Verify bridge IP and connection settings",
+                    "Try 'rescan' action to rediscover lights",
+                    "Check MCP server logs for detailed error information"
+                ]
+
+            return build_hardware_error_response(
+                error=f"Hue Bridge communication failed during {action}",
+                device_type="Hue Bridge",
+                device_id=hue_manager._bridge_ip or "unknown",
+                recovery_options=recovery_options,
+                suggestions=[
+                    f"Try running lighting action '{action}' again after applying recovery steps",
+                    "Check bridge status with 'status' action first",
+                    "Verify bridge configuration and network connectivity"
+                ]
+            )

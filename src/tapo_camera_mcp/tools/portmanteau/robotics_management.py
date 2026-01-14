@@ -21,6 +21,13 @@ from ...tools.robotics.moorebot_tools import (
     moorebot_return_to_dock,
     moorebot_stop_patrol,
 )
+from ...utils.response_builders import (
+    build_success_response,
+    build_error_response,
+    build_hardware_error_response,
+    build_network_error_response,
+    build_configuration_error_response,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -190,8 +197,76 @@ def register_robotics_management_tool(mcp: FastMCP) -> None:
                 result = await moorebot_get_camera_stream()
                 return {"success": True, "action": action, "data": result}
 
-            return {"success": False, "error": f"Action '{action}' not implemented"}
+            return build_error_response(
+                error=f"Robotics action '{action}' not implemented",
+                error_code="ACTION_NOT_IMPLEMENTED",
+                message=f"The requested robotics action '{action}' is not yet available",
+                suggestions=[
+                    "Use available actions: get_status, move, patrol, stop_patrol, etc.",
+                    "Check for MCP server updates that may add this functionality",
+                    "Verify robot supports the requested operation"
+                ]
+            )
 
         except Exception as e:
             logger.error(f"Error in robotics management action '{action}': {e}", exc_info=True)
-            return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
+
+            # Intelligent error analysis for robotics issues
+            error_str = str(e).lower()
+            recovery_options = []
+
+            if "ros" in error_str or "master" in error_str:
+                recovery_options = [
+                    "Check ROS master is running: 'roscore'",
+                    "Verify ROS_MASTER_URI environment variable",
+                    "Ensure robot and MCP server are on same ROS network",
+                    "Check ROS node registration and topics"
+                ]
+            elif "connection" in error_str or "network" in error_str or "unreachable" in error_str:
+                recovery_options = [
+                    "Check robot is powered on and connected to network",
+                    "Verify robot IP address and network configuration",
+                    "Check firewall allows communication with robot",
+                    "Try power cycling the robot (unplug for 30 seconds)"
+                ]
+            elif "moorebot" in error_str or "scout" in error_str:
+                recovery_options = [
+                    "Check Moorebot Scout is powered on and in range",
+                    "Verify Scout is connected to same WiFi network as MCP server",
+                    "Ensure Scout firmware is up to date via Moorebot app",
+                    "Check battery level - charge if below 20%",
+                    "Verify Scout is not in use by another application"
+                ]
+            elif "battery" in error_str or "power" in error_str:
+                recovery_options = [
+                    "Check robot battery level - charge if low",
+                    "Ensure robot is not in power-saving mode",
+                    "Verify charging dock connection if returning to dock",
+                    "Check battery contacts and charging system"
+                ]
+            elif "camera" in error_str or "stream" in error_str:
+                recovery_options = [
+                    "Check robot camera is not obstructed or covered",
+                    "Verify RTSP stream settings in robot configuration",
+                    "Ensure camera permissions and network access",
+                    "Try restarting camera service on robot"
+                ]
+            else:
+                recovery_options = [
+                    "Check robot status and connectivity",
+                    "Verify robot is powered on and not in error state",
+                    "Try restarting the MCP server",
+                    "Check robot firmware and software updates"
+                ]
+
+            return build_hardware_error_response(
+                error=f"Robotics operation failed during {action}",
+                device_type="Robot",
+                device_id="scout_robot",
+                recovery_options=recovery_options,
+                suggestions=[
+                    f"Try running robotics action '{action}' again after applying recovery steps",
+                    "Check robot status with 'get_status' action first",
+                    "Verify robot network connectivity and power status"
+                ]
+            )

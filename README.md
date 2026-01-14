@@ -16,15 +16,56 @@
 [![Multi-Device](https://img.shields.io/badge/Devices-Tapo%20%7C%20Ring%20%7C%20Nest%20%7C%20Plex%20%7C%20USB-blue.svg)](https://github.com/sandraschi/tapo-camera-mcp)
 [![LLM Integration](https://img.shields.io/badge/LLM-Multi--Provider-orange.svg)](https://github.com/sandraschi/tapo-camera-mcp)
 
-⚠️ **BETA**: Comprehensive home security platform in active development. Unified surveillance dashboard with multi-device MCP architecture - serving as both individual device MCP servers AND a complete security monitoring ecosystem. **Status: Beta - Active Development**
+## 🎯 **DUAL-NATURE ARCHITECTURE**
 
-✅ **CURSOR IDE MCP INTEGRATION**: Tapo MCP server now works perfectly in Cursor IDE with full camera control, PTZ operations, and hardware monitoring.
+This repository serves **two complementary roles** in the smart home ecosystem:
+
+### **🎭 ROLE 1: Individual MCP Servers**
+Standalone MCP servers for specific device types, each providing specialized functionality:
+- **Tapo Camera MCP**: TP-Link camera control with PTZ and streaming
+- **USB Webcam MCP**: Direct webcam capture and management
+- **Ring MCP**: Doorbell integration with WebRTC streaming
+- **Nest Protect MCP**: Smoke/CO monitoring via Home Assistant
+- **Lighting MCP**: Philips Hue control with scenes and groups
+- **Energy MCP**: Smart plug monitoring and appliance control
+- **Weather MCP**: Environmental sensors and forecasts
+
+### **🎪 ROLE 2: Unified Dashboard Platform**
+Complete orchestration platform that unifies all MCP servers into a single interface:
+- **Single Dashboard**: Monitor and control all devices from one place
+- **Cross-System Integration**: Event correlation and unified alerts
+- **Real-time Monitoring**: Live status updates and health checks
+- **AI Integration**: Claude Desktop MCP tools for natural language control
+- **Multi-Protocol Support**: ONVIF, WebRTC, RTSP, Zigbee, and more
+
+**Status: Beta - Active Development** | **Version: 1.17.1**
+
+✅ **CURSOR IDE MCP INTEGRATION**: Full compatibility with Cursor IDE for AI-assisted smart home control.
 
 > **✅ REPOSITORY STRUCTURE FIXED**: Refactored to separate MCP server (`src/tapo_camera_mcp/`) from webapp (`webapp/`). All .exe files properly organized in `integrations/` folder.
 >
 > **See: [EXE_FILES_ANALYSIS.md](EXE_FILES_ANALYSIS.md)** for detailed breakdown of all 50+ critical executables.
 >
 > **⚠️ Beta Status Notice**: This project is in active beta development. Features are working but may have bugs, APIs may change between versions, and some integrations are experimental. Not recommended for critical production use. Active development - contributions welcome.
+
+## 🤔 **WHEN TO USE EACH ROLE**
+
+### **🎯 Use Individual MCP Servers When:**
+- You need **specialized control** for specific device types
+- You want **lightweight, focused functionality** for one system
+- You're building **custom integrations** or automation scripts
+- You need **direct API access** to device-specific features
+- You're developing **device drivers** or extending functionality
+
+### **🎪 Use Unified Dashboard When:**
+- You want **complete home automation** across multiple systems
+- You need **single interface** to monitor and control everything
+- You want **AI-powered control** through Claude Desktop natural language
+- You need **cross-system automation** and event correlation
+- You want **comprehensive monitoring** with health dashboards and alerts
+- You need **remote access** and unified security monitoring
+
+**💡 Pro Tip**: Most users will want the **unified dashboard** for complete smart home control, while developers may use individual MCP servers for specialized integrations.
 
 ## 🔧 **MCP SERVER CONFIGURATION & AUTHENTICATION**
 

@@ -1,9 +1,17 @@
 #!/usr/bin/env pwsh
 <#
+⚠️ DEPRECATED - This script has been moved to SOTA location ⚠️
+
+NEW LOCATION: sota-scripts/backup-system/backup-repo.ps1
+MIGRATION: This script has been moved to the State-of-the-Art scripts directory
+           for better organization and maintenance.
+
+Use the new location instead: sota-scripts/backup-system/backup-repo.ps1
+
 ---
 name: backup-repo.ps1
 description: SOTA Repository Backup Script with per-repo rules and frequency support.
-version: 2.1.0
+version: 2.1.0 (DEPRECATED - use sota-scripts/backup-system/backup-repo.ps1)
 features:
   - Multi-destination support (N: Drive, OneDrive, Desktop)
   - Selective frequency (WEEKLY, MONTHLY)
@@ -659,7 +667,13 @@ Write-Host "📊 Analyzing repository size..." -ForegroundColor Cyan
 try {
     $allFiles = Get-ChildItem -Recurse -File -ErrorAction SilentlyContinue | Where-Object {
         # Skip symlinks/ReparsePoints (cause access denied errors)
-        -not ($_.Attributes -band [System.IO.FileAttributes]::ReparsePoint)
+        -not ($_.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -and
+        # Skip problematic directories that cause hangs or have too many files
+        $_.FullName -notlike "*\logs\*" -and
+        $_.FullName -notlike "*\venv\*" -and
+        $_.FullName -notlike "*\build_venv\*" -and
+        $_.FullName -notlike "*\test_venv\*" -and
+        $_.FullName -notlike "*\grafana\*"
     }
     
     $totalSize = ($allFiles | Measure-Object -Property Length -Sum).Sum

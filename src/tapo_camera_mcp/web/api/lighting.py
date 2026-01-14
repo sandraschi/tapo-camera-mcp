@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from ...config import ConfigManager, get_config
-from ...tools.lighting.hue_tools import get_hue_manager
+from ...tools.lighting.hue_tools import get_hue_manager, hue_manager
 from ...tools.lighting.tapo_lighting_tools import tapo_lighting_manager
 
 logger = logging.getLogger(__name__)
@@ -58,6 +58,12 @@ async def list_hue_lights(refresh: bool = False) -> dict[str, Any]:
     hue_manager = get_hue_manager()
     try:
         import asyncio
+
+        # Ensure bridge is initialized on first access
+        if not hue_manager._initialized:
+            logger.info("Initializing Hue bridge on first access...")
+            await hue_manager.initialize()
+
         # Refresh from bridge if requested
         if refresh and hue_manager._initialized:
             await asyncio.wait_for(
@@ -232,17 +238,18 @@ async def get_hue_status() -> dict[str, Any]:
 @router.post("/hue/rescan", summary="Rescan all Hue devices")
 async def rescan_hue_devices() -> dict[str, Any]:
     """Force rescan of all lights, groups, and scenes from the Hue Bridge.
-    
+
     Use this when:
     - You've added/removed lights
     - Light states seem out of sync
     - You want to refresh the cached data
     """
     try:
-        if not hue_manager._initialized:
-            await hue_manager.initialize()
+        manager = get_hue_manager()
+        if not manager._initialized:
+            await manager.initialize()
 
-        result = await hue_manager.rescan()
+        result = await manager.rescan()
         return {
             "success": True,
             "message": f"Rescanned {result['lights']} lights, {result['groups']} groups, {result['scenes']} scenes",

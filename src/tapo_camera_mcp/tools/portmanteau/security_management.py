@@ -16,6 +16,13 @@ from tapo_camera_mcp.integrations.nest_client import (
 )
 from tapo_camera_mcp.tools.alarms.nest_protect_tool import NestProtectTool
 from tapo_camera_mcp.tools.alarms.security_analysis_tool import SecurityAnalysisTool
+from tapo_camera_mcp.utils.response_builders import (
+    build_success_response,
+    build_error_response,
+    build_hardware_error_response,
+    build_network_error_response,
+    build_configuration_error_response,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -426,4 +433,55 @@ def register_security_management_tool(mcp: FastMCP) -> None:
 
         except Exception as e:
             logger.exception(f"Error in security management action '{action}'")
-            return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
+
+            # Intelligent error analysis for security system issues
+            error_str = str(e).lower()
+            recovery_options = []
+
+            if "oauth" in error_str or "authorization" in error_str or "token" in error_str:
+                recovery_options = [
+                    "Complete Nest OAuth setup with 'nest_oauth_helper.py'",
+                    "Check OAuth credentials are properly configured",
+                    "Refresh OAuth tokens if they have expired",
+                    "Ensure Nest account has proper device permissions"
+                ]
+            elif "nest" in error_str and ("connection" in error_str or "network" in error_str):
+                recovery_options = [
+                    "Check Nest devices are online and connected to WiFi",
+                    "Verify Nest account credentials and permissions",
+                    "Ensure MCP server can reach Google Nest API endpoints",
+                    "Check firewall allows HTTPS connections to Nest services"
+                ]
+            elif "device" in error_str and ("not found" in error_str or "offline" in error_str):
+                recovery_options = [
+                    f"Verify device_id '{device_id}' exists in your Nest account" if device_id else "Provide a valid device_id from your Nest account",
+                    "Check device is powered on and connected to network",
+                    "Ensure device is properly linked to your Nest account",
+                    "Try refreshing device list from Nest app"
+                ]
+            elif "api" in error_str or "rate limit" in error_str:
+                recovery_options = [
+                    "Wait a few minutes before retrying (rate limit exceeded)",
+                    "Check Google Nest API status and service health",
+                    "Verify API credentials and permissions are correct",
+                    "Reduce request frequency if hitting rate limits"
+                ]
+            else:
+                recovery_options = [
+                    "Check Nest device connectivity and account permissions",
+                    "Verify OAuth setup is complete and tokens are valid",
+                    "Try restarting the MCP server",
+                    "Check Nest service status online"
+                ]
+
+            device_info = f" for device '{device_id}'" if device_id else ""
+            return build_network_error_response(
+                error=f"Nest security operation failed during {action}{device_info}",
+                service="Google Nest API",
+                recovery_options=recovery_options,
+                suggestions=[
+                    f"Try running security action '{action}' again after applying recovery steps",
+                    "Complete OAuth setup if you haven't done so already",
+                    "Check Nest app for device status and connectivity"
+                ]
+            )

@@ -324,8 +324,8 @@
             </div>
         </div>
         
-        <!-- Smarter iKettle Card (Future Option) -->
-        <div class="appliance-card">
+        <!-- Smarter iKettle Card (commented out - no hardware available) -->
+        <!-- <div class="appliance-card">
             <div class="appliance-header">
                 <div>
                     <div class="appliance-name">Smarter iKettle <span style="color: var(--warning-yellow); font-size: 12px; font-weight: 600;">(Alternative Option)</span></div>
@@ -342,7 +342,6 @@
                     The Smarter iKettle is a WiFi-enabled electric kettle that allows remote control via smartphone app or voice commands (Alexa, Google Assistant).
                 </p>
 
-                <!-- iKettle Control Panel -->
                 <div id="ikettle-controls" style="margin-top: 20px; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg);">
                     <h4 style="margin: 0 0 15px 0; color: var(--text-color);">iKettle Controls</h4>
 
@@ -410,12 +409,13 @@
                 <button class="btn btn-primary" onclick="ikettleRefreshStatus()">Check iKettle Status</button>
                 <button class="btn btn-success" onclick="ikettleMorningCoffee()">Setup Morning Coffee</button>
             </div>
-        </div>
+        </div> -->
     </div>
 </div>
 
 <script>
-// iKettle control functions
+// iKettle control functions (commented out - no hardware available)
+/*
 async function ikettleRefreshStatus() {
     try {
         const response = await fetch('/api/ikettle/status');
@@ -639,14 +639,16 @@ async function loadAppliances() {
     }
 }
 
+*/
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     loadAppliances();
-    ikettleRefreshStatus(); // Check iKettle status on load
+    // ikettleRefreshStatus(); // Check iKettle status on load - commented out, no hardware
 
     // Refresh every 30 seconds
     setInterval(loadAppliances, 30000);
-    setInterval(ikettleRefreshStatus, 15000); // Refresh iKettle status every 15 seconds
+    // setInterval(ikettleRefreshStatus, 15000); // Refresh iKettle status every 15 seconds - commented out, no hardware
 });
 </script>
 {% endblock %}

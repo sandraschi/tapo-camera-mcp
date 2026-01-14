@@ -10,6 +10,13 @@ from typing import Any, Literal
 from fastmcp import FastMCP
 
 from tapo_camera_mcp.tools.energy.energy_management_tool import EnergyManagementTool
+from tapo_camera_mcp.utils.response_builders import (
+    build_success_response,
+    build_error_response,
+    build_hardware_error_response,
+    build_network_error_response,
+    build_configuration_error_response,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -92,8 +99,130 @@ def register_energy_management_tool(mcp: FastMCP) -> None:
                 action=power_state,
                 time_range=time_range,
             )
-            return {"success": True, "action": action, "data": result}
+
+            # Build conversational success response based on action type
+            if action == "status":
+                device_count = len(result.get("devices", [])) if isinstance(result, dict) else 0
+                return build_success_response(
+                    operation="energy_status",
+                    summary=f"Retrieved status for {device_count} smart plug{'s' if device_count != 1 else ''}",
+                    result=result,
+                    recommendations=[
+                        "Monitor energy usage with 'consumption' action",
+                        "Set up automated controls based on device status",
+                        "Check cost analysis with 'cost' action for savings"
+                    ],
+                    next_steps=[
+                        "Try 'consumption' to see energy usage patterns",
+                        "Use 'control' to manage device power states",
+                        "Set up automation based on energy data"
+                    ]
+                )
+
+            elif action == "control":
+                state = power_state or result.get("power_state", "unknown")
+                return build_success_response(
+                    operation="energy_control",
+                    summary=f"Smart plug {device_id or 'device'} turned {state}",
+                    result=result,
+                    recommendations=[
+                        "Monitor power consumption after state change",
+                        "Set up schedules for automated on/off times",
+                        "Check energy cost impact of the change"
+                    ],
+                    next_steps=[
+                        "Check status with 'status' action to confirm change",
+                        "Monitor consumption with 'consumption' action",
+                        "Set up automation rules for this device"
+                    ]
+                )
+
+            elif action == "consumption":
+                return build_success_response(
+                    operation="energy_consumption",
+                    summary=f"Retrieved energy consumption data for time range: {time_range}",
+                    result=result,
+                    recommendations=[
+                        "Analyze usage patterns for optimization opportunities",
+                        "Compare consumption across different time periods",
+                        "Check cost analysis with 'cost' action"
+                    ],
+                    next_steps=[
+                        "Run 'cost' analysis to see financial impact",
+                        "Set up monitoring alerts for high usage",
+                        "Optimize device usage based on consumption data"
+                    ]
+                )
+
+            elif action == "cost":
+                return build_success_response(
+                    operation="energy_cost_analysis",
+                    summary=f"Generated energy cost analysis for time range: {time_range}",
+                    result=result,
+                    recommendations=[
+                        "Identify high-cost devices for optimization",
+                        "Set up usage alerts for cost control",
+                        "Compare costs across different time periods"
+                    ],
+                    next_steps=[
+                        "Implement energy-saving measures for high-cost devices",
+                        "Set up automated controls to reduce costs",
+                        "Monitor cost trends over time"
+                    ]
+                )
+
+            else:
+                return build_success_response(
+                    operation=f"energy_{action}",
+                    summary=f"Energy {action} operation completed successfully",
+                    result=result
+                )
 
         except Exception as e:
             logger.error(f"Error in energy management action '{action}': {e}", exc_info=True)
-            return {"success": False, "error": f"Failed to execute action '{action}': {e!s}"}
+
+            # Intelligent error analysis for smart plug issues
+            error_str = str(e).lower()
+            recovery_options = []
+
+            if "connection" in error_str or "network" in error_str or "unreachable" in error_str:
+                recovery_options = [
+                    "Check smart plug is powered on and connected to WiFi",
+                    "Verify smart plug is on the same network as MCP server",
+                    "Check firewall allows communication with smart plug",
+                    "Try power cycling the smart plug (unplug for 30 seconds)"
+                ]
+            elif "authentication" in error_str or "login" in error_str or "credentials" in error_str:
+                recovery_options = [
+                    "Verify smart plug username/password in configuration",
+                    "Check if smart plug was factory reset and needs re-setup",
+                    "Ensure you're using the correct device model/API",
+                    "Try re-linking the smart plug to your account"
+                ]
+            elif "device" in error_str or "not found" in error_str:
+                recovery_options = [
+                    f"Verify device_id '{device_id}' exists and is configured" if device_id else "Provide a valid device_id parameter",
+                    "Check device is registered in Tapo app",
+                    "Try rescanning for devices in Tapo app",
+                    "Ensure device firmware is up to date"
+                ]
+            else:
+                recovery_options = [
+                    "Check smart plug status and network connectivity",
+                    "Verify device credentials and configuration",
+                    "Try restarting the MCP server",
+                    "Check smart plug firmware is current"
+                ]
+
+            device_info = f" for device '{device_id}'" if device_id else ""
+            return build_hardware_error_response(
+                error=f"Smart plug operation failed during {action}{device_info}",
+                device_type="Smart Plug",
+                device_id=device_id or "unknown",
+                recovery_options=recovery_options,
+                suggestions=[
+                    f"Try running energy action '{action}' again after applying recovery steps",
+                    "Check device connectivity with 'status' action first",
+                    "Verify device configuration in config.yaml"
+                ]
+            )

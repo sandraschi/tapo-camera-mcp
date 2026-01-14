@@ -276,6 +276,17 @@ class VbotClient:
 
         return result
 
+    async def list_physical_robots(self) -> Dict:
+        """
+        List all available physical robots from the robotics MCP.
+
+        Returns:
+            List of physical robots available
+        """
+        args = {"operation": "list_physical"}
+        result = await self._call_mcp_tool("robot_physical", args)
+        return result
+
     async def list_vbots(self, robot_type: Optional[str] = None) -> Dict:
         """
         List all virtual robots.

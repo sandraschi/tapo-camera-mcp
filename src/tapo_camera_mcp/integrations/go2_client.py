@@ -5,7 +5,7 @@ Provides Python interface to Unitree Go2 quadruped robot.
 Based on official Unitree SDK for Go2 robot.
 
 **Timestamp**: 2025-12-02
-**Status**: Mock implementation ready for hardware (ETA: Spring 2025)
+**Status**: Commented out - no hardware available (ETA: 2027)
 """
 
 import logging

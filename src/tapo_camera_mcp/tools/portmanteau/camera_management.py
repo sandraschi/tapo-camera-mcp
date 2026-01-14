@@ -10,6 +10,14 @@ from typing import Any, Literal
 
 from fastmcp import FastMCP
 
+from tapo_camera_mcp.utils.response_builders import (
+    build_success_response,
+    build_error_response,
+    build_hardware_error_response,
+    build_network_error_response,
+    build_configuration_error_response,
+)
+
 # Import existing camera tool functions
 from tapo_camera_mcp.tools.camera.camera_tools import (
     AddCameraTool,
@@ -144,11 +152,16 @@ def register_camera_management_tool(mcp: FastMCP) -> None:
         try:
             # Validate action
             if action not in CAMERA_ACTIONS:
-                return {
-                    "success": False,
-                    "error": f"Invalid action '{action}'. Available actions: {list(CAMERA_ACTIONS.keys())}",
-                    "available_actions": CAMERA_ACTIONS,
-                }
+                return build_error_response(
+                    error="Invalid camera action",
+                    error_code="INVALID_ACTION",
+                    message=f"Action '{action}' is not supported. Use one of: {list(CAMERA_ACTIONS.keys())}",
+                    available_actions=CAMERA_ACTIONS,
+                    suggestions=[
+                        "Check action spelling against available actions",
+                        "Use 'list' action to see all cameras first"
+                    ]
+                )
 
             logger.info(f"Executing camera management action: {action}")
 
@@ -190,20 +203,65 @@ def register_camera_management_tool(mcp: FastMCP) -> None:
                     camera_name=camera_name,
                 )
 
-            return {
-                "success": False,
-                "error": f"Action '{action}' not implemented",
-                "available_actions": CAMERA_ACTIONS,
-            }
+            return build_error_response(
+                error=f"Camera action '{action}' not implemented",
+                error_code="ACTION_NOT_IMPLEMENTED",
+                message=f"The requested camera action '{action}' is not yet available in this version",
+                suggestions=[
+                    f"Use one of the available actions: {list(CAMERA_ACTIONS.keys())}",
+                    "Check for MCP server updates that may add this functionality"
+                ],
+                available_actions=CAMERA_ACTIONS
+            )
 
         except Exception as e:
             logger.error(f"Error in camera management action '{action}': {e}", exc_info=True)
-            return {
-                "success": False,
-                "error": f"Failed to execute action '{action}': {e!s}",
-                "action": action,
-                "available_actions": CAMERA_ACTIONS,
-            }
+
+            # Intelligent error analysis for common hardware issues
+            error_str = str(e).lower()
+            recovery_options = []
+
+            if "port" in error_str and ("already" in error_str or "in use" in error_str):
+                recovery_options = [
+                    "Kill previous server instance: find process using port and terminate it",
+                    "Check if another Tapo-Camera-MCP instance is running",
+                    "Use 'netstat -ano | findstr :PORT' to find process using the port",
+                    "Restart MCP server after terminating conflicting process"
+                ]
+            elif "connection" in error_str or "network" in error_str:
+                recovery_options = [
+                    "Check camera is powered on and connected to network",
+                    "Verify camera IP address and network configuration",
+                    "Ensure firewall allows communication on camera ports",
+                    "Try power cycling the camera"
+                ]
+            elif "authentication" in error_str or "login" in error_str:
+                recovery_options = [
+                    "Verify camera username and password in configuration",
+                    "Check if camera firmware needs updating",
+                    "Reset camera to factory settings if login repeatedly fails",
+                    "Ensure camera is not locked out due to failed login attempts"
+                ]
+            else:
+                recovery_options = [
+                    "Check camera configuration and network connectivity",
+                    "Verify camera firmware is up to date",
+                    "Try restarting the MCP server",
+                    "Check logs for more detailed error information"
+                ]
+
+            return build_error_response(
+                error=f"Camera {action} operation failed",
+                error_code="CAMERA_OPERATION_FAILED",
+                message=f"Failed to execute camera action '{action}': {str(e)}",
+                recovery_options=recovery_options,
+                suggestions=[
+                    f"Try running camera action '{action}' again after applying recovery steps",
+                    "Check camera status with 'status' action first",
+                    "Verify camera configuration in config.yaml"
+                ],
+                available_actions=CAMERA_ACTIONS
+            )
 
 
 async def _handle_list_cameras() -> dict[str, Any]:
@@ -212,15 +270,58 @@ async def _handle_list_cameras() -> dict[str, Any]:
         tool = ListCamerasTool()
         result = await tool.execute()
         if isinstance(result, dict) and result.get("success"):
-            return {
-                "success": True,
-                "action": "list",
-                "data": result,
-                "count": result.get("total", 0),
-            }
-        return {"success": False, "action": "list", "error": "Failed to list cameras"}
+            camera_count = result.get("total", 0)
+            recommendations = []
+            next_steps = []
+
+            if camera_count > 0:
+                recommendations.append("Use 'status' action to check camera connectivity")
+                if camera_count > 2:
+                    recommendations.append("Configure camera groups for organized management")
+                next_steps.extend([
+                    "Check camera status with 'status' action",
+                    "Test camera connections with 'connect' action",
+                    "Configure camera groups for better organization"
+                ])
+            else:
+                recommendations.append("Add cameras using 'add' action")
+                next_steps.extend([
+                    "Add your first camera using 'add' action",
+                    "Configure camera credentials in config.yaml"
+                ])
+
+            return build_success_response(
+                operation="list_cameras",
+                summary=f"Found {camera_count} configured camera{'s' if camera_count != 1 else ''}",
+                result=result,
+                recommendations=recommendations,
+                next_steps=next_steps
+            )
+        return build_configuration_error_response(
+            error="Failed to retrieve camera list",
+            config_field="camera configuration",
+            recovery_options=[
+                "Check config.yaml for camera configurations",
+                "Verify camera IP addresses are reachable",
+                "Ensure camera credentials are correct",
+                "Try restarting the MCP server"
+            ]
+        )
     except Exception as e:
-        return {"success": False, "action": "list", "error": f"Failed to list cameras: {e!s}"}
+        return build_error_response(
+            error="Camera list retrieval failed",
+            error_code="LIST_CAMERAS_ERROR",
+            message=f"Unable to list cameras: {str(e)}",
+            recovery_options=[
+                "Check network connectivity to cameras",
+                "Verify camera configurations are valid",
+                "Check MCP server logs for detailed error information"
+            ],
+            suggestions=[
+                "Try individual camera 'status' actions to isolate issues",
+                "Verify camera firmware versions are compatible"
+            ]
+        )
 
 
 async def _handle_add_camera(

@@ -26,7 +26,12 @@ class ToggleRequest(BaseModel):
         }
 
 router = APIRouter(prefix="/api/sensors", tags=["sensors"])
-_db = TimeSeriesDB()  # Initialize database for historical data
+
+def get_sensors_db() -> TimeSeriesDB:
+    """Lazy initialization of sensors database."""
+    if not hasattr(get_sensors_db, '_db'):
+        get_sensors_db._db = TimeSeriesDB()
+    return get_sensors_db._db
 
 
 def _model_dump(model: Any) -> dict[str, Any]:
@@ -67,7 +72,7 @@ async def get_tapo_p115_history(
         raise HTTPException(status_code=404, detail=f"Device {device_id} not found")
 
     # Get historical data from database
-    history = _db.get_energy_history(device_id=device_id, hours=hours)
+    history = get_sensors_db().get_energy_history(device_id=device_id, hours=hours)
 
     # Format data points for frontend
     data_points = [

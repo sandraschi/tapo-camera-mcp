@@ -80,7 +80,15 @@ def register_all_portmanteau_tools(mcp: FastMCP) -> None:
     register_appliance_monitor_management_tool(mcp)
     register_alerts_management_tool(mcp)
     register_messages_management_tool(mcp)
-    logger.info("All portmanteau tools registered successfully (20 tools)")
+
+    # Register agentic tools (SEP-1577) if available
+    if _agentic_security_available:
+        # The agentic_security_workflow tool is already registered via @mcp.tool decorator
+        logger.info("Agentic security workflow tool registered (SEP-1577)")
+    else:
+        logger.warning("Agentic security workflow tool not available (missing advanced_memory dependency)")
+
+    logger.info("All portmanteau tools registered successfully (20+ agentic tools)")
 
 
 # Export the registration function

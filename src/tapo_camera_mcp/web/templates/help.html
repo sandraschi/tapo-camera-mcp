@@ -30,11 +30,11 @@
         <div class="info-grid">
             <div class="info-card">
                 <h4>Version</h4>
-                <p><strong>1.8.0</strong> (Beta - Stability Enhanced)</p>
+                <p><strong>1.17.1</strong> (Beta - Cursor IDE MCP Integration Fixed)</p>
             </div>
             <div class="info-card">
                 <h4>MCP Server</h4>
-                <p><strong>FastMCP 2.14.1</strong> with 16 portmanteau tools (75% consolidation)</p>
+                <p><strong>FastMCP 2.14.1</strong> with 32+ portmanteau tools (85% consolidation)</p>
             </div>
             <div class="info-card">
                 <h4>Dashboard URL</h4>
@@ -53,29 +53,51 @@
     <div id="architecture" class="help-section">
         <h2>🏗️ System Architecture</h2>
         
-        <h3>Dual-Role Architecture</h3>
-        <p>This platform serves two complementary roles:</p>
-        
+        <h3>🎭 Dual-Nature Architecture</h3>
+        <p>This repository serves <strong>two complementary roles</strong> in your smart home ecosystem:</p>
+
         <div class="architecture-grid">
             <div class="arch-card">
-                <h4>TARGET Role 1: Individual MCP Servers</h4>
-                <p>Standalone MCP servers for specific device types:</p>
+                <h4>🎯 ROLE 1: MCP Server Tools</h4>
+                <p><strong>Specialized server tools</strong> - each providing focused functionality for specific device types:</p>
                 <ul>
-                    <li><strong>Tapo Camera MCP</strong> - TP-Link camera control</li>
-                    <li><strong>USB Webcam MCP</strong> - Direct webcam management</li>
-                    <li><strong>Ring MCP</strong> - Doorbell integration</li>
-                    <li><strong>Nest Protect MCP</strong> - Smoke/CO monitoring</li>
+                    <li><strong>📹 Camera MCPs</strong> - Tapo, Ring, USB webcams with streaming & PTZ</li>
+                    <li><strong>💡 Lighting MCP</strong> - Philips Hue with 18 bulbs, scenes, and color control</li>
+                    <li><strong>⚡ Energy MCP</strong> - Tapo P115 plugs with real-time power monitoring</li>
+                    <li><strong>🌤️ Weather MCP</strong> - Netatmo sensors and environmental monitoring</li>
+                    <li><strong>🤖 Robotics MCP</strong> - Moorebot, VBot autonomous control (Go2 planned for 2027)</li>
+                    <li><strong>🍵 Appliance MCP</strong> - iKettle smart temperature control</li>
+                    <li><strong>🔥 Security MCP</strong> - Ring doorbells and Nest Protect monitoring</li>
                 </ul>
+                <p><em>Each MCP server tool can be used independently for specific device control.</em></p>
             </div>
             <div class="arch-card">
-                <h4>TARGET Role 2: Unified Dashboard</h4>
-                <p>Multi-MCP orchestration platform:</p>
+                <h4>🎪 ROLE 2: Unified Orchestration Platform</h4>
+                <p><strong>Complete smart home dashboard</strong> - brings together all MCP servers into a single, powerful interface:</p>
                 <ul>
-                    <li><strong>Single Interface</strong> - Monitor all devices</li>
-                    <li><strong>Cross-System Integration</strong> - Event correlation</li>
-                    <li><strong>Real-time Monitoring</strong> - Live status updates</li>
-                    <li><strong>Remote Access</strong> - Via Tailscale VPN</li>
+                    <li><strong>🏠 Single Dashboard</strong> - Monitor and control all devices from one place</li>
+                    <li><strong>🔗 Cross-System Integration</strong> - Event correlation between different systems</li>
+                    <li><strong>📊 Real-time Monitoring</strong> - Live status updates and health dashboards</li>
+                    <li><strong>🤖 AI Integration</strong> - 32+ MCP tools for Claude Desktop natural language control</li>
+                    <li><strong>🌐 Multi-Protocol Support</strong> - ONVIF, WebRTC, RTSP, Zigbee, WiFi, and more</li>
+                    <li><strong>📱 Remote Access</strong> - Secure access via Tailscale VPN or direct IP</li>
                 </ul>
+                <p><em>The orchestration layer provides unified management across all your smart home devices.</em></p>
+            </div>
+        </div>
+
+        <h4>💡 How the Dual Roles Work Together</h4>
+        <div class="flow-diagram">
+            <div class="flow-step">
+                <strong>Individual MCPs</strong> handle device-specific protocols and APIs
+            </div>
+            <div class="flow-arrow">↕️</div>
+            <div class="flow-step">
+                <strong>Orchestration Platform</strong> coordinates between systems and provides unified interface
+            </div>
+            <div class="flow-arrow">↕️</div>
+            <div class="flow-step">
+                <strong>AI Integration</strong> enables natural language control through Claude Desktop
             </div>
         </div>
         
@@ -310,7 +332,86 @@
                 <p><strong>Data Access:</strong> API provides current measurements, historical data, and module status. Data is updated every 5-10 minutes by the weather station.</p>
             </div>
         </div>
-        
+
+        <h3>🤖 Robotics & Automation</h3>
+        <div class="hardware-grid">
+            <div class="hardware-card">
+                <h4>🤖 Robotics MCP Integration</h4>
+                <p><strong>Supported Robots:</strong> Moorebot Scout, VBot (Unitree Go2 planned for 2027)</p>
+                <p><strong>Description:</strong> Integration with robotic systems for autonomous navigation, task execution, and monitoring. Supports real-time robot status monitoring, command execution, and safety monitoring.</p>
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li><strong>Multi-robot support:</strong> Control and monitor multiple robots simultaneously</li>
+                    <li><strong>Real-time status:</strong> Battery level, position, task status, and health monitoring</li>
+                    <li><strong>Safety monitoring:</strong> Emergency stop capabilities and collision detection</li>
+                    <li><strong>Task execution:</strong> Send navigation commands and monitor task completion</li>
+                    <li><strong>Video integration:</strong> Robot-mounted cameras integrated with main dashboard</li>
+                </ul>
+                <p><strong>Connection:</strong> Robotics MCP server provides unified interface to robot APIs</p>
+                <p><strong>Protocol:</strong> Custom robotics protocol with JSON-based command/response system</p>
+                <p><strong>Setup Requirements:</strong> Robotics MCP server running on port 8080, robot-specific configuration</p>
+            </div>
+        </div>
+
+        <h3>🍵 Smart Appliances</h3>
+        <div class="hardware-grid">
+            <div class="hardware-card">
+                <h4>🍵 iKettle Smart Kettle</h4>
+                <p><strong>Description:</strong> Smart kettle with temperature control, scheduling, and remote operation capabilities. Features precise temperature settings, keep-warm functionality, and integration with smart home systems. The iKettle allows you to boil water to specific temperatures (20°C-100°C) and maintain that temperature for up to 30 minutes after boiling.</p>
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li><strong>Temperature control:</strong> Set precise boiling temperatures (20°C-100°C)</li>
+                    <li><strong>Keep warm:</strong> Maintain temperature for up to 30 minutes after boiling</li>
+                    <li><strong>Scheduling:</strong> Create schedules for automatic boiling times</li>
+                    <li><strong>Remote control:</strong> Boil water remotely via dashboard or API</li>
+                    <li><strong>Status monitoring:</strong> Real-time temperature, water level, and operation status</li>
+                    <li><strong>Energy monitoring:</strong> Track power consumption and usage patterns</li>
+                </ul>
+                <p><strong>Connection:</strong> WiFi connection with direct API integration</p>
+                <p><strong>Protocol:</strong> iKettle proprietary API with authentication</p>
+                <p><strong>Setup Requirements:</strong> iKettle connected to WiFi, API credentials configured in config.yaml</p>
+            </div>
+        </div>
+
+        <h3>🌡️ Thermal & Environmental</h3>
+        <div class="hardware-grid">
+            <div class="hardware-card">
+                <h4>🌡️ Thermal Camera Integration</h4>
+                <p><strong>Description:</strong> Thermal imaging cameras for temperature monitoring, heat detection, and environmental analysis. Useful for detecting hotspots, monitoring equipment temperature, and security applications. Thermal cameras provide real-time temperature visualization with color-coded heat maps and precise temperature measurements.</p>
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li><strong>Thermal imaging:</strong> Real-time temperature visualization with color-coded heat maps</li>
+                    <li><strong>Temperature measurement:</strong> Precise temperature readings at any point</li>
+                    <li><strong>Hotspot detection:</strong> Automatic identification of temperature anomalies</li>
+                    <li><strong>Zone monitoring:</strong> Define temperature thresholds for specific areas</li>
+                    <li><strong>Historical analysis:</strong> Temperature trend analysis over time</li>
+                    <li><strong>Alert system:</strong> Temperature threshold alerts and notifications</li>
+                </ul>
+                <p><strong>Connection:</strong> IP-based connection with RTSP streaming support</p>
+                <p><strong>Protocol:</strong> ONVIF-compatible thermal camera protocols</p>
+                <p><strong>Setup Requirements:</strong> Thermal camera configured with IP address and authentication</p>
+            </div>
+        </div>
+
+        <h3>🌐 Public Webcams</h3>
+        <div class="hardware-grid">
+            <div class="hardware-card">
+                <h4>🌐 Public Webcam Networks</h4>
+                <p><strong>Description:</strong> Integration with public webcam networks for external monitoring and environmental observation. Includes Vienna public webcams and other municipal camera systems for monitoring public spaces, weather conditions, and city infrastructure.</p>
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li><strong>Vienna webcams:</strong> Live feeds from Vienna's public camera network</li>
+                    <li><strong>Municipal cameras:</strong> City infrastructure and public space monitoring</li>
+                    <li><strong>Environmental monitoring:</strong> Weather conditions, traffic, and public areas</li>
+                    <li><strong>Historical archives:</strong> Access to archived footage when available</li>
+                    <li><strong>Multi-location support:</strong> Monitor multiple public camera locations</li>
+                </ul>
+                <p><strong>Connection:</strong> Direct HTTP/RTSP streams from public APIs</p>
+                <p><strong>Protocol:</strong> HTTP streaming with MJPEG/RTSP support</p>
+                <p><strong>Setup Requirements:</strong> API access configured, location coordinates specified</p>
+            </div>
+        </div>
+
         <h3>ALERT Security & Safety</h3>
         <div class="hardware-grid">
             <div class="hardware-card">
@@ -376,6 +477,23 @@
             <li>See Vienna external weather (5-day forecast)</li>
             <li>Compare multiple modules (main station, bathroom, outdoor)</li>
         </ol>
+
+        <h3>5️⃣ Monitor Robotics</h3>
+        <ol>
+            <li>Click <strong>Robotics</strong> in the sidebar</li>
+            <li>View real-time robot status (Moorebot, VBot - Go2 planned for 2027)</li>
+            <li>Monitor battery levels and health</li>
+            <li>Send navigation commands</li>
+            <li>Watch robot camera feeds</li>
+        </ol>
+
+        <h3>6️⃣ Control Appliances</h3>
+        <ol>
+            <li>Check <strong>Energy</strong> dashboard for iKettle status</li>
+            <li>Set boiling temperature (20°C-100°C)</li>
+            <li>Schedule automatic boiling times</li>
+            <li>Monitor keep-warm status</li>
+        </ol>
         
         <h3>5️⃣ Use MCP Tools in Claude</h3>
         <ol>
@@ -389,8 +507,8 @@
     
     <!-- MCP Tools -->
     <div id="mcp-tools" class="help-section">
-        <h2>🛠️ MCP Server Tools (16 Portmanteau)</h2>
-        <p>FastMCP 2.14.1 server with <strong>16 consolidated portmanteau tools</strong> (75% reduction from 64 individual tools)</p>
+        <h2>🛠️ MCP Server Tools (32+ Portmanteau)</h2>
+        <p>FastMCP 2.14.1 server with <strong>32+ consolidated portmanteau tools</strong> (85% reduction from 200+ individual tools)</p>
         <p><em>Use these tools in Claude Desktop to control your entire smart home!</em></p>
         
         <div class="tool-grid">
@@ -463,6 +581,61 @@
                     <li><code>action: analyze</code> - Analyze weather patterns</li>
                 </ul>
             </div>
+
+            <div class="tool-card">
+                <h4>🤖 robotics_management</h4>
+                <p>Multi-robot control and monitoring</p>
+                <ul>
+                    <li><code>action: status</code> - Get robot status</li>
+                    <li><code>action: control</code> - Send movement commands</li>
+                    <li><code>action: navigate</code> - Path planning and navigation</li>
+                    <li><code>action: safety</code> - Emergency stop and safety controls</li>
+                </ul>
+            </div>
+
+            <div class="tool-card">
+                <h4>🍵 ikettle_management</h4>
+                <p>iKettle smart appliance control</p>
+                <ul>
+                    <li><code>action: boil</code> - Start boiling water</li>
+                    <li><code>action: temperature</code> - Set target temperature</li>
+                    <li><code>action: schedule</code> - Program boiling schedules</li>
+                    <li><code>action: status</code> - Check kettle status</li>
+                </ul>
+            </div>
+
+            <div class="tool-card">
+                <h4>🌡️ thermal_management</h4>
+                <p>Thermal camera analysis and monitoring</p>
+                <ul>
+                    <li><code>action: capture</code> - Capture thermal images</li>
+                    <li><code>action: analyze</code> - Temperature analysis</li>
+                    <li><code>action: hotspots</code> - Detect temperature anomalies</li>
+                    <li><code>action: zones</code> - Define monitoring zones</li>
+                </ul>
+            </div>
+
+            <div class="tool-card">
+                <h4>🏠 home_assistant_management</h4>
+                <p>Home Assistant integration</p>
+                <ul>
+                    <li><code>action: devices</code> - List HA devices</li>
+                    <li><code>action: control</code> - Control HA entities</li>
+                    <li><code>action: scenes</code> - Manage HA scenes</li>
+                    <li><code>action: automation</code> - Trigger automations</li>
+                </ul>
+            </div>
+
+            <div class="tool-card">
+                <h4>📢 alerts_management</h4>
+                <p>Alert system management</p>
+                <ul>
+                    <li><code>action: list</code> - View active alerts</li>
+                    <li><code>action: acknowledge</code> - Acknowledge alerts</li>
+                    <li><code>action: filter</code> - Filter by severity</li>
+                    <li><code>action: history</code> - Alert history</li>
+                </ul>
+            </div>
             
             <div class="tool-card">
                 <h4>TOOLS system_management</h4>
@@ -488,7 +661,7 @@
             </div>
         </div>
         
-        <p><strong>DOCS Full tool list:</strong> 16 portmanteau tools covering cameras, PTZ, lighting, energy, Ring, weather, security, automation, media, onboarding, configuration, analytics, AI, and system management.</p>
+        <p><strong>DOCS Full tool list:</strong> 32+ portmanteau tools covering cameras, PTZ, lighting, energy, Ring, weather, security, robotics, thermal, iKettle, Home Assistant, alerts, automation, media, medical, audio, analytics, AI, and system management.</p>
     </div>
     
     <!-- Dashboard Features -->
@@ -539,9 +712,10 @@
                     <li>Netatmo indoor data</li>
                     <li>Vienna 5-day forecast</li>
                     <li>Temperature & humidity</li>
-                    <li>Air quality monitoring</li>
+                    <li>Air quality monitoring (CO₂)</li>
                     <li>Multi-module comparison</li>
                     <li>Dual-line graphs</li>
+                    <li>Public webcam feeds</li>
                 </ul>
             </div>
             
@@ -553,6 +727,41 @@
                     <li>DING alert popups</li>
                     <li>Motion notifications</li>
                     <li>Event history</li>
+                    <li>Battery monitoring</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h4>🤖 Robotics Dashboard</h4>
+                <ul>
+                    <li>Multi-robot monitoring</li>
+                    <li>Real-time status updates</li>
+                    <li>Battery & health monitoring</li>
+                    <li>Navigation control</li>
+                    <li>Task execution tracking</li>
+                    <li>Safety monitoring</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h4>🍵 Appliance Control</h4>
+                <ul>
+                    <li>iKettle temperature control</li>
+                    <li>Smart appliance scheduling</li>
+                    <li>Energy usage monitoring</li>
+                    <li>Remote operation</li>
+                    <li>Status monitoring</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h4>🌡️ Thermal Monitoring</h4>
+                <ul>
+                    <li>Thermal camera feeds</li>
+                    <li>Temperature visualization</li>
+                    <li>Hotspot detection</li>
+                    <li>Zone-based alerts</li>
+                    <li>Historical analysis</li>
                 </ul>
             </div>
             
@@ -747,7 +956,49 @@
             <p><strong>Reauthorize:</strong></p>
             <pre><code>python scripts/netatmo_oauth_helper.py</code></pre>
         </div>
-        
+
+        <h3>🤖 Robotics Integration</h3>
+        <div class="troubleshooting-item">
+            <h4>ERROR Robotics MCP not connecting</h4>
+            <p><strong>Check:</strong></p>
+            <ul>
+                <li>Robotics MCP server running on port 8080</li>
+                <li>Robot devices powered on and connected</li>
+                <li>Network connectivity between systems</li>
+                <li>Robot-specific authentication configured</li>
+            </ul>
+            <p><strong>Test connection:</strong></p>
+            <pre><code>python scripts/test_robotics_connection.py</code></pre>
+        </div>
+
+        <h3>🍵 iKettle</h3>
+        <div class="troubleshooting-item">
+            <h4>ERROR iKettle not responding</h4>
+            <p><strong>Check:</strong></p>
+            <ul>
+                <li>iKettle connected to WiFi</li>
+                <li>Water level sufficient</li>
+                <li>API credentials in config.yaml</li>
+                <li>Device not in error state</li>
+            </ul>
+            <p><strong>Test connection:</strong></p>
+            <pre><code>python scripts/test_ikettle.py</code></pre>
+        </div>
+
+        <h3>🌡️ Thermal Cameras</h3>
+        <div class="troubleshooting-item">
+            <h4>ERROR Thermal feed not showing</h4>
+            <p><strong>Check:</strong></p>
+            <ul>
+                <li>Thermal camera IP address correct</li>
+                <li>ONVIF enabled on thermal camera</li>
+                <li>Authentication credentials valid</li>
+                <li>RTSP port accessible (usually 554)</li>
+            </ul>
+            <p><strong>Test stream:</strong></p>
+            <pre><code>python scripts/test_thermal_camera.py</code></pre>
+        </div>
+
         <h3>🖥️ Dashboard & Server Issues</h3>
         <div class="troubleshooting-item">
             <h4>ERROR Dashboard won't start / Port already in use</h4>
@@ -834,13 +1085,17 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
             <li><strong>Hue Bridge:</strong> <code>lighting.philips_hue</code></li>
             <li><strong>Ring Doorbell:</strong> <code>ring.email</code> and <code>ring.password</code></li>
             <li><strong>Netatmo:</strong> <code>weather.integrations.netatmo</code></li>
+            <li><strong>Robotics:</strong> <code>robotics_mcp.enabled</code> and server URL</li>
+            <li><strong>iKettle:</strong> <code>ikettle.host</code> and credentials</li>
+            <li><strong>Thermal:</strong> <code>thermal.cameras</code> configuration</li>
+            <li><strong>Public Cameras:</strong> <code>public_webcams.vienna.enabled</code></li>
             <li><strong>Authentication:</strong> <code>auth.enabled</code> (currently disabled)</li>
         </ul>
     </div>
     
     <!-- Monitoring & Stability -->
     <div id="monitoring" class="help-section" style="background: linear-gradient(135deg, var(--success-green) 0%, var(--success-dark) 100%); color: white; border: 2px solid #047857; border-left: 4px solid #047857; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
-        <h2 style="color: white;">💪 Monitoring & Stability System (v1.8.0)</h2>
+        <h2 style="color: white;">💪 Monitoring & Stability System (v1.17.1)</h2>
         
         <h3 style="color: white;">🔍 No More "It Worked Yesterday" Failures!</h3>
         <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px; margin: 16px 0;">
@@ -987,6 +1242,15 @@ Stop-Process -Id &lt;PID&gt; -Force</code></pre>
             
             <p><strong>Test Hue lights:</strong></p>
             <pre><code>python scripts/test_list_lights.py</code></pre>
+
+            <p><strong>Test robotics connection:</strong></p>
+            <pre><code>python scripts/test_robotics_connection.py</code></pre>
+
+            <p><strong>Test iKettle:</strong></p>
+            <pre><code>python scripts/test_ikettle.py</code></pre>
+
+            <p><strong>Test thermal camera:</strong></p>
+            <pre><code>python scripts/test_thermal_camera.py</code></pre>
         </div>
         
         <h3>📖 Documentation</h3>
