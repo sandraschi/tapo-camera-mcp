@@ -161,28 +161,38 @@ class TapoCameraServer:
             else:
                 logger.debug("Camera manager already exists, reusing")
 
-            # Load cameras from config
-            from ..config import get_config
+            # Check if we should skip hardware/camera loading
+            skip_hardware_init = os.getenv("TAPO_MCP_SKIP_HARDWARE_INIT", "false").lower() in (
+                "true",
+                "1",
+                "yes",
+            )
 
-            config = get_config()
-            camera_configs = config.get("cameras", {})
+            # Load cameras from config (unless hardware init is skipped)
+            if not skip_hardware_init:
+                from ..config import get_config
 
-            # Convert config format to camera configs
-            if camera_configs:
-                logger.info(f"Loading {len(camera_configs)} cameras from configuration...")
-                for camera_name, camera_config in camera_configs.items():
-                    try:
-                        # Add name to config if not present
-                        if "name" not in camera_config:
-                            camera_config["name"] = camera_name
+                config = get_config()
+                camera_configs = config.get("cameras", {})
 
-                        success = await self.camera_manager.add_camera(camera_config)
-                        if success:
-                            logger.info(f"Loaded camera: {camera_name}")
-                        else:
-                            logger.warning(f"Failed to load camera: {camera_name}")
-                    except Exception:
-                        logger.exception(f"Error loading camera {camera_name}")
+                # Convert config format to camera configs
+                if camera_configs:
+                    logger.info(f"Loading {len(camera_configs)} cameras from configuration...")
+                    for camera_name, camera_config in camera_configs.items():
+                        try:
+                            # Add name to config if not present
+                            if "name" not in camera_config:
+                                camera_config["name"] = camera_name
+
+                            success = await self.camera_manager.add_camera(camera_config)
+                            if success:
+                                logger.info(f"Loaded camera: {camera_name}")
+                            else:
+                                logger.warning(f"Failed to load camera: {camera_name}")
+                        except Exception:
+                            logger.exception(f"Error loading camera {camera_name}")
+            else:
+                logger.info("Skipping camera loading (TAPO_MCP_SKIP_HARDWARE_INIT=true)")
 
             # Register all tools
             await self._register_tools()

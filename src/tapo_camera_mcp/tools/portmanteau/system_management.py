@@ -19,6 +19,7 @@ SYSTEM_ACTIONS = {
     "info": "Get system information",
     "status": "Get system status",
     "health": "Perform health check",
+    "initialize": "Initialize all cameras and hardware",
     "reboot": "Reboot camera",
     "logs": "Get system logs",
 }
@@ -29,7 +30,7 @@ def register_system_management_tool(mcp: FastMCP) -> None:
 
     @mcp.tool()
     async def system_management(
-        action: Literal["info", "status", "health", "reboot", "logs"],
+        action: Literal["info", "status", "health", "initialize", "reboot", "logs"],
         camera_name: str | None = None,
         reboot_type: str = "soft",
         log_level: str = "INFO",
@@ -45,10 +46,11 @@ def register_system_management_tool(mcp: FastMCP) -> None:
 
         Args:
             action (Literal, required): The operation to perform. Must be one of: "info", "status", "health",
-                "reboot", "logs".
+                "initialize", "reboot", "logs".
                 - "info": Get system information (no other parameters required)
                 - "status": Get system status (no other parameters required)
                 - "health": Perform health check (no other parameters required)
+                - "initialize": Initialize all cameras and hardware (no other parameters required)
                 - "reboot": Reboot camera (requires: camera_name, reboot_type)
                 - "logs": Get system logs (optional: log_level, lines)
 
@@ -78,6 +80,9 @@ def register_system_management_tool(mcp: FastMCP) -> None:
 
             # Health check
             result = await system_management(action="health")
+
+            # Initialize all cameras
+            result = await system_management(action="initialize")
 
             # Reboot camera
             result = await system_management(action="reboot", camera_name="Front Door", reboot_type="soft")
@@ -124,6 +129,14 @@ def register_system_management_tool(mcp: FastMCP) -> None:
             if action == "health":
                 tool = HealthCheckTool()
                 result = await tool.execute()
+                return {"success": True, "action": action, "data": result}
+
+            if action == "initialize":
+                from tapo_camera_mcp.core.hardware_init import initialize_all_hardware
+                from tapo_camera_mcp.core.server import TapoCameraServer
+
+                server = await TapoCameraServer.get_instance()
+                result = await initialize_all_hardware(server.camera_manager)
                 return {"success": True, "action": action, "data": result}
 
             return {"success": False, "error": f"Action '{action}' not implemented"}

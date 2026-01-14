@@ -39,6 +39,13 @@ from .tapo_control import register_tapo_control_tool
 from .thermal_management import register_thermal_management_tool
 from .weather_management import register_weather_management_tool
 
+# Import agentic tools (SEP-1577)
+try:
+    from ..agentic_security import agentic_security_workflow
+    _agentic_security_available = True
+except ImportError:
+    _agentic_security_available = False
+
 logger = logging.getLogger(__name__)
 
 
